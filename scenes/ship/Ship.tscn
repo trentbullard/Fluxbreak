@@ -1,0 +1,65 @@
+[gd_scene load_steps=9 format=3 uid="uid://5aubsil1o756"]
+
+[ext_resource type="Script" uid="uid://bmssav2pv370w" path="res://scripts/ship/Ship.gd" id="1_dkinh"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_2l2hl"]
+size = Vector3(1.5, 0.5, 3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_dkinh"]
+size = Vector3(1.5, 0.5, 3)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_dqc1n"]
+top_radius = 0.0
+bottom_radius = 0.6
+height = 1.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_ob0mf"]
+size = Vector3(1.2, 0.1, 0.6)
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_xfxds"]
+emission_shape_scale = Vector3(0.2, 0.2, 0.1)
+emission_shape = 3
+emission_box_extents = Vector3(1, 1, 1)
+direction = Vector3(0, 0, -1)
+initial_velocity_min = 3.0
+initial_velocity_max = 6.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qos36"]
+albedo_color = Color(1, 0.40392157, 0, 1)
+emission_enabled = true
+emission = Color(1, 0.49019608, 0, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_hj22y"]
+material = SubResource("StandardMaterial3D_qos36")
+size = Vector3(0.2, 0.2, 0.1)
+
+[node name="Ship" type="CharacterBody3D"]
+script = ExtResource("1_dkinh")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_2l2hl")
+
+[node name="HullMesh" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_dkinh")
+
+[node name="NoseMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.3711392e-08, -1.0000001, 0, 1.0000001, -4.3711392e-08, 0, 0, 2)
+mesh = SubResource("CylinderMesh_dqc1n")
+
+[node name="WingLMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.2, 0, 0.4)
+mesh = SubResource("BoxMesh_ob0mf")
+
+[node name="WingRMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2, 0, 0.4)
+mesh = SubResource("BoxMesh_ob0mf")
+skeleton = NodePath("../WingLMesh")
+
+[node name="ThrusterParticles" type="GPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.6)
+lifetime = 0.3
+process_material = SubResource("ParticleProcessMaterial_xfxds")
+draw_pass_1 = SubResource("BoxMesh_hj22y")
+
+[node name="CameraPivot" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, -5.5)
