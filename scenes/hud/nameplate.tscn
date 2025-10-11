@@ -1,0 +1,22 @@
+[gd_scene load_steps=3 format=3 uid="uid://icnhxdf4gt2c"]
+
+[sub_resource type="SystemFont" id="SystemFont_xj1lc"]
+font_names = PackedStringArray("Consolas")
+
+[sub_resource type="LabelSettings" id="LabelSettings_wligs"]
+font = SubResource("SystemFont_xj1lc")
+font_size = 18
+outline_size = 8
+outline_color = Color(0, 0, 0, 1)
+
+[node name="Nameplate" type="MarginContainer"]
+offset_right = 1.0
+offset_bottom = 19.0
+mouse_filter = 2
+
+[node name="HBox" type="HBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HBox"]
+layout_mode = 2
+label_settings = SubResource("LabelSettings_wligs")
