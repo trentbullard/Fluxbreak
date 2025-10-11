@@ -1,3 +1,4 @@
+# hud_manager.gd  (Godot 4.5)
 extends CanvasLayer
 @export var camera_path: NodePath
 @export var ship_path: NodePath

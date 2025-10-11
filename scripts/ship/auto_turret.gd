@@ -1,3 +1,4 @@
+# auto_turret.gd  (Godot 4.5)
 extends Node3D
 
 @export var projectile_scene: PackedScene
@@ -61,9 +62,13 @@ func _fire_at(target: Node3D) -> void:
 		return
 
 	# Aim from muzzle toward target (no leading yet)
-	var dir := (target.global_position - muzzle.global_position).normalized()
-	var aim_basis := Basis.looking_at(dir, Vector3.UP)
+	var dir: Vector3 = (target.global_position - muzzle.global_position).normalized()
+	var aim_basis: Basis = Basis.looking_at(dir, Vector3.UP)
 
-	var p = projectile_scene.instantiate() as Area3D
+	var p: Projectile = projectile_scene.instantiate() as Projectile
+	if p == null:
+		return
+
 	get_tree().current_scene.add_child(p)
 	p.global_transform = Transform3D(aim_basis, muzzle.global_position)
+	p.configure(get_parent())

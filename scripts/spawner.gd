@@ -1,3 +1,4 @@
+# spawner.gd  (Godot 4.5)
 extends Node3D
 
 @export var target_scene: PackedScene

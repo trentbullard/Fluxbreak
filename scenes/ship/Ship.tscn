@@ -83,6 +83,9 @@ ship_path = NodePath("..")
 [node name="Turret" type="Node3D" parent="."]
 script = ExtResource("3_wxx60")
 projectile_scene = ExtResource("4_iyjb8")
+fire_rate = null
+detection_radius = null
+lead_fraction = null
 
 [node name="Barrel" type="MeshInstance3D" parent="Turret"]
 transform = Transform3D(0.2, 0, 0, 0, -1.7484556e-08, -0.2, 0, 0.4, -8.742278e-09, 0, 0.61471206, 0)
@@ -101,3 +104,6 @@ shape = SubResource("SphereShape3D_iyjb8")
 
 [node name="Muzzle" type="Marker3D" parent="Turret"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.61564785, -0.3501404)
+
+[node name="CockpitSocket" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.6)

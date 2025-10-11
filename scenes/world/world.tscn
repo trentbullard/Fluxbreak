@@ -88,6 +88,7 @@ script = ExtResource("2_v5dby")
 target_path = NodePath("../FollowCamera")
 
 [node name="Ship" parent="." instance=ExtResource("2_6m72w")]
+fa_enabled = false
 
 [node name="FollowCamera" parent="." instance=ExtResource("3_v5dby")]
 fov = 90.0
