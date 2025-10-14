@@ -1,0 +1,101 @@
+[gd_scene load_steps=11 format=3 uid="uid://drrnshnyy4682"]
+
+[ext_resource type="Script" uid="uid://ctypdxlxrxqme" path="res://scripts/main_menu/main_menu.gd" id="1_0ebjn"]
+[ext_resource type="PackedScene" uid="uid://ppgr7fveqbrd" path="res://scenes/world/world.tscn" id="2_ob46e"]
+
+[sub_resource type="SystemFont" id="SystemFont_0ebjn"]
+font_names = PackedStringArray("Marlett")
+
+[sub_resource type="LabelSettings" id="LabelSettings_ob46e"]
+font = SubResource("SystemFont_0ebjn")
+font_size = 100
+outline_size = 10
+outline_color = Color(0, 0, 0, 1)
+shadow_size = 10
+shadow_color = Color(0, 0, 0, 1)
+shadow_offset = Vector2(3, 3)
+
+[sub_resource type="SystemFont" id="SystemFont_uqeha"]
+
+[sub_resource type="Theme" id="Theme_wem23"]
+default_font = SubResource("SystemFont_uqeha")
+default_font_size = 30
+
+[sub_resource type="SystemFont" id="SystemFont_3ovsr"]
+
+[sub_resource type="Theme" id="Theme_5seab"]
+default_font = SubResource("SystemFont_3ovsr")
+default_font_size = 30
+
+[sub_resource type="SystemFont" id="SystemFont_4xg86"]
+
+[sub_resource type="Theme" id="Theme_thkx5"]
+default_font = SubResource("SystemFont_4xg86")
+default_font_size = 30
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_0ebjn")
+practice_scene = ExtResource("2_ob46e")
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer"]
+layout_mode = 2
+
+[node name="TitleContainer" type="CenterContainer" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="CenterContainer/VBoxContainer/TitleContainer"]
+layout_mode = 2
+text = "POC SPACE GAME"
+label_settings = SubResource("LabelSettings_ob46e")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ButtonsContainer" type="VBoxContainer" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="PracticeContainer" type="CenterContainer" parent="CenterContainer/VBoxContainer/ButtonsContainer"]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/VBoxContainer/ButtonsContainer/PracticeContainer"]
+layout_mode = 2
+theme_override_constants/margin_top = 15
+
+[node name="Practice" type="Button" parent="CenterContainer/VBoxContainer/ButtonsContainer/PracticeContainer/MarginContainer"]
+layout_mode = 2
+theme = SubResource("Theme_wem23")
+text = "Practice"
+
+[node name="SettingsContainer" type="CenterContainer" parent="CenterContainer/VBoxContainer/ButtonsContainer"]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/VBoxContainer/ButtonsContainer/SettingsContainer"]
+layout_mode = 2
+theme_override_constants/margin_top = 30
+theme_override_constants/margin_bottom = 30
+
+[node name="Settings" type="Button" parent="CenterContainer/VBoxContainer/ButtonsContainer/SettingsContainer/MarginContainer"]
+layout_mode = 2
+theme = SubResource("Theme_5seab")
+text = "Settings"
+
+[node name="ExitContainer" type="CenterContainer" parent="CenterContainer/VBoxContainer/ButtonsContainer"]
+layout_mode = 2
+
+[node name="Exit" type="Button" parent="CenterContainer/VBoxContainer/ButtonsContainer/ExitContainer"]
+layout_mode = 2
+theme = SubResource("Theme_thkx5")
+text = "Exit"
