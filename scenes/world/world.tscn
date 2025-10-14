@@ -1,11 +1,10 @@
-[gd_scene load_steps=22 format=3 uid="uid://ppgr7fveqbrd"]
+[gd_scene load_steps=23 format=3 uid="uid://ppgr7fveqbrd"]
 
 [ext_resource type="Texture2D" uid="uid://d3x23q2en3ng1" path="res://assets/plain_starfield_1.png" id="1_dphjl"]
 [ext_resource type="PackedScene" uid="uid://5aubsil1o756" path="res://scenes/ship/ship.tscn" id="2_6m72w"]
 [ext_resource type="Script" uid="uid://o2d5kgipj00g" path="res://scripts/vfx/starfield_follower.gd" id="2_v5dby"]
-[ext_resource type="PackedScene" uid="uid://bcncxybfvyf3h" path="res://scenes/follow_camera.tscn" id="3_v5dby"]
-[ext_resource type="Script" uid="uid://cgqq5arx6po6h" path="res://scripts/camera/follow_camera.gd" id="4_t5ptc"]
 [ext_resource type="Script" uid="uid://btyca23m2ejd3" path="res://scripts/spawner.gd" id="6_bq33v"]
+[ext_resource type="Script" uid="uid://bv6so66yvn2if" path="res://scripts/hud/reticle_layer.gd" id="7_gb53w"]
 [ext_resource type="PackedScene" uid="uid://bk2fpvtu6c4ij" path="res://scenes/target_object.tscn" id="7_j2gmx"]
 [ext_resource type="Script" uid="uid://du7q53l77nqki" path="res://scripts/hud/hud_manager.gd" id="8_1yooq"]
 [ext_resource type="Script" uid="uid://i56d1j8euse1" path="res://scripts/hud/nameplate_manager.gd" id="9_gb53w"]
@@ -59,6 +58,14 @@ font = SubResource("SystemFont_5qq27")
 outline_size = 4
 outline_color = Color(0, 0, 0, 1)
 
+[sub_resource type="SystemFont" id="SystemFont_srmg5"]
+font_names = PackedStringArray("Consolas")
+
+[sub_resource type="LabelSettings" id="LabelSettings_umvgx"]
+font = SubResource("SystemFont_srmg5")
+outline_size = 4
+outline_color = Color(0, 0, 0, 1)
+
 [node name="World" type="Node3D"]
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
@@ -75,7 +82,7 @@ shadow_normal_bias = 0.3
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_v5dby")
 
-[node name="Starfield" type="GPUParticles3D" parent="."]
+[node name="Starfield" type="GPUParticles3D" parent="." node_paths=PackedStringArray("ship")]
 amount = 2000
 lifetime = 12.0
 preprocess = 12.0
@@ -85,16 +92,9 @@ trail_lifetime = 0.14
 process_material = SubResource("ParticleProcessMaterial_dphjl")
 draw_pass_1 = SubResource("QuadMesh_t5ptc")
 script = ExtResource("2_v5dby")
-target_path = NodePath("../FollowCamera")
+ship = NodePath("../Ship")
 
 [node name="Ship" parent="." instance=ExtResource("2_6m72w")]
-fa_enabled = false
-
-[node name="FollowCamera" parent="." instance=ExtResource("3_v5dby")]
-fov = 90.0
-script = ExtResource("4_t5ptc")
-target_path = NodePath("../Ship")
-local_offset = Vector3(0, 1.3, 3)
 
 [node name="Spawner" type="Node3D" parent="."]
 script = ExtResource("6_bq33v")
@@ -103,7 +103,7 @@ ship_path = NodePath("../Ship")
 
 [node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("8_1yooq")
-camera_path = NodePath("../FollowCamera")
+camera_path = null
 ship_path = NodePath("../Ship")
 
 [node name="ScreenRoot" type="Control" parent="HUD"]
@@ -116,9 +116,12 @@ grow_vertical = 2
 mouse_filter = 2
 
 [node name="ReticleLayer" type="Control" parent="HUD/ScreenRoot"]
+visible = false
 anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
+script = ExtResource("7_gb53w")
+ship_path = NodePath("../../../Ship")
 
 [node name="NameplateLayer" type="Control" parent="HUD/ScreenRoot"]
 layout_mode = 1
@@ -150,7 +153,7 @@ mouse_filter = 2
 script = ExtResource("11_5qq27")
 back_color = Color(0.24705882, 0.24705882, 0.24705882, 0.75686276)
 
-[node name="VBox" type="HBoxContainer" parent="HUD/ScreenRoot/BottomDock/Centerer/ShipHud"]
+[node name="VBox" type="VBoxContainer" parent="HUD/ScreenRoot/BottomDock/Centerer/ShipHud"]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -158,43 +161,54 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -93.5
-offset_top = -100.0
+offset_top = -127.0
 offset_right = 93.5
 grow_horizontal = 2
 grow_vertical = 0
+
+[node name="ShieldHullContainer" type="HBoxContainer" parent="HUD/ScreenRoot/BottomDock/Centerer/ShipHud/VBox"]
+layout_mode = 2
 theme_override_constants/separation = 7
 
-[node name="Hull" type="HBoxContainer" parent="HUD/ScreenRoot/BottomDock/Centerer/ShipHud/VBox"]
+[node name="Hull" type="HBoxContainer" parent="HUD/ScreenRoot/BottomDock/Centerer/ShipHud/VBox/ShieldHullContainer"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Value" type="Label" parent="HUD/ScreenRoot/BottomDock/Centerer/ShipHud/VBox/Hull"]
+[node name="Value" type="Label" parent="HUD/ScreenRoot/BottomDock/Centerer/ShipHud/VBox/ShieldHullContainer/Hull"]
 layout_mode = 2
 text = "100/100"
 label_settings = SubResource("LabelSettings_srmg5")
 
-[node name="Bar" type="ProgressBar" parent="HUD/ScreenRoot/BottomDock/Centerer/ShipHud/VBox/Hull"]
+[node name="Bar" type="ProgressBar" parent="HUD/ScreenRoot/BottomDock/Centerer/ShipHud/VBox/ShieldHullContainer/Hull"]
 custom_minimum_size = Vector2(20, 100)
 layout_mode = 2
 value = 50.0
 fill_mode = 3
 show_percentage = false
 
-[node name="Shield" type="HBoxContainer" parent="HUD/ScreenRoot/BottomDock/Centerer/ShipHud/VBox"]
+[node name="Shield" type="HBoxContainer" parent="HUD/ScreenRoot/BottomDock/Centerer/ShipHud/VBox/ShieldHullContainer"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Bar" type="ProgressBar" parent="HUD/ScreenRoot/BottomDock/Centerer/ShipHud/VBox/Shield"]
+[node name="Bar" type="ProgressBar" parent="HUD/ScreenRoot/BottomDock/Centerer/ShipHud/VBox/ShieldHullContainer/Shield"]
 custom_minimum_size = Vector2(20, 100)
 layout_mode = 2
 value = 50.0
 fill_mode = 3
 show_percentage = false
 
-[node name="Value" type="Label" parent="HUD/ScreenRoot/BottomDock/Centerer/ShipHud/VBox/Shield"]
+[node name="Value" type="Label" parent="HUD/ScreenRoot/BottomDock/Centerer/ShipHud/VBox/ShieldHullContainer/Shield"]
 layout_mode = 2
 text = "100/100"
 label_settings = SubResource("LabelSettings_dlabj")
+
+[node name="VelocityContainer" type="CenterContainer" parent="HUD/ScreenRoot/BottomDock/Centerer/ShipHud/VBox"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HUD/ScreenRoot/BottomDock/Centerer/ShipHud/VBox/VelocityContainer"]
+layout_mode = 2
+text = "180m/s"
+label_settings = SubResource("LabelSettings_umvgx")
 
 [node name="MinimapDock" type="Control" parent="HUD/ScreenRoot"]
 anchors_preset = 0

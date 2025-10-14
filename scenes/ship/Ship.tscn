@@ -1,12 +1,14 @@
-[gd_scene load_steps=15 format=3 uid="uid://5aubsil1o756"]
+[gd_scene load_steps=17 format=3 uid="uid://5aubsil1o756"]
 
 [ext_resource type="Script" uid="uid://bmssav2pv370w" path="res://scripts/ship/ship.gd" id="1_dkinh"]
+[ext_resource type="Script" uid="uid://bg8wrq5keroaf" path="res://scripts/ship/camera_rig.gd" id="2_c54or"]
+[ext_resource type="Script" uid="uid://b6l13a7bry0bf" path="res://scripts/ship/visual_root.gd" id="2_dh1m8"]
 [ext_resource type="Script" uid="uid://b8t0af6cqqigx" path="res://scripts/input/mouse_flight_controller.gd" id="2_u5c2e"]
 [ext_resource type="Script" uid="uid://can3devb4ldff" path="res://scripts/ship/auto_turret.gd" id="3_wxx60"]
 [ext_resource type="PackedScene" uid="uid://ml5cr05cbn68" path="res://scenes/projectile.tscn" id="4_iyjb8"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_2l2hl"]
-size = Vector3(1.5, 0.5, 3.9448242)
+size = Vector3(1.5, 0.5, 4)
 
 [sub_resource type="BoxMesh" id="BoxMesh_dkinh"]
 size = Vector3(1.5, 0.5, 3)
@@ -18,6 +20,10 @@ height = 1.0
 
 [sub_resource type="BoxMesh" id="BoxMesh_ob0mf"]
 size = Vector3(1.2, 0.1, 0.6)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_wxx60"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_iyjb8"]
 
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_xfxds"]
 emission_shape_scale = Vector3(0.2, 0.2, 0.1)
@@ -36,36 +42,49 @@ emission = Color(1, 0.49019608, 0, 1)
 material = SubResource("StandardMaterial3D_qos36")
 size = Vector3(0.2, 0.2, 0.1)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_wxx60"]
-
-[sub_resource type="CylinderMesh" id="CylinderMesh_iyjb8"]
-
 [sub_resource type="SphereShape3D" id="SphereShape3D_iyjb8"]
 radius = 200.0
 
-[node name="Ship" type="CharacterBody3D"]
+[node name="Ship" type="RigidBody3D"]
 collision_mask = 5
+gravity_scale = 0.0
 script = ExtResource("1_dkinh")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.46679688)
 shape = SubResource("BoxShape3D_2l2hl")
 
-[node name="HullMesh" type="MeshInstance3D" parent="."]
-mesh = SubResource("BoxMesh_dkinh")
+[node name="VisualRoot" type="Node3D" parent="." node_paths=PackedStringArray("ship")]
+script = ExtResource("2_dh1m8")
+ship = NodePath("..")
 
-[node name="NoseMesh" type="MeshInstance3D" parent="."]
+[node name="HullMesh" type="MeshInstance3D" parent="VisualRoot"]
+mesh = SubResource("BoxMesh_dkinh")
+skeleton = NodePath("../..")
+
+[node name="NoseMesh" type="MeshInstance3D" parent="VisualRoot"]
 transform = Transform3D(1, 0, 0, 0, -4.3711392e-08, 1.0000001, 0, -1.0000001, -4.3711392e-08, 0, 0, -2)
 mesh = SubResource("CylinderMesh_dqc1n")
+skeleton = NodePath("../..")
 
-[node name="WingLMesh" type="MeshInstance3D" parent="."]
+[node name="WingLMesh" type="MeshInstance3D" parent="VisualRoot"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.2, 0, 0.4)
 mesh = SubResource("BoxMesh_ob0mf")
+skeleton = NodePath("../..")
 
-[node name="WingRMesh" type="MeshInstance3D" parent="."]
+[node name="WingRMesh" type="MeshInstance3D" parent="VisualRoot"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2, 0, 0.4)
 mesh = SubResource("BoxMesh_ob0mf")
 skeleton = NodePath("../WingLMesh")
+
+[node name="Barrel" type="MeshInstance3D" parent="VisualRoot"]
+transform = Transform3D(0.2, 0, 0, 0, -1.7484556e-08, -0.2, 0, 0.4, -8.742278e-09, 0, 0.61471206, 0)
+mesh = SubResource("CylinderMesh_wxx60")
+skeleton = NodePath("../../Turret")
+
+[node name="Mount" type="MeshInstance3D" parent="VisualRoot"]
+transform = Transform3D(0.15, 0, 0, 0, 0.2, 0, 0, 0, 0.15, 0, 0.41782814, 0.18828964)
+mesh = SubResource("CylinderMesh_iyjb8")
+skeleton = NodePath("../../Turret")
 
 [node name="ThrusterParticles" type="GPUParticles3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.5383478)
@@ -73,12 +92,9 @@ lifetime = 0.3
 process_material = SubResource("ParticleProcessMaterial_xfxds")
 draw_pass_1 = SubResource("BoxMesh_hj22y")
 
-[node name="CameraPivot" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.7683716e-07, 2.8074646, 9.768425)
-
-[node name="MouseFlightController" type="Node" parent="."]
+[node name="MouseFlightController" type="Node" parent="." node_paths=PackedStringArray("ship")]
 script = ExtResource("2_u5c2e")
-ship_path = NodePath("..")
+ship = NodePath("..")
 
 [node name="Turret" type="Node3D" parent="."]
 script = ExtResource("3_wxx60")
@@ -86,14 +102,6 @@ projectile_scene = ExtResource("4_iyjb8")
 fire_rate = null
 detection_radius = null
 lead_fraction = null
-
-[node name="Barrel" type="MeshInstance3D" parent="Turret"]
-transform = Transform3D(0.2, 0, 0, 0, -1.7484556e-08, -0.2, 0, 0.4, -8.742278e-09, 0, 0.61471206, 0)
-mesh = SubResource("CylinderMesh_wxx60")
-
-[node name="Mount" type="MeshInstance3D" parent="Turret"]
-transform = Transform3D(0.15, 0, 0, 0, 0.2, 0, 0, 0, 0.15, 0, 0.41782814, 0.18828964)
-mesh = SubResource("CylinderMesh_iyjb8")
 
 [node name="Detector" type="Area3D" parent="Turret"]
 collision_layer = 0
@@ -107,3 +115,15 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.61564785, -0.3501404)
 
 [node name="CockpitSocket" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.6)
+
+[node name="CameraPivot" type="Marker3D" parent="."]
+
+[node name="CameraRig" type="Node3D" parent="CameraPivot" node_paths=PackedStringArray("ship", "camera")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 10)
+script = ExtResource("2_c54or")
+ship = NodePath("../..")
+camera = NodePath("Camera3D")
+la_gain = -0.5
+
+[node name="Camera3D" type="Camera3D" parent="CameraPivot/CameraRig"]
+current = true

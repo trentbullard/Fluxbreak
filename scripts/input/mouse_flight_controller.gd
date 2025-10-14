@@ -1,7 +1,7 @@
 # mouse_flight_controller.gd  (Godot 4.5)
 extends Node
 
-@export var ship_path: NodePath
+@export var ship: Ship
 @export var radius_px := 300.0
 @export var deadzone_px := 6.0
 @export var sensitivity := 0.13         # mouse → aim pixels
@@ -17,12 +17,10 @@ extends Node
 @export var bank_factor := 0.6         # 0..1 portion of yaw rate → roll rate
 @export var max_roll_rate_deg := 120.0
 
-var _ship: Node
 var _aim := Vector2.ZERO
 var _target_aim := Vector2.ZERO
 
 func _ready() -> void:
-	_ship = get_node_or_null(ship_path)
 	if lock_mouse_on_start:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
@@ -37,9 +35,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			_target_aim = _target_aim.normalized() * radius_px
 
 func _process(_dt: float) -> void:
-	if _ship == null:
-		return
-
 	# light smoothing without the springiness
 	_aim = _aim.lerp(_target_aim, 0.35)
 
@@ -60,12 +55,11 @@ func _process(_dt: float) -> void:
 	var target_roll_rate := 0.0
 	if auto_bank:
 		target_roll_rate += bank_factor * target_yaw_rate
-	if Input.is_action_pressed("roll_left"):  target_roll_rate -= max_roll_rate_deg
-	if Input.is_action_pressed("roll_right"): target_roll_rate += max_roll_rate_deg
+	if Input.is_action_pressed("roll_left"):  target_roll_rate += max_roll_rate_deg
+	if Input.is_action_pressed("roll_right"): target_roll_rate -= max_roll_rate_deg
 
-	if "set_target_angular_rates" in _ship:
-		_ship.set_target_angular_rates(
-			Vector3( deg_to_rad(target_pitch_rate),  # X (pitch)
-					 deg_to_rad(target_yaw_rate),    # Y (yaw)
-					 deg_to_rad(target_roll_rate) )  # Z (roll)
-		)
+	ship.set_target_angular_rates(
+		Vector3( deg_to_rad(target_pitch_rate),  # X (pitch)
+				 deg_to_rad(target_yaw_rate),    # Y (yaw)
+				 deg_to_rad(target_roll_rate) )  # Z (roll)
+	)

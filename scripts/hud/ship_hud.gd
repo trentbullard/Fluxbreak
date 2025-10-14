@@ -7,16 +7,17 @@ class_name ShipHud
 @export var back_color: Color = Color(0, 0, 0, 0.6)
 @export var ui_hz: float = 20.0
 
-var _ship: Node3D
+var _ship: Ship
 var _accum := 0.0
 
-@onready var _shield_bar: ProgressBar = $VBox/Shield/Bar
-@onready var _shield_val: Label = $VBox/Shield/Value
-@onready var _hull_bar: ProgressBar = $VBox/Hull/Bar
-@onready var _hull_val: Label = $VBox/Hull/Value
+@onready var _shield_bar: ProgressBar = $VBox/ShieldHullContainer/Shield/Bar
+@onready var _shield_val: Label = $VBox/ShieldHullContainer/Shield/Value
+@onready var _hull_bar: ProgressBar = $VBox/ShieldHullContainer/Hull/Bar
+@onready var _hull_val: Label = $VBox/ShieldHullContainer/Hull/Value
+@onready var _vel_val: Label = $VBox/VelocityContainer/Label
 
 func init(ship: Node3D) -> void:
-	_ship = ship
+	_ship = ship as Ship
 
 func _ready() -> void:
 	_style_bar(_shield_bar, shield_color)
@@ -40,6 +41,15 @@ func _update_values() -> void:
 	
 	_apply_bar(_shield_bar, _shield_val, shield, shield_max)
 	_apply_bar(_hull_bar, _hull_val, hull, hull_max)
+	
+	var fwd_speed: float = 0.0
+	var max_fwd: float = 100.0
+	
+	fwd_speed = _ship.linear_velocity.length()
+	var caps: Vector2 = _ship.get_speed_caps()
+	max_fwd = max(caps.y, 1.0)
+	
+	_apply_speed(_vel_val, fwd_speed, max_fwd)
 
 func _apply_bar(bar: ProgressBar, label: Label, val: float, maxv: float) -> void:
 	maxv = max(maxv, 1.0)
@@ -65,6 +75,9 @@ func _style_bar(bar: ProgressBar, fill_col: Color) -> void:
 	bar.add_theme_stylebox_override("fill", fill)
 	bar.add_theme_stylebox_override("background", back)
 	bar.step = 1.0
+
+func _apply_speed(label: Label, fwd_speed: float, max_fwd: float) -> void:
+	label.text = "v: %dm/s | max: %dm/s" % [int(round(fwd_speed)), int(round(max_fwd))]
 
 func _read_pair(component_name: String, component_max: String, def_v: float, def_m: float) -> Array:
 	var v := def_v
