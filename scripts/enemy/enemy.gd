@@ -1,11 +1,18 @@
 # target_object.gd  (Godot 4.5)
 extends RigidBody3D
-class_name TargetObject
+class_name Enemy
 
 @export var _hp: float = 20.0
+@export var evasion: float = 0.10        # 0..1
+@export var thrust: float = 35.0
 @export var explosion_scene: PackedScene
 
 @export var player_ship: Ship
+@export var label_height: float = 1.5
+@export var label_update_hz: float = 10.0
+
+@export var min_distance: float = 250.0
+@export var max_distance: float = 400.0
 
 var _dead: bool = false
 var _last_xform: Transform3D = Transform3D()
@@ -15,6 +22,11 @@ enum Size {SM, MD, LG}
 func _ready() -> void:
 	add_to_group("targets")
 	_last_xform = global_transform
+
+func _physics_process(_delta: float) -> void:
+	if player_ship != null:
+		face_target(player_ship.global_position)
+		orbit_target(player_ship.global_position)
 
 func _process(_delta: float) -> void:
 	if is_inside_tree():
@@ -62,8 +74,27 @@ func _is_offscreen(cam: Camera3D, world_pos: Vector3) -> bool:
 	var rect: Rect2i = get_viewport().get_visible_rect()
 	return not rect.has_point(screen_pos)
 
+func face_target(target: Vector3) -> void:
+	var new_transform: Transform3D = global_transform.looking_at(target, Vector3.UP)
+	new_transform.origin = global_position
+	global_transform = new_transform
+
+func orbit_target(target: Vector3) -> void:
+	var diff: Vector3 = global_position - target
+	var too_close: bool = diff.length_squared() <= min_distance * min_distance
+	var too_far: bool = diff.length_squared() > max_distance * max_distance
+	
+	if too_close:
+		apply_central_force(global_transform.basis.z * thrust)
+	
+	if too_far:
+		apply_central_force(-global_transform.basis.z * thrust)
+
 func set_ship(ship: Ship):
 	player_ship = ship
+
+func get_evasion() -> float:
+	return clamp(evasion, 0.0, 1.0)
 
 func set_size(size: Size) -> void:
 	match size:

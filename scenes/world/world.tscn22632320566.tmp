@@ -1,4 +1,4 @@
-[gd_scene load_steps=26 format=3 uid="uid://ppgr7fveqbrd"]
+[gd_scene load_steps=25 format=3 uid="uid://ppgr7fveqbrd"]
 
 [ext_resource type="Texture2D" uid="uid://d3x23q2en3ng1" path="res://assets/plain_starfield_1.png" id="1_dphjl"]
 [ext_resource type="PackedScene" uid="uid://bsm2da0co8h01" path="res://scenes/ship/Ship.tscn" id="2_6m72w"]
@@ -12,7 +12,6 @@
 [ext_resource type="PackedScene" uid="uid://icnhxdf4gt2c" path="res://scenes/hud/nameplate.tscn" id="10_gb53w"]
 [ext_resource type="Script" uid="uid://b5hyfbp2ddcs7" path="res://scripts/hud/ship_hud.gd" id="11_5qq27"]
 [ext_resource type="Script" uid="uid://cemxmjhjo1dcl" path="res://scripts/hud/floating_text_layer.gd" id="11_dlabj"]
-[ext_resource type="PackedScene" uid="uid://dfwkrpcwwyo3c" path="res://scenes/hud/floating_text.tscn" id="12_srmg5"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_1fp7r"]
 panorama = ExtResource("1_dphjl")
@@ -110,6 +109,7 @@ ship_path = NodePath("../Ship")
 
 [node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("8_1yooq")
+camera_path = null
 ship_path = NodePath("../Ship")
 
 [node name="ScreenRoot" type="Control" parent="HUD"]
@@ -145,7 +145,6 @@ anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
 script = ExtResource("11_dlabj")
-floating_text_scene = ExtResource("12_srmg5")
 
 [node name="BottomDock" type="MarginContainer" parent="HUD/ScreenRoot"]
 layout_mode = 1

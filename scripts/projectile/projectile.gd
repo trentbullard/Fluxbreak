@@ -8,32 +8,34 @@ class_name Projectile
 @export var collision_mask: int = 1 << 2   # e.g., layer 3 = targets
 @export var exclude_owner: Node = null     # set by turret to avoid hitting self
 
+var _target: Node3D = null
+var _outcome: int = ShotResult.MISS
+var _crit_mult: float = 0.0
+var _graze_mult: float = 0.3
+
 var _prev_pos: Vector3
 var _life: float = 0.0
+var _dir: Vector3
+
+enum ShotResult { MISS, GRAZE, HIT, CRIT }
+
+func configure_with_outcome(source: Node, target: Node3D, outcome: int, graze_mult: float, crit_mult: float) -> void:
+	exclude_owner = source
+	_target = target
+	_outcome = outcome
+	_crit_mult = crit_mult
+	_graze_mult = graze_mult
 
 func _ready() -> void:
 	_prev_pos = global_position
+	_dir = -global_transform.basis.z
 
 func _physics_process(delta: float) -> void:
-	var dir: Vector3 = -global_transform.basis.z
-	var travel: Vector3 = dir * speed * delta
+	var travel: Vector3 = _dir * speed * delta
 	var next_pos: Vector3 = global_position + travel
-
-	# Sweep from _prev_pos to next_pos
-	var space: PhysicsDirectSpaceState3D = get_world_3d().direct_space_state
-	var params: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(_prev_pos, next_pos)
-	params.collision_mask = collision_mask
-	if exclude_owner != null:
-		params.exclude = [exclude_owner]
-
-	var hit: Dictionary = space.intersect_ray(params)
-	if not hit.is_empty():
-		var collider: Object = hit.get("collider")
-		if collider != null and collider.has_method("apply_damage"):
-			(collider as Object).call("apply_damage", damage)
-		queue_free()
-		return
-
+	
+	_apply_to_target(_target)
+	
 	# No hit: move forward and continue
 	global_position = next_pos
 	_prev_pos = next_pos
@@ -42,5 +44,20 @@ func _physics_process(delta: float) -> void:
 	if _life >= max_lifetime:
 		queue_free()
 
-func configure(source: Node) -> void:
-	exclude_owner = source
+func _apply_to_target(collider: Object) -> void:
+	var dmg: float = 0.0
+	var fx_pos: Vector3 = collider.global_position
+	match _outcome:
+		ShotResult.CRIT:
+			EffectsBus.show_float(fx_pos, "CRIT", Color.GREEN)
+			dmg = damage * _crit_mult
+		ShotResult.HIT: dmg = damage
+		ShotResult.GRAZE:
+			EffectsBus.show_float(fx_pos, "GRAZE", Color(0.8, 0.8, 0.8))
+			dmg = damage * _graze_mult
+		ShotResult.MISS:
+			EffectsBus.show_float(fx_pos, "MISS", Color(1.0, 0.5, 0.3))
+			dmg = 0.0
+	if dmg > 0.0 and collider != null and collider.has_method("apply_damage"):
+		(collider as Object).call("apply_damage", dmg)
+	queue_free()

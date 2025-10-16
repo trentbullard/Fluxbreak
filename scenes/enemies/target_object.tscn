@@ -7,9 +7,10 @@
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_j40ee"]
 cull_mode = 2
-albedo_color = Color(0.34396318, 0.24241897, 0.15621242, 1)
+vertex_color_use_as_albedo = true
+albedo_color = Color(0, 0.5568628, 1, 1)
 emission_enabled = true
-emission = Color(0.7254902, 0.3647059, 0, 1)
+emission = Color(0, 0.5568628, 1, 1)
 
 [sub_resource type="SphereMesh" id="SphereMesh_s2cdo"]
 material = SubResource("StandardMaterial3D_j40ee")
@@ -17,9 +18,9 @@ material = SubResource("StandardMaterial3D_j40ee")
 [node name="TargetObject" type="RigidBody3D"]
 collision_layer = 4
 collision_mask = 3
+gravity_scale = 0.0
 script = ExtResource("1_kxkup")
 explosion_scene = ExtResource("2_kfbfx")
-label_height = 20.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("SphereShape3D_kfbfx")
@@ -27,5 +28,3 @@ shape = SubResource("SphereShape3D_kfbfx")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 transform = Transform3D(30, 0, 0, 0, 30, 0, 0, 0, 30, 0, 0, 0)
 mesh = SubResource("SphereMesh_s2cdo")
-
-[node name="AudioStreamPlayer3D" type="AudioStreamPlayer3D" parent="."]

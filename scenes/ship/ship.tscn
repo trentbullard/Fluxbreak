@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://5aubsil1o756"]
+[gd_scene load_steps=18 format=3 uid="uid://bsm2da0co8h01"]
 
 [ext_resource type="Script" uid="uid://bmssav2pv370w" path="res://scripts/ship/ship.gd" id="1_dkinh"]
 [ext_resource type="Script" uid="uid://bg8wrq5keroaf" path="res://scripts/ship/camera_rig.gd" id="2_c54or"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://b8t0af6cqqigx" path="res://scripts/input/mouse_flight_controller.gd" id="2_u5c2e"]
 [ext_resource type="Script" uid="uid://can3devb4ldff" path="res://scripts/ship/auto_turret.gd" id="3_wxx60"]
 [ext_resource type="PackedScene" uid="uid://ml5cr05cbn68" path="res://scenes/projectile.tscn" id="4_iyjb8"]
+[ext_resource type="AudioStream" uid="uid://bc0bnr0mdvk6e" path="res://assets/sounds/plasma_shot.wav" id="6_7nsyl"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_2l2hl"]
 size = Vector3(1.5, 0.5, 4)
@@ -99,9 +100,6 @@ ship = NodePath("..")
 [node name="Turret" type="Node3D" parent="."]
 script = ExtResource("3_wxx60")
 projectile_scene = ExtResource("4_iyjb8")
-fire_rate = null
-detection_radius = null
-lead_fraction = null
 
 [node name="Detector" type="Area3D" parent="Turret"]
 collision_layer = 0
@@ -112,6 +110,10 @@ shape = SubResource("SphereShape3D_iyjb8")
 
 [node name="Muzzle" type="Marker3D" parent="Turret"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.61564785, -0.3501404)
+
+[node name="ShotSound" type="AudioStreamPlayer3D" parent="Turret"]
+stream = ExtResource("6_7nsyl")
+volume_db = -5.0
 
 [node name="CockpitSocket" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.6)

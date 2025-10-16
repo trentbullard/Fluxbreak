@@ -6,6 +6,7 @@ extends CanvasLayer
 
 @onready var ship: Node3D = get_node_or_null(ship_path)
 @onready var nameplates: NameplateManager = $ScreenRoot/NameplateLayer
+@onready var effects: FloatingTextLayer = $ScreenRoot/EffectsLayer
 @onready var ship_hud: ShipHud = $ScreenRoot/BottomDock/Centerer/ShipHud
 
 var camera: Camera3D
@@ -20,6 +21,8 @@ func _ready() -> void:
 		nameplates.init(camera, ship)
 	if ship_hud and ship:
 		ship_hud.init(ship)
+	if effects and camera:
+		effects.init(camera)
 
 func _process(_dt: float) -> void:
 	# If the camera changes (e.g., switch to cockpit or different scene), refresh

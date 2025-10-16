@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3 uid="uid://dfwkrpcwwyo3c"]
+
+[ext_resource type="Script" uid="uid://dcpwcrhvajiwd" path="res://scripts/hud/floating_text.gd" id="1_mymkm"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_mymkm"]
+outline_size = 4
+outline_color = Color(0, 0, 0, 1)
+
+[node name="FloatingText" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_mymkm")
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+label_settings = SubResource("LabelSettings_mymkm")

@@ -26,7 +26,7 @@ class_name Reticle
 signal aim_offset_changed(nrm: Vector2)  # inner cursor normalized to max_radius_px
 
 var _aim_pos: Vector2 = Vector2.ZERO
-var _aim_vel: Vector2 = Vector2.ZERO
+#var _aim_vel: Vector2 = Vector2.ZERO
 
 var _outer_pos: Vector2 = Vector2.ZERO   # from angular velocity
 

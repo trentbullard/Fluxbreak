@@ -9,11 +9,6 @@ class_name Ship
 @export var accel_reverse := 60.0      # see above
 @export var boost_mult := 1.5          # multiplies accel
 
-@export var fa_enabled := true
-@export var fa_lateral_strength := 10.0    # how strongly we cancel X/Y drift (m/s^2)
-@export var fa_vertical_strength := 6.0   # Z-up axis in local space
-@export var fa_forward_brake := 2.5       # forward/back toward commanded speed
-
 @export var max_ang_rate := Vector3( # caps the rate the *ship* can actually reach
 	deg_to_rad(120.0),  # pitch
 	deg_to_rad(120.0),  # yaw

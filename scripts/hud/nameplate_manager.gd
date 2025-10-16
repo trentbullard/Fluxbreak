@@ -57,7 +57,7 @@ func _sync_targets() -> void:
 
 			var label := ui.get_node("HBox/Label") as Label
 			if label != null:
-				label.text = "%dm  •  HP: %d" % [int(round(d)), int(round(max(target.hp, 0.0)))]
+				label.text = "%dm  •  HP: %d" % [int(round(d)), int(round(max(target._hp, 0.0)))]
 
 			_place_center_bottom(ui, sp, vp_size)
 		else:
