@@ -25,10 +25,6 @@ func _ready() -> void:
 				_max_radius_px = r
 
 func _process(_delta: float) -> void:
-	var aim_px: Vector2 = Vector2.ZERO
-	if _controller != null and _controller.has_method("get_aim_px"):
-		aim_px = _controller.call("get_aim_px") as Vector2
-
 	queue_redraw()
 
 func _draw() -> void:
