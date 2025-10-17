@@ -3,9 +3,9 @@ extends Control
 
 @export var practice_scene: PackedScene
 
-@onready var btn_practice: Button = $CenterContainer/VBoxContainer/ButtonsContainer/PracticeContainer/MarginContainer/Practice
-@onready var btn_settings: Button = $CenterContainer/VBoxContainer/ButtonsContainer/SettingsContainer/MarginContainer/Settings
-@onready var btn_exit: Button = $CenterContainer/VBoxContainer/ButtonsContainer/ExitContainer/Exit
+@onready var btn_practice: Button = $CenterContainer/MainMenuContainer/ButtonsContainer/PracticeContainer/MarginContainer/Practice
+@onready var btn_settings: Button = $CenterContainer/MainMenuContainer/ButtonsContainer/SettingsContainer/MarginContainer/Settings
+@onready var btn_exit: Button = $CenterContainer/MainMenuContainer/ButtonsContainer/ExitContainer/Exit
 
 func _ready() -> void:
 	btn_practice.pressed.connect(_on_practice_pressed)

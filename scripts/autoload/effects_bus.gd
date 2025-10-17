@@ -1,4 +1,4 @@
-# EffectsBus.gd
+# effects_bus.gd
 extends Node
 
 signal float_text(world_pos: Vector3, text: String, color: Color)

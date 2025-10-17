@@ -13,9 +13,11 @@ var _outcome: int = ShotResult.MISS
 var _crit_mult: float = 0.0
 var _graze_mult: float = 0.3
 
+var _init_pos: Vector3
 var _prev_pos: Vector3
 var _life: float = 0.0
 var _dir: Vector3
+var _dmg_applied: bool = false
 
 enum ShotResult { MISS, GRAZE, HIT, CRIT }
 
@@ -27,14 +29,21 @@ func configure_with_outcome(source: Node, target: Node3D, outcome: int, graze_mu
 	_graze_mult = graze_mult
 
 func _ready() -> void:
+	_init_pos = global_position
 	_prev_pos = global_position
-	_dir = -global_transform.basis.z
+	_dir = (_target.global_position - _init_pos).normalized()
 
 func _physics_process(delta: float) -> void:
 	var travel: Vector3 = _dir * speed * delta
 	var next_pos: Vector3 = global_position + travel
 	
-	_apply_to_target(_target)
+	if not _dmg_applied:
+		_apply_to_target(_target)
+	
+	if is_instance_valid(_target):
+		var d_to_t: float = _init_pos.distance_squared_to(_target.global_position)
+		if d_to_t <= 0.0:
+			queue_free()
 	
 	# No hit: move forward and continue
 	global_position = next_pos
@@ -60,4 +69,4 @@ func _apply_to_target(collider: Object) -> void:
 			dmg = 0.0
 	if dmg > 0.0 and collider != null and collider.has_method("apply_damage"):
 		(collider as Object).call("apply_damage", dmg)
-	queue_free()
+	_dmg_applied = true

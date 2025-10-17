@@ -1,7 +1,10 @@
-[gd_scene load_steps=8 format=3 uid="uid://e7u5rwibgucu"]
+[gd_scene load_steps=12 format=3 uid="uid://e7u5rwibgucu"]
 
 [ext_resource type="Script" uid="uid://cy5nyc7dqmn0w" path="res://scripts/enemy/enemy.gd" id="1_6xk8f"]
 [ext_resource type="PackedScene" uid="uid://yo2mi8h7ihfj" path="res://scenes/explosion.tscn" id="2_8e3ao"]
+[ext_resource type="Script" uid="uid://runyeqarkj6b" path="res://scripts/enemy/enemy_turret.gd" id="3_lu5c6"]
+[ext_resource type="PackedScene" uid="uid://ml5cr05cbn68" path="res://scenes/projectile.tscn" id="4_nb6gf"]
+[ext_resource type="AudioStream" uid="uid://bc0bnr0mdvk6e" path="res://assets/sounds/plasma_shot.wav" id="5_jt03m"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_6xk8f"]
 
@@ -15,9 +18,12 @@ emission_energy_multiplier = 1.5
 [sub_resource type="BoxMesh" id="BoxMesh_8e3ao"]
 material = SubResource("StandardMaterial3D_6xk8f")
 
+[sub_resource type="CylinderMesh" id="CylinderMesh_38ino"]
+
 [sub_resource type="CylinderMesh" id="CylinderMesh_8e3ao"]
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_38ino"]
+[sub_resource type="SphereShape3D" id="SphereShape3D_n7575"]
+radius = 200.0
 
 [node name="Enemy" type="RigidBody3D"]
 collision_layer = 4
@@ -29,14 +35,47 @@ explosion_scene = ExtResource("2_8e3ao")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("SphereShape3D_6xk8f")
 
-[node name="Body" type="MeshInstance3D" parent="."]
+[node name="ModelRoot" type="Node3D" parent="."]
+
+[node name="Body" type="MeshInstance3D" parent="ModelRoot"]
 transform = Transform3D(30, 0, 0, 0, 30, 0, 0, 0, 30, 0, 0, 0)
 mesh = SubResource("BoxMesh_8e3ao")
+skeleton = NodePath("../..")
 
-[node name="Mount" type="MeshInstance3D" parent="."]
-transform = Transform3D(3, 0, 0, 0, 3.147955, 0, 0, 0, 3, 0, 17.983444, 0)
-mesh = SubResource("CylinderMesh_8e3ao")
+[node name="Turret" type="Node3D" parent="ModelRoot"]
+script = ExtResource("3_lu5c6")
+projectile_scene = ExtResource("4_nb6gf")
+detector_path = NodePath("../../Detector")
+fire_rate = 1.0
+target_groups = Array[String](["player"])
+detection_radius = 400.0
+systems_bonus = 0.0
+base_range = 400.0
+crit_chance = 0.0
+graze_on_hit = 0.0
+graze_on_miss = 0.0
+graze_mult = 0.0
+crit_mult = 0.0
 
-[node name="Barrel" type="MeshInstance3D" parent="."]
+[node name="Muzzle" type="Marker3D" parent="ModelRoot/Turret"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 21.98146, -8.429119)
+
+[node name="ShotSound" type="AudioStreamPlayer3D" parent="ModelRoot/Turret"]
+stream = ExtResource("5_jt03m")
+volume_db = -5.0
+
+[node name="Barrel" type="MeshInstance3D" parent="ModelRoot/Turret"]
 transform = Transform3D(4, 0, 0, 0, -2.8512937e-07, 4, 0, -6.523, -1.7484555e-07, 0, 21.864933, -2.8426156)
 mesh = SubResource("CylinderMesh_38ino")
+skeleton = NodePath("../../..")
+
+[node name="Mount" type="MeshInstance3D" parent="ModelRoot/Turret"]
+transform = Transform3D(3, 0, 0, 0, 3.147955, 0, 0, 0, 3, 0, 17.983444, 0)
+mesh = SubResource("CylinderMesh_8e3ao")
+skeleton = NodePath("../../..")
+
+[node name="Detector" type="Area3D" parent="."]
+collision_layer = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Detector"]
+shape = SubResource("SphereShape3D_n7575")

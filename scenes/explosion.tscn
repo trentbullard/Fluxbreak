@@ -1,6 +1,6 @@
 [gd_scene load_steps=6 format=3 uid="uid://yo2mi8h7ihfj"]
 
-[ext_resource type="Script" uid="uid://b1qrm30xyllgt" path="res://scripts/target_object/explosion.gd" id="1_17npe"]
+[ext_resource type="Script" uid="uid://b1qrm30xyllgt" path="res://scripts/vfx/explosion.gd" id="1_17npe"]
 [ext_resource type="AudioStream" uid="uid://bj85bxh4i81l5" path="res://assets/sounds/explosion.wav" id="2_nfeox"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_17npe"]

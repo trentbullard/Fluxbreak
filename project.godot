@@ -17,7 +17,9 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-EffectsBus="*res://scripts/autoload/EffectsBus.gd"
+EffectsBus="*res://scripts/autoload/effects_bus.gd"
+RunState="*res://scripts/autoload/run_state.gd"
+GameFlow="*res://scripts/autoload/game_flow.gd"
 
 [dotnet]
 

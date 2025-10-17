@@ -1,7 +1,7 @@
-[gd_scene load_steps=26 format=3 uid="uid://ppgr7fveqbrd"]
+[gd_scene load_steps=28 format=3 uid="uid://ppgr7fveqbrd"]
 
 [ext_resource type="Texture2D" uid="uid://d3x23q2en3ng1" path="res://assets/plain_starfield_1.png" id="1_dphjl"]
-[ext_resource type="PackedScene" uid="uid://bsm2da0co8h01" path="res://scenes/ship/Ship.tscn" id="2_6m72w"]
+[ext_resource type="PackedScene" uid="uid://bsm2da0co8h01" path="res://scenes/ship/ship.tscn" id="2_6m72w"]
 [ext_resource type="Script" uid="uid://o2d5kgipj00g" path="res://scripts/vfx/starfield_follower.gd" id="2_v5dby"]
 [ext_resource type="PackedScene" uid="uid://e7u5rwibgucu" path="res://scenes/enemies/enemy.tscn" id="6_5qq27"]
 [ext_resource type="Script" uid="uid://btyca23m2ejd3" path="res://scripts/spawner.gd" id="6_bq33v"]
@@ -13,6 +13,8 @@
 [ext_resource type="Script" uid="uid://b5hyfbp2ddcs7" path="res://scripts/hud/ship_hud.gd" id="11_5qq27"]
 [ext_resource type="Script" uid="uid://cemxmjhjo1dcl" path="res://scripts/hud/floating_text_layer.gd" id="11_dlabj"]
 [ext_resource type="PackedScene" uid="uid://dfwkrpcwwyo3c" path="res://scenes/hud/floating_text.tscn" id="12_srmg5"]
+[ext_resource type="Script" uid="uid://db0ytqd3q0hp0" path="res://scripts/hud/score_layer.gd" id="13_umvgx"]
+[ext_resource type="Script" uid="uid://bhas5bk572gt0" path="res://scripts/hud/timer_layer.gd" id="14_mxkvs"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_1fp7r"]
 panorama = ExtResource("1_dphjl")
@@ -107,6 +109,7 @@ script = ExtResource("6_bq33v")
 target_scene = ExtResource("7_j2gmx")
 enemy_scene = ExtResource("6_5qq27")
 ship_path = NodePath("../Ship")
+spawn_radius = 600.0
 
 [node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("8_1yooq")
@@ -146,6 +149,36 @@ offset_right = 40.0
 offset_bottom = 40.0
 script = ExtResource("11_dlabj")
 floating_text_scene = ExtResource("12_srmg5")
+
+[node name="ScoreLayer" type="Control" parent="HUD/ScreenRoot"]
+anchors_preset = 0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 50.0
+offset_bottom = 50.0
+script = ExtResource("13_umvgx")
+
+[node name="Label" type="Label" parent="HUD/ScreenRoot/ScoreLayer"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="TimerLayer" type="Control" parent="HUD/ScreenRoot"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -20.0
+offset_top = 10.0
+offset_right = 20.0
+offset_bottom = 50.0
+grow_horizontal = 2
+script = ExtResource("14_mxkvs")
+
+[node name="Label" type="Label" parent="HUD/ScreenRoot/TimerLayer"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
 
 [node name="BottomDock" type="MarginContainer" parent="HUD/ScreenRoot"]
 layout_mode = 1

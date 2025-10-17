@@ -1,9 +1,11 @@
-# auto_turret.gd  (Godot 4.5)
+# enemy_turret.gd  (Godot 4.5)
 extends Node3D
 
 @export var projectile_scene: PackedScene
+@export var detector_path: NodePath
 @export var fire_rate: float = 0.5                 # seconds between shots
 @export var target_groups: Array[String] = []      # targets or player
+@export var detection_radius: float = 200.0        # should match Detector sphere radius
 
 @export var base_accuracy: float = 0.75            # turret's baseline 0..1
 @export var systems_bonus: float = 0.10            # upgrades add here
@@ -17,10 +19,10 @@ extends Node3D
 @export var crit_mult: float = 1.5          # damage multiplier on critical
 
 @export var team_id: int = 0
-@export var controller_path: NodePath
 
 @onready var shot_sound: AudioStreamPlayer3D = $ShotSound
 @onready var muzzle: Marker3D   = $Muzzle
+@onready var detector: Area3D
 
 var _cooldown := 0.0
 var _targets: Array[Node3D] = []
@@ -29,19 +31,23 @@ var _controller: TurretController = null
 enum ShotResult { MISS, GRAZE, HIT, CRIT }
 
 func _ready() -> void:
-	_controller = get_node_or_null(controller_path) as TurretController
-	if _controller != null:
-		_controller.register_turret(self, team_id)
+	detector = get_node_or_null(detector_path)
+
+	# Ensure detector radius matches range
+	var cs: CollisionShape3D = detector.get_node("CollisionShape3D") as CollisionShape3D
+	var sphere: SphereShape3D = cs.shape as SphereShape3D
+	if sphere != null:
+		sphere.radius = detection_radius
+
+	# Track bodies entering/leaving
+	detector.body_entered.connect(_on_body_entered)
+	detector.body_exited.connect(_on_body_exited)
 
 func decorator_body_signal(area: Area3D, is_enter: bool) -> void:
 	if is_enter:
 		area.body_entered.connect(_on_body_entered)
 	else:
 		area.body_exited.connect(_on_body_exited)
-
-func _exit_tree() -> void:
-	if _controller != null:
-		_controller.unregister_turret(self, team_id)
 
 func _on_body_entered(body: Node) -> void:
 	if not (body is Node3D) or _targets.has(body):
@@ -65,9 +71,7 @@ func _physics_process(delta: float) -> void:
 	if _cooldown > 0.0:
 		return
 
-	var target: Node3D = null
-	if _controller != null:
-		target = _controller.get_assigned_target(self, team_id)
+	var target: Node3D = _pick_nearest()
 	
 	if target == null:
 		return
@@ -75,10 +79,20 @@ func _physics_process(delta: float) -> void:
 	_fire_at_with_roll(target)
 	_cooldown = fire_rate
 
+func _pick_nearest() -> Node3D:
+	var best: Node3D = null
+	var best_d2: float = INF
+	for t in _targets:
+		var d2: float = global_position.distance_squared_to(t.global_position)
+		if d2 < best_d2:
+			best_d2 = d2
+			best = t
+	return best
+
 func _effective_accuracy_vs(target: Node3D) -> float:
 	var ev: float = 0.0
-	if target is Enemy:
-		ev = (target as Enemy).get_evasion()
+	if target.has_method("get_evasion"):
+		ev = (target as Ship).get_evasion()
 	var dist: float = global_position.distance_to(target.global_position)
 	var range_factor: float = clamp(dist / base_range, 0.0, 1.0) # 0 close -> 1 far
 	var acc_base: float = clamp(base_accuracy + systems_bonus, 0.0, 1.0)
@@ -86,7 +100,7 @@ func _effective_accuracy_vs(target: Node3D) -> float:
 	return clamp(acc_range_scaled - ev, 0.0, 1.0)
 
 func _fire_at_with_roll(target: Node3D) -> void:
-	if projectile_scene == null or :
+	if projectile_scene == null:
 		return
 
 	# Aim (still straight) -- projectile will use proximity fuse to "connect"
