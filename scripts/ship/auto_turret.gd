@@ -86,7 +86,7 @@ func _effective_accuracy_vs(target: Node3D) -> float:
 	return clamp(acc_range_scaled - ev, 0.0, 1.0)
 
 func _fire_at_with_roll(target: Node3D) -> void:
-	if projectile_scene == null or :
+	if projectile_scene == null:
 		return
 
 	# Aim (still straight) -- projectile will use proximity fuse to "connect"

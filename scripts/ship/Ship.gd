@@ -152,6 +152,9 @@ func _die() -> void:
 	
 	visible = false
 	
+	var turret_controller: TurretController = $TurretController
+	turret_controller.queue_free()
+	
 	var mode = Input.get_mouse_mode()
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED if mode == Input.MOUSE_MODE_VISIBLE else Input.MOUSE_MODE_VISIBLE)
 	

@@ -134,18 +134,8 @@ shape = SubResource("SphereShape3D_iyjb8")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.3, -0.18, 0.2)
 script = ExtResource("3_wxx60")
 projectile_scene = ExtResource("4_iyjb8")
-fire_rate = null
 target_groups = Array[String](["targets", "enemies"])
-base_accuracy = null
 systems_bonus = 0.0
-base_range = null
-accuracy_range_falloff = null
-crit_chance = null
-graze_on_hit = null
-graze_on_miss = null
-graze_mult = null
-crit_mult = null
-team_id = null
 controller_path = NodePath("..")
 
 [node name="Muzzle" type="Marker3D" parent="TurretController/Turret"]
@@ -159,17 +149,8 @@ volume_db = -5.0
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.3, -0.18, 0.2)
 script = ExtResource("3_wxx60")
 projectile_scene = ExtResource("4_iyjb8")
-fire_rate = null
 target_groups = Array[String](["targets", "enemies"])
-base_accuracy = null
 systems_bonus = 0.0
-base_range = null
-accuracy_range_falloff = null
-crit_chance = null
-graze_on_hit = null
-graze_on_miss = null
-graze_mult = null
-crit_mult = null
 team_id = 1
 controller_path = NodePath("..")
 
