@@ -135,6 +135,9 @@ func _die() -> void:
 		return
 	_dead = true
 	
+	var mode = Input.get_mouse_mode()
+	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED if mode == Input.MOUSE_MODE_VISIBLE else Input.MOUSE_MODE_VISIBLE)
+
 	if has_node("CollisionShape3D"):
 		var col: CollisionShape3D = $CollisionShape3D
 		col.disabled = true
@@ -154,9 +157,6 @@ func _die() -> void:
 	
 	var turret_controller: TurretController = $TurretController
 	turret_controller.queue_free()
-	
-	var mode = Input.get_mouse_mode()
-	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED if mode == Input.MOUSE_MODE_VISIBLE else Input.MOUSE_MODE_VISIBLE)
 	
 	var t: SceneTreeTimer = get_tree().create_timer(return_to_menu_delay)
 	await t.timeout

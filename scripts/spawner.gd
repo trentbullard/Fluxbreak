@@ -49,7 +49,7 @@ func _try_spawn() -> void:
 		inst = enemy_scene.instantiate()
 		_last_kind_was_enemy = true
 	else:
-		inst = enemy_scene.instantiate()
+		inst = target_scene.instantiate()
 		_last_kind_was_enemy = false
 	
 	_have_last = true

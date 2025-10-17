@@ -26,7 +26,6 @@ extends Node3D
 
 var _cooldown := 0.0
 var _targets: Array[Node3D] = []
-var _controller: TurretController = null
 
 enum ShotResult { MISS, GRAZE, HIT, CRIT }
 

@@ -7,7 +7,7 @@ func _ready() -> void:
 	label.text = "Score: 0"
 	RunState.score_changed.connect(_on_score_changed)
 
-func _on_score_changed(total: int, delta: int, _reason: String) -> void:
+func _on_score_changed(total: int, _delta: int, _reason: String) -> void:
 	label.text = "Score: %d" % total
 	# tiny pop animation so the player notices increases
 	var t: Tween = create_tween()

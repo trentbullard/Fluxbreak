@@ -20,6 +20,12 @@ extends Node
 var _aim := Vector2.ZERO
 var _target_aim := Vector2.ZERO
 
+func get_aim_px() -> Vector2:
+	return _aim
+
+func get_radius_px() -> float:
+	return radius_px
+
 func _ready() -> void:
 	if lock_mouse_on_start:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)

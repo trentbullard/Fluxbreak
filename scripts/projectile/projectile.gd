@@ -65,7 +65,7 @@ func _apply_to_target(collider: Object) -> void:
 			EffectsBus.show_float(fx_pos, "GRAZE", Color(0.8, 0.8, 0.8))
 			dmg = damage * _graze_mult
 		ShotResult.MISS:
-			EffectsBus.show_float(fx_pos, "MISS", Color(1.0, 0.5, 0.3))
+			EffectsBus.show_float(fx_pos, "MISS", Color(1.0, 0.569, 0.271, 1.0))
 			dmg = 0.0
 	if dmg > 0.0 and collider != null and collider.has_method("apply_damage"):
 		(collider as Object).call("apply_damage", dmg)
