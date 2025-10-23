@@ -45,12 +45,18 @@ func unregister_turret(turret: Node3D, team_id: int) -> void:
 	_turret_to_target.erase(turret)
 
 func get_assigned_target(turret: Node3D, team_id: int) -> Node3D:
-	# Returns the controller's assignment for a turret; may be null.
-	if assign_mode == AssignMode.FOCUS_PER_TEAM:
-		if _team_to_target.has(team_id):
-			return _team_to_target[team_id]
+	if assign_mode == AssignMode.FOCUS_PER_TEAM and _team_to_target.has(team_id):
+		var t_team: Node3D = _team_to_target[team_id] as Node3D
+		if is_instance_valid(t_team):
+			return t_team
+		_team_to_target.erase(team_id)
+
 	if _turret_to_target.has(turret):
-		return _turret_to_target[turret]
+		var t_turret: Node3D = _turret_to_target[turret] as Node3D
+		if is_instance_valid(t_turret):
+			return t_turret
+		_turret_to_target.erase(turret)
+
 	return null
 
 func _on_body_entered(body: Node) -> void:

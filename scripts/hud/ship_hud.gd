@@ -3,7 +3,7 @@ extends Control
 class_name ShipHud
 
 @export var shield_color: Color = Color(0.2, 0.6, 1.0)
-@export var hull_color: Color = Color(0.2, 0.9, 0.2)
+@export var hull_color: Color = Color(1.0, 0.22, 0.22, 1.0)
 @export var back_color: Color = Color(0, 0, 0, 0.6)
 @export var ui_hz: float = 20.0
 

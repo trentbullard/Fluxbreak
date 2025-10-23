@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="TargetDef" load_steps=2 format=3 uid="uid://csohgxk4eco6e"]
+
+[ext_resource type="Script" uid="uid://bitk3uva0wi2v" path="res://content/defs/target_def.gd" id="1_2ug1x"]
+
+[resource]
+script = ExtResource("1_2ug1x")
+id = "wreck_medium"
+display_name = "Medium Wreck"
+size_band = 2
+threat_cost = 2
+bounty_scrap = 2
+metadata/_custom_type_script = "uid://bitk3uva0wi2v"

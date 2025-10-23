@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=2 format=3 uid="uid://rv0v6at870ld"]
+
+[ext_resource type="Script" uid="uid://bx6wive40u6f" path="res://content/defs/enemy_def.gd" id="1_jjjdy"]
+
+[resource]
+script = ExtResource("1_jjjdy")
+id = "merc_frigate_mk1"
+display_name = "Frigate Mk I"
+faction = "Mercs"
+tier = 2
+threat_cost = 2
+bounty_scrap = 2
+metadata/_custom_type_script = "uid://bx6wive40u6f"

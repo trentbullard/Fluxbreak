@@ -1,7 +1,7 @@
 # score_layer.gd
 extends Control
 
-@onready var label: Label = $Label as Label
+@onready var label: Label = $Score as Label
 
 func _ready() -> void:
 	label.text = "Score: 0"

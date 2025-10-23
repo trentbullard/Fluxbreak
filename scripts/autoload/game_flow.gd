@@ -13,7 +13,6 @@ var high_score: int = 0
 func _ready() -> void:
 	_load_high_score()
 	await get_tree().process_frame
-	RunState.time_over.connect(_on_time_over, CONNECT_DEFERRED)
 
 func start_new_run() -> void:
 	RunState.start_run()
@@ -26,6 +25,7 @@ func _on_time_over() -> void:
 
 func _end_run_and_return_to_menu() -> void:
 	check_and_update_high_score(RunState.run_score)
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	get_tree().change_scene_to_file(MENU)
 
 func check_and_update_high_score(final_run_score: int) -> void:

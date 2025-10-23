@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=2 format=3 uid="uid://djvymy6onxxty"]
+
+[ext_resource type="Script" uid="uid://bx6wive40u6f" path="res://content/defs/enemy_def.gd" id="1_qvaoy"]
+
+[resource]
+script = ExtResource("1_qvaoy")
+id = "machine_sentinel_mk1"
+display_name = "Sentinel Mk II"
+tier = 2
+threat_cost = 2
+bounty_scrap = 2
+affixes = Array[String](["Prime", "Core", "Sigma"])
+metadata/_custom_type_script = "uid://bx6wive40u6f"

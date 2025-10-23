@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="WaveCard" load_steps=2 format=3 uid="uid://cem52uptcff4c"]
+
+[ext_resource type="Script" uid="uid://dwo3qna7vo5nk" path="res://content/defs/wave_card.gd" id="1_7kpsk"]
+
+[resource]
+script = ExtResource("1_7kpsk")
+metadata/_custom_type_script = "uid://dwo3qna7vo5nk"

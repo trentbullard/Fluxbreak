@@ -12,6 +12,7 @@ var _target: Node3D = null
 var _outcome: int = ShotResult.MISS
 var _crit_mult: float = 0.0
 var _graze_mult: float = 0.3
+var _from_player: bool = false
 
 var _init_pos: Vector3
 var _prev_pos: Vector3
@@ -21,12 +22,13 @@ var _dmg_applied: bool = false
 
 enum ShotResult { MISS, GRAZE, HIT, CRIT }
 
-func configure_with_outcome(source: Node, target: Node3D, outcome: int, graze_mult: float, crit_mult: float) -> void:
+func configure_with_outcome(source: Node, target: Node3D, outcome: int, graze_mult: float, crit_mult: float, from_player: bool = false) -> void:
 	exclude_owner = source
 	_target = target
 	_outcome = outcome
 	_crit_mult = crit_mult
 	_graze_mult = graze_mult
+	_from_player = from_player
 
 func _ready() -> void:
 	_init_pos = global_position
@@ -69,4 +71,6 @@ func _apply_to_target(collider: Object) -> void:
 			dmg = 0.0
 	if dmg > 0.0 and collider != null and collider.has_method("apply_damage"):
 		(collider as Object).call("apply_damage", dmg)
+		if _from_player:
+			CombatStats.report_damage(dmg)
 	_dmg_applied = true

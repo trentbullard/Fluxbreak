@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="TargetDef" load_steps=2 format=3 uid="uid://d3ov3f30loch0"]
+
+[ext_resource type="Script" uid="uid://bitk3uva0wi2v" path="res://content/defs/target_def.gd" id="1_6v4vb"]
+
+[resource]
+script = ExtResource("1_6v4vb")
+id = "asteroid_small"
+metadata/_custom_type_script = "uid://bitk3uva0wi2v"

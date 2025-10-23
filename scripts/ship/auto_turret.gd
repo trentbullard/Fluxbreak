@@ -101,7 +101,7 @@ func _fire_at_with_roll(target: Node3D) -> void:
 		return
 
 	p.global_transform = Transform3D(aim_basis, muzzle.global_position)
-	p.configure_with_outcome(get_parent(), target, outcome, graze_mult, crit_mult)
+	p.configure_with_outcome(get_parent(), target, outcome, graze_mult, crit_mult, true)
 	get_tree().current_scene.add_child(p)
 
 	if shot_sound != null:

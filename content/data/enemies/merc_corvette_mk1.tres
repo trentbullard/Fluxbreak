@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=2 format=3 uid="uid://bfqfno3bqn0wg"]
+
+[ext_resource type="Script" uid="uid://bx6wive40u6f" path="res://content/defs/enemy_def.gd" id="1_21rtp"]
+
+[resource]
+script = ExtResource("1_21rtp")
+id = "merc_corvette_mk1"
+display_name = "Corvette Mk I"
+faction = "Mercs"
+affixes = Array[String](["Veteran", "Apex", "Vanguard"])
+metadata/_custom_type_script = "uid://bx6wive40u6f"

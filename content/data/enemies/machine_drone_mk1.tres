@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=2 format=3 uid="uid://dyd5gse2o0v5y"]
+
+[ext_resource type="Script" uid="uid://bx6wive40u6f" path="res://content/defs/enemy_def.gd" id="1_mtdvg"]
+
+[resource]
+script = ExtResource("1_mtdvg")
+id = "machine_drone_mk1"
+affixes = Array[String](["Prime", "Core", "Sigma"])
+metadata/_custom_type_script = "uid://bx6wive40u6f"

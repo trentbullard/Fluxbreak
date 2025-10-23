@@ -1,20 +1,36 @@
-[gd_scene load_steps=28 format=3 uid="uid://ppgr7fveqbrd"]
+[gd_scene load_steps=44 format=3 uid="uid://ppgr7fveqbrd"]
 
 [ext_resource type="Texture2D" uid="uid://d3x23q2en3ng1" path="res://assets/plain_starfield_1.png" id="1_dphjl"]
 [ext_resource type="PackedScene" uid="uid://bsm2da0co8h01" path="res://scenes/ship/ship.tscn" id="2_6m72w"]
 [ext_resource type="Script" uid="uid://o2d5kgipj00g" path="res://scripts/vfx/starfield_follower.gd" id="2_v5dby"]
 [ext_resource type="PackedScene" uid="uid://e7u5rwibgucu" path="res://scenes/enemies/enemy.tscn" id="6_5qq27"]
-[ext_resource type="Script" uid="uid://btyca23m2ejd3" path="res://scripts/spawner.gd" id="6_bq33v"]
+[ext_resource type="Script" uid="uid://btyca23m2ejd3" path="res://systems/spawning/spawner.gd" id="6_bq33v"]
 [ext_resource type="Script" uid="uid://bv6so66yvn2if" path="res://scripts/hud/reticle_layer.gd" id="7_gb53w"]
 [ext_resource type="PackedScene" uid="uid://bk2fpvtu6c4ij" path="res://scenes/enemies/target_object.tscn" id="7_j2gmx"]
+[ext_resource type="Script" uid="uid://ocd0uqj80pk3" path="res://systems/director/wave_director.gd" id="7_m114p"]
 [ext_resource type="Script" uid="uid://du7q53l77nqki" path="res://scripts/hud/hud_manager.gd" id="8_1yooq"]
+[ext_resource type="Script" uid="uid://dg7wrb62rqtwf" path="res://scripts/components/threat_director.gd" id="8_71ii3"]
+[ext_resource type="Script" uid="uid://dwo3qna7vo5nk" path="res://content/defs/wave_card.gd" id="8_wnndm"]
+[ext_resource type="Resource" uid="uid://cem52uptcff4c" path="res://content/data/cards/basic_wave.tres" id="9_26xou"]
+[ext_resource type="Script" uid="uid://dw6cm3pc4tv74" path="res://scripts/components/wave_budgeter.gd" id="9_bt7bg"]
 [ext_resource type="Script" uid="uid://i56d1j8euse1" path="res://scripts/hud/nameplate_manager.gd" id="9_gb53w"]
+[ext_resource type="Script" uid="uid://dbbf334sll6co" path="res://systems/catalogs/enemy_catalog.gd" id="10_6hctx"]
 [ext_resource type="PackedScene" uid="uid://icnhxdf4gt2c" path="res://scenes/hud/nameplate.tscn" id="10_gb53w"]
+[ext_resource type="LabelSettings" uid="uid://coy4ocfodghm4" path="res://scripts/hud/status_label_settings.tres" id="10_m114p"]
 [ext_resource type="Script" uid="uid://b5hyfbp2ddcs7" path="res://scripts/hud/ship_hud.gd" id="11_5qq27"]
 [ext_resource type="Script" uid="uid://cemxmjhjo1dcl" path="res://scripts/hud/floating_text_layer.gd" id="11_dlabj"]
+[ext_resource type="Script" uid="uid://wosrql05x4n6" path="res://systems/catalogs/target_catalog.gd" id="11_ues17"]
 [ext_resource type="PackedScene" uid="uid://dfwkrpcwwyo3c" path="res://scenes/hud/floating_text.tscn" id="12_srmg5"]
+[ext_resource type="Script" uid="uid://7pnh4n4d775s" path="res://systems/spawning/budget_buyer.gd" id="12_xq18t"]
+[ext_resource type="Script" uid="uid://bx6wive40u6f" path="res://content/defs/enemy_def.gd" id="13_jyr8v"]
 [ext_resource type="Script" uid="uid://db0ytqd3q0hp0" path="res://scripts/hud/score_layer.gd" id="13_umvgx"]
-[ext_resource type="Script" uid="uid://bhas5bk572gt0" path="res://scripts/hud/timer_layer.gd" id="14_mxkvs"]
+[ext_resource type="Resource" uid="uid://dyd5gse2o0v5y" path="res://content/data/enemies/machine_drone_mk1.tres" id="14_5o5dd"]
+[ext_resource type="Resource" uid="uid://djvymy6onxxty" path="res://content/data/enemies/machine_sentinel_mk1.tres" id="15_d0ajt"]
+[ext_resource type="Resource" uid="uid://d3ufm3pj66s60" path="res://content/data/enemies/machine_reaper_mk1.tres" id="16_jyr8v"]
+[ext_resource type="Script" uid="uid://bitk3uva0wi2v" path="res://content/defs/target_def.gd" id="17_fymcc"]
+[ext_resource type="Resource" uid="uid://d3ov3f30loch0" path="res://content/data/targets/asteroid_small.tres" id="18_lbnhc"]
+[ext_resource type="Script" uid="uid://b554csvoi1u8w" path="res://scripts/hud/debug_wave_hud.gd" id="19_wbwoo"]
+[ext_resource type="Resource" uid="uid://csohgxk4eco6e" path="res://content/data/targets/wreck_medium.tres" id="20_5o5dd"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_1fp7r"]
 panorama = ExtResource("1_dphjl")
@@ -111,9 +127,59 @@ enemy_scene = ExtResource("6_5qq27")
 ship_path = NodePath("../Ship")
 spawn_radius = 600.0
 
+[node name="WaveDirector" type="Node" parent="."]
+script = ExtResource("7_m114p")
+spawner_path = NodePath("../Spawner")
+downtime_sec = null
+start_enemies_min = null
+start_enemies_max = null
+start_targets_min = null
+start_targets_max = null
+per_wave_enemy_add = null
+per_wave_target_add = null
+pressure_interval_sec = null
+pressure_enemy_burst = null
+pressure_target_burst = null
+batch_size_min = null
+batch_size_max = null
+inter_batch_delay = null
+wave_clear_carryover_ok = null
+wave_timeout_sec = 60.0
+max_alive_base = null
+max_alive_per_wave = null
+max_targets_alive = null
+threat_director_path = NodePath("../ThreatDirector")
+wave_budgeter_path = NodePath("../WaveBudgeter")
+budget_buyer_path = NodePath("../BudgetBuyer")
+wave_cards = Array[ExtResource("8_wnndm")]([ExtResource("9_26xou")])
+
+[node name="ThreatDirector" type="Node" parent="."]
+script = ExtResource("8_71ii3")
+
+[node name="WaveBudgeter" type="Node" parent="."]
+script = ExtResource("9_bt7bg")
+
+[node name="EnemyCatalog" type="Node" parent="."]
+script = ExtResource("10_6hctx")
+enemies = Array[ExtResource("13_jyr8v")]([ExtResource("14_5o5dd"), ExtResource("15_d0ajt"), ExtResource("16_jyr8v")])
+
+[node name="TargetCatalog" type="Node" parent="."]
+script = ExtResource("11_ues17")
+targets = Array[ExtResource("17_fymcc")]([ExtResource("18_lbnhc"), ExtResource("20_5o5dd")])
+
+[node name="BudgetBuyer" type="Node" parent="."]
+script = ExtResource("12_xq18t")
+enemy_catalog_path = NodePath("../EnemyCatalog")
+target_catalog_path = NodePath("../TargetCatalog")
+
 [node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("8_1yooq")
 ship_path = NodePath("../Ship")
+wave_director_path = NodePath("../WaveDirector")
+spawner_path = NodePath("../Spawner")
+wave_label_path = NodePath("ScreenRoot/TopDock/CenterContainer/VBoxContainer/WaveLayer/Label")
+countdown_label_path = NodePath("ScreenRoot/TopDock/CenterContainer/VBoxContainer/TimerLayer/Label")
+alive_label_path = NodePath("ScreenRoot/TopDock/ScoreLayer/Alive")
 
 [node name="ScreenRoot" type="Control" parent="HUD"]
 layout_mode = 3
@@ -123,6 +189,88 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+
+[node name="TopDock" type="MarginContainer" parent="HUD/ScreenRoot"]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+offset_left = 15.0
+offset_top = 15.0
+offset_right = -15.0
+offset_bottom = 4.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ScoreLayer" type="Control" parent="HUD/ScreenRoot/TopDock"]
+layout_mode = 2
+script = ExtResource("13_umvgx")
+
+[node name="Score" type="Label" parent="HUD/ScreenRoot/TopDock/ScoreLayer"]
+layout_mode = 1
+anchors_preset = -1
+offset_top = -4.0
+offset_right = 79.0
+offset_bottom = 23.0
+text = "Score: 200"
+label_settings = ExtResource("10_m114p")
+
+[node name="Alive" type="Label" parent="HUD/ScreenRoot/TopDock/ScoreLayer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 16.0
+offset_bottom = 35.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Enemies: 2 Targets: 1 Total: 3"
+label_settings = ExtResource("10_m114p")
+
+[node name="MinimapDock" type="Control" parent="HUD/ScreenRoot/TopDock"]
+layout_mode = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="HUD/ScreenRoot/TopDock"]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HUD/ScreenRoot/TopDock/CenterContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="TimerLayer" type="Control" parent="HUD/ScreenRoot/TopDock/CenterContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HUD/ScreenRoot/TopDock/CenterContainer/VBoxContainer/TimerLayer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -16.0
+offset_right = 16.0
+offset_bottom = 23.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "5:00"
+label_settings = ExtResource("10_m114p")
+horizontal_alignment = 1
+
+[node name="WaveLayer" type="Control" parent="HUD/ScreenRoot/TopDock/CenterContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HUD/ScreenRoot/TopDock/CenterContainer/VBoxContainer/WaveLayer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -28.0
+offset_top = 18.0
+offset_right = 28.0
+offset_bottom = 41.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Wave 1"
+label_settings = ExtResource("10_m114p")
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="ReticleLayer" type="Control" parent="HUD/ScreenRoot"]
 layout_mode = 1
@@ -152,36 +300,6 @@ offset_bottom = 40.0
 script = ExtResource("11_dlabj")
 floating_text_scene = ExtResource("12_srmg5")
 
-[node name="ScoreLayer" type="Control" parent="HUD/ScreenRoot"]
-anchors_preset = 0
-offset_left = 10.0
-offset_top = 10.0
-offset_right = 50.0
-offset_bottom = 50.0
-script = ExtResource("13_umvgx")
-
-[node name="Label" type="Label" parent="HUD/ScreenRoot/ScoreLayer"]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 23.0
-
-[node name="TimerLayer" type="Control" parent="HUD/ScreenRoot"]
-layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -20.0
-offset_top = 10.0
-offset_right = 20.0
-offset_bottom = 50.0
-grow_horizontal = 2
-script = ExtResource("14_mxkvs")
-
-[node name="Label" type="Label" parent="HUD/ScreenRoot/TimerLayer"]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 23.0
-
 [node name="BottomDock" type="MarginContainer" parent="HUD/ScreenRoot"]
 layout_mode = 1
 anchors_preset = -1
@@ -209,9 +327,9 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -94.0
-offset_top = -117.325
+offset_top = -70.0
 offset_right = 93.0
-offset_bottom = 9.674942
+offset_bottom = 56.99994
 grow_horizontal = 2
 grow_vertical = 0
 
@@ -259,15 +377,16 @@ layout_mode = 2
 text = "180m/s"
 label_settings = SubResource("LabelSettings_umvgx")
 
-[node name="MinimapDock" type="Control" parent="HUD/ScreenRoot"]
-anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
+[node name="InteractionLayer" type="Control" parent="HUD/ScreenRoot/BottomDock/Centerer"]
+layout_mode = 2
 
-[node name="InteractionLayer" type="Control" parent="HUD/ScreenRoot"]
-anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
+[node name="DebugWaveHUD" type="MarginContainer" parent="HUD/ScreenRoot/BottomDock"]
+layout_mode = 2
+script = ExtResource("19_wbwoo")
+wave_director_path = NodePath("../../../../WaveDirector")
+
+[node name="Label" type="Label" parent="HUD/ScreenRoot/BottomDock/DebugWaveHUD"]
+layout_mode = 2
 
 [node name="PopupLayer" type="Control" parent="HUD/ScreenRoot"]
 anchors_preset = 0
