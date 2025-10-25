@@ -25,6 +25,6 @@ explosion_scene = ExtResource("2_kfbfx")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("SphereShape3D_kfbfx")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+[node name="VisualRoot" type="MeshInstance3D" parent="."]
 transform = Transform3D(30, 0, 0, 0, 30, 0, 0, 0, 30, 0, 0, 0)
 mesh = SubResource("SphereMesh_s2cdo")

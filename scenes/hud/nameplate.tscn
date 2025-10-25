@@ -2,6 +2,7 @@
 
 [sub_resource type="SystemFont" id="SystemFont_xj1lc"]
 font_names = PackedStringArray("Consolas")
+subpixel_positioning = 0
 
 [sub_resource type="LabelSettings" id="LabelSettings_wligs"]
 font = SubResource("SystemFont_xj1lc")

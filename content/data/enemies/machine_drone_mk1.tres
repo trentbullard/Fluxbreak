@@ -1,9 +1,16 @@
-[gd_resource type="Resource" script_class="EnemyDef" load_steps=2 format=3 uid="uid://dyd5gse2o0v5y"]
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=4 format=3 uid="uid://dyd5gse2o0v5y"]
 
 [ext_resource type="Script" uid="uid://bx6wive40u6f" path="res://content/defs/enemy_def.gd" id="1_mtdvg"]
+[ext_resource type="PackedScene" uid="uid://crhla8xljcdxp" path="res://scenes/enemies/machine_drone_mk1.tscn" id="1_yfniw"]
+[ext_resource type="Resource" uid="uid://bskk7qmspf063" path="res://content/data/weapons/laser_bolt_mk1.tres" id="3_jj33j"]
 
 [resource]
 script = ExtResource("1_mtdvg")
 id = "machine_drone_mk1"
+display_name = "Drone Mk I"
+faction = "Machines"
+role = "Brawler"
 affixes = Array[String](["Prime", "Core", "Sigma"])
+weapon = ExtResource("3_jj33j")
+model_scene = ExtResource("1_yfniw")
 metadata/_custom_type_script = "uid://bx6wive40u6f"

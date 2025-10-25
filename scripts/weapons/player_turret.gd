@@ -1,90 +1,73 @@
-# enemy_turret.gd  (Godot 4.5)
+# scripts/weapons/player_turret.gd (godot 4.5)
 extends Node3D
-class_name EnemyTurret
+class_name PlayerTurret
 
+@export var controller_path: NodePath
 @export var target_groups: Array[String] = []      # targets or player
 @export var systems_bonus: float = 0.10            # upgrades add here
 @export var team_id: int = 0
 
+@export var detector_path: NodePath                # optional (for range gizmo / future)
+@onready var muzzle: Marker3D = $Muzzle
 @onready var shot_sound: AudioStreamPlayer3D = $ShotSound
-@onready var muzzle: Marker3D   = $Muzzle
 
-var _detector: Area3D = null
 var _weapon: WeaponDef = null
-var _cooldown: float = 0.0
-var _targets: Array[Node3D] = []
+var _cooldown := 0.0
+var _controller: TurretController = null
 
 enum ShotResult { MISS, GRAZE, HIT, CRIT }
 
-func apply_weapon(w: WeaponDef, team_id_val: int, d: Area3D) -> void:
-	_weapon = w
-	_detector = d
-	team_id = team_id_val
-	if _detector != null:
-		var cs: CollisionShape3D = _detector.get_node("CollisionShape3D") as CollisionShape3D
-		var sphere: SphereShape3D = cs.shape as SphereShape3D
-		if sphere != null and w != null:
-			sphere.radius = w.base_range
+signal weapon_changed(new_weapon: WeaponDef)
 
 func _ready() -> void:
-	if _detector != null:
-		_detector.body_entered.connect(_on_body_entered)
-		_detector.body_exited.connect(_on_body_exited)
+	_controller = get_node_or_null(controller_path) as TurretController
+	if _controller != null:
+		_controller.register_turret(self, team_id)
 
-func decorator_body_signal(area: Area3D, is_enter: bool) -> void:
-	if is_enter:
-		area.body_entered.connect(_on_body_entered)
-	else:
-		area.body_exited.connect(_on_body_exited)
+func _exit_tree() -> void:
+	if _controller != null:
+		_controller.unregister_turret(self, team_id)
 
-func _on_body_entered(body: Node) -> void:
-	if not (body is Node3D) or _targets.has(body):
-		return
-	
-	for group_name: String in target_groups:
-		if body.is_in_group(group_name):
-			_targets.append(body)
-			break
+# --- public api ---
 
-func _on_body_exited(body: Node) -> void:
-	_targets.erase(body)
+func apply_weapon(w: WeaponDef, team_id_val: int) -> void:
+	_weapon = w
+	team_id = team_id_val
+	weapon_changed.emit(_weapon)
+
+func get_weapon() -> WeaponDef:
+	return _weapon
+
+func swap_weapon(new_weapon: WeaponDef, keep_cooldown: bool = true) -> void:
+	var prev_cd: float = _cooldown
+	apply_weapon(new_weapon, team_id)
+	_cooldown = prev_cd if keep_cooldown else 0.0
+
+# --- firing loop ---
 
 func _physics_process(delta: float) -> void:
-	if _weapon == null:
+	if _weapon == null or _controller == null:
 		return
-	
-	# Trim freed/null targets
-	for i in range(_targets.size() - 1, -1, -1):
-		if _targets[i] == null or not is_instance_valid(_targets[i]):
-			_targets.remove_at(i)
 
 	_cooldown -= delta
 	if _cooldown > 0.0:
 		return
 
-	var target: Node3D = _pick_nearest()
-	if target == null:
+	var tgt: Node3D = _controller.get_assigned_target(self, team_id)
+	if tgt == null:
 		return
 	
-	_fire_at_with_roll(target)
+	_fire_at_with_roll(tgt)
 	_cooldown = max(0.01, _weapon.fire_rate)
-
-func _pick_nearest() -> Node3D:
-	var best: Node3D = null
-	var best_d2: float = INF
-	for t in _targets:
-		var d2: float = global_position.distance_squared_to(t.global_position)
-		if d2 < best_d2:
-			best_d2 = d2
-			best = t
-	return best
 
 func _effective_accuracy_vs(target: Node3D) -> float:
 	if _weapon == null:
 		return 0.0
+
 	var ev: float = 0.0
 	if target.has_method("get_evasion"):
 		ev = float(target.call("get_evasion"))
+
 	var dist: float = global_position.distance_to(target.global_position)
 	var range_factor: float = clamp(dist / _weapon.base_range, 0.0, 1.0) # 0 close -> 1 far
 	var acc_base: float = clamp(_weapon.base_accuracy + systems_bonus, 0.0, 1.0)
@@ -101,7 +84,6 @@ func _fire_at_with_roll(target: Node3D) -> void:
 	
 	var hit_chance: float = _effective_accuracy_vs(target)
 	var outcome: int = _resolve_shot(hit_chance)
-	
 	var dmg: float = randf_range(_weapon.damage_min, _weapon.damage_max)
 
 	var p: Projectile = _weapon.projectile_scene.instantiate() as Projectile
@@ -109,7 +91,7 @@ func _fire_at_with_roll(target: Node3D) -> void:
 		return
 
 	p.global_transform = Transform3D(aim_basis, muzzle.global_position)
-	p.configure_shot(self, target, outcome, dmg, _weapon.graze_mult, _weapon.crit_mult, _weapon.status_effects, false)
+	p.configure_shot(self, target, outcome, dmg, _weapon.graze_mult, _weapon.crit_mult, _weapon.status_effects, true)
 	get_tree().current_scene.add_child(p)
 
 	if shot_sound != null:

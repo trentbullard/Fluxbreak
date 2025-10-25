@@ -11,8 +11,6 @@ var spawn_mode: int = 0
 @export var enemy_weight: float = 0.6
 @export var anti_streak_bias: float = 0.5
 
-enum Size {SM, MD, LG}
-
 @export var target_scene: PackedScene
 @export var enemy_scene: PackedScene
 @export var ship_path: NodePath
@@ -52,6 +50,45 @@ func _ready() -> void:
 	_target_topup.autostart = true
 	_target_topup.timeout.connect(_maintain_targets)
 	add_child(_target_topup)
+
+func spawn_one_with_def(kind: int, def: Resource) -> Node3D:
+	if enemy_scene == null or target_scene == null or _player_ship == null:
+		return null
+	if not _has_room_for(kind):
+		return null
+	
+	var inst: Node3D = (enemy_scene if kind == SpawnKind.ENEMY else target_scene).instantiate() as Node3D
+	_last_kind_was_enemy = (kind == SpawnKind.ENEMY)
+	_have_last = true
+	
+	var pos: Vector3 = _pick_spawn_position()
+	if inst.has_method("set_ship"):
+		inst.call("set_ship", _player_ship)
+	
+	if kind == SpawnKind.ENEMY and def is EnemyDef and inst.has_method("configure_enemy"):
+		inst.call("configure_enemy", def as EnemyDef)
+	elif kind == SpawnKind.TARGET and def is TargetDef and inst.has_method("configure_target"):
+		inst.call("configure_target", def as TargetDef)
+	
+	get_tree().current_scene.add_child(inst)
+	inst.global_position = pos
+	
+	_alive += 1
+	if kind == SpawnKind.ENEMY: _alive_enemies += 1
+	else: _alive_targets += 1
+	alive_counts_changed.emit(_alive_enemies, _alive_targets, _alive)
+	
+	var kind_captured: int = kind
+	inst.tree_exited.connect(func() -> void:
+		_alive = max(_alive - 1, 0)
+		if kind_captured == SpawnKind.ENEMY:
+			_alive_enemies = max(_alive_enemies - 1, 0)
+		else:
+			_alive_targets = max(_alive_targets - 1, 0)
+		alive_counts_changed.emit(_alive_enemies, _alive_targets, _alive)
+	)
+	
+	return inst
 
 func spawn_one(kind: int) -> Node3D:
 	if enemy_scene == null or target_scene == null or _player_ship == null:
@@ -101,6 +138,22 @@ func get_alive_counts() -> Dictionary:
 		"targets": _alive_targets,
 		"total": _alive
 	}
+
+func spawn_enemy_burst(def: EnemyDef, count: int) -> int:
+	var spawned: int = 0
+	for i in count:
+		if spawn_one_with_def(SpawnKind.ENEMY, def) == null:
+			break
+		spawned += 1
+	return spawned
+
+func spawn_target_burst(def: TargetDef, count: int) -> int:
+	var spawned: int = 0
+	for i in count:
+		if spawn_one_with_def(SpawnKind.TARGET, def) == null:
+			break
+		spawned += 1
+	return spawned
 
 func spawn_burst(kind: int, count: int) -> int:
 	var spawned: int = 0

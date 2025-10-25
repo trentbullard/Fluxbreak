@@ -7,6 +7,7 @@ script = ExtResource("1_jjjdy")
 id = "merc_frigate_mk1"
 display_name = "Frigate Mk I"
 faction = "Mercs"
+role = "Brawler"
 tier = 2
 threat_cost = 2
 bounty_scrap = 2

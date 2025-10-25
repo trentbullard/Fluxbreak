@@ -1,23 +1,43 @@
-# target_object.gd  (Godot 4.5)
+# scripts/enemy/enemy.gd  (Godot 4.5)
 extends RigidBody3D
 class_name Enemy
 
+signal about_to_die(target: Enemy)
+
+@export_group("Paths")
+@export var turret_paths: Array[NodePath] = []
+
+# ---------- Designer test defaults (used if no def is injected) ----------
+@export_group("Defaults")
 @export var max_hull: float = 20.0
 @export var max_shield: float = 0.0
 @export var shield_regen: float = 0.0
-@export var evasion: float = 0.10        # 0..1
+@export var evasion: float = 0.10
 @export var thrust: float = 40.0
-@export var explosion_scene: PackedScene
 @export var score_on_kill: int = 10
+@export var explosion_scene: PackedScene
 
 @export var player_ship: Ship
 @export var label_height: float = 1.5
 @export var label_update_hz: float = 10.0
 
+@export_group("Behavior")
 @export var min_distance: float = 250.0
 @export var max_distance: float = 400.0
 @export var model_root_path: NodePath = ^"ModelRoot"
 
+# designer test entry point
+@export var editor_preview_def: EnemyDef
+
+# ---------- Runtime / identity (not exported) ----------
+var def: EnemyDef = null
+var enemy_id: String = ""
+var display_name: String = ""
+var faction: String = ""
+var role: String = ""
+var tier: int = 1
+
+# ---------- Internals ----------
 var _dead: bool = false
 var _last_xform: Transform3D = Transform3D()
 var hull: float
@@ -25,39 +45,44 @@ var shield: float
 var _tangent_axis: Vector3 = Vector3.UP
 var _axis_timer: float = 0.0
 
-enum Size {SM, MD, LG}
-@export var size: Size = Size.MD
-@export var randomize_on_spawn: bool = true
-
-const SIZE_DATA: Dictionary = {
-	Size.SM: { "hull_mult": 0.5, "scale": 0.25, "thrust_mult": 1.15, "evasion_add": 0.05, "score_mult": 0.5 },
-	Size.MD: { "hull_mult": 1.0, "scale": 1.0,  "thrust_mult": 1.0,  "evasion_add": 0.0, "score_mult": 1.0  },
-	Size.LG: { "hull_mult": 1.5, "scale": 2.0,  "thrust_mult": 0.85, "evasion_add": -0.05, "score_mult": 1.5 }
-}
-
-func _ready() -> void:
-	add_to_group("targets")
-	_last_xform = global_transform
-	hull = max_hull
-	shield = max_shield
-	if randomize_on_spawn:
-		var pool: Array[int] = [Size.SM, Size.SM, Size.MD, Size.MD, Size.MD, Size.MD, Size.MD, Size.LG, Size.LG, Size.LG]
-		size = pool[randi() % pool.size()] as Size
-	_pick_new_axis()
-	_apply_size(size)
-
-func _physics_process(delta: float) -> void:
-	_axis_timer -= delta
-	if _axis_timer <= 0.0:
-		_pick_new_axis()
+func configure_enemy(d: EnemyDef) -> void:
+	if d == null: return
+	def = d
 	
-	if player_ship != null:
-		_face_target(player_ship.global_position)
-		_orbit_target(player_ship.global_position)
-
-func _process(_delta: float) -> void:
-	if is_inside_tree():
-		_last_xform = global_transform
+	# Identity (runtime only)
+	enemy_id = d.id
+	display_name = d.display_name
+	faction = d.faction
+	role = d.role
+	tier = d.tier
+	
+	# Make this discoverable by AI/UX without tight coupling
+	set_meta("faction", faction)
+	set_meta("role", role)
+	set_meta("kind", "enemy")
+	if faction != "": add_to_group("faction_" + faction)
+	if role != "": add_to_group("role_" + role)
+	
+	# Stats (these override prefab defaults)
+	max_hull = d.max_hull
+	max_shield = d.max_shield
+	shield_regen = d.shield_regen
+	evasion = d.evasion
+	thrust = d.thrust
+	score_on_kill = d.score_on_kill
+	
+	# Visuals
+	var model_root: Node3D = get_node_or_null(model_root_path) as Node3D
+	if d.model_scene != null:
+		if model_root != null: model_root.free()
+		var new_root: Node3D = d.model_scene.instantiate() as Node3D
+		new_root.name = "ModelRoot"
+		add_child(new_root)
+		model_root_path = ^"ModelRoot"
+		model_root = new_root
+		call_deferred("_snap_to_socket", ^"Turret/Muzzle", ^"ModelRoot/MuzzleSocket", false, false)
+	
+	_apply_weapon_to_turrets(d.weapon, d.team_id)
 
 func apply_damage(amount: float) -> void:
 	if _dead:
@@ -72,24 +97,54 @@ func set_ship(ship: Ship):
 func get_evasion() -> float:
 	return clamp(evasion, 0.0, 1.0)
 
+func _enter_tree() -> void:
+	# In-editor preview convenience: if a def is set on the prefab
+	# and nobody configured us yet, hydrate from it.
+	if Engine.is_editor_hint() and def == null and editor_preview_def != null:
+		configure_enemy(editor_preview_def)
+
+func _ready() -> void:
+	add_to_group("targets")
+	_last_xform = global_transform
+
+	hull = max_hull
+	shield = max_shield
+
+func _physics_process(delta: float) -> void:
+	_axis_timer -= delta
+	if _axis_timer <= 0.0:
+		_pick_new_axis()
+	
+	if player_ship != null:
+		_face_target(player_ship.global_position)
+		_orbit_target(player_ship.global_position)
+
+func _process(_delta: float) -> void:
+	if is_inside_tree():
+		_last_xform = global_transform
+
 func _die() -> void:
 	if _dead:
 		return
 	_dead = true
-	RunState.add_score(score_on_kill, "enemy")
 	
+	about_to_die.emit(self)
+	
+	remove_from_group("targets")
 	if has_node("CollisionShape3D"):
-		var col: CollisionShape3D = $CollisionShape3D
-		col.disabled = true
+		$CollisionShape3D.disabled = true
+	collision_layer = 0
+	collision_mask  = 0
+	set_physics_process(false)
 	
+	RunState.add_score(score_on_kill, "enemy")
 	if explosion_scene != null:
-		var fx: Node3D = explosion_scene.instantiate() as Node3D
+		var fx := explosion_scene.instantiate() as Node3D
 		fx.global_transform = global_transform
-		var parent_for_fx: Node = get_parent() if get_parent() != null else get_tree().root
-		parent_for_fx.add_child(fx)
+		(get_parent() if get_parent() != null else get_tree().root).add_child(fx)
 	
 	hide()
-	queue_free()
+	call_deferred("_finalize_death")
 
 func _face_target(target: Vector3) -> void:
 	var desired: Vector3 = (target - global_position).normalized()
@@ -131,21 +186,55 @@ func _is_offscreen(cam: Camera3D, world_pos: Vector3) -> bool:
 	var rect: Rect2i = get_viewport().get_visible_rect()
 	return not rect.has_point(screen_pos)
 
-func _apply_size(s: Size) -> void:
-	var data: Dictionary = SIZE_DATA[s]
-	score_on_kill = int(ceil(score_on_kill * float(data["score_mult"])))
-	hull = max_hull * float(data["hull_mult"])
-	thrust = thrust * float(data["thrust_mult"])
-	evasion = clamp(evasion + float(data["evasion_add"]), 0.0, 1.0)
-	
-	var model_root: Node3D = get_node_or_null(model_root_path) as Node3D
-	if model_root != null:
-		var k: float = float(data["scale"])
-		model_root.scale = Vector3(k, k, k)
-		var col: CollisionShape3D = $CollisionShape3D
-		col.scale = Vector3(k, k, k)
-
 func _pick_new_axis() -> void:
 	var choices: Array[Vector3] = [Vector3.UP, Vector3.DOWN, Vector3.LEFT, Vector3.RIGHT]
 	_tangent_axis = choices.pick_random()
 	_axis_timer = randf_range(1.0, 4.0)
+
+func _finalize_death() -> void:
+	queue_free()
+
+func _snap_to_socket(local_node_path: NodePath, socket_rel_path: NodePath, copy_rot := true, copy_scale := false) -> void:
+	var node := get_node_or_null(local_node_path) as Node3D
+	var model_root := get_node_or_null(model_root_path) as Node3D
+	if node == null or model_root == null:
+		return
+	var socket := model_root.get_node_or_null(socket_rel_path) as Node3D
+	if socket == null:
+		return
+
+	var parent := node.get_parent() as Node3D
+	var xf := socket.global_transform
+
+	# strip socket scale unless you explicitly want it
+	if not copy_scale:
+		xf.basis = xf.basis.orthonormalized()
+
+	if copy_rot:
+		# place node at socket (pos + rot)
+		if parent:
+			node.transform = parent.global_transform.affine_inverse() * xf
+		else:
+			node.global_transform = xf
+	else:
+		# position only; keep your current rotation/scale
+		node.global_position = xf.origin
+
+func _apply_weapon_to_turrets(weapon: WeaponDef, team_id_val: int) -> void:
+	if weapon == null: return
+	
+	var turrets: Array[Node] = []
+	for p in turret_paths:
+		var n: Node = get_node_or_null(p)
+		if n != null:
+			turrets.append(n)
+	
+	if turrets.is_empty():
+		for child in get_children():
+			if child is EnemyTurret:
+				turrets.append(child)
+	
+	for t in turrets:
+		if t is EnemyTurret:
+			var detector: Area3D = $Detector
+			(t as EnemyTurret).apply_weapon(weapon, team_id_val, detector)

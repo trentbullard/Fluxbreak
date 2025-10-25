@@ -6,7 +6,7 @@ var _ema_dps: float = 0.0
 var _frame_damage: float = 0.0
 
 # optional wire these later
-var _evasion_est: float = 0.0   # 0..1
+var _evasion_est: float = 0.0    # 0..1
 var _aoe_factor: float = 0.0     # 0..1-ish
 var _sustain_rating: float = 0.0 # 0..1-ish
 

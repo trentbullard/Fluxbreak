@@ -1,0 +1,84 @@
+[gd_scene load_steps=7 format=3 uid="uid://bevdmyvffaiqo"]
+
+[ext_resource type="Material" uid="uid://81lhwme88nx6" path="res://content/materials/plastic_lite_gray.tres" id="1_ivurh"]
+[ext_resource type="Material" uid="uid://cuxk1elgydret" path="res://content/materials/sensor_eye.tres" id="2_o4dry"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_2qy84"]
+material = ExtResource("1_ivurh")
+radius = 7.5
+height = 30.0
+radial_segments = 4
+rings = 0
+
+[sub_resource type="SphereMesh" id="SphereMesh_lo0kb"]
+material = ExtResource("1_ivurh")
+radius = 1.5
+height = 3.0
+
+[sub_resource type="SphereMesh" id="SphereMesh_c1amo"]
+material = ExtResource("2_o4dry")
+radius = 0.9
+height = 1.8
+
+[sub_resource type="TorusMesh" id="TorusMesh_2x2wk"]
+material = ExtResource("1_ivurh")
+inner_radius = 20.0
+outer_radius = 25.0
+rings = 32
+
+[node name="MachineSentinelMk1" type="Node3D"]
+
+[node name="ModelRoot" type="Node3D" parent="."]
+
+[node name="Core" type="Node3D" parent="ModelRoot"]
+
+[node name="CoreBody" type="MeshInstance3D" parent="ModelRoot/Core"]
+mesh = SubResource("CapsuleMesh_2qy84")
+
+[node name="SensorArray" type="Node3D" parent="ModelRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.5, -7.5)
+
+[node name="Sensor1" type="Node3D" parent="ModelRoot/SensorArray"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 1.2000008, 1.9000001)
+
+[node name="SensorHousing" type="MeshInstance3D" parent="ModelRoot/SensorArray/Sensor1"]
+mesh = SubResource("SphereMesh_lo0kb")
+skeleton = NodePath("../..")
+
+[node name="SensorEye" type="MeshInstance3D" parent="ModelRoot/SensorArray/Sensor1/SensorHousing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.5, -0.5)
+mesh = SubResource("SphereMesh_c1amo")
+skeleton = NodePath("../..")
+
+[node name="Sensor2" type="Node3D" parent="ModelRoot/SensorArray"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6, 1.2, 1.9)
+
+[node name="SensorHousing" type="MeshInstance3D" parent="ModelRoot/SensorArray/Sensor2"]
+mesh = SubResource("SphereMesh_lo0kb")
+skeleton = NodePath("../..")
+
+[node name="SensorEye" type="MeshInstance3D" parent="ModelRoot/SensorArray/Sensor2/SensorHousing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.5, -0.5)
+mesh = SubResource("SphereMesh_c1amo")
+skeleton = NodePath("../..")
+
+[node name="Sensor3" type="Node3D" parent="ModelRoot/SensorArray"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.119, 0)
+
+[node name="SensorHousing" type="MeshInstance3D" parent="ModelRoot/SensorArray/Sensor3"]
+mesh = SubResource("SphereMesh_lo0kb")
+skeleton = NodePath("../..")
+
+[node name="SensorEye" type="MeshInstance3D" parent="ModelRoot/SensorArray/Sensor3/SensorHousing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.75)
+mesh = SubResource("SphereMesh_c1amo")
+skeleton = NodePath("../..")
+
+[node name="Ring" type="Node3D" parent="ModelRoot"]
+
+[node name="Ring" type="MeshInstance3D" parent="ModelRoot/Ring"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0)
+mesh = SubResource("TorusMesh_2x2wk")
+
+[node name="MuzzleSocket" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.5, -7.5)

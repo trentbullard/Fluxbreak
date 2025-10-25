@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="MountLoadoutDef" load_steps=3 format=3 uid="uid://dvd0xdwfcbam6"]
+
+[ext_resource type="Script" uid="uid://dhvgo1sv28rx3" path="res://content/defs/mount_loadout_def.gd" id="1_sqke1"]
+[ext_resource type="Resource" uid="uid://dvy0gac2vg1b6" path="res://content/data/weapons/pulse_mk1.tres" id="2_w4a2p"]
+
+[resource]
+script = ExtResource("1_sqke1")
+mount_id = "fore_left"
+weapon = ExtResource("2_w4a2p")
+metadata/_custom_type_script = "uid://dhvgo1sv28rx3"

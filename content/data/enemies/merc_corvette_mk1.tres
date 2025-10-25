@@ -7,5 +7,6 @@ script = ExtResource("1_21rtp")
 id = "merc_corvette_mk1"
 display_name = "Corvette Mk I"
 faction = "Mercs"
+role = "Brawler"
 affixes = Array[String](["Veteran", "Apex", "Vanguard"])
 metadata/_custom_type_script = "uid://bx6wive40u6f"

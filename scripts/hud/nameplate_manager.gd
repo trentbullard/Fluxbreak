@@ -57,7 +57,20 @@ func _sync_targets() -> void:
 
 			var label := ui.get_node("HBox/Label") as Label
 			if label != null:
-				label.text = "%dm  •  HP: %d" % [int(round(d)), int(round(max(target.hull, 0.0)))]
+				var kind: String = _kind_of(target)
+				if kind == "enemy":
+					label.text = "%s (%s)\n%dm  •  HP: %d" % [
+						target.display_name,
+						target.faction,
+						int(round(d)),
+						int(round(max(target.hull, 0.0)))
+					]
+				elif kind == "target":
+					label.text = "%s\n%dm  •  HP: %d" % [
+						target.display_name,
+						int(round(d)),
+						int(round(max(target.hull, 0.0)))
+					]
 
 			_place_center_bottom(ui, sp, vp_size)
 		else:
@@ -82,3 +95,10 @@ func _place_center_bottom(ui: Control, screen_pos: Vector2, vp_size: Vector2) ->
 	pos.x = clamp(pos.x, 0.0, vp_size.x - s.x)
 	pos.y = clamp(pos.y, 0.0, vp_size.y - s.y)
 	ui.position = pos
+
+func _kind_of(node: Object) -> String:
+	if not is_instance_valid(node):
+		return "unknown"
+	if node.has_meta("kind"):
+		return String(node.get_meta("kind"))
+	return "enemy" if node.is_class("Enemy") else "target"

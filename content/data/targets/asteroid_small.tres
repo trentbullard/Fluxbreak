@@ -5,4 +5,7 @@
 [resource]
 script = ExtResource("1_6v4vb")
 id = "asteroid_small"
+display_name = "Asteroid"
+max_hull = 100.0
+score_on_kill = 15
 metadata/_custom_type_script = "uid://bitk3uva0wi2v"

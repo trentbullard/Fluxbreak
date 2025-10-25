@@ -1,0 +1,70 @@
+[gd_scene load_steps=6 format=3 uid="uid://cva25tbpxf8uj"]
+
+[ext_resource type="Material" uid="uid://81lhwme88nx6" path="res://content/materials/plastic_lite_gray.tres" id="1_hwl8l"]
+[ext_resource type="Material" uid="uid://cuxk1elgydret" path="res://content/materials/sensor_eye.tres" id="2_nuoxb"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_46jgn"]
+material = ExtResource("1_hwl8l")
+radius = 17.5
+height = 35.0
+radial_segments = 8
+rings = 2
+
+[sub_resource type="TorusMesh" id="TorusMesh_mdj0d"]
+material = ExtResource("2_nuoxb")
+inner_radius = 10.0
+outer_radius = 16.0
+rings = 8
+ring_segments = 16
+
+[sub_resource type="BoxMesh" id="BoxMesh_anhnd"]
+material = ExtResource("1_hwl8l")
+size = Vector3(5, 5, 5)
+
+[node name="MachineReaperMk1" type="Node3D"]
+
+[node name="ModelRoot" type="Node3D" parent="."]
+
+[node name="Core" type="Node3D" parent="ModelRoot"]
+
+[node name="Body" type="MeshInstance3D" parent="ModelRoot/Core"]
+mesh = SubResource("SphereMesh_46jgn")
+
+[node name="SensorRing" type="MeshInstance3D" parent="ModelRoot/Core"]
+mesh = SubResource("TorusMesh_mdj0d")
+
+[node name="Ring" type="Node3D" parent="ModelRoot"]
+
+[node name="Ring1" type="MeshInstance3D" parent="ModelRoot/Ring"]
+transform = Transform3D(0.8535533, -0.14644662, 0.49999997, 0.49999997, 0.49999997, -0.70710677, -0.14644662, 0.8535533, 0.49999997, 0, 30, 0)
+mesh = SubResource("BoxMesh_anhnd")
+
+[node name="Ring2" type="MeshInstance3D" parent="ModelRoot/Ring"]
+transform = Transform3D(0.9999999, 0, 0, 0, 0.7071067, -0.7071067, 0, 0.7071067, 0.7071067, 22, 22, 0)
+mesh = SubResource("BoxMesh_anhnd")
+
+[node name="Ring3" type="MeshInstance3D" parent="ModelRoot/Ring"]
+transform = Transform3D(0.7071067, 0.4999999, 0.49999994, 0, 0.7071067, -0.7071067, -0.7071067, 0.4999999, 0.49999994, -22, 22, 0)
+mesh = SubResource("BoxMesh_anhnd")
+
+[node name="Ring4" type="MeshInstance3D" parent="ModelRoot/Ring"]
+transform = Transform3D(0.49345288, 0.71169096, 0.49999994, -0.24184471, 0.6644629, -0.7071067, -0.83547294, 0.2280015, 0.49999994, 30, 0, 0)
+mesh = SubResource("BoxMesh_anhnd")
+
+[node name="Ring5" type="MeshInstance3D" parent="ModelRoot/Ring"]
+transform = Transform3D(0.83547294, 0.2280015, 0.49999994, 0.24184471, 0.6644629, -0.7071067, -0.49345288, 0.71169096, 0.49999994, -30, 0, 0)
+mesh = SubResource("BoxMesh_anhnd")
+
+[node name="Ring6" type="MeshInstance3D" parent="ModelRoot/Ring"]
+transform = Transform3D(0.49999988, 0.49999994, -0.7071067, 0.4999999, 0.4999999, 0.7071067, 0.7071067, -0.7071067, -3.0908616e-08, 22, -22, 0)
+mesh = SubResource("BoxMesh_anhnd")
+
+[node name="Ring7" type="MeshInstance3D" parent="ModelRoot/Ring"]
+transform = Transform3D(0.49999988, 0.49999994, 0.7071067, 0.4999999, 0.4999999, -0.7071067, -0.7071067, 0.7071067, -3.0908616e-08, -22, -22, 0)
+mesh = SubResource("BoxMesh_anhnd")
+
+[node name="Ring8" type="MeshInstance3D" parent="ModelRoot/Ring"]
+transform = Transform3D(0.1464466, 0.8535532, -0.49999994, -0.4999999, 0.4999999, 0.7071067, 0.8535532, 0.1464466, 0.49999994, 0, -30, 0)
+mesh = SubResource("BoxMesh_anhnd")
+
+[node name="MuzzleSocket" type="Marker3D" parent="ModelRoot"]

@@ -9,4 +9,6 @@ display_name = "Medium Wreck"
 size_band = 2
 threat_cost = 2
 bounty_scrap = 2
+max_hull = 200.0
+score_on_kill = 30
 metadata/_custom_type_script = "uid://bitk3uva0wi2v"

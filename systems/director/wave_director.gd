@@ -121,6 +121,8 @@ func _next_wave() -> void:
 	)
 	
 	emit_signal("wave_started", _wave_index, budgets["enemy_points"], budgets["target_points"])
+	
+	_run_requests_async(reqs, card)
 
 func _rand_batch() -> int:
 	return _rng.randi_range(batch_size_min, batch_size_max)
@@ -153,16 +155,19 @@ func _run_requests_coroutine(reqs: Array[SpawnRequest], card: WaveCard, token: i
 		remaining.append(r.count)
 	
 	var req_index: int = 0
-	var pressure_clock: float = 0.0
+	#var pressure_clock: float = 0.0
 	
 	# initial pop to sell "wave started"
 	if reqs.size() > 0:
 		var first: SpawnRequest = reqs[0]
 		var first_batch: int = _rand_batch()
-		var kind0: int = _request_kind(first)
 		var n0: int = min(first_batch, remaining[0])
 		if n0 > 0:
-			var spawned0: int = _spawner.spawn_burst(kind0, n0)
+			var spawned0: int
+			if first.kind == "Enemy":
+				spawned0 = _spawner.spawn_enemy_burst(first.enemy_def, n0)
+			else:
+				spawned0 = _spawner.spawn_target_burst(first.target_def, n0)
 			remaining[0] = max(remaining[0] - spawned0, 0)
 		var timer0: SceneTreeTimer = get_tree().create_timer(inter_batch_delay)
 		await timer0.timeout
@@ -184,55 +189,57 @@ func _run_requests_coroutine(reqs: Array[SpawnRequest], card: WaveCard, token: i
 		var req: SpawnRequest = reqs[req_index]
 		var batch_size: int = clampi(_rand_batch(), req.batch_size_min, req.batch_size_max)
 		batch_size = min(batch_size, remaining[req_index])
-	
-	# initial burst so waves feel like waves
-	var first_batch: int = _rand_batch()
-	var first_enemy: int = min(first_batch, enemies_left)
-	if first_enemy > 0:
-		_spawner.spawn_burst(Spawner.SpawnKind.ENEMY, first_enemy)
-		enemies_left -= first_enemy
-	await get_tree().create_timer(inter_batch_delay).timeout
-	
-	# drip remaining budget
-	while enemies_left > 0 or targets_left > 0:
-		var do_enemy: bool = (enemies_left > 0 and (_rand_pick_enemy_first() or targets_left == 0))
-		var batch: int = _rand_batch()
-		if do_enemy:
-			var n: int = min(batch, enemies_left)
-			if n > 0:
-				_spawner.spawn_burst(Spawner.SpawnKind.ENEMY, n)
-				enemies_left -= n
+		
+		var spawned: int = 0
+		if req.kind == "Enemy": 
+			spawned = _spawner.spawn_enemy_burst(req.enemy_def, batch_size)
 		else:
-			var n2: int = min(batch, targets_left)
-			if n2 > 0:
-				_spawner.spawn_burst(Spawner.SpawnKind.TARGET, n2)
-				targets_left -= n2
+			spawned = _spawner.spawn_target_burst(req.target_def, batch_size)
 		
-		pressure_clock += inter_batch_delay
-		await get_tree().create_timer(inter_batch_delay).timeout
+		if spawned == 0:
+			# cap is full; wait a short while for space, then try again
+			var wait_cap: SceneTreeTimer = get_tree().create_timer(0.35)
+			await wait_cap.timeout
+			if token != _wave_token:
+				return
+		else:
+			remaining[req_index] = max(remaining[req_index] - spawned, 0)
+			# per-request inter-batch delay
+			var wait: SceneTreeTimer = get_tree().create_timer(req.inter_batch_sec)
+			await wait.timeout
+			if token != _wave_token:
+				return
 		
-		# mid-wave pressure: if the player is slow, add a little heat
-		if pressure_interval_sec > 0.0 and pressure_clock >= pressure_interval_sec:
-			pressure_clock = 0.0
-			if pressure_enemy_burst > 0:
-				_spawner.spawn_burst(Spawner.SpawnKind.ENEMY, pressure_enemy_burst)
-			if pressure_target_burst > 0:
-				_spawner.spawn_burst(Spawner.SpawnKind.TARGET, pressure_target_burst)
+		# optional light pressure (just enemies)
+		#if pressure_interval_sec > 0.0:
+			#pressure_clock += req.inter_batch_sec
+			#if pressure_clock >= pressure_interval_sec:
+				#pressure_clock = 0.0
+				#if pressure_enemy_burst > 0:
+					#_spawner.spawn_burst(Spawner.SpawnKind.ENEMY, pressure_enemy_burst)
+				#if token != _wave_token:
+					#return
 		
-		# hard timeout while still spawning (optional early bail)
+		# hard timeout while still spawning
 		if _wave_timer >= wave_timeout_sec:
 			emit_signal("wave_forced_next", _wave_index)
-			break
+			_start_downtime()
+			return
 	
-	var t: float = 0.0
-	while t < wave_timeout_sec:
-		var alive_now: Dictionary = _spawner.get_alive_counts()
-		var enemies_alive = alive_now["enemies"]
+	await _clear_or_timeout_then_downtime(token)
+
+func _clear_or_timeout_then_downtime(token: int) -> void:
+	var end_deadline: float = _wave_timer + wave_timeout_sec
+	while _wave_timer < end_deadline:
+		if token != _wave_token:
+			return
+		var enemies_alive: int = _alive_enemy_count()
 		if enemies_alive <= wave_clear_carryover_ok:
-			emit_signal("wave_cleared", _wave_index, _wave_timer + t)
-			break
-		await get_tree().create_timer(0.5).timeout
-		t += 0.5
+			emit_signal("wave_cleared", _wave_index, _wave_timer)
+			_start_downtime()
+			return
+		var t: SceneTreeTimer = get_tree().create_timer(0.5)
+		await t.timeout
 	
-	# advance
+	emit_signal("wave_forced_next", _wave_index)
 	_start_downtime()

@@ -2,6 +2,12 @@
 extends RigidBody3D
 class_name Ship
 
+@export var team_id: int = 0
+@export var loadout: ShipLoadoutDef
+@export var mount_paths: Array[NodePath] = []  # link turretplatform nodes
+
+var _mounts_by_id: Dictionary = {}  # String -> TurretPlatform
+
 @export var explosion_scene: PackedScene
 @export var return_to_menu_delay: float = 3.0
 
@@ -45,6 +51,40 @@ func _ready() -> void:
 	_regen_timer.autostart = true
 	_regen_timer.timeout.connect(_on_regen_tick)
 	add_child(_regen_timer)
+	_index_mounts()
+	_apply_initial_loadout()
+
+func _apply_initial_loadout() -> void:
+	if loadout == null: return
+	for ml in loadout.mounts:
+		if ml == null or ml.mount_id == "" or ml.weapon == null: continue
+		if _mounts_by_id.has(ml.mount_id):
+			var plat: TurretPlatform = _mounts_by_id[ml.mount_id] as TurretPlatform
+			plat.set_weapon(ml.weapon, team_id, false)  # fresh CD on spawn
+
+# --- public api for upgrades/ui ---
+
+func swap_weapon_on_mount(mount_id: String, new_weapon: WeaponDef, keep_cooldown: bool = true) -> bool:
+	if new_weapon == null or not _mounts_by_id.has(mount_id): return false
+	var plat: TurretPlatform = _mounts_by_id[mount_id] as TurretPlatform
+	plat.set_weapon(new_weapon, team_id, keep_cooldown)
+	return true
+
+func get_weapon_on_mount(mount_id: String) -> WeaponDef:
+	if not _mounts_by_id.has(mount_id): return null
+	var plat: TurretPlatform = _mounts_by_id[mount_id] as TurretPlatform
+	var t: PlayerTurret = plat.get_turret()
+	return t.get_weapon() if t != null else null
+
+func _exit_tree() -> void:
+	_mounts_by_id.clear()
+
+func _index_mounts() -> void:
+	_mounts_by_id.clear()
+	for p in mount_paths:
+		var tp: TurretPlatform = get_node_or_null(p) as TurretPlatform
+		if tp != null and tp.mount_id != "":
+			_mounts_by_id[tp.mount_id] = tp
 
 func _physics_process(_delta: float) -> void:
 	_update_translation()

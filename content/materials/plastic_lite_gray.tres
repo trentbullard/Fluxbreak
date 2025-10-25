@@ -1,0 +1,23 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://81lhwme88nx6"]
+
+[resource]
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.8156863, 0.8156863, 0.8156863, 1)
+metallic_specular = 0.7
+roughness = 0.25
+emission = Color(1, 1, 1, 1)
+emission_energy_multiplier = 0.2
+rim = 0.0
+clearcoat_enabled = true
+clearcoat = 0.4
+clearcoat_roughness = 0.08
+heightmap_scale = 5.485
+heightmap_deep_parallax = true
+heightmap_min_layers = 8
+heightmap_max_layers = 32
+subsurf_scatter_enabled = true
+subsurf_scatter_strength = 0.6
+subsurf_scatter_transmittance_enabled = true
+subsurf_scatter_transmittance_color = Color(0.9098039, 0.9098039, 0.9019608, 1)
+stencil_flags = 2
+stencil_reference = 9

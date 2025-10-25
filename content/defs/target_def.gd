@@ -1,10 +1,25 @@
-# content/defs/enemy_def.gd (godot 4.5)
+# content/defs/target_def.gd  (Godot 4.5)
 extends Resource
 class_name TargetDef
 
-@export var id: String = ""                         # e.g. "asteroid_small"
-@export var display_name: String = "Small Asteroid"
-@export var size_band: int = 1                      # 1=small, 2=med, 3=large
-@export var threat_cost: int = 1                    # budget for targets use these too
-@export var bounty_scrap: int = 1                   # economy faucet
-@export var hazard_tag: String = ""                 # optional: "explosive", etc.
+@export var id: String = ""                  # "asteroid_small"
+@export var display_name: String = "Target"
+@export var size_band: int = 1               # 1..3, optional
+@export var threat_cost: int = 1
+@export var bounty_scrap: int = 1
+@export var hazard_tag: String = ""          # "explosive", "radiation", etc.
+
+# --- gameplay knobs ---
+@export var max_hull: float = 20.0
+@export var max_shield: float = 0.0
+@export var shield_regen: float = 0.0
+@export var score_on_kill: int = 5
+@export var lifetime: float = 0.0            # 0.0 = infinite
+@export var angular_spin: Vector3
+@export var drift: Vector3
+
+# --- visuals (optional) ---
+@export var model_scene: PackedScene         # swap mesh for specific target types
+@export var material: StandardMaterial3D     # one-and-done override for all meshes
+@export var emission_color: Color = Color(0.9, 0.8, 0.4)
+@export var emission_energy: float = 1.2
