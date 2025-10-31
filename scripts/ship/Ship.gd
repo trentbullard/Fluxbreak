@@ -1,4 +1,4 @@
-# ship.gd  (Godot 4.5)
+# scripts/ship/ship.gd  (Godot 4.5)
 extends RigidBody3D
 class_name Ship
 
@@ -46,14 +46,16 @@ var _stack: Array[WeaponDef] = []
 func _ready() -> void:
 	add_to_group("player")
 	RunState.start_run()
+	
+	# --- shield regen timer ---
 	_regen_timer = Timer.new()
 	_regen_timer.wait_time = 1.0
 	_regen_timer.autostart = true
 	_regen_timer.timeout.connect(_on_regen_tick)
 	add_child(_regen_timer)
-	
+
+	# --- weapon manager ---
 	if hardpoint_manager != null:
-		hardpoint_manager.weapons_changed.connect(_on_weapons_changed)
 		hardpoint_manager.apply_loadout(loadout, starting_weapons)
 
 # --- public api for upgrades/ui ---
@@ -158,11 +160,6 @@ func _update_translation() -> void:
 		var reverse_vel: float = linear_velocity.dot(transform.basis.z)
 		if reverse_vel < max_speed_reverse:
 			apply_central_force(transform.basis.z * accel_reverse * boost)
-
-func _on_weapons_changed(weapons: Array[WeaponDef]) -> void:
-	# Example: update HUD, debug print, recalc DPS preview, etc.
-	# HUD.update_weapon_icons(weapons)
-	print("[Ship] Weapons changed -> count: ", str(weapons.size()))
 
 func _on_regen_tick() -> void:
 	if _dead:

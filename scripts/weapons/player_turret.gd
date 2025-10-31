@@ -9,6 +9,7 @@ class_name PlayerTurret
 
 @export var muzzle: Marker3D
 @export var shot_sound: AudioStreamPlayer3D
+@export var max_shot_sounds: int = 4
 
 var _weapon: WeaponDef = null
 var _cooldown := 0.0
@@ -35,6 +36,8 @@ func apply_weapon(w: WeaponDef, team_id_val: int) -> void:
 	_weapon = w
 	team_id = team_id_val
 	weapon_changed.emit(_weapon)
+	shot_sound.stream = w.shot_sound
+	shot_sound.max_polyphony = max_shot_sounds
 
 func get_weapon() -> WeaponDef:
 	return _weapon

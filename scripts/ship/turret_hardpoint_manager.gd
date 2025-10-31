@@ -2,8 +2,6 @@
 extends Node3D
 class_name TurretHardpointManager
 
-signal weapons_changed(weapons: Array[WeaponDef])
-
 @export var assembly_scene: PackedScene
 @export var policy: MountLayoutPolicy
 @export var anchors_root_path: NodePath = NodePath("Anchors")
@@ -17,6 +15,9 @@ var _weapons: Array[WeaponDef] = []
 func _ready() -> void:
 	_build_anchor_cache()
 	ensure_pool_size(8)
+	
+	EventBus.add_gun_requested.connect(push_weapon)
+	EventBus.rem_gun_requested.connect(pop_weapon)
 
 func get_weapons() -> Array[WeaponDef]:
 	return _weapons.duplicate()
@@ -41,30 +42,47 @@ func set_weapons(weapons_ordered: Array[WeaponDef]) -> void:
 	_notify_changed()
 
 func push_weapon(w: WeaponDef) -> void:
+	if _weapons.size() >= max_assemblies: return
 	if w == null:
-		return
-	if _weapons.size() >= max_assemblies:
-		return
+		w = get_weapons()[0].duplicate(true)
 	_weapons.append(w)
 	_realign_and_apply_current()
 	_notify_changed()
 
-func pop_weapon() -> void:
-	if _weapons.is_empty():
+func pop_weapon(idx: int = -1, w: WeaponDef = null) -> void:
+	if _weapons.size() <= 1:
 		return
-	_weapons.remove_at(_weapons.size() - 1)
+
+	var target_index: int = idx
+
+	if w != null:
+		# find the first matching weapon by weapon_id
+		for i in range(_weapons.size()):
+			var weap: WeaponDef = _weapons[i]
+			if weap.weapon_id == w.weapon_id:
+				target_index = i
+				break
+	else:
+		# if no specific weapon, default to last if idx not given
+		if target_index < 0 or target_index >= _weapons.size():
+			target_index = _weapons.size() - 1
+
+	# safety check before removing
+	if target_index < 0 or target_index >= _weapons.size():
+		return
+
+	_weapons.remove_at(target_index)
 	_realign_and_apply_current()
 	_notify_changed()
 
 func swap_weapon_at(index: int, w: WeaponDef) -> void:
-	if index < 0 or index >= _weapons.size():
-		return
+	if index < 0 or index >= _weapons.size(): return
 	_weapons[index] = w
 	_realign_and_apply_current()
 	_notify_changed()
 
 func _notify_changed() -> void:
-	weapons_changed.emit(get_weapons())
+	EventBus.weapons_changed.emit(_weapons)
 
 func _realign_and_apply_current() -> void:
 	var count: int = _weapons.size()
@@ -114,8 +132,6 @@ func ensure_pool_size(n: int) -> void:
 		if a != null:
 			a.mount_index = _pool.size()
 			a.controller_path = get_parent().get_path()
-			# todo: make a mesh for the different turrets
-			#a.default_visual = 
 			add_child(a)
 			_pool.append(a)
 	while _pool.size() > target:

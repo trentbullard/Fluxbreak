@@ -1,6 +1,8 @@
 extends Resource
 class_name WeaponDef
 
+@export var weapon_id: String
+
 # Firing / targeting
 @export var fire_rate: float = 0.5
 @export var base_accuracy: float = 0.75
@@ -21,3 +23,4 @@ class_name WeaponDef
 # Projectile + effects
 @export var projectile_scene: PackedScene
 @export var status_effects: Array[StatusEffectDef] = []
+@export var shot_sound: AudioStream

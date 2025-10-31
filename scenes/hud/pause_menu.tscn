@@ -1,11 +1,15 @@
-[gd_scene load_steps=2 format=3 uid="uid://dywsechusg01y"]
+[gd_scene load_steps=6 format=3 uid="uid://dywsechusg01y"]
 
 [ext_resource type="Script" uid="uid://bapsjbior1dq4" path="res://scripts/hud/pause_menu.gd" id="1_xxxx0"]
+[ext_resource type="LabelSettings" uid="uid://coy4ocfodghm4" path="res://scripts/hud/status_label_settings.tres" id="2_qp6lq"]
+[ext_resource type="Script" uid="uid://dby70n1hr4uk3" path="res://content/defs/weapon_def.gd" id="2_wiae1"]
+[ext_resource type="Resource" uid="uid://dvy0gac2vg1b6" path="res://content/data/weapons/pulse_mk1.tres" id="3_cgdix"]
+[ext_resource type="Resource" uid="uid://bskk7qmspf063" path="res://content/data/weapons/laser_bolt_mk1.tres" id="4_cgdix"]
 
 [node name="PauseMenu" type="CanvasLayer"]
 layer = 2
-visible = false
 script = ExtResource("1_xxxx0")
+weapon_defs = Array[ExtResource("2_wiae1")]([ExtResource("3_cgdix"), ExtResource("4_cgdix")])
 
 [node name="ScreenRoot" type="Control" parent="."]
 layout_mode = 3
@@ -37,6 +41,7 @@ layout_mode = 2
 
 [node name="Resume" type="Button" parent="ScreenRoot/CenterContainer/VBox"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 16
 text = "Resume"
 
 [node name="Restart" type="Button" parent="ScreenRoot/CenterContainer/VBox"]
@@ -50,3 +55,39 @@ text = "Main Menu"
 [node name="Quit" type="Button" parent="ScreenRoot/CenterContainer/VBox"]
 layout_mode = 2
 text = "Quit"
+
+[node name="MarginContainer" type="MarginContainer" parent="ScreenRoot"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -15.0
+grow_horizontal = 0
+
+[node name="CenterContainer" type="CenterContainer" parent="ScreenRoot/MarginContainer"]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ScreenRoot/MarginContainer/CenterContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="ScreenRoot/MarginContainer/CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "GUNS: 0"
+label_settings = ExtResource("2_qp6lq")
+
+[node name="AddPulse" type="Button" parent="ScreenRoot/MarginContainer/CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "+Pulse"
+
+[node name="RemovePulse" type="Button" parent="ScreenRoot/MarginContainer/CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "-Pulse"
+
+[node name="AddLaser" type="Button" parent="ScreenRoot/MarginContainer/CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "+Laser"
+
+[node name="RemoveLaser" type="Button" parent="ScreenRoot/MarginContainer/CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "-Laser"

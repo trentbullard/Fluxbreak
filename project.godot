@@ -24,6 +24,7 @@ RunState="*res://scripts/autoload/run_state.gd"
 GameFlow="*res://scripts/autoload/game_flow.gd"
 CombatStats="*res://scripts/autoload/combat_stats.gd"
 PauseManager="*res://scripts/autoload/pause_manager.gd"
+EventBus="*res://scripts/autoload/event_bus.gd"
 
 [debug]
 

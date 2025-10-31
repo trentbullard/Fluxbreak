@@ -1,10 +1,13 @@
-[gd_resource type="Resource" script_class="WeaponDef" load_steps=4 format=3 uid="uid://dvy0gac2vg1b6"]
+[gd_resource type="Resource" script_class="WeaponDef" load_steps=5 format=3 uid="uid://dvy0gac2vg1b6"]
 
 [ext_resource type="Script" uid="uid://dby70n1hr4uk3" path="res://content/defs/weapon_def.gd" id="1_3vaxh"]
 [ext_resource type="PackedScene" uid="uid://ml5cr05cbn68" path="res://scenes/weapons/projectile.tscn" id="1_s51ta"]
 [ext_resource type="Script" uid="uid://bc5o0q4rptsnq" path="res://content/defs/status_effect_def.gd" id="2_s51ta"]
+[ext_resource type="AudioStream" uid="uid://bc0bnr0mdvk6e" path="res://assets/sounds/plasma_shot.wav" id="3_x4mvk"]
 
 [resource]
 script = ExtResource("1_3vaxh")
+weapon_id = "pulse_mk1"
 projectile_scene = ExtResource("1_s51ta")
+shot_sound = ExtResource("3_x4mvk")
 metadata/_custom_type_script = "uid://dby70n1hr4uk3"

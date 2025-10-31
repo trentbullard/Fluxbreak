@@ -24,6 +24,7 @@ func apply_weapon(w: WeaponDef, keep_cooldown: bool) -> void:
 		clear_weapon(keep_cooldown)
 		return
 	turret.apply_weapon(w, team_id)
+
 	weapon_changed.emit(w)
 	_update_visual_for_weapon(w)
 
