@@ -41,8 +41,14 @@ sky_material = SubResource("PanoramaSkyMaterial_1fp7r")
 [sub_resource type="Environment" id="Environment_v5dby"]
 background_mode = 2
 sky = SubResource("Sky_6m72w")
-ambient_light_source = 2
-ambient_light_color = Color(0.2509804, 0.28235295, 0.34901962, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.735357, 0.735357, 0.735357, 1)
+ambient_light_energy = 5.0
+reflected_light_source = 2
+volumetric_fog_density = 0.01
+volumetric_fog_albedo = Color(0.95468724, 0.95468724, 1, 1)
+volumetric_fog_emission = Color(0.24780053, 0.24780053, 0.3491902, 1)
+volumetric_fog_emission_energy = 0.1
 
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_dphjl"]
 emission_shape = 3
@@ -94,7 +100,7 @@ outline_color = Color(0, 0, 0, 1)
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.610531, 32.244186)
-light_color = Color(1, 0.8627451, 0.7019608, 1)
+light_color = Color(0.45043758, 0.45043758, 0.463739, 1)
 light_energy = 2.5
 light_indirect_energy = 0.0
 light_angular_distance = 30.0

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="MountLayoutPolicy" load_steps=2 format=3 uid="uid://dcssl41w3hvhr"]
+
+[ext_resource type="Script" uid="uid://cmxqylyj6csvd" path="res://systems/mounts/mount_layout_policy.gd" id="1_gy3d7"]
+
+[resource]
+script = ExtResource("1_gy3d7")
+anchors_by_count = Dictionary[int, PackedStringArray]({
+0: PackedStringArray("TopMiddle"),
+1: PackedStringArray("WingLT", "WingRT"),
+2: PackedStringArray("TopMiddle", "WingLT", "WingRT"),
+3: PackedStringArray("WingLT", "WingRT", "WingLB", "WingRB"),
+4: PackedStringArray("TopMiddle", "WingLT", "WingRT", "WingLB", "WingRB"),
+5: PackedStringArray("TopL", "TopR", "WingLT", "WingRT", "WingLB", "WingRB"),
+6: PackedStringArray("TopL", "TopR", "WingLT", "WingRT", "WingLB", "WingRB", "BottomMiddle"),
+7: PackedStringArray("TopL", "TopR", "WingLT", "WingRT", "WingLB", "WingRB", "BottomL", "BottomR")
+})
+metadata/_custom_type_script = "uid://cmxqylyj6csvd"

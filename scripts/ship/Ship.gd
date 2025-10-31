@@ -2,11 +2,8 @@
 extends RigidBody3D
 class_name Ship
 
-@export var team_id: int = 0
 @export var loadout: ShipLoadoutDef
-@export var mount_paths: Array[NodePath] = []  # link turretplatform nodes
-
-var _mounts_by_id: Dictionary = {}  # String -> TurretPlatform
+@export_range(0, 16, 1) var starting_weapons: int = 1
 
 @export var explosion_scene: PackedScene
 @export var return_to_menu_delay: float = 3.0
@@ -33,15 +30,18 @@ var _mounts_by_id: Dictionary = {}  # String -> TurretPlatform
 	deg_to_rad(500.0),
 	deg_to_rad(500.0))
 
-@onready var thruster: GPUParticles3D = $ThrusterParticles
+@onready var thruster1: GPUParticles3D = $ThrusterParticles1
+@onready var thruster2: GPUParticles3D = $ThrusterParticles2
+@onready var thruster3: GPUParticles3D = $ThrusterParticles3
 @onready var camera_pivot: Marker3D = $CameraPivot
+@onready var hardpoint_manager: TurretHardpointManager = $TurretController/HardpointManager
 
 var hull: float = 100.0
 var shield: float = 100.0
 var _target_ang_rate := Vector3.ZERO   # desired ω from input (rad/s)
 var _dead: bool = false
-
 var _regen_timer: Timer
+var _stack: Array[WeaponDef] = []
 
 func _ready() -> void:
 	add_to_group("player")
@@ -51,52 +51,47 @@ func _ready() -> void:
 	_regen_timer.autostart = true
 	_regen_timer.timeout.connect(_on_regen_tick)
 	add_child(_regen_timer)
-	_index_mounts()
-	_apply_initial_loadout()
-
-func _apply_initial_loadout() -> void:
-	if loadout == null: return
-	for ml in loadout.mounts:
-		if ml == null or ml.mount_id == "" or ml.weapon == null: continue
-		if _mounts_by_id.has(ml.mount_id):
-			var plat: TurretPlatform = _mounts_by_id[ml.mount_id] as TurretPlatform
-			plat.set_weapon(ml.weapon, team_id, false)  # fresh CD on spawn
+	
+	if hardpoint_manager != null:
+		hardpoint_manager.weapons_changed.connect(_on_weapons_changed)
+		hardpoint_manager.apply_loadout(loadout, starting_weapons)
 
 # --- public api for upgrades/ui ---
 
-func swap_weapon_on_mount(mount_id: String, new_weapon: WeaponDef, keep_cooldown: bool = true) -> bool:
-	if new_weapon == null or not _mounts_by_id.has(mount_id): return false
-	var plat: TurretPlatform = _mounts_by_id[mount_id] as TurretPlatform
-	plat.set_weapon(new_weapon, team_id, keep_cooldown)
-	return true
+func push_weapon_to_stack(w: WeaponDef) -> void:
+	if hardpoint_manager != null:
+		hardpoint_manager.push_weapon(w)
 
-func get_weapon_on_mount(mount_id: String) -> WeaponDef:
-	if not _mounts_by_id.has(mount_id): return null
-	var plat: TurretPlatform = _mounts_by_id[mount_id] as TurretPlatform
-	var t: PlayerTurret = plat.get_turret()
-	return t.get_weapon() if t != null else null
+func pop_weapon_from_stack() -> void:
+	if hardpoint_manager != null:
+		hardpoint_manager.pop_weapon()
 
-func _exit_tree() -> void:
-	_mounts_by_id.clear()
+func swap_weapon_at(index: int, w: WeaponDef) -> void:
+	if hardpoint_manager != null:
+		hardpoint_manager.swap_weapon_at(index, w)
 
-func _index_mounts() -> void:
-	_mounts_by_id.clear()
-	for p in mount_paths:
-		var tp: TurretPlatform = get_node_or_null(p) as TurretPlatform
-		if tp != null and tp.mount_id != "":
-			_mounts_by_id[tp.mount_id] = tp
+# --- private methods ---
+
+func _refresh() -> void:
+	if hardpoint_manager == null:
+		return
+	hardpoint_manager.realign_and_apply(_stack)
 
 func _physics_process(_delta: float) -> void:
 	_update_translation()
 
-	if thruster:
+	if thruster1 and thruster2 and thruster3:
 		var forward_vel: float = linear_velocity.dot(-transform.basis.z)
 		var forward_key := Input.is_action_pressed("thrust")
 		var reverse_key := Input.is_action_pressed("reverse")
 		var main_emit := forward_key and not reverse_key
 
-		thruster.emitting = main_emit
-		thruster.amount_ratio = clamp(max(forward_vel, 0.0) / (max_speed_forward * boost_mult), 0.15, 1.0)
+		thruster1.emitting = main_emit
+		thruster2.emitting = main_emit
+		thruster3.emitting = main_emit
+		thruster1.amount_ratio = clamp(max(forward_vel, 0.0) / (max_speed_forward * boost_mult), 0.15, 1.0)
+		thruster2.amount_ratio = clamp(max(forward_vel, 0.0) / (max_speed_forward * boost_mult), 0.15, 1.0)
+		thruster3.amount_ratio = clamp(max(forward_vel, 0.0) / (max_speed_forward * boost_mult), 0.15, 1.0)
 
 func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	var dt: float = state.step
@@ -163,6 +158,11 @@ func _update_translation() -> void:
 		var reverse_vel: float = linear_velocity.dot(transform.basis.z)
 		if reverse_vel < max_speed_reverse:
 			apply_central_force(transform.basis.z * accel_reverse * boost)
+
+func _on_weapons_changed(weapons: Array[WeaponDef]) -> void:
+	# Example: update HUD, debug print, recalc DPS preview, etc.
+	# HUD.update_weapon_icons(weapons)
+	print("[Ship] Weapons changed -> count: ", str(weapons.size()))
 
 func _on_regen_tick() -> void:
 	if _dead:

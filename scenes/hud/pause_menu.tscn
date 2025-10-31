@@ -1,0 +1,52 @@
+[gd_scene load_steps=2 format=3 uid="uid://dywsechusg01y"]
+
+[ext_resource type="Script" uid="uid://bapsjbior1dq4" path="res://scripts/hud/pause_menu.gd" id="1_xxxx0"]
+
+[node name="PauseMenu" type="CanvasLayer"]
+layer = 2
+visible = false
+script = ExtResource("1_xxxx0")
+
+[node name="ScreenRoot" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="ScreenRoot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.5)
+
+[node name="CenterContainer" type="CenterContainer" parent="ScreenRoot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="ScreenRoot/CenterContainer"]
+layout_mode = 2
+
+[node name="Resume" type="Button" parent="ScreenRoot/CenterContainer/VBox"]
+layout_mode = 2
+text = "Resume"
+
+[node name="Restart" type="Button" parent="ScreenRoot/CenterContainer/VBox"]
+layout_mode = 2
+text = "Restart"
+
+[node name="MainMenu" type="Button" parent="ScreenRoot/CenterContainer/VBox"]
+layout_mode = 2
+text = "Main Menu"
+
+[node name="Quit" type="Button" parent="ScreenRoot/CenterContainer/VBox"]
+layout_mode = 2
+text = "Quit"

@@ -7,22 +7,23 @@ class_name PlayerTurret
 @export var systems_bonus: float = 0.10            # upgrades add here
 @export var team_id: int = 0
 
-@export var detector_path: NodePath                # optional (for range gizmo / future)
-@onready var muzzle: Marker3D = $Muzzle
-@onready var shot_sound: AudioStreamPlayer3D = $ShotSound
+@export var muzzle: Marker3D
+@export var shot_sound: AudioStreamPlayer3D
 
 var _weapon: WeaponDef = null
 var _cooldown := 0.0
 var _controller: TurretController = null
+var _detector: Area3D = null
 
 enum ShotResult { MISS, GRAZE, HIT, CRIT }
 
 signal weapon_changed(new_weapon: WeaponDef)
 
 func _ready() -> void:
-	_controller = get_node_or_null(controller_path) as TurretController
-	if _controller != null:
-		_controller.register_turret(self, team_id)
+	_bind_controller()
+
+func _enter_tree() -> void:
+	_bind_controller()
 
 func _exit_tree() -> void:
 	if _controller != null:
@@ -121,3 +122,22 @@ func _resolve_shot(hit_chance: float) -> int:
 		if r3 <= gm:
 			return ShotResult.GRAZE
 		return ShotResult.MISS
+
+# --- private ---
+
+func _bind_controller() -> void:
+	var ctrl: TurretController = null
+	
+	if controller_path != NodePath():
+		ctrl = get_node_or_null(controller_path) as TurretController
+	
+	if ctrl == null:
+		var p: Node = get_parent()
+		while p != null and ctrl == null:
+			ctrl = p as TurretController
+			p = p.get_parent()
+	
+	_controller = ctrl
+	if _controller != null:
+		_controller.register_turret(self, team_id)
+		_detector = _controller.detector

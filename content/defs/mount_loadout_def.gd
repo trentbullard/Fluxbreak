@@ -4,3 +4,4 @@ class_name MountLoadoutDef
 
 @export var mount_id: String = ""   # e.g. "fore_left", "dorsal_1"
 @export var weapon: WeaponDef
+@export var team_id: int = 1

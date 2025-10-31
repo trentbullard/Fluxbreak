@@ -1,0 +1,11 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://ckmrjpewic1t6"]
+
+[resource]
+transparency = 1
+blend_mode = 1
+specular_mode = 2
+albedo_color = Color(1, 0, 0, 1)
+emission_enabled = true
+emission = Color(0.7977378, 0, 0, 1)
+emission_energy_multiplier = 1.5
+rim_enabled = true

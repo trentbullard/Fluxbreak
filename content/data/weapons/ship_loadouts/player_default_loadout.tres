@@ -1,11 +1,10 @@
-[gd_resource type="Resource" script_class="ShipLoadoutDef" load_steps=5 format=3 uid="uid://bmjdosjus5db0"]
+[gd_resource type="Resource" script_class="ShipLoadoutDef" load_steps=4 format=3 uid="uid://bmjdosjus5db0"]
 
 [ext_resource type="Script" uid="uid://dhvgo1sv28rx3" path="res://content/defs/mount_loadout_def.gd" id="1_bndi8"]
-[ext_resource type="Resource" uid="uid://dbi8pxb4e5fvd" path="res://content/data/weapons/mount_loadouts/fore_right_default.tres" id="2_6d7rx"]
+[ext_resource type="Resource" uid="uid://bwex6asskxuot" path="res://content/data/weapons/mount_loadouts/pulse_default.tres" id="2_6d7rx"]
 [ext_resource type="Script" uid="uid://c35jeiv6o1idc" path="res://content/defs/ship_loadout_def.gd" id="2_b7pv0"]
-[ext_resource type="Resource" uid="uid://dvd0xdwfcbam6" path="res://content/data/weapons/mount_loadouts/fore_left_default.tres" id="3_wqmni"]
 
 [resource]
 script = ExtResource("2_b7pv0")
-mounts = Array[ExtResource("1_bndi8")]([ExtResource("2_6d7rx"), ExtResource("3_wqmni")])
+mounts = Array[ExtResource("1_bndi8")]([ExtResource("2_6d7rx")])
 metadata/_custom_type_script = "uid://c35jeiv6o1idc"

@@ -1,18 +1,11 @@
 [gd_scene load_steps=4 format=3 uid="uid://bso2dpcl7d5tx"]
 
 [ext_resource type="Script" uid="uid://c1b2hixwpa6y6" path="res://scripts/projectile/projectile.gd" id="1_rjjob"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rjjob"]
-transparency = 1
-blend_mode = 1
-specular_mode = 2
-albedo_color = Color(1, 0, 0, 1)
-emission_enabled = true
-emission = Color(0.7977378, 0, 0, 1)
+[ext_resource type="Material" uid="uid://ckmrjpewic1t6" path="res://content/materials/bad_laser.tres" id="2_i828x"]
 
 [sub_resource type="PrismMesh" id="PrismMesh_i828x"]
-material = SubResource("StandardMaterial3D_rjjob")
-size = Vector3(0.5, 0.5, 10)
+material = ExtResource("2_i828x")
+size = Vector3(0.6, 0.6, 15)
 
 [node name="LaserBolt" type="Node3D"]
 script = ExtResource("1_rjjob")
