@@ -1,0 +1,44 @@
+[gd_scene load_steps=6 format=3 uid="uid://0f6acoounpis"]
+
+[ext_resource type="Material" uid="uid://cnxx4vml8k406" path="res://content/materials/black_metal.tres" id="1_nyfan"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_3jlyu"]
+material = ExtResource("1_nyfan")
+top_radius = 0.15
+bottom_radius = 0.15
+height = 0.5
+
+[sub_resource type="SphereMesh" id="SphereMesh_iqlfj"]
+material = ExtResource("1_nyfan")
+
+[sub_resource type="BoxMesh" id="BoxMesh_ufii5"]
+material = ExtResource("1_nyfan")
+size = Vector3(0.7, 0.7, 0.7)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_33yds"]
+material = ExtResource("1_nyfan")
+top_radius = 0.2
+bottom_radius = 0.2
+height = 0.5
+
+[node name="PulseMk1TurretVisual" type="Node3D"]
+
+[node name="Barrel" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.2085092, 0.9780204, 0, -0.9780204, 0.2085092, 0, 0.9764981, -0.3588174)
+mesh = SubResource("CylinderMesh_3jlyu")
+
+[node name="Sphere" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+mesh = SubResource("SphereMesh_iqlfj")
+
+[node name="Cube" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+mesh = SubResource("BoxMesh_ufii5")
+
+[node name="Mount" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.23924634, 0)
+mesh = SubResource("CylinderMesh_33yds")
+skeleton = NodePath("../..")
+
+[node name="Muzzle" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0451139, -0.56062365)

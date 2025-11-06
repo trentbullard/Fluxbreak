@@ -1,0 +1,87 @@
+[gd_scene load_steps=11 format=3 uid="uid://bqq631rq27m52"]
+
+[ext_resource type="Material" uid="uid://cnxx4vml8k406" path="res://content/materials/black_metal.tres" id="1_lj0fu"]
+[ext_resource type="Material" uid="uid://cemlxv0ajucig" path="res://content/materials/exciter_ring.tres" id="2_pb7av"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_23chu"]
+material = ExtResource("1_lj0fu")
+top_radius = 0.05
+bottom_radius = 0.1
+height = 1.0
+
+[sub_resource type="TorusMesh" id="TorusMesh_62o6i"]
+material = ExtResource("2_pb7av")
+inner_radius = 0.129
+outer_radius = 0.225
+
+[sub_resource type="TorusMesh" id="TorusMesh_nfcuk"]
+material = ExtResource("2_pb7av")
+inner_radius = 0.116
+outer_radius = 0.203
+
+[sub_resource type="TorusMesh" id="TorusMesh_wixf5"]
+material = ExtResource("2_pb7av")
+inner_radius = 0.105
+outer_radius = 0.183
+
+[sub_resource type="TorusMesh" id="TorusMesh_cti17"]
+material = ExtResource("2_pb7av")
+inner_radius = 0.094
+outer_radius = 0.165
+
+[sub_resource type="TorusMesh" id="TorusMesh_aat6r"]
+material = ExtResource("2_pb7av")
+inner_radius = 0.085
+outer_radius = 0.149
+
+[sub_resource type="SphereMesh" id="SphereMesh_t40rn"]
+material = ExtResource("1_lj0fu")
+radius = 0.25
+height = 0.5
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_ujooh"]
+material = ExtResource("1_lj0fu")
+top_radius = 0.2
+bottom_radius = 0.2
+height = 0.75
+
+[node name="LaserMk1TurretVisual" type="Node3D"]
+
+[node name="Barrel" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.17364822, 0.9848077, 0, -0.9848077, 0.17364822, 0, 0.86176765, -0.6905782)
+mesh = SubResource("CylinderMesh_23chu")
+
+[node name="Exciter" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.17364822, 0.9848077, 0, -0.9848077, 0.17364822, 0, 0.81755114, -0.43981427)
+
+[node name="Ring1" type="MeshInstance3D" parent="Exciter"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.14633566, -3.7252903e-09)
+mesh = SubResource("TorusMesh_62o6i")
+
+[node name="Ring2" type="MeshInstance3D" parent="Exciter"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.049, 0)
+mesh = SubResource("TorusMesh_nfcuk")
+
+[node name="Ring3" type="MeshInstance3D" parent="Exciter"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.048, 0)
+mesh = SubResource("TorusMesh_wixf5")
+
+[node name="Ring4" type="MeshInstance3D" parent="Exciter"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.145, 0)
+mesh = SubResource("TorusMesh_cti17")
+
+[node name="Ring5" type="MeshInstance3D" parent="Exciter"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.24118853, 4.1909516e-09)
+mesh = SubResource("TorusMesh_aat6r")
+
+[node name="Gimbal" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.74, 0)
+mesh = SubResource("SphereMesh_t40rn")
+
+[node name="Mount" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.365, 0)
+mesh = SubResource("CylinderMesh_ujooh")
+skeleton = NodePath("../..")
+
+[node name="Muzzle" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95268404, -1.1706604)

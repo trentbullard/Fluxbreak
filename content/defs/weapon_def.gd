@@ -20,6 +20,9 @@ class_name WeaponDef
 @export var damage_min: float = 6.0
 @export var damage_max: float = 12.0
 
+# Visual
+@export var visual_scene: PackedScene
+
 # Projectile + effects
 @export var projectile_scene: PackedScene
 @export var status_effects: Array[StatusEffectDef] = []

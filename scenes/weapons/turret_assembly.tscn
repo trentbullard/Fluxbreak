@@ -22,9 +22,12 @@ script = ExtResource("1_wrt6a")
 [node name="Turret" type="Node3D" parent="." node_paths=PackedStringArray("muzzle", "shot_sound")]
 script = ExtResource("2_vr3xr")
 muzzle = NodePath("../VisualRoot/Muzzle")
-shot_sound = NodePath("../VisualRoot/Muzzle/ShotSound")
+shot_sound = NodePath("../ShotSound")
 
 [node name="VisualRoot" type="Node3D" parent="."]
+
+[node name="Muzzle" type="Marker3D" parent="VisualRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.03, -0.85)
 
 [node name="Mount" type="MeshInstance3D" parent="VisualRoot"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.48, 0)
@@ -34,8 +37,4 @@ mesh = SubResource("CylinderMesh_3wasd")
 transform = Transform3D(1, 0, 0, 0, 0.091067046, 0.9958448, 0, -0.9958448, 0.091067046, 0, 0.960583, -0.14731175)
 mesh = SubResource("CylinderMesh_cru22")
 
-[node name="Muzzle" type="Marker3D" parent="VisualRoot"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.03, -0.85)
-
-[node name="ShotSound" type="AudioStreamPlayer3D" parent="VisualRoot/Muzzle"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.03, 0.85)
+[node name="ShotSound" type="AudioStreamPlayer3D" parent="."]

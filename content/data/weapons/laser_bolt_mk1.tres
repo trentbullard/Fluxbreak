@@ -1,9 +1,10 @@
-[gd_resource type="Resource" script_class="WeaponDef" load_steps=5 format=3 uid="uid://bskk7qmspf063"]
+[gd_resource type="Resource" script_class="WeaponDef" load_steps=6 format=3 uid="uid://bskk7qmspf063"]
 
 [ext_resource type="Script" uid="uid://dby70n1hr4uk3" path="res://content/defs/weapon_def.gd" id="1_tw0gp"]
 [ext_resource type="PackedScene" uid="uid://bso2dpcl7d5tx" path="res://scenes/weapons/laser_bolt.tscn" id="1_xvm1s"]
 [ext_resource type="Script" uid="uid://bc5o0q4rptsnq" path="res://content/defs/status_effect_def.gd" id="2_xvm1s"]
 [ext_resource type="AudioStream" uid="uid://cg2afukmlkc53" path="res://assets/sounds/laser_bolt.wav" id="3_gue4u"]
+[ext_resource type="PackedScene" uid="uid://bqq631rq27m52" path="res://scenes/weapons/laser_mk1_turret_visual.tscn" id="5_auv1g"]
 
 [resource]
 script = ExtResource("1_tw0gp")
@@ -12,6 +13,7 @@ fire_rate = 1.0
 base_accuracy = 0.5
 base_range = 400.0
 crit_chance = 0.0
+visual_scene = ExtResource("5_auv1g")
 projectile_scene = ExtResource("1_xvm1s")
 shot_sound = ExtResource("3_gue4u")
 metadata/_custom_type_script = "uid://dby70n1hr4uk3"

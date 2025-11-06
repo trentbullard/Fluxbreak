@@ -8,6 +8,7 @@ class_name TurretAssembly
 @export var default_visual: PackedScene
 
 @onready var turret: PlayerTurret = $Turret
+@onready var visual_root: Node3D = $VisualRoot
 
 signal weapon_changed(new_weapon: WeaponDef)
 
@@ -44,4 +45,39 @@ func has_weapon() -> bool:
 	return turret != null and turret.get_weapon() != null
 
 func _update_visual_for_weapon(w: WeaponDef) -> void:
-	pass
+	if visual_root == null:
+		return
+
+	# Remove previous visuals
+	for c in visual_root.get_children():
+		visual_root.remove_child(c)
+		c.queue_free()
+
+	# Pick scene: weapon's visual, else default (if provided)
+	var scene: PackedScene = null
+	if w != null and w.visual_scene != null:
+		scene = w.visual_scene
+	elif default_visual != null:
+		scene = default_visual
+
+	# Instance and attach
+	if scene != null:
+		var inst := scene.instantiate()
+		if inst is Node3D:
+			visual_root.add_child(inst)
+			# Ensure editable ownership in editor and reset local transform
+			inst.owner = visual_root.owner
+			(inst as Node3D).transform = Transform3D.IDENTITY
+	
+		var new_muzzle: Marker3D = _find_muzzle_in(inst)
+		if new_muzzle == null:
+			new_muzzle = Marker3D.new()
+			new_muzzle.name = "Muzzle"
+			inst.add_child(new_muzzle)
+			new_muzzle.owner = visual_root.owner
+		if turret != null:
+			turret.muzzle = new_muzzle
+
+func _find_muzzle_in(root: Node) -> Marker3D:
+	var direct: Marker3D = root.get_node_or_null("Muzzle") as Marker3D
+	return direct

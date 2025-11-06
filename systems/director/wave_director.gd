@@ -24,6 +24,10 @@ signal next_wave_eta(seconds: float)
 @export var pressure_interval_sec: float = 10.0
 @export var pressure_enemy_burst: int = 1
 @export var pressure_target_burst: int = 0
+@export var pressure_enemy_point_budget: int = 3
+@export var pressure_target_point_budget: int = 0
+
+@export var wave_burst_extra: int = 0 # optional extra burst on wave start to make waves more obvious
 
 @export var batch_size_min: int = 2
 @export var batch_size_max: int = 4
@@ -53,6 +57,7 @@ var _wave_timer: float = 0.0
 var _state: RunState.State = RunState.State.DOWNTIME
 var _downtime_remaining: float = 0.0
 var _wave_token: int = 0
+var _pressure_token: int = 0
 
 func _ready() -> void:
 	_threat_dir = get_node_or_null(threat_director_path) as ThreatDirector
@@ -64,6 +69,7 @@ func _ready() -> void:
 		return
 	_rng.randomize()
 	_start_downtime(true)
+	_start_pressure_loop()
 
 func _process(delta: float) -> void:
 	_elapsed_sec += delta
@@ -121,8 +127,54 @@ func _next_wave() -> void:
 	)
 	
 	emit_signal("wave_started", _wave_index, budgets["enemy_points"], budgets["target_points"])
-	
+	# Make the initial wave pop more obvious: allow an optional extra generic burst
+	if wave_burst_extra > 0 and reqs.size() > 0:
+		# try to spawn extra enemies (respecting spawner caps)
+		_spawner.spawn_burst(Spawner.SpawnKind.ENEMY, wave_burst_extra)
+
 	_run_requests_async(reqs, card)
+
+func _start_pressure_loop() -> void:
+	# Start a background pressure loop which spawns small bursts periodically.
+	# This runs continuously (during downtime and waves) so the world feels active.
+	if pressure_interval_sec <= 0.0:
+		return
+	_pressure_token += 1
+	_run_pressure_coroutine(_pressure_token)
+
+func _run_pressure_coroutine(token: int) -> void:
+	while true:
+		var t: SceneTreeTimer = get_tree().create_timer(pressure_interval_sec)
+		await t.timeout
+		if token != _pressure_token:
+			return
+		# spawn a light background burst; prefer using catalog-ed defs via BudgetBuyer
+		# Fallback to generic spawn_burst if buyer isn't available or budgets are zero
+		var did_spawn: bool = false
+		if _buyer != null:
+			# Enemy pressure by buying a very small "wave" and spawning those defs
+			if pressure_enemy_point_budget > 0:
+				var ecard: WaveCard = WaveCard.new()
+				var max_tier: int = clamp(1 + _wave_index / 3, 1, 5)
+				var ereqs: Array[SpawnRequest] = _buyer.buy_wave(pressure_enemy_point_budget, 0, ecard, max_tier)
+				for r in ereqs:
+					if r.kind == "Enemy" and r.enemy_def != null and r.count > 0:
+						_spawner.spawn_enemy_burst(r.enemy_def, r.count)
+						did_spawn = true
+			# Target pressure
+			if pressure_target_point_budget > 0:
+				var tcard: WaveCard = WaveCard.new()
+				var treqs: Array[SpawnRequest] = _buyer.buy_wave(0, pressure_target_point_budget, tcard, 1)
+				for r2 in treqs:
+					if r2.kind == "Target" and r2.target_def != null and r2.count > 0:
+						_spawner.spawn_target_burst(r2.target_def, r2.count)
+						did_spawn = true
+		# If the buyer didn't run (null) or produced nothing, fall back to simple generic bursts
+		if not did_spawn:
+			if pressure_enemy_burst > 0:
+				_spawner.spawn_burst(Spawner.SpawnKind.ENEMY, pressure_enemy_burst)
+			if pressure_target_burst > 0:
+				_spawner.spawn_burst(Spawner.SpawnKind.TARGET, pressure_target_burst)
 
 func _rand_batch() -> int:
 	return _rng.randi_range(batch_size_min, batch_size_max)
@@ -209,16 +261,6 @@ func _run_requests_coroutine(reqs: Array[SpawnRequest], card: WaveCard, token: i
 			await wait.timeout
 			if token != _wave_token:
 				return
-		
-		# optional light pressure (just enemies)
-		#if pressure_interval_sec > 0.0:
-			#pressure_clock += req.inter_batch_sec
-			#if pressure_clock >= pressure_interval_sec:
-				#pressure_clock = 0.0
-				#if pressure_enemy_burst > 0:
-					#_spawner.spawn_burst(Spawner.SpawnKind.ENEMY, pressure_enemy_burst)
-				#if token != _wave_token:
-					#return
 		
 		# hard timeout while still spawning
 		if _wave_timer >= wave_timeout_sec:
