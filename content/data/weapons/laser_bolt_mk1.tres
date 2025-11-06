@@ -10,9 +10,10 @@
 script = ExtResource("1_tw0gp")
 weapon_id = "laser_mk1"
 fire_rate = 1.0
-base_accuracy = 0.5
 base_range = 400.0
-crit_chance = 0.0
+accuracy_range_falloff = 0.15
+damage_min = 12.0
+damage_max = 24.0
 visual_scene = ExtResource("5_auv1g")
 projectile_scene = ExtResource("1_xvm1s")
 shot_sound = ExtResource("3_gue4u")

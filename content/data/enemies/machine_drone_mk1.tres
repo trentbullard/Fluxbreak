@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bx6wive40u6f" path="res://content/defs/enemy_def.gd" id="1_mtdvg"]
 [ext_resource type="PackedScene" uid="uid://crhla8xljcdxp" path="res://scenes/enemies/machine_drone_mk1.tscn" id="1_yfniw"]
-[ext_resource type="Resource" uid="uid://bskk7qmspf063" path="res://content/data/weapons/laser_bolt_mk1.tres" id="3_jj33j"]
+[ext_resource type="Resource" uid="uid://dtcage8b6gq5e" path="res://content/data/weapons/machine_drone_mk1_laser_turret_mk1.tres" id="3_jj33j"]
 
 [resource]
 script = ExtResource("1_mtdvg")

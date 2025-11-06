@@ -1,6 +1,7 @@
-[gd_scene load_steps=11 format=3 uid="uid://bqq631rq27m52"]
+[gd_scene load_steps=12 format=3 uid="uid://bqq631rq27m52"]
 
 [ext_resource type="Material" uid="uid://cnxx4vml8k406" path="res://content/materials/black_metal.tres" id="1_lj0fu"]
+[ext_resource type="Script" uid="uid://y4soej1bx3we" path="res://scripts/weapons/laser_turret_visual_controller.gd" id="1_pb7av"]
 [ext_resource type="Material" uid="uid://cemlxv0ajucig" path="res://content/materials/exciter_ring.tres" id="2_pb7av"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_23chu"]
@@ -46,6 +47,8 @@ bottom_radius = 0.2
 height = 0.75
 
 [node name="LaserMk1TurretVisual" type="Node3D"]
+script = ExtResource("1_pb7av")
+max_strength = 2.0
 
 [node name="Barrel" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.17364822, 0.9848077, 0, -0.9848077, 0.17364822, 0, 0.86176765, -0.6905782)

@@ -78,6 +78,20 @@ func _update_visual_for_weapon(w: WeaponDef) -> void:
 		if turret != null:
 			turret.muzzle = new_muzzle
 
+		if turret != null:
+			var vc: LaserTurretVisualController = _find_visual_controller(inst)
+			if vc != null:
+				turret.set_visual_controller(vc)
+
 func _find_muzzle_in(root: Node) -> Marker3D:
 	var direct: Marker3D = root.get_node_or_null("Muzzle") as Marker3D
 	return direct
+
+func _find_visual_controller(root: Node) -> LaserTurretVisualController:
+	if root is LaserTurretVisualController:
+		return root as LaserTurretVisualController
+	for c in root.get_children():
+		var got: LaserTurretVisualController = _find_visual_controller(c)
+		if got != null:
+			return got
+	return null

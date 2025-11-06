@@ -7,6 +7,7 @@ class_name PlayerTurret
 @export var systems_bonus: float = 0.10            # upgrades add here
 @export var team_id: int = 0
 
+@export var visual_controller: LaserTurretVisualController
 @export var muzzle: Marker3D
 @export var shot_sound: AudioStreamPlayer3D
 @export var max_shot_sounds: int = 4
@@ -47,6 +48,11 @@ func swap_weapon(new_weapon: WeaponDef, keep_cooldown: bool = true) -> void:
 	apply_weapon(new_weapon, team_id)
 	_cooldown = prev_cd if keep_cooldown else 0.0
 
+func set_visual_controller(vc: LaserTurretVisualController) -> void:
+	visual_controller = vc
+	if visual_controller != null:
+		visual_controller.set_charge(0.0)
+
 # --- firing loop ---
 
 func _physics_process(delta: float) -> void:
@@ -54,6 +60,11 @@ func _physics_process(delta: float) -> void:
 		return
 
 	_cooldown -= delta
+	
+	if visual_controller != null and _weapon.fire_rate > 0.0:
+		var t_charge: float = 1.0 - clamp(_cooldown / _weapon.fire_rate, 0.0, 1.0)
+		visual_controller.set_charge(t_charge)
+	
 	if _cooldown > 0.0:
 		return
 
@@ -99,8 +110,11 @@ func _fire_at_with_roll(target: Node3D) -> void:
 	get_tree().current_scene.add_child(p)
 
 	if shot_sound != null:
-		shot_sound.pitch_scale = randf_range(0.90, 1.10)
+		shot_sound.pitch_scale = randf_range(0.80, 1.20)
 		shot_sound.play()
+	
+	if visual_controller != null:
+		visual_controller.reset_after_shot()
 
 func _resolve_shot(hit_chance: float) -> int:
 	var hc: float = clamp(hit_chance, 0.0, 1.0)
