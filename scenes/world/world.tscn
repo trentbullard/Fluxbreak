@@ -41,10 +41,11 @@ sky_material = SubResource("PanoramaSkyMaterial_1fp7r")
 
 [sub_resource type="Environment" id="Environment_v5dby"]
 background_mode = 2
+background_energy_multiplier = 1.5
 sky = SubResource("Sky_6m72w")
 ambient_light_source = 3
-ambient_light_color = Color(0.735357, 0.735357, 0.735357, 1)
-ambient_light_energy = 5.0
+ambient_light_color = Color(0, 0.18040457, 0.37047803, 1)
+ambient_light_sky_contribution = 0.15
 reflected_light_source = 2
 volumetric_fog_density = 0.01
 volumetric_fog_albedo = Color(0.95468724, 0.95468724, 1, 1)
@@ -99,19 +100,13 @@ outline_color = Color(0, 0, 0, 1)
 
 [node name="World" type="Node3D"]
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.610531, 32.244186)
-light_color = Color(0.45043758, 0.45043758, 0.463739, 1)
-light_energy = 2.5
-light_indirect_energy = 0.0
-light_angular_distance = 30.0
-light_specular = 0.7
-shadow_enabled = true
-shadow_bias = 0.02
-shadow_normal_bias = 0.3
-
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_v5dby")
+
+[node name="Star" type="DirectionalLight3D" parent="."]
+light_energy = 2.0
+shadow_enabled = true
+directional_shadow_mode = 0
 
 [node name="Starfield" type="GPUParticles3D" parent="." node_paths=PackedStringArray("ship")]
 amount = 2000

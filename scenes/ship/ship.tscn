@@ -164,9 +164,10 @@ ring_segments = 3
 material = ExtResource("5_sttky")
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0ipbl"]
-albedo_color = Color(0.706985, 0.5775778, 1, 1)
+albedo_color = Color(0.35438356, 0.571901, 0.9999965, 1)
 emission_enabled = true
 emission = Color(0.38410568, 0.7554169, 1, 1)
+emission_energy_multiplier = 3.0
 
 [sub_resource type="SphereMesh" id="SphereMesh_8ks32"]
 material = SubResource("StandardMaterial3D_0ipbl")
@@ -190,7 +191,8 @@ initial_velocity_max = 6.0
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qos36"]
 albedo_color = Color(1, 0.40392157, 0, 1)
 emission_enabled = true
-emission = Color(0.5189479, 0.69577837, 1, 1)
+emission = Color(0.40224198, 0.6187108, 0.99999744, 1)
+emission_energy_multiplier = 1.5
 
 [sub_resource type="BoxMesh" id="BoxMesh_hj22y"]
 material = SubResource("StandardMaterial3D_qos36")
@@ -270,7 +272,7 @@ mesh = SubResource("PrismMesh_37jfo")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.93, 0, 0)
 
 [node name="Top" type="MeshInstance3D" parent="VisualRoot/WingR/Arm1"]
-transform = Transform3D(0.9961947, 0.08715574, 0, -0.08715574, 0.9961947, 0, 0, 0, 1, 0, 0.15, 0)
+transform = Transform3D(0.9961947, 0.08715574, 0, -0.08715574, 0.9961947, 0, 0, 0, 1, -0.029651318, 0.15259416, 0)
 mesh = SubResource("BoxMesh_xvsf7")
 skeleton = NodePath("../..")
 
@@ -293,7 +295,7 @@ mesh = SubResource("BoxMesh_sakv4")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, 0, 0)
 
 [node name="Top" type="MeshInstance3D" parent="VisualRoot/WingR/Arm3"]
-transform = Transform3D(0.9998477, 0.017452406, 0, -0.017452406, 0.9998477, 0, 0, 0, 1, 0, 0.038, 0)
+transform = Transform3D(0.9998477, 0.017452406, 0, -0.017452406, 0.9998477, 0, 0, 0, 1, 0.043334953, 0.037243582, 0)
 mesh = SubResource("BoxMesh_3lg4r")
 
 [node name="Bottom" type="MeshInstance3D" parent="VisualRoot/WingR/Arm3"]
@@ -309,7 +311,7 @@ transform = Transform3D(-0.02654333, -4.5727756e-08, -0.9996476, -0.9996475, -4.
 mesh = SubResource("PrismMesh_itjdq")
 
 [node name="Flap2" type="MeshInstance3D" parent="VisualRoot/WingR"]
-transform = Transform3D(5.2358955e-05, -4.4855618e-08, -0.99999994, -0.99999994, -4.369641e-08, -5.2358955e-05, -4.369406e-08, 1, -4.485791e-08, -0.6865689, 1.2024351e-05, 0.86029506)
+transform = Transform3D(5.2358955e-05, -4.4855618e-08, -0.99999994, -0.99999994, -4.369641e-08, -5.2358955e-05, -4.369406e-08, 1, -4.485791e-08, -0.68236774, 1.2244319e-05, 0.86029506)
 mesh = SubResource("PrismMesh_roibb")
 
 [node name="WingL" type="Node3D" parent="VisualRoot"]
@@ -323,7 +325,7 @@ mesh = SubResource("PrismMesh_0ipbl")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.93, 0, 0)
 
 [node name="Top" type="MeshInstance3D" parent="VisualRoot/WingL/Arm1"]
-transform = Transform3D(0.9961947, -0.08715574, 0, 0.08715574, 0.9961947, 0, 0, 0, 1, 0, 0.15, 0)
+transform = Transform3D(0.9961947, -0.08715574, 0, 0.08715574, 0.9961947, 0, 0, 0, 1, 0.036095247, 0.15315792, 0)
 mesh = SubResource("BoxMesh_37jfo")
 
 [node name="Bottom" type="MeshInstance3D" parent="VisualRoot/WingL/Arm1"]
@@ -345,7 +347,7 @@ mesh = SubResource("BoxMesh_itjdq")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3, 0, 0)
 
 [node name="Top" type="MeshInstance3D" parent="VisualRoot/WingL/Arm3"]
-transform = Transform3D(0.9998477, -0.017452406, 0, 0.017452406, 0.9998477, 0, 0, 0, 1, 0, 0.025, 0)
+transform = Transform3D(0.9998477, -0.017452406, 0, 0.017452406, 0.9998477, 0, 0, 0, 1, -0.045656726, 0.02420306, 0)
 mesh = SubResource("BoxMesh_roibb")
 
 [node name="Bottom" type="MeshInstance3D" parent="VisualRoot/WingL/Arm3"]
@@ -361,7 +363,7 @@ transform = Transform3D(0.026176948, -4.256716e-08, -0.9996573, -0.9996573, -4.3
 mesh = SubResource("PrismMesh_wkb1m")
 
 [node name="Flap2" type="MeshInstance3D" parent="VisualRoot/WingL"]
-transform = Transform3D(1.9106855e-15, -4.371139e-08, -1, -1, -4.371139e-08, 0, -4.371139e-08, 1, -4.371139e-08, 0.687, 0, 0.86)
+transform = Transform3D(2.5870348e-09, -4.3634767e-08, -1, -0.9982471, -0.059184458, 0, -0.059184458, 0.9982471, -4.371139e-08, 0.6777939, 0, 0.86)
 mesh = SubResource("PrismMesh_r75st")
 
 [node name="Thruster" type="Node3D" parent="VisualRoot"]
@@ -525,8 +527,11 @@ la_gain = -0.5
 [node name="Camera3D" type="Camera3D" parent="CameraPivot/CameraRig"]
 current = true
 
-[node name="OmniLight3D" type="OmniLight3D" parent="CameraPivot/CameraRig/Camera3D"]
-light_color = Color(0.9063318, 0.9063318, 1, 1)
-light_energy = 0.4
-omni_range = 30.0
-omni_attenuation = 0.0
+[node name="CameraLight" type="OmniLight3D" parent="CameraPivot/CameraRig/Camera3D"]
+transform = Transform3D(1, 0, 0, 0, 0.99044216, 0.13792859, 0, -0.13792859, 0.99044216, 5.343026, 2.834952, -4.6635275)
+light_color = Color(0.7977378, 0.7977378, 0.7977378, 1)
+light_energy = 3.0
+light_cull_mask = 4293918721
+shadow_caster_mask = 4293918721
+omni_range = 40.0
+omni_attenuation = -0.5

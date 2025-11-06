@@ -1,0 +1,50 @@
+[gd_scene load_steps=7 format=3 uid="uid://dtnutlcuxr4ys"]
+
+[ext_resource type="Script" uid="uid://dfmvya8pot7y0" path="res://scripts/drops/nanobot_swarm.gd" id="1_k4eqp"]
+
+[sub_resource type="Gradient" id="Gradient_w65sh"]
+colors = PackedColorArray(0.6155507, 0.8756056, 1, 1, 0.54102784, 0.54102784, 0.54102784, 0.354)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_k4eqp"]
+gradient = SubResource("Gradient_w65sh")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_fyv4k"]
+emission_shape = 1
+emission_sphere_radius = 1.0
+angle_min = 1.0728835e-05
+angle_max = 20.000011
+spread = 75.0
+initial_velocity_min = 5.0
+initial_velocity_max = 10.0
+angular_velocity_min = 9.999984
+angular_velocity_max = 59.99998
+radial_velocity_min = -3.0000222
+radial_velocity_max = -3.0000222
+gravity = Vector3(0, 0, 0)
+damping_min = 0.2
+damping_max = 0.4
+color_ramp = SubResource("GradientTexture1D_k4eqp")
+turbulence_enabled = true
+turbulence_noise_speed = Vector3(1, 1, 1)
+turbulence_influence_max = 0.15
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_72fs5"]
+vertex_color_use_as_albedo = true
+emission_enabled = true
+emission = Color(1, 1, 1, 1)
+billboard_mode = 1
+
+[sub_resource type="PointMesh" id="PointMesh_jifgu"]
+material = SubResource("StandardMaterial3D_72fs5")
+
+[node name="NanobotSwarm" type="GPUParticles3D" node_paths=PackedStringArray("particles", "attractor")]
+amount = 1000
+lifetime = 2.0
+process_material = SubResource("ParticleProcessMaterial_fyv4k")
+draw_pass_1 = SubResource("PointMesh_jifgu")
+script = ExtResource("1_k4eqp")
+particles = NodePath(".")
+attractor = NodePath("GPUParticlesAttractorSphere3D")
+
+[node name="GPUParticlesAttractorSphere3D" type="GPUParticlesAttractorSphere3D" parent="."]
+radius = 12.0
