@@ -12,6 +12,13 @@ class_name PlayerTurret
 @export var shot_sound: AudioStreamPlayer3D
 @export var max_shot_sounds: int = 4
 
+## Extra range added to the weapon's base_range for assignment purposes.
+## This models ammo/accuracy modifiers that let a turret engage past its base range at a penalty.
+@export var range_bonus: float = 0.0
+
+## Optional hard cap for how far this turret may ever be assigned (0 = auto: base + range_bonus).
+@export var max_range_override: float = 0.0
+
 var _weapon: WeaponDef = null
 var _cooldown := 0.0
 var _controller: TurretController = null
@@ -52,6 +59,20 @@ func set_visual_controller(vc: LaserTurretVisualController) -> void:
 	visual_controller = vc
 	if visual_controller != null:
 		visual_controller.set_charge(0.0)
+
+## Return the weapon's base range (from the currently equipped weapon) or 0 if none.
+func get_base_range() -> float:
+	if _weapon != null:
+		return _weapon.base_range
+	return 0.0
+
+## Return the maximum range the controller may assign to this turret.
+## If `max_range_override` > 0 it is used, otherwise base_range + range_bonus.
+func get_max_assign_range() -> float:
+	var base: float = get_base_range()
+	if max_range_override > 0.0:
+		return max_range_override
+	return base + range_bonus
 
 # --- firing loop ---
 

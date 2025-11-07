@@ -493,7 +493,8 @@ ship = NodePath("..")
 script = ExtResource("6_37jfo")
 detector = NodePath("Detector")
 detector_shape = NodePath("Detector/CollisionShape3D")
-assign_mode = 3
+detection_radius = 1000.0
+assign_mode = 2
 
 [node name="Detector" type="Area3D" parent="TurretController"]
 collision_layer = 0
