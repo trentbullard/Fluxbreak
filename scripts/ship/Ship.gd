@@ -44,7 +44,7 @@ var _target_ang_rate := Vector3.ZERO   # desired ω from input (rad/s)
 var _dead: bool = false
 var _regen_timer: Timer
 var _stack: Array[WeaponDef] = []
-var _collected_nanobots: int = 0.0
+var _collected_nanobots: int = 0
 
 func _ready() -> void:
 	add_to_group("player")
