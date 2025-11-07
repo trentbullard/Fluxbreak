@@ -48,15 +48,15 @@ radial_segments = 4
 [sub_resource type="SphereMesh" id="SphereMesh_37jfo"]
 material = ExtResource("5_sttky")
 height = 0.5
-radial_segments = 4
-rings = 3
+radial_segments = 18
+rings = 5
 is_hemisphere = true
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_roibb"]
 material = ExtResource("5_sttky")
 bottom_radius = 1.0
 height = 9.0
-radial_segments = 4
+radial_segments = 18
 
 [sub_resource type="PrismMesh" id="PrismMesh_37jfo"]
 material = ExtResource("5_sttky")
@@ -144,6 +144,7 @@ left_to_right = 0.8
 size = Vector3(0.285, 0.285, 1.545)
 
 [sub_resource type="PrismMesh" id="PrismMesh_r75st"]
+material = ExtResource("5_sttky")
 left_to_right = 0.8
 size = Vector3(0.2, 0.285, 0.995)
 
@@ -167,7 +168,7 @@ material = ExtResource("5_sttky")
 albedo_color = Color(0.35438356, 0.571901, 0.9999965, 1)
 emission_enabled = true
 emission = Color(0.38410568, 0.7554169, 1, 1)
-emission_energy_multiplier = 3.0
+emission_energy_multiplier = 16.0
 
 [sub_resource type="SphereMesh" id="SphereMesh_8ks32"]
 material = SubResource("StandardMaterial3D_0ipbl")
