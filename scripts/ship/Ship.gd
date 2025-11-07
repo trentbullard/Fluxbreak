@@ -20,6 +20,8 @@ class_name Ship
 @export var accel_reverse := 60.0      # see above
 @export var boost_mult := 1.5          # multiplies accel
 
+@export var pickup_range: float = 30.0
+
 @export var max_ang_rate := Vector3( # caps the rate the *ship* can actually reach
 	deg_to_rad(120.0),  # pitch
 	deg_to_rad(120.0),  # yaw
@@ -42,6 +44,7 @@ var _target_ang_rate := Vector3.ZERO   # desired ω from input (rad/s)
 var _dead: bool = false
 var _regen_timer: Timer
 var _stack: Array[WeaponDef] = []
+var _collected_nanobots: int = 0.0
 
 func _ready() -> void:
 	add_to_group("player")
@@ -71,6 +74,17 @@ func pop_weapon_from_stack() -> void:
 func swap_weapon_at(index: int, w: WeaponDef) -> void:
 	if hardpoint_manager != null:
 		hardpoint_manager.swap_weapon_at(index, w)
+
+func collect_nanobots(amount: int) -> void:
+	_collected_nanobots += amount
+	RunState.nanobots_updated.emit(_collected_nanobots)
+
+func spend_nanobots(amount: int) -> void:
+	_collected_nanobots -= amount
+	RunState.nanobots_updated.emit(_collected_nanobots)
+
+func get_nanobots() -> int:
+	return _collected_nanobots
 
 # --- private methods ---
 

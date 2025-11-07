@@ -2,6 +2,7 @@
 extends Node
 
 signal score_changed(total: int, delta: int, reason: String)
+signal nanobots_updated(amount: int)
 
 enum State { IN_WAVE, DOWNTIME }
 

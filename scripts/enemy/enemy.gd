@@ -4,6 +4,8 @@ class_name Enemy
 
 signal about_to_die(target: Enemy)
 
+const NanobotSwarmScene: PackedScene = preload("res://scenes/drops/nanobot_swarm.tscn")
+
 @export_group("Paths")
 @export var turret_paths: Array[NodePath] = []
 
@@ -129,6 +131,15 @@ func _die() -> void:
 	_dead = true
 	
 	about_to_die.emit(self)
+
+	# spawn a visual nanobot swarm at the enemy location to represent dropped resources
+	if NanobotSwarmScene != null:
+		var swarm_node: Node3D = NanobotSwarmScene.instantiate() as Node3D
+		if swarm_node != null:
+			swarm_node.global_transform = global_transform
+			# add to the same parent as the enemy so it sits in the world
+			var parent_node := (get_parent() if get_parent() != null else get_tree().root)
+			parent_node.add_child(swarm_node)
 	
 	remove_from_group("targets")
 	if has_node("CollisionShape3D"):
