@@ -30,8 +30,9 @@ turbulence_influence_max = 0.15
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_72fs5"]
 vertex_color_use_as_albedo = true
+albedo_color = Color(3.1573774e-05, 0.480375, 0.90340185, 1)
 emission_enabled = true
-emission = Color(1, 1, 1, 1)
+emission = Color(4.7841968e-05, 0.47236526, 0.89034986, 1)
 billboard_mode = 1
 
 [sub_resource type="PointMesh" id="PointMesh_jifgu"]
