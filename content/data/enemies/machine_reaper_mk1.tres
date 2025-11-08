@@ -14,6 +14,7 @@ tier = 3
 threat_cost = 3
 bounty_scrap = 3
 affixes = Array[String](["Prime", "Core", "Sigma"])
+score_on_kill = 30
 max_hull = 60.0
 weapon = ExtResource("3_oml5f")
 model_scene = ExtResource("1_0sgp6")

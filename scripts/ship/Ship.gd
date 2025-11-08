@@ -44,7 +44,7 @@ var _target_ang_rate := Vector3.ZERO   # desired ω from input (rad/s)
 var _dead: bool = false
 var _regen_timer: Timer
 var _stack: Array[WeaponDef] = []
-var _collected_nanobots: int = 0
+var _nanobots: int = 0
 
 func _ready() -> void:
 	add_to_group("player")
@@ -76,15 +76,15 @@ func swap_weapon_at(index: int, w: WeaponDef) -> void:
 		hardpoint_manager.swap_weapon_at(index, w)
 
 func collect_nanobots(amount: int) -> void:
-	_collected_nanobots += amount
-	RunState.nanobots_updated.emit(_collected_nanobots)
+	_nanobots += amount
+	RunState.nanobots_updated.emit(_nanobots)
 
 func spend_nanobots(amount: int) -> void:
-	_collected_nanobots -= amount
-	RunState.nanobots_updated.emit(_collected_nanobots)
+	_nanobots -= amount
+	RunState.nanobots_updated.emit(_nanobots)
 
 func get_nanobots() -> int:
-	return _collected_nanobots
+	return _nanobots
 
 # --- private methods ---
 
