@@ -110,7 +110,7 @@ func _fmt_mm_ss(s: float) -> String:
 	var m: int = total / 60
 	var sec: int = total % 60
 	if m <= 0:
-		return ":%02s" % [sec]
+		return ":%02d" % [sec]
 	else:
-		return "%d:%02s" % [m, sec]
+		return "%d:%02d" % [m, sec]
 		
