@@ -30,18 +30,7 @@ collision_mask = 3
 gravity_scale = 0.0
 script = ExtResource("1_6xk8f")
 turret_paths = Array[NodePath]([NodePath("Turret")])
-max_hull = null
-max_shield = null
-shield_regen = null
-evasion = null
-thrust = null
-score_on_kill = null
 explosion_scene = ExtResource("2_8e3ao")
-label_height = null
-label_update_hz = null
-min_distance = null
-max_distance = null
-model_root_path = null
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("SphereShape3D_6xk8f")

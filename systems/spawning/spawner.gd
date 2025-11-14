@@ -21,7 +21,7 @@ var spawn_mode: int = 0
 @export var max_alive_total: int = 30
 @export var max_enemies_alive: int = 10
 @export var max_targets_alive: int = 3
-@export var maintain_target_floor: bool = true
+@export var maintain_target_floor: bool = false
 @export var target_floor_alive: int = 2
 @export var target_topup_interval: float = 10.0
 
@@ -47,7 +47,7 @@ func _ready() -> void:
 	
 	_target_topup = Timer.new()
 	_target_topup.wait_time = target_topup_interval
-	_target_topup.autostart = true
+	_target_topup.autostart = (not directed_mode)
 	_target_topup.timeout.connect(_maintain_targets)
 	add_child(_target_topup)
 

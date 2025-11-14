@@ -31,11 +31,11 @@ func _process(delta: float) -> void:
 	_update_values()
 
 func _update_values() -> void:
-	var shield_pair := _read_pair("shield", "shield_max", 100.0, 100.0)
+	var shield_pair := _read_pair("shield", "eff_max_shield", 100.0, 100.0)
 	var shield: float = shield_pair[0]
 	var shield_max: float = shield_pair[1]
 
-	var hull_pair := _read_pair("hull", "hull_max", 100.0, 100.0)
+	var hull_pair := _read_pair("hull", "eff_max_hull", 100.0, 100.0)
 	var hull: float = hull_pair[0]
 	var hull_max: float = hull_pair[1]
 	

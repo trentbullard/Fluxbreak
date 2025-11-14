@@ -1,0 +1,81 @@
+[gd_scene load_steps=8 format=3 uid="uid://c5vgj2pner6ln"]
+
+[ext_resource type="Material" uid="uid://cjtpg6xet41ey" path="res://content/materials/asteroid_surface.tres" id="1_v5y0t"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_row54"]
+lightmap_size_hint = Vector2i(127, 64)
+material = ExtResource("1_v5y0t")
+radius = 4.0
+height = 8.0
+radial_segments = 18
+rings = 6
+
+[sub_resource type="SphereMesh" id="SphereMesh_2o2nn"]
+material = ExtResource("1_v5y0t")
+radius = 3.0
+height = 6.0
+radial_segments = 18
+rings = 6
+
+[sub_resource type="SphereMesh" id="SphereMesh_7bonj"]
+lightmap_size_hint = Vector2i(127, 64)
+material = ExtResource("1_v5y0t")
+radius = 3.401
+height = 6.204
+radial_segments = 18
+rings = 6
+
+[sub_resource type="SphereMesh" id="SphereMesh_cpf3l"]
+lightmap_size_hint = Vector2i(127, 64)
+material = ExtResource("1_v5y0t")
+radius = 2.802
+height = 6.802
+radial_segments = 18
+rings = 6
+
+[sub_resource type="SphereMesh" id="SphereMesh_quwpw"]
+lightmap_size_hint = Vector2i(127, 64)
+material = ExtResource("1_v5y0t")
+radius = 3.0
+height = 6.0
+radial_segments = 18
+rings = 6
+
+[sub_resource type="SphereMesh" id="SphereMesh_vrsy1"]
+lightmap_size_hint = Vector2i(127, 64)
+material = ExtResource("1_v5y0t")
+radius = 3.0
+height = 5.0
+radial_segments = 18
+rings = 6
+
+[node name="SmallAsteroid" type="Node3D"]
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.37376332, -1.146965, 0.33923304)
+mesh = SubResource("SphereMesh_row54")
+skeleton = NodePath("../MeshInstance3D")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.28550202, 0.31419158, -0.74098)
+mesh = SubResource("SphereMesh_2o2nn")
+
+[node name="MeshInstance3D3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2141417, -2.7492442, 1.1937243)
+mesh = SubResource("SphereMesh_7bonj")
+skeleton = NodePath("../MeshInstance3D")
+
+[node name="MeshInstance3D4" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.1471827, -0.85126466, 1.0486976)
+mesh = SubResource("SphereMesh_cpf3l")
+skeleton = NodePath("../MeshInstance3D")
+
+[node name="MeshInstance3D5" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4536339, -1.7857826, -1.2743472)
+mesh = SubResource("SphereMesh_quwpw")
+skeleton = NodePath("../MeshInstance3D")
+
+[node name="MeshInstance3D6" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8007624, -1.146965, 1.5386866)
+mesh = SubResource("SphereMesh_vrsy1")
+skeleton = NodePath("../MeshInstance3D")

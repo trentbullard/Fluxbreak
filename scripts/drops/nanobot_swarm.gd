@@ -9,8 +9,7 @@ class_name NanobotSwarm
 @export var attract_strength_start: float = 40.0
 @export var attract_strength_max: float = 120.0
 @export var ramp_time: float = 0.5
-@export var value_min: int = 100
-@export var value_max: int = 1000
+@export var value: int = 0
 
 @export var pickup_distance: float = 5.0
 @export var move_towards_player_speed: float = 120.0
@@ -19,14 +18,12 @@ var _magnet_on: bool = false
 var _magnet_started_ts: float = 0.0
 var _player: Ship
 var _picked: bool = false
-var _pickup_trigger_range: float = 0.0
 
 func _ready() -> void:
 	_player = get_tree().get_first_node_in_group("player") as RigidBody3D
 	particles.emitting = true
 	attractor.radius = attract_radius_start
 	attractor.strength = 0.0
-	_pickup_trigger_range = _read_player_pickup_range()
 
 func _process(delta: float) -> void:
 	if _player == null:
@@ -36,8 +33,11 @@ func _process(delta: float) -> void:
 	var player_pos: Vector3 = _player.global_transform.origin
 	var dist_sq: float = cur_pos.distance_squared_to(player_pos)
 	
+	var trigger_range: float = 0.0
+	trigger_range = _player.get_effective_pickup_range()
+
 	if not _magnet_on:
-		var trigger_sq: float = _pickup_trigger_range * _pickup_trigger_range
+		var trigger_sq: float = trigger_range * trigger_range
 		if dist_sq <= trigger_sq:
 			_magnet_on = true
 			_magnet_started_ts = 0.0
@@ -73,13 +73,5 @@ func _process(delta: float) -> void:
 		call_deferred("_on_picked")
 
 func _on_picked() -> void:
-	# give one frame for particles to update, then free
-	var val: int = randi_range(value_min, value_max)
-	_player.collect_nanobots(val)
+	_player.collect_nanobots(value)
 	queue_free()
-
-func _read_player_pickup_range() -> float:
-	var pickup_range: float = _pickup_trigger_range
-	if _player != null:
-		pickup_range = _player.pickup_range
-	return pickup_range

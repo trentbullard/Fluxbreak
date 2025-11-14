@@ -132,6 +132,8 @@ spawn_radius = 600.0
 [node name="WaveDirector" type="Node" parent="."]
 script = ExtResource("7_m114p")
 spawner_path = NodePath("../Spawner")
+pressure_target_burst = 1
+pressure_target_point_budget = 1
 wave_timeout_sec = 60.0
 threat_director_path = NodePath("../ThreatDirector")
 wave_budgeter_path = NodePath("../WaveBudgeter")

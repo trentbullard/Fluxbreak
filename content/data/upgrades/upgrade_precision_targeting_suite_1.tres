@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=6 format=3 uid="uid://boee0f2x3pc3l"]
+
+[ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="1_swfr7"]
+[ext_resource type="Script" uid="uid://f3a4tqbwupk2" path="res://content/defs/upgrade_def.gd" id="2_h4aac"]
+
+[sub_resource type="Resource" id="Resource_swfr7"]
+script = ExtResource("1_swfr7")
+stat = 20
+value = 5.0
+source_id = "precision_targeting_suite_1"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_h4aac"]
+script = ExtResource("1_swfr7")
+stat = 23
+value = 0.05
+source_id = "precision_targeting_suite_1"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_ta2ub"]
+script = ExtResource("1_swfr7")
+stat = 22
+value = -0.05
+source_id = "precision_targeting_suite_1"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[resource]
+script = ExtResource("2_h4aac")
+id = "precision_targeting_suite_1"
+display_name = "Precision Targeting Suite I"
+descripton = "Lasers hit where you point them. Weak on spray, strong on elites."
+modifiers = Array[ExtResource("1_swfr7")]([SubResource("Resource_swfr7"), SubResource("Resource_h4aac"), SubResource("Resource_ta2ub")])
+metadata/_custom_type_script = "uid://f3a4tqbwupk2"

@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=5 format=3 uid="uid://co8i1xw33rdoh"]
+
+[ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="1_o4mvm"]
+[ext_resource type="Script" uid="uid://f3a4tqbwupk2" path="res://content/defs/upgrade_def.gd" id="2_hlxwi"]
+
+[sub_resource type="Resource" id="Resource_o4mvm"]
+script = ExtResource("1_o4mvm")
+stat = 13
+value = 40.0
+source_id = "adaptive_shield_matrix_1"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_hlxwi"]
+script = ExtResource("1_o4mvm")
+stat = 14
+value = 0.8
+source_id = "adaptive_shield_matrix_1"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[resource]
+script = ExtResource("2_hlxwi")
+id = "adaptive_shield_matrix_1"
+display_name = "Adaptive Shield Matrix I"
+descripton = "Energy tank, shrugs off chip damage."
+modifiers = Array[ExtResource("1_o4mvm")]([SubResource("Resource_o4mvm"), SubResource("Resource_hlxwi")])
+metadata/_custom_type_script = "uid://f3a4tqbwupk2"

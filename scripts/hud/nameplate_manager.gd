@@ -59,11 +59,12 @@ func _sync_targets() -> void:
 			if label != null:
 				var kind: String = _kind_of(target)
 				if kind == "enemy":
-					label.text = "%s (%s)\n%dm  •  HP: %d" % [
+					label.text = "%s (%s)\n%dm  •  HP: %d | S: %d" % [
 						target.display_name,
 						target.faction,
 						int(round(d)),
-						int(round(max(target.hull, 0.0)))
+						int(round(max(target.hull, 0.0))),
+						int(round(max(target.shield, 0.0)))
 					]
 				elif kind == "target":
 					label.text = "%s\n%dm  •  HP: %d" % [

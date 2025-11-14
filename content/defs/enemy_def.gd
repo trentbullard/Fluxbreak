@@ -12,6 +12,8 @@ class_name EnemyDef
 @export var bounty_scrap: int = 1         # economy faucet
 @export var can_be_elite: bool = true     # whether to apply an affix
 @export var affixes: Array[String] = []   # see below
+
+@export_group("Rewards")
 @export var score_on_kill: int = 10
 
 @export_group("Defense")

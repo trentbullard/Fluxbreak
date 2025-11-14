@@ -21,5 +21,5 @@ class_name TargetDef
 # --- visuals (optional) ---
 @export var model_scene: PackedScene         # swap mesh for specific target types
 @export var material: StandardMaterial3D     # one-and-done override for all meshes
-@export var emission_color: Color = Color(0.9, 0.8, 0.4)
-@export var emission_energy: float = 1.2
+@export var emission_color: Color = Color(1.0, 1.0, 1.0, 1.0)
+@export var emission_energy: float = 0.0

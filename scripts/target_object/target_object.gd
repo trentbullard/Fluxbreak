@@ -99,7 +99,9 @@ func _process(delta: float) -> void:
 func _die() -> void:
 	if _dead: return
 	_dead = true
-	RunState.add_score(score_on_kill, "target")
+	
+	var mult: float = player_ship.get_effective_score_gain_mult()
+	RunState.add_score(int(round(score_on_kill * mult)), "target")
 	
 	if has_node("CollisionShape3D"):
 		$CollisionShape3D.disabled = true

@@ -1,4 +1,4 @@
-# turret_controller.gd
+# scripts/ship/turret_controller.gd (godot 4.5)
 extends Node3D
 class_name TurretController
 
@@ -14,6 +14,11 @@ enum AssignMode { FOCUS_ONE, FOCUS_PER_TEAM, FOCUS_PER_TURRET }
 # Optional: how often to recompute assignments (sec). 0 = every physics frame.
 @export var assign_interval: float = 0.10
 
+const Stat = StatTypes.Stat
+
+var eff_detection_radius: float
+var _stats: StatAggregator
+
 var _targets: Array[WeakRef] = []
 var _by_team: Dictionary = {}              # team_id:int -> Array[PlayerTurret] turrets
 var _turret_to_target: Dictionary = {}     # turret:PlayerTurret -> target:Node3D (or null)
@@ -26,6 +31,11 @@ func _ready() -> void:
 	var sphere: SphereShape3D = detector_shape.shape as SphereShape3D
 	if sphere != null:
 		sphere.radius = detection_radius
+
+	_stats = get_stat_aggregator()
+	_refresh_detection_radius()
+	if _stats != null and not _stats.stats_changed.is_connected(_on_stats_changed):
+		_stats.stats_changed.connect(_on_stats_changed)
 
 	if not detector.body_entered.is_connected(_on_body_entered):
 		detector.body_entered.connect(_on_body_entered)
@@ -335,3 +345,22 @@ func _purge_target(wr: WeakRef) -> void:
 		var w2 := _team_to_target[team_id] as WeakRef
 		if w2 != null and w2 == wr:
 			_team_to_target.erase(team_id)
+
+func get_stat_aggregator() -> StatAggregator:
+	# Ship is expected to be parent.
+	var ship: Node = get_parent()
+	if ship != null and ship.has_node("StatAggregator"):
+		return ship.get_node("StatAggregator") as StatAggregator
+	return null
+
+func _refresh_detection_radius() -> void:
+	if _stats == null:
+		eff_detection_radius = detection_radius
+	else:
+		eff_detection_radius = _stats.compute(Stat.SCANNER_RANGE, detection_radius)
+	var sphere: SphereShape3D = detector_shape.shape as SphereShape3D
+	if sphere != null:
+		sphere.radius = eff_detection_radius
+
+func _on_stats_changed(_affected: Array[int]) -> void:
+	_refresh_detection_radius()

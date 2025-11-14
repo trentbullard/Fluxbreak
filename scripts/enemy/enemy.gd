@@ -44,6 +44,7 @@ var _dead: bool = false
 var _last_xform: Transform3D = Transform3D()
 var hull: float
 var shield: float
+var _regen_timer: Timer
 var _tangent_axis: Vector3 = Vector3.UP
 var _axis_timer: float = 0.0
 
@@ -89,7 +90,14 @@ func configure_enemy(d: EnemyDef) -> void:
 func apply_damage(amount: float) -> void:
 	if _dead:
 		return
-	hull -= amount
+	var incoming: float = max(0.0, amount)
+	var remaining: float = incoming
+	if shield > 0.0:
+		var absorbed: float = min(shield, remaining)
+		shield -= absorbed
+		remaining -= absorbed
+	if remaining > 0.0:
+		hull -= remaining
 	if hull <= 0.0:
 		_die()
 
@@ -111,6 +119,13 @@ func _ready() -> void:
 
 	hull = max_hull
 	shield = max_shield
+	
+	# --- shield regen timer ---
+	_regen_timer = Timer.new()
+	_regen_timer.wait_time = 1.0
+	_regen_timer.autostart = true
+	_regen_timer.timeout.connect(_on_regen_tick)
+	add_child(_regen_timer)
 
 func _physics_process(delta: float) -> void:
 	_axis_timer -= delta
@@ -125,6 +140,12 @@ func _process(_delta: float) -> void:
 	if is_inside_tree():
 		_last_xform = global_transform
 
+func _on_regen_tick() -> void:
+	if _dead:
+		return
+	if shield < max_shield and shield_regen > 0.0:
+		shield = min(shield + shield_regen, max_shield)
+
 func _die() -> void:
 	if _dead:
 		return
@@ -134,12 +155,14 @@ func _die() -> void:
 
 	# spawn a visual nanobot swarm at the enemy location to represent dropped resources
 	if NanobotSwarmScene != null:
-		var swarm_node: Node3D = NanobotSwarmScene.instantiate() as Node3D
+		var swarm_node: NanobotSwarm = NanobotSwarmScene.instantiate() as NanobotSwarm
 		if swarm_node != null:
 			swarm_node.global_transform = global_transform
 			# add to the same parent as the enemy so it sits in the world
 			var parent_node := (get_parent() if get_parent() != null else get_tree().root)
 			parent_node.add_child(swarm_node)
+			var pps: float = CombatStats.get_pps()
+			swarm_node.value = RunState.calc_enemy_nanobots(def, pps)
 	
 	remove_from_group("targets")
 	if has_node("CollisionShape3D"):
@@ -148,7 +171,8 @@ func _die() -> void:
 	collision_mask  = 0
 	set_physics_process(false)
 	
-	RunState.add_score(score_on_kill, "enemy")
+	var mult: float = player_ship.get_effective_score_gain_mult()
+	RunState.add_score(int(round(score_on_kill * mult)), "enemy")
 	if explosion_scene != null:
 		var fx := explosion_scene.instantiate() as Node3D
 		fx.global_transform = global_transform

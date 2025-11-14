@@ -9,6 +9,7 @@ class_name Ship
 @export var return_to_menu_delay: float = 3.0
 
 @export var max_hull: float = 100.0
+@export var overheal: float = 0.0
 @export var max_shield: float = 100.0
 @export var shield_regen: float = 5.0
 @export var base_evasion: float = 0.1
@@ -20,7 +21,9 @@ class_name Ship
 @export var accel_reverse := 60.0      # see above
 @export var boost_mult := 1.5          # multiplies accel
 
-@export var pickup_range: float = 30.0
+@export var pickup_range: float = 40.0
+@export var nanobot_gain_mult: float = 1.0
+@export var score_gain_mult: float = 1.0
 
 @export var max_ang_rate := Vector3( # caps the rate the *ship* can actually reach
 	deg_to_rad(120.0),  # pitch
@@ -37,6 +40,27 @@ class_name Ship
 @onready var thruster3: GPUParticles3D = $ThrusterParticles3
 @onready var camera_pivot: Marker3D = $CameraPivot
 @onready var hardpoint_manager: TurretHardpointManager = $TurretController/HardpointManager
+@onready var stat_aggregator: StatAggregator = $StatAggregator
+
+const Stat = StatTypes.Stat
+
+# --- cached effective stats ---
+var eff_max_hull: float
+var eff_max_shield: float
+var eff_shield_regen: float
+var eff_evasion: float
+var eff_damage_taken_mult: float
+var eff_max_speed_forward: float
+var eff_max_speed_reverse: float
+var eff_accel_forward: float
+var eff_accel_reverse: float
+var eff_boost_mult: float
+var eff_drag: float
+var eff_max_ang_rate: Vector3
+var eff_angular_accel: Vector3
+var eff_pickup_range: float
+var eff_nanobot_gain_mult: float
+var eff_score_gain_mult: float
 
 var hull: float = 100.0
 var shield: float = 100.0
@@ -49,6 +73,23 @@ var _nanobots: int = 0
 func _ready() -> void:
 	add_to_group("player")
 	RunState.start_run()
+	_refresh_effective_stats()
+	EventBus.heal_hull_requested.connect(_on_heal_hull_requested)
+	RunState.nanobots_spent.connect(spend_nanobots)
+	if stat_aggregator != null and not stat_aggregator.stats_changed.is_connected(_on_stats_changed):
+		stat_aggregator.stats_changed.connect(_on_stats_changed)
+		if not EventBus.add_bulkhead_requested.is_connected(stat_aggregator.add_upgrade):
+			EventBus.add_bulkhead_requested.connect(stat_aggregator.add_upgrade)
+		if not EventBus.add_shield_requested.is_connected(stat_aggregator.add_upgrade):
+			EventBus.add_shield_requested.connect(stat_aggregator.add_upgrade)
+		if not EventBus.add_targeting_requested.is_connected(stat_aggregator.add_upgrade):
+			EventBus.add_targeting_requested.connect(stat_aggregator.add_upgrade)
+		if not EventBus.add_systems_requested.is_connected(stat_aggregator.add_upgrade):
+			EventBus.add_systems_requested.connect(stat_aggregator.add_upgrade)
+		if not EventBus.add_salvage_requested.is_connected(stat_aggregator.add_upgrade):
+			EventBus.add_salvage_requested.connect(stat_aggregator.add_upgrade)
+		if not EventBus.add_thrusters_requested.is_connected(stat_aggregator.add_upgrade):
+			EventBus.add_thrusters_requested.connect(stat_aggregator.add_upgrade)
 	
 	# --- shield regen timer ---
 	_regen_timer = Timer.new()
@@ -76,7 +117,9 @@ func swap_weapon_at(index: int, w: WeaponDef) -> void:
 		hardpoint_manager.swap_weapon_at(index, w)
 
 func collect_nanobots(amount: int) -> void:
-	_nanobots += amount
+	var gain_mult: float = eff_nanobot_gain_mult if eff_nanobot_gain_mult > 0.0 else 1.0
+	var adjusted: int = int(round(max(0.0, float(amount) * gain_mult)))
+	_nanobots += adjusted
 	RunState.nanobots_updated.emit(_nanobots)
 
 func spend_nanobots(amount: int) -> void:
@@ -141,25 +184,49 @@ func set_target_angular_rates(rad_per_sec: Vector3) -> void:
 	)
 
 func get_evasion() -> float:
-	return clamp(base_evasion, 0.0, 1.0)
+	return eff_evasion
 
 func get_speed_caps() -> Vector2:
-	return Vector2(max_speed_reverse, max_speed_forward)
+	return Vector2(eff_max_speed_reverse, eff_max_speed_forward)
+
+func get_effective_accel_forward() -> float:
+	return eff_accel_forward
+
+func get_effective_accel_reverse() -> float:
+	return eff_accel_reverse
+
+func get_effective_boost_mult() -> float:
+	return eff_boost_mult
+
+func get_effective_drag() -> float:
+	return eff_drag
+
+func get_effective_max_angular_rates() -> Vector3:
+	return eff_max_ang_rate
+
+func get_effective_angular_accel() -> Vector3:
+	return eff_angular_accel
+
+func get_effective_pickup_range() -> float:
+	return eff_pickup_range
+
+func get_effective_nanobot_gain_mult() -> float:
+	return eff_nanobot_gain_mult
+
+func get_effective_score_gain_mult() -> float:
+	return eff_score_gain_mult
 
 func apply_damage(amount: float) -> void:
 	if _dead:
 		return
-	
-	var remaining: float = amount
-	
+	var incoming: float = max(0.0, amount * eff_damage_taken_mult)
+	var remaining: float = incoming
 	if shield > 0.0:
 		var absorbed: float = min(shield, remaining)
 		shield -= absorbed
 		remaining -= absorbed
-	
 	if remaining > 0.0:
 		hull -= remaining
-	
 	if hull <= 0.0:
 		_die()
 
@@ -178,8 +245,67 @@ func _update_translation() -> void:
 func _on_regen_tick() -> void:
 	if _dead:
 		return
-	if shield < max_shield:
-		shield = min(shield + shield_regen, max_shield)
+	if shield < eff_max_shield and eff_shield_regen > 0.0:
+		shield = min(shield + eff_shield_regen, eff_max_shield)
+
+func _refresh_effective_stats() -> void:
+	var aggr: StatAggregator = stat_aggregator
+	if aggr == null:
+		eff_max_hull = max_hull
+		eff_max_shield = max_shield
+		eff_shield_regen = shield_regen
+		eff_evasion = clamp(base_evasion, 0.0, 1.0)
+		eff_damage_taken_mult = 1.0
+		eff_max_speed_forward = max_speed_forward
+		eff_max_speed_reverse = max_speed_reverse
+		eff_accel_forward = accel_forward
+		eff_accel_reverse = accel_reverse
+		eff_boost_mult = boost_mult
+		eff_drag = drag
+		eff_max_ang_rate = max_ang_rate
+		eff_angular_accel = angular_accel
+		eff_pickup_range = pickup_range
+		eff_nanobot_gain_mult = nanobot_gain_mult
+		eff_score_gain_mult = score_gain_mult
+		return
+	# Pull effective values once.
+	eff_max_hull = aggr.compute(Stat.MAX_HULL, max_hull)
+	eff_max_shield = aggr.compute(Stat.MAX_SHIELD, max_shield)
+	eff_shield_regen = aggr.compute(Stat.SHIELD_REGEN, shield_regen)
+	eff_evasion = clamp(aggr.compute(Stat.EVASION_BASE, base_evasion), 0.0, 1.0)
+	eff_damage_taken_mult = aggr.compute(Stat.DAMAGE_TAKEN_MULT, 1.0)
+	eff_max_speed_forward = aggr.compute(Stat.MAX_SPEED_FORWARD, max_speed_forward)
+	eff_max_speed_reverse = aggr.compute(Stat.MAX_SPEED_REVERSE, max_speed_reverse)
+	eff_accel_forward = aggr.compute(Stat.ACCEL_FORWARD, accel_forward)
+	eff_accel_reverse = aggr.compute(Stat.ACCEL_REVERSE, accel_reverse)
+	eff_boost_mult = aggr.compute(Stat.BOOST_MULT, boost_mult)
+	eff_drag = aggr.compute(Stat.DRAG, drag)
+	eff_max_ang_rate = Vector3(
+		aggr.compute(Stat.ANGULAR_RATE_PITCH, max_ang_rate.x),
+		aggr.compute(Stat.ANGULAR_RATE_YAW, max_ang_rate.y),
+		aggr.compute(Stat.ANGULAR_RATE_ROLL, max_ang_rate.z))
+	eff_angular_accel = Vector3(
+		aggr.compute(Stat.ANGULAR_ACCEL_PITCH, angular_accel.x),
+		aggr.compute(Stat.ANGULAR_ACCEL_YAW, angular_accel.y),
+		aggr.compute(Stat.ANGULAR_ACCEL_ROLL, angular_accel.z))
+	eff_pickup_range = aggr.compute(Stat.PICKUP_RANGE, pickup_range)
+	eff_nanobot_gain_mult = aggr.compute(Stat.NANOBOT_GAIN_MULT, nanobot_gain_mult)
+	eff_score_gain_mult = aggr.compute(Stat.SCORE_GAIN_MULT, score_gain_mult)
+
+func _on_stats_changed(_affected: Array[int]) -> void:
+	_refresh_effective_stats()
+
+func _on_heal_hull_requested(amount: float, percent: float) -> void:
+	var flat: float = max(0.0, amount)
+
+	var pct_clamped: float = clamp(percent, 0.0, 1.0)
+	var heal_from_percent: float = max_hull * pct_clamped
+	var total_heal: float = flat + heal_from_percent
+	
+	var overheal_cap_mult: float = 1.0 + max(overheal, 0.0)
+	var cap: float = max_hull * overheal_cap_mult
+	
+	hull = min(cap, hull + total_heal)
 
 func _die() -> void:
 	if _dead:

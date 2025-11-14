@@ -115,6 +115,7 @@ func _next_wave() -> void:
 	var pps: float = CombatStats.get_pps()
 	var threat: float = _threat_dir.compute_threat(_elapsed_sec, pps)
 	var budgets: Dictionary = _wave_budgeter.to_budgets(threat, _elapsed_sec)
+	RunState.set_wave_context(_wave_index, int(budgets["enemy_points"]), int(budgets["target_points"]))
 	
 	var card: WaveCard = _choose_card()
 	var max_tier: int = clamp(1 + _wave_index / 3, 1, 5)
@@ -170,11 +171,11 @@ func _run_pressure_coroutine(token: int) -> void:
 						_spawner.spawn_target_burst(r2.target_def, r2.count)
 						did_spawn = true
 		# If the buyer didn't run (null) or produced nothing, fall back to simple generic bursts
-		if not did_spawn:
-			if pressure_enemy_burst > 0:
-				_spawner.spawn_burst(Spawner.SpawnKind.ENEMY, pressure_enemy_burst)
-			if pressure_target_burst > 0:
-				_spawner.spawn_burst(Spawner.SpawnKind.TARGET, pressure_target_burst)
+		#if not did_spawn:
+			#if pressure_enemy_burst > 0:
+				#_spawner.spawn_burst(Spawner.SpawnKind.ENEMY, pressure_enemy_burst)
+			#if pressure_target_burst > 0:
+				#_spawner.spawn_burst(Spawner.SpawnKind.TARGET, pressure_target_burst)
 
 func _rand_batch() -> int:
 	return _rng.randi_range(batch_size_min, batch_size_max)

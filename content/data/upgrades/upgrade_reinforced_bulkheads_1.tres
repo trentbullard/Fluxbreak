@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=5 format=3 uid="uid://cjl7i8ndls66u"]
+
+[ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="1_vomjb"]
+[ext_resource type="Script" uid="uid://f3a4tqbwupk2" path="res://content/defs/upgrade_def.gd" id="2_ytepu"]
+
+[sub_resource type="Resource" id="Resource_vomjb"]
+script = ExtResource("1_vomjb")
+stat = 12
+value = 50.0
+source_id = "reinforced_bulkheads_1"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_ytepu"]
+script = ExtResource("1_vomjb")
+stat = 16
+op = 1
+value = 0.95
+source_id = "reinforced_bulkheads_1"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[resource]
+script = ExtResource("2_ytepu")
+id = "reinforced_bulkheads_1"
+display_name = "Reinforced Bulkheads I"
+descripton = "Thickener armor plating: +50 hull, -5% incoming damage."
+modifiers = Array[ExtResource("1_vomjb")]([SubResource("Resource_vomjb"), SubResource("Resource_ytepu")])
+metadata/_custom_type_script = "uid://f3a4tqbwupk2"

@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="TargetDef" load_steps=2 format=3 uid="uid://d3ov3f30loch0"]
+[gd_resource type="Resource" script_class="TargetDef" load_steps=3 format=3 uid="uid://d3ov3f30loch0"]
 
 [ext_resource type="Script" uid="uid://bitk3uva0wi2v" path="res://content/defs/target_def.gd" id="1_6v4vb"]
+[ext_resource type="PackedScene" uid="uid://c5vgj2pner6ln" path="res://scenes/targets/asteroid_small.tscn" id="1_b3rit"]
 
 [resource]
 script = ExtResource("1_6v4vb")
@@ -8,4 +9,8 @@ id = "asteroid_small"
 display_name = "Asteroid"
 max_hull = 100.0
 score_on_kill = 15
+angular_spin = Vector3(0.1, 0, 0.1)
+drift = Vector3(0, 0.1, 0)
+model_scene = ExtResource("1_b3rit")
+emission_color = Color(0.15594886, 0.12835406, 0.025840001, 0.1)
 metadata/_custom_type_script = "uid://bitk3uva0wi2v"

@@ -1,6 +1,6 @@
-[gd_scene load_steps=52 format=3 uid="uid://bsm2da0co8h01"]
+[gd_scene load_steps=53 format=3 uid="uid://bsm2da0co8h01"]
 
-[ext_resource type="Script" uid="uid://bmssav2pv370w" path="res://scripts/ship/ship.gd" id="1_dkinh"]
+[ext_resource type="Script" uid="uid://ijoiya8g5w2t" path="res://scripts/ship/ship.gd" id="1_dkinh"]
 [ext_resource type="PackedScene" uid="uid://yo2mi8h7ihfj" path="res://scenes/explosion.tscn" id="2_0s5ox"]
 [ext_resource type="Resource" uid="uid://bmjdosjus5db0" path="res://content/data/weapons/ship_loadouts/player_default_loadout.tres" id="2_37jfo"]
 [ext_resource type="Script" uid="uid://bg8wrq5keroaf" path="res://scripts/ship/camera_rig.gd" id="2_c54or"]
@@ -9,6 +9,7 @@
 [ext_resource type="Material" uid="uid://bs46d23h8cicj" path="res://content/materials/gray_metal.tres" id="5_sttky"]
 [ext_resource type="Material" uid="uid://cnxx4vml8k406" path="res://content/materials/black_metal.tres" id="6_0ipbl"]
 [ext_resource type="Script" uid="uid://cu02qkegoh0bh" path="res://scripts/ship/turret_controller.gd" id="6_37jfo"]
+[ext_resource type="Script" uid="uid://bjdmr046qcn4y" path="res://systems/stats/stat_aggregator.gd" id="8_8ks32"]
 [ext_resource type="PackedScene" uid="uid://b2r6cha4kt75j" path="res://scenes/weapons/turret_assembly.tscn" id="10_0ipbl"]
 [ext_resource type="Resource" uid="uid://dcssl41w3hvhr" path="res://content/data/weapons/mount_layouts/player_policy.tres" id="11_8ks32"]
 [ext_resource type="Script" uid="uid://d4bjj3kl6527f" path="res://scripts/ship/turret_hardpoint_manager.gd" id="12_8ks32"]
@@ -489,6 +490,9 @@ draw_pass_1 = SubResource("BoxMesh_hj22y")
 [node name="MouseFlightController" type="Node" parent="." node_paths=PackedStringArray("ship")]
 script = ExtResource("2_u5c2e")
 ship = NodePath("..")
+
+[node name="StatAggregator" type="Node" parent="."]
+script = ExtResource("8_8ks32")
 
 [node name="TurretController" type="Node3D" parent="." node_paths=PackedStringArray("detector", "detector_shape")]
 script = ExtResource("6_37jfo")

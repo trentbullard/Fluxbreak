@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=7 format=3 uid="uid://d1nhfdmnn8g72"]
+
+[ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="1_qlkcg"]
+[ext_resource type="Script" uid="uid://f3a4tqbwupk2" path="res://content/defs/upgrade_def.gd" id="2_0t1dx"]
+
+[sub_resource type="Resource" id="Resource_qlkcg"]
+script = ExtResource("1_qlkcg")
+stat = 12
+op = 1
+value = 1.1
+source_id = "systems_optimization_1"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_0t1dx"]
+script = ExtResource("1_qlkcg")
+stat = 13
+op = 1
+value = 1.1
+source_id = "systems_optimization_1"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_d8sut"]
+script = ExtResource("1_qlkcg")
+stat = 28
+op = 1
+value = 1.05
+source_id = "systems_optimization_1"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_hahl6"]
+script = ExtResource("1_qlkcg")
+stat = 29
+op = 1
+value = 1.05
+source_id = "systems_optimization_1"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[resource]
+script = ExtResource("2_0t1dx")
+id = "systems_optimization_1"
+display_name = "Systems Optimization I"
+descripton = "Boring but efficient - legendary-lite."
+modifiers = Array[ExtResource("1_qlkcg")]([SubResource("Resource_qlkcg"), SubResource("Resource_0t1dx"), SubResource("Resource_d8sut"), SubResource("Resource_hahl6")])
+metadata/_custom_type_script = "uid://f3a4tqbwupk2"
