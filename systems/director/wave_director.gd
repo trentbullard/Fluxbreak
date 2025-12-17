@@ -13,14 +13,6 @@ signal next_wave_eta(seconds: float)
 @export var spawner_path: NodePath
 @export var downtime_sec: float = 30.0
 
-@export var start_enemies_min: int = 2
-@export var start_enemies_max: int = 3
-@export var start_targets_min: int = 1
-@export var start_targets_max: int = 2
-
-@export var per_wave_enemy_add: int = 1
-@export var per_wave_target_add: int = 1
-
 @export var pressure_interval_sec: float = 10.0
 @export var pressure_enemy_burst: int = 1
 @export var pressure_target_burst: int = 0
@@ -36,8 +28,8 @@ signal next_wave_eta(seconds: float)
 @export var wave_clear_carryover_ok: int = 0
 @export var wave_timeout_sec: float = 25.0
 
-@export var max_alive_base: int = 8
-@export var max_alive_per_wave: int = 1
+@export var max_alive_base: int = 5
+@export var max_alive_per_wave: int = 2
 @export var max_targets_alive: int = 3
 
 # new threat/budget system

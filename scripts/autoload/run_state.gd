@@ -7,10 +7,10 @@ signal nanobots_spent(amount: int) # called by pause menu
 
 # --- Nanobots ---
 # base scaling
-var base_drop: float = 120.0
-var tier_factor: float = 20.0
-var threat_factor: float = 1.5
-var wave_linear: float = 0.75
+var base_drop: float = 150.0
+var tier_factor: float = 50.0
+var threat_factor: float = 10.0
+var wave_linear: float = 1.2
 var wave_quadratic: float = 0.02
 
 # performance coupling

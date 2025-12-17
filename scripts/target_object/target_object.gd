@@ -69,8 +69,14 @@ func configure_target(d: TargetDef) -> void:
 		new_vis.name = "VisualRoot"
 		add_child(new_vis)
 		visual_root = new_vis
-
+	
 	_apply_material_and_emission(visual_root, d)
+	
+	angular_velocity = Vector3(
+		randf_range(-0.5, 0.5),
+		randf_range(-0.5, 0.5),
+		randf_range(-0.5, 0.5)
+	) * d.angular_spin
 
 func set_ship(ship: Ship):
 	player_ship = ship
@@ -86,6 +92,10 @@ func _ready() -> void:
 	_last_xform = global_transform
 	hull = max_hull
 	shield = max_shield
+
+	# Keep rotation from decaying
+	angular_damp_mode = RigidBody3D.DAMP_MODE_REPLACE
+	angular_damp = 0.0
 
 func _process(delta: float) -> void:
 	if is_inside_tree():

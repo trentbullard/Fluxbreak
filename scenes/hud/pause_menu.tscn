@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://dywsechusg01y"]
+[gd_scene load_steps=12 format=3 uid="uid://dywsechusg01y"]
 
 [ext_resource type="Script" uid="uid://bapsjbior1dq4" path="res://scripts/hud/pause_menu.gd" id="1_xxxx0"]
 [ext_resource type="LabelSettings" uid="uid://coy4ocfodghm4" path="res://scripts/hud/status_label_settings.tres" id="2_qp6lq"]
@@ -9,6 +9,8 @@
 [ext_resource type="Resource" uid="uid://co8i1xw33rdoh" path="res://content/data/upgrades/upgrade_adaptive_shield_matrix_1.tres" id="6_b56t0"]
 [ext_resource type="Resource" uid="uid://boee0f2x3pc3l" path="res://content/data/upgrades/upgrade_precision_targeting_suite_1.tres" id="7_rwyqn"]
 [ext_resource type="Resource" uid="uid://d1nhfdmnn8g72" path="res://content/data/upgrades/upgrade_systems_optimization_1.tres" id="8_q0fbk"]
+[ext_resource type="Resource" uid="uid://bs1n4ls1c4is4" path="res://content/data/upgrades/upgrade_salvage_magnet_1.tres" id="9_rwyqn"]
+[ext_resource type="Resource" uid="uid://bepfsw50andu" path="res://content/data/upgrades/upgrade_vectoring_thrusters_1.tres" id="10_q0fbk"]
 
 [node name="PauseMenu" type="CanvasLayer"]
 layer = 2
@@ -18,14 +20,8 @@ bulkhead_upgrade = ExtResource("5_5kir2")
 shield_upgrade = ExtResource("6_b56t0")
 targeting_upgrade = ExtResource("7_rwyqn")
 systems_upgrade = ExtResource("8_q0fbk")
-pulse_weapon_cost = null
-laser_weapon_cost = null
-bulkhead_upgrade_cost = null
-shield_upgrade_cost = null
-targeting_upgrade_cost = null
-systems_upgrade_cost = null
-refund_on_removal = null
-remove_refund_pct = null
+salvage_upgrade = ExtResource("9_rwyqn")
+thrusters_upgrade = ExtResource("10_q0fbk")
 
 [node name="ScreenRoot" type="Control" parent="."]
 layout_mode = 3
@@ -152,3 +148,7 @@ text = "Salvage (1000)"
 [node name="Thrusters" type="Button" parent="ScreenRoot/Upgrades/CenterContainer/VBoxContainer"]
 layout_mode = 2
 text = "Thrusters (1000)"
+
+[node name="Repair" type="Button" parent="ScreenRoot/Upgrades/CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "Repair (500)"

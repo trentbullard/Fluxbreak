@@ -6,7 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://e7u5rwibgucu" path="res://scenes/enemies/enemy.tscn" id="6_5qq27"]
 [ext_resource type="Script" uid="uid://btyca23m2ejd3" path="res://systems/spawning/spawner.gd" id="6_bq33v"]
 [ext_resource type="Script" uid="uid://bv6so66yvn2if" path="res://scripts/hud/reticle_layer.gd" id="7_gb53w"]
-[ext_resource type="PackedScene" uid="uid://bk2fpvtu6c4ij" path="res://scenes/enemies/target_object.tscn" id="7_j2gmx"]
+[ext_resource type="PackedScene" uid="uid://bk2fpvtu6c4ij" path="res://scenes/targets/target_object.tscn" id="7_j2gmx"]
 [ext_resource type="Script" uid="uid://ocd0uqj80pk3" path="res://systems/director/wave_director.gd" id="7_m114p"]
 [ext_resource type="Script" uid="uid://du7q53l77nqki" path="res://scripts/hud/hud_manager.gd" id="8_1yooq"]
 [ext_resource type="Script" uid="uid://dg7wrb62rqtwf" path="res://scripts/components/threat_director.gd" id="8_71ii3"]
@@ -46,6 +46,7 @@ sky = SubResource("Sky_6m72w")
 ambient_light_source = 3
 ambient_light_color = Color(0, 0.18040457, 0.37047803, 1)
 ambient_light_sky_contribution = 0.15
+ambient_light_energy = 6.0
 reflected_light_source = 2
 volumetric_fog_density = 0.01
 volumetric_fog_albedo = Color(0.95468724, 0.95468724, 1, 1)
@@ -385,3 +386,21 @@ offset_right = 40.0
 offset_bottom = 40.0
 
 [node name="PauseMenu" parent="." instance=ExtResource("32_5o5dd")]
+
+[node name="DamageOverlay" type="CanvasLayer" parent="."]
+
+[node name="FrontRect" type="TextureRect" parent="DamageOverlay"]
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="BackRect" type="TextureRect" parent="DamageOverlay"]
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="LeftRect" type="TextureRect" parent="DamageOverlay"]
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="RightRect" type="TextureRect" parent="DamageOverlay"]
+offset_right = 40.0
+offset_bottom = 40.0

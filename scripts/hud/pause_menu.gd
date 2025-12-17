@@ -21,12 +21,14 @@ class_name PauseMenu
 @export var thrusters_upgrade_cost: int = 1000
 @export var refund_on_removal: bool = true
 @export var remove_refund_pct: float = 0.50
+@export var repair_cost: int = 500
 
 @onready var root: Control = $ScreenRoot
 @onready var btn_resume: Button = $ScreenRoot/CenterContainer/VBox/Resume
 @onready var btn_restart: Button = $ScreenRoot/CenterContainer/VBox/Restart
 @onready var btn_menu: Button = $ScreenRoot/CenterContainer/VBox/MainMenu
 @onready var btn_quit: Button = $ScreenRoot/CenterContainer/VBox/Quit
+@onready var btn_repair: Button = $ScreenRoot/Upgrades/CenterContainer/VBoxContainer/Repair
 @onready var label_gun: Label = $ScreenRoot/MarginContainer/CenterContainer/VBoxContainer/Label
 @onready var btn_add_pulse: Button = $ScreenRoot/MarginContainer/CenterContainer/VBoxContainer/AddPulse
 @onready var btn_rem_pulse: Button = $ScreenRoot/MarginContainer/CenterContainer/VBoxContainer/RemovePulse
@@ -65,6 +67,7 @@ func _ready() -> void:
 	btn_systems.pressed.connect(_on_systems_clicked)
 	btn_salvage.pressed.connect(_on_salvage_clicked)
 	btn_thrusters.pressed.connect(_on_thrusters_clicked)
+	btn_repair.pressed.connect(_on_repair_clicked)
 	
 	PauseManager.paused_changed.connect(_on_paused_changed)
 	EventBus.weapons_changed.connect(_set_num_guns)
@@ -172,6 +175,14 @@ func _on_thrusters_clicked() -> void:
 	thrusters_upgrade_cost *= 1.5
 	btn_thrusters.text = "Thrusters (%d)" % thrusters_upgrade_cost
 
+func _on_repair_clicked() -> void:
+	_attempt_purchase(repair_cost, func() -> void:
+		EventBus.heal_hull_requested.emit(25.0, 0.0)
+	)
+	# Repair cost does not scale (leave constant). Update button text in case design changes later.
+	if btn_repair:
+		btn_repair.text = "Repair (%d)" % repair_cost
+
 func _refresh_affordability() -> void:
 	var nb: int = _current_nanobots
 	if btn_add_pulse:
@@ -186,6 +197,12 @@ func _refresh_affordability() -> void:
 		btn_targeting.disabled = (targeting_upgrade_cost > nb)
 	if btn_systems:
 		btn_systems.disabled = (systems_upgrade_cost > nb)
+	if btn_thrusters:
+		btn_thrusters.disabled = (thrusters_upgrade_cost > nb)
+	if btn_salvage:
+		btn_salvage.disabled = (salvage_upgrade_cost > nb)
+	if btn_repair:
+		btn_repair.disabled = (repair_cost > nb)
 
 func _set_stat_label() -> void:
 	label_stats.text = "Max Hull: %f\nMax Shield: %f\nAccuracy: %f" % [max_hull, max_shield, accuracy]

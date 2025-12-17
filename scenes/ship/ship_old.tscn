@@ -1,0 +1,592 @@
+[gd_scene load_steps=59 format=3 uid="uid://dlq3aie15ouy1"]
+
+[ext_resource type="Script" uid="uid://ijoiya8g5w2t" path="res://scripts/ship/ship.gd" id="1_usqd7"]
+[ext_resource type="Resource" uid="uid://bmjdosjus5db0" path="res://content/data/weapons/ship_loadouts/player_default_loadout.tres" id="2_2fj7d"]
+[ext_resource type="PackedScene" uid="uid://yo2mi8h7ihfj" path="res://scenes/explosion.tscn" id="3_g4krp"]
+[ext_resource type="Script" uid="uid://b6l13a7bry0bf" path="res://scripts/ship/visual_root.gd" id="4_u506d"]
+[ext_resource type="Material" uid="uid://bs46d23h8cicj" path="res://content/materials/gray_metal.tres" id="5_6obma"]
+[ext_resource type="Material" uid="uid://cnxx4vml8k406" path="res://content/materials/black_metal.tres" id="6_bcbe8"]
+[ext_resource type="Script" uid="uid://b8t0af6cqqigx" path="res://scripts/input/mouse_flight_controller.gd" id="7_55hpd"]
+[ext_resource type="Script" uid="uid://bjdmr046qcn4y" path="res://systems/stats/stat_aggregator.gd" id="8_u5tnu"]
+[ext_resource type="Script" uid="uid://cu02qkegoh0bh" path="res://scripts/ship/turret_controller.gd" id="9_g6urh"]
+[ext_resource type="Script" uid="uid://d4bjj3kl6527f" path="res://scripts/ship/turret_hardpoint_manager.gd" id="10_t1apb"]
+[ext_resource type="PackedScene" uid="uid://b2r6cha4kt75j" path="res://scenes/weapons/turret_assembly.tscn" id="11_vpycd"]
+[ext_resource type="Resource" uid="uid://dcssl41w3hvhr" path="res://content/data/weapons/mount_layouts/player_policy.tres" id="12_abrxb"]
+[ext_resource type="Script" uid="uid://bg8wrq5keroaf" path="res://scripts/ship/camera_rig.gd" id="13_kbtsb"]
+[ext_resource type="AudioStream" uid="uid://0wvln2504pi0" path="res://assets/sounds/laser_shield_hit.wav" id="14_5eo34"]
+[ext_resource type="AudioStream" uid="uid://d4jqh40at4h1v" path="res://assets/sounds/laser_hull_hit.wav" id="15_8tsht"]
+[ext_resource type="AudioStream" uid="uid://cf02rji3mj1b8" path="res://assets/sounds/shield_low_alarm.wav" id="16_stfhq"]
+[ext_resource type="AudioStream" uid="uid://bgwvk6khwbvch" path="res://assets/sounds/hull_low_alarm.wav" id="17_4kpn7"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_2l2hl"]
+size = Vector3(1.5, 0.5, 4)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_37jfo"]
+material = ExtResource("5_6obma")
+top_radius = 0.66
+bottom_radius = 0.6
+height = 0.25
+radial_segments = 4
+
+[sub_resource type="PrismMesh" id="PrismMesh_sttky"]
+material = ExtResource("5_6obma")
+left_to_right = 1.0
+size = Vector3(0.6, 0.56, 0.83)
+
+[sub_resource type="BoxMesh" id="BoxMesh_0ipbl"]
+material = ExtResource("5_6obma")
+size = Vector3(0.95, 0.62, 0.5)
+
+[sub_resource type="PrismMesh" id="PrismMesh_8ks32"]
+material = ExtResource("5_6obma")
+left_to_right = 0.0
+size = Vector3(0.6, 2, 0.805)
+subdivide_width = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_itjdq"]
+material = ExtResource("5_6obma")
+top_radius = 0.6
+bottom_radius = 0.65
+height = 0.5
+radial_segments = 4
+
+[sub_resource type="SphereMesh" id="SphereMesh_37jfo"]
+material = ExtResource("5_6obma")
+height = 0.5
+radial_segments = 18
+rings = 5
+is_hemisphere = true
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_roibb"]
+material = ExtResource("5_6obma")
+bottom_radius = 1.0
+height = 9.0
+radial_segments = 18
+
+[sub_resource type="PrismMesh" id="PrismMesh_37jfo"]
+material = ExtResource("5_6obma")
+left_to_right = 0.0
+size = Vector3(3, 2, 0.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_xvsf7"]
+material = ExtResource("5_6obma")
+size = Vector3(1.5, 0.15, 1.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_6qm8q"]
+material = ExtResource("5_6obma")
+size = Vector3(1.5, 0.15, 1.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_woufe"]
+material = ExtResource("5_6obma")
+size = Vector3(1, 0.12, 1.45)
+
+[sub_resource type="BoxMesh" id="BoxMesh_sakv4"]
+material = ExtResource("5_6obma")
+size = Vector3(1, 0.12, 1.45)
+
+[sub_resource type="BoxMesh" id="BoxMesh_3lg4r"]
+material = ExtResource("5_6obma")
+size = Vector3(1, 0.1, 1.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_2xkf5"]
+material = ExtResource("5_6obma")
+size = Vector3(1, 0.1, 1.2)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_0616w"]
+material = ExtResource("5_6obma")
+radius = 0.14
+radial_segments = 6
+rings = 0
+
+[sub_resource type="PrismMesh" id="PrismMesh_itjdq"]
+material = ExtResource("5_6obma")
+left_to_right = 0.8
+size = Vector3(0.285, 0.285, 1.545)
+
+[sub_resource type="PrismMesh" id="PrismMesh_roibb"]
+material = ExtResource("5_6obma")
+left_to_right = 0.8
+size = Vector3(0.2, 0.285, 0.995)
+
+[sub_resource type="PrismMesh" id="PrismMesh_0ipbl"]
+material = ExtResource("5_6obma")
+left_to_right = 1.0
+size = Vector3(3, 2, 0.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_37jfo"]
+material = ExtResource("5_6obma")
+size = Vector3(1.5, 0.15, 1.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_sttky"]
+material = ExtResource("5_6obma")
+size = Vector3(1.5, 0.15, 1.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_8ks32"]
+material = ExtResource("5_6obma")
+size = Vector3(1, 0.12, 1.45)
+
+[sub_resource type="BoxMesh" id="BoxMesh_itjdq"]
+material = ExtResource("5_6obma")
+size = Vector3(1, 0.12, 1.45)
+
+[sub_resource type="BoxMesh" id="BoxMesh_roibb"]
+material = ExtResource("5_6obma")
+size = Vector3(1, 0.1, 1.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wkb1m"]
+material = ExtResource("5_6obma")
+size = Vector3(1, 0.1, 1.2)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_r75st"]
+material = ExtResource("5_6obma")
+radius = 0.14
+radial_segments = 6
+rings = 0
+
+[sub_resource type="PrismMesh" id="PrismMesh_wkb1m"]
+material = ExtResource("5_6obma")
+left_to_right = 0.8
+size = Vector3(0.285, 0.285, 1.545)
+
+[sub_resource type="PrismMesh" id="PrismMesh_r75st"]
+material = ExtResource("5_6obma")
+left_to_right = 0.8
+size = Vector3(0.2, 0.285, 0.995)
+
+[sub_resource type="TorusMesh" id="TorusMesh_q6f52"]
+material = ExtResource("6_bcbe8")
+inner_radius = 0.25
+outer_radius = 0.5
+rings = 32
+ring_segments = 3
+
+[sub_resource type="TorusMesh" id="TorusMesh_37jfo"]
+material = ExtResource("6_bcbe8")
+inner_radius = 0.08
+outer_radius = 0.7
+ring_segments = 3
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_8ks32"]
+material = ExtResource("5_6obma")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0ipbl"]
+albedo_color = Color(0.35438356, 0.571901, 0.9999965, 1)
+emission_enabled = true
+emission = Color(0.38410568, 0.7554169, 1, 1)
+emission_energy_multiplier = 16.0
+
+[sub_resource type="SphereMesh" id="SphereMesh_8ks32"]
+material = SubResource("StandardMaterial3D_0ipbl")
+radius = 0.1
+height = 0.2
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_wkb1m"]
+material = ExtResource("5_6obma")
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_r75st"]
+material = ExtResource("5_6obma")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_roibb"]
+transparency = 1
+blend_mode = 3
+depth_draw_mode = 2
+albedo_color = Color(0, 0.78214186, 1, 0.010000001)
+metallic_specular = 0.0
+roughness = 0.0
+emission_enabled = true
+emission = Color(1, 1, 1, 1)
+rim_enabled = true
+rim_tint = 1.0
+
+[sub_resource type="SphereMesh" id="SphereMesh_wkb1m"]
+material = SubResource("StandardMaterial3D_roibb")
+radius = 5.0
+height = 14.0
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_xfxds"]
+emission_shape_scale = Vector3(0.2, 0.2, 0.1)
+emission_shape = 3
+emission_box_extents = Vector3(1, 1, 1)
+direction = Vector3(0, 0, 1)
+initial_velocity_min = 3.0
+initial_velocity_max = 6.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qos36"]
+albedo_color = Color(1, 0.40392157, 0, 1)
+emission_enabled = true
+emission = Color(0.40224198, 0.6187108, 0.99999744, 1)
+emission_energy_multiplier = 1.5
+
+[sub_resource type="BoxMesh" id="BoxMesh_hj22y"]
+material = SubResource("StandardMaterial3D_qos36")
+size = Vector3(0.1, 0.1, 0.2)
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_iyjb8"]
+radius = 200.0
+
+[node name="Ship" type="RigidBody3D"]
+collision_mask = 5
+gravity_scale = 0.0
+script = ExtResource("1_usqd7")
+loadout = ExtResource("2_2fj7d")
+explosion_scene = ExtResource("3_g4krp")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_2l2hl")
+debug_color = Color(0, 0.60038817, 0.70000815, 0)
+debug_fill = false
+
+[node name="VisualRoot" type="Node3D" parent="." node_paths=PackedStringArray("ship")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.465335)
+script = ExtResource("4_u506d")
+ship = NodePath("..")
+
+[node name="Fuselage" type="Node3D" parent="VisualRoot"]
+
+[node name="Cockpit" type="Node3D" parent="VisualRoot/Fuselage"]
+transform = Transform3D(1, 0, 0, 0, 0.999882, 0.015358294, 0, -0.015358294, 0.999882, 0, 0.8217356, 0.6239329)
+
+[node name="PostSeat1" type="MeshInstance3D" parent="VisualRoot/Fuselage/Cockpit"]
+transform = Transform3D(0.70710677, -1.2802768e-08, 0.7071067, -0.70710677, -3.0908616e-08, 0.7071067, 1.2802769e-08, -0.99999994, -3.0908616e-08, 0, -0.14755952, 0.82880616)
+mesh = SubResource("CylinderMesh_37jfo")
+
+[node name="PostSeat2" type="MeshInstance3D" parent="VisualRoot/Fuselage/Cockpit"]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, -0.012313843, 1.2541821)
+mesh = SubResource("PrismMesh_sttky")
+
+[node name="Seat" type="MeshInstance3D" parent="VisualRoot/Fuselage/Cockpit"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.017496943, 0.45585614)
+mesh = SubResource("BoxMesh_0ipbl")
+
+[node name="Windshield" type="Node3D" parent="VisualRoot/Fuselage/Cockpit"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.3243661)
+
+[node name="Front" type="MeshInstance3D" parent="VisualRoot/Fuselage/Cockpit/Windshield"]
+transform = Transform3D(1.9106855e-15, 4.371139e-08, -1, 1, -4.371139e-08, 0, -4.371139e-08, -1, -4.371139e-08, 0, -0.033245564, 0.03367591)
+mesh = SubResource("PrismMesh_8ks32")
+skeleton = NodePath("../..")
+
+[node name="Mid" type="MeshInstance3D" parent="VisualRoot/Fuselage/Cockpit/Windshield"]
+transform = Transform3D(0.7071067, 1.2802767e-08, -0.7071067, 0.7071067, -3.0908616e-08, 0.7071067, -1.2802768e-08, -0.9999999, -3.0908616e-08, 0, -0.14181697, 1.2833188)
+mesh = SubResource("CylinderMesh_itjdq")
+
+[node name="Nose" type="Node3D" parent="VisualRoot/Fuselage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -5.672088)
+
+[node name="Cone" type="MeshInstance3D" parent="VisualRoot/Fuselage/Nose"]
+transform = Transform3D(0.70710677, -1.2802768e-08, 0.7071067, -0.7068747, 0.025618596, 0.70687467, -0.018115094, -0.99967176, 0.018115073, 1.0121483e-08, 0.018846536, 0.81018686)
+mesh = SubResource("SphereMesh_37jfo")
+
+[node name="MidBody" type="Node3D" parent="VisualRoot/Fuselage"]
+
+[node name="Midsection1" type="MeshInstance3D" parent="VisualRoot/Fuselage/MidBody"]
+transform = Transform3D(-0.70710677, 7.461998e-08, -0.70710677, 0.7069436, 0.021483313, -0.7069436, 0.015190948, -0.999769, -0.015191053, -6.2433735e-08, -0.078354046, -0.3698575)
+mesh = SubResource("CylinderMesh_roibb")
+skeleton = NodePath("../../..")
+
+[node name="WingR" type="Node3D" parent="VisualRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.25, 0, 3.2)
+
+[node name="Angle" type="MeshInstance3D" parent="VisualRoot/WingR"]
+transform = Transform3D(0.99862945, -5.990586e-11, 0.05233597, -0.05233597, -2.287678e-09, 0.99862945, 5.990585e-11, -1, -2.2876778e-09, -1.175, 0.05, -1.6)
+mesh = SubResource("PrismMesh_37jfo")
+
+[node name="Arm1" type="Node3D" parent="VisualRoot/WingR"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.93, 0, 0)
+
+[node name="Top" type="MeshInstance3D" parent="VisualRoot/WingR/Arm1"]
+transform = Transform3D(0.9961947, 0.08715574, 0, -0.08715574, 0.9961947, 0, 0, 0, 1, -0.029651318, 0.15259416, 0)
+mesh = SubResource("BoxMesh_xvsf7")
+skeleton = NodePath("../..")
+
+[node name="Bottom" type="MeshInstance3D" parent="VisualRoot/WingR/Arm1"]
+transform = Transform3D(0.9961947, -0.08715574, 0, 0.08715574, 0.9961947, 0, 0, 0, 1, 0, -0.15, 0)
+mesh = SubResource("BoxMesh_6qm8q")
+
+[node name="Arm2" type="Node3D" parent="VisualRoot/WingR"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.685, 0, 0)
+
+[node name="Top" type="MeshInstance3D" parent="VisualRoot/WingR/Arm2"]
+transform = Transform3D(0.99939084, 0.034899496, 0, -0.034899496, 0.99939084, 0, 0, 0, 1, 0, 0.07, 0)
+mesh = SubResource("BoxMesh_woufe")
+
+[node name="Bottom" type="MeshInstance3D" parent="VisualRoot/WingR/Arm2"]
+transform = Transform3D(0.99939084, -0.034899496, 0, 0.034899496, 0.99939084, 0, 0, 0, 1, 0, -0.07, 0)
+mesh = SubResource("BoxMesh_sakv4")
+
+[node name="Arm3" type="Node3D" parent="VisualRoot/WingR"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, 0, 0)
+
+[node name="Top" type="MeshInstance3D" parent="VisualRoot/WingR/Arm3"]
+transform = Transform3D(0.9998477, 0.017452406, 0, -0.017452406, 0.9998477, 0, 0, 0, 1, 0.043334953, 0.037243582, 0)
+mesh = SubResource("BoxMesh_3lg4r")
+
+[node name="Bottom" type="MeshInstance3D" parent="VisualRoot/WingR/Arm3"]
+transform = Transform3D(0.9998477, -0.017452406, 0, 0.017452406, 0.9998477, 0, 0, 0, 1, 0, -0.038, 0)
+mesh = SubResource("BoxMesh_2xkf5")
+
+[node name="Tip" type="MeshInstance3D" parent="VisualRoot/WingR"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0.8, 0, 0)
+mesh = SubResource("CapsuleMesh_0616w")
+
+[node name="Flap1" type="MeshInstance3D" parent="VisualRoot/WingR"]
+transform = Transform3D(-0.02654333, -4.5727756e-08, -0.9996476, -0.9996475, -4.1597385e-08, 0.026543327, -4.279649e-08, 0.9999999, -4.4607518e-08, -1.9647961, 0.014732556, 0.877)
+mesh = SubResource("PrismMesh_itjdq")
+
+[node name="Flap2" type="MeshInstance3D" parent="VisualRoot/WingR"]
+transform = Transform3D(5.2358955e-05, -4.4855618e-08, -0.99999994, -0.99999994, -4.369641e-08, -5.2358955e-05, -4.369406e-08, 1, -4.485791e-08, -0.68236774, 1.2244319e-05, 0.86029506)
+mesh = SubResource("PrismMesh_roibb")
+
+[node name="WingL" type="Node3D" parent="VisualRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.25, 0, 3.2)
+
+[node name="Angle" type="MeshInstance3D" parent="VisualRoot/WingL"]
+transform = Transform3D(0.99862945, -5.990586e-11, -0.052335937, 0.052335937, 2.2876767e-09, 0.99862945, 5.990585e-11, -1, 2.2876765e-09, 1.175, 0.05, -1.6)
+mesh = SubResource("PrismMesh_0ipbl")
+
+[node name="Arm1" type="Node3D" parent="VisualRoot/WingL"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.93, 0, 0)
+
+[node name="Top" type="MeshInstance3D" parent="VisualRoot/WingL/Arm1"]
+transform = Transform3D(0.9961947, -0.08715574, 0, 0.08715574, 0.9961947, 0, 0, 0, 1, 0.036095247, 0.15315792, 0)
+mesh = SubResource("BoxMesh_37jfo")
+
+[node name="Bottom" type="MeshInstance3D" parent="VisualRoot/WingL/Arm1"]
+transform = Transform3D(0.9961947, 0.08715574, 0, -0.08715574, 0.9961947, 0, 0, 0, 1, 0, -0.15, 0)
+mesh = SubResource("BoxMesh_sttky")
+
+[node name="Arm2" type="Node3D" parent="VisualRoot/WingL"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.685, 0, 0)
+
+[node name="Top" type="MeshInstance3D" parent="VisualRoot/WingL/Arm2"]
+transform = Transform3D(0.99939084, -0.034899496, 0, 0.034899496, 0.99939084, 0, 0, 0, 1, 0, 0.07, 0)
+mesh = SubResource("BoxMesh_8ks32")
+
+[node name="Bottom" type="MeshInstance3D" parent="VisualRoot/WingL/Arm2"]
+transform = Transform3D(0.99939084, 0.034899496, 0, -0.034899496, 0.99939084, 0, 0, 0, 1, 0, -0.07, 0)
+mesh = SubResource("BoxMesh_itjdq")
+
+[node name="Arm3" type="Node3D" parent="VisualRoot/WingL"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3, 0, 0)
+
+[node name="Top" type="MeshInstance3D" parent="VisualRoot/WingL/Arm3"]
+transform = Transform3D(0.9998477, -0.017452406, 0, 0.017452406, 0.9998477, 0, 0, 0, 1, -0.045656726, 0.02420306, 0)
+mesh = SubResource("BoxMesh_roibb")
+
+[node name="Bottom" type="MeshInstance3D" parent="VisualRoot/WingL/Arm3"]
+transform = Transform3D(0.9998477, 0.017452406, 0, -0.017452406, 0.9998477, 0, 0, 0, 1, 0, -0.025, 0)
+mesh = SubResource("BoxMesh_wkb1m")
+
+[node name="Tip" type="MeshInstance3D" parent="VisualRoot/WingL"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, -0.8, 0, 0)
+mesh = SubResource("CapsuleMesh_r75st")
+
+[node name="Flap1" type="MeshInstance3D" parent="VisualRoot/WingL"]
+transform = Transform3D(0.026176948, -4.256716e-08, -0.9996573, -0.9996573, -4.369641e-08, -0.026176948, -4.2567155e-08, 1, -4.3696406e-08, 1.965, 0.015, 0.877)
+mesh = SubResource("PrismMesh_wkb1m")
+
+[node name="Flap2" type="MeshInstance3D" parent="VisualRoot/WingL"]
+transform = Transform3D(2.5870348e-09, -4.3634767e-08, -1, -0.9982471, -0.059184458, 0, -0.059184458, 0.9982471, -4.371139e-08, 0.6777939, 0, 0.86)
+mesh = SubResource("PrismMesh_r75st")
+
+[node name="Thruster" type="Node3D" parent="VisualRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4.5886807)
+
+[node name="Jet1" type="Node3D" parent="VisualRoot/Thruster"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.65, 0)
+
+[node name="Mount" type="MeshInstance3D" parent="VisualRoot/Thruster/Jet1"]
+transform = Transform3D(1, 0, 0, 0, -4.3711385e-08, 0.99999994, 0, -0.99999994, -4.3711385e-08, 0, 0, -0.26499987)
+mesh = SubResource("TorusMesh_q6f52")
+skeleton = NodePath("../..")
+
+[node name="Nozzle" type="MeshInstance3D" parent="VisualRoot/Thruster/Jet1"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0, 0.040424585)
+mesh = SubResource("TorusMesh_37jfo")
+skeleton = NodePath("../..")
+
+[node name="Engine" type="MeshInstance3D" parent="VisualRoot/Thruster/Jet1"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0, -1.35)
+mesh = SubResource("CylinderMesh_8ks32")
+
+[node name="Burn" type="MeshInstance3D" parent="VisualRoot/Thruster/Jet1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.039505005)
+mesh = SubResource("SphereMesh_8ks32")
+
+[node name="Jet2" type="Node3D" parent="VisualRoot/Thruster"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6, -0.35, 0)
+
+[node name="Mount" type="MeshInstance3D" parent="VisualRoot/Thruster/Jet2"]
+transform = Transform3D(1, 0, 0, 0, -4.3711385e-08, 0.99999994, 0, -0.99999994, -4.3711385e-08, 0, 0, -0.26499987)
+mesh = SubResource("TorusMesh_q6f52")
+skeleton = NodePath("../..")
+
+[node name="Nozzle" type="MeshInstance3D" parent="VisualRoot/Thruster/Jet2"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0, 0.04)
+mesh = SubResource("TorusMesh_37jfo")
+skeleton = NodePath("../..")
+
+[node name="Engine" type="MeshInstance3D" parent="VisualRoot/Thruster/Jet2"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0, -1.35)
+mesh = SubResource("CylinderMesh_wkb1m")
+
+[node name="Burn" type="MeshInstance3D" parent="VisualRoot/Thruster/Jet2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.039505005)
+mesh = SubResource("SphereMesh_8ks32")
+
+[node name="Jet3" type="Node3D" parent="VisualRoot/Thruster"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6, -0.35, 0)
+
+[node name="Mount" type="MeshInstance3D" parent="VisualRoot/Thruster/Jet3"]
+transform = Transform3D(1, 0, 0, 0, -4.3711385e-08, 0.99999994, 0, -0.99999994, -4.3711385e-08, 0, 0, -0.26499987)
+mesh = SubResource("TorusMesh_q6f52")
+skeleton = NodePath("../..")
+
+[node name="Nozzle" type="MeshInstance3D" parent="VisualRoot/Thruster/Jet3"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0, 0.04)
+mesh = SubResource("TorusMesh_37jfo")
+skeleton = NodePath("../..")
+
+[node name="Engine" type="MeshInstance3D" parent="VisualRoot/Thruster/Jet3"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0, -1.35)
+mesh = SubResource("CylinderMesh_r75st")
+
+[node name="Burn" type="MeshInstance3D" parent="VisualRoot/Thruster/Jet3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.039505005)
+mesh = SubResource("SphereMesh_8ks32")
+
+[node name="Anchors" type="Node3D" parent="VisualRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.465335)
+
+[node name="TopMiddle" type="Marker3D" parent="VisualRoot/Anchors"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1483877, 1.8292994)
+
+[node name="TopL" type="Marker3D" parent="VisualRoot/Anchors"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.25, 1.08, 1.829)
+
+[node name="TopR" type="Marker3D" parent="VisualRoot/Anchors"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.25, 1.08, 1.829)
+
+[node name="WingLT" type="Marker3D" parent="VisualRoot/Anchors"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.375, 0.22, 1.829)
+
+[node name="WingRT" type="Marker3D" parent="VisualRoot/Anchors"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.375, 0.22, 1.829)
+
+[node name="WingLB" type="Marker3D" parent="VisualRoot/Anchors"]
+transform = Transform3D(-1, -8.742278e-08, 0, 8.742278e-08, -1, 0, 0, 0, 1, -1.375, -0.22, 1.829)
+
+[node name="WingRB" type="Marker3D" parent="VisualRoot/Anchors"]
+transform = Transform3D(-1, -8.742278e-08, 0, 8.742278e-08, -1, 0, 0, 0, 1, 1.375, -0.22, 1.829)
+
+[node name="BottomMiddle" type="Marker3D" parent="VisualRoot/Anchors"]
+transform = Transform3D(-1, -8.742278e-08, 0, 8.742278e-08, -1, 0, 0, 0, 1, 0, -0.83, 1.829)
+
+[node name="BottomL" type="Marker3D" parent="VisualRoot/Anchors"]
+transform = Transform3D(-1, -8.742278e-08, 0, 8.742278e-08, -1, 0, 0, 0, 1, -0.466, -0.83, 1.829)
+
+[node name="BottomR" type="Marker3D" parent="VisualRoot/Anchors"]
+transform = Transform3D(-1, -8.742278e-08, 0, 8.742278e-08, -1, 0, 0, 0, 1, 0.466, -0.83, 1.829)
+
+[node name="StowParking" type="Marker3D" parent="VisualRoot/Anchors"]
+
+[node name="Shield" type="MeshInstance3D" parent="VisualRoot"]
+transform = Transform3D(1, 0, 0, 0, -4.3711385e-08, 0.99999994, 0, -0.99999994, -4.3711385e-08, 0, 0, 0.9)
+layers = 16
+mesh = SubResource("SphereMesh_wkb1m")
+skeleton = NodePath("../..")
+
+[node name="ThrusterParticles1" type="GPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.66, 3.15)
+lifetime = 0.3
+process_material = SubResource("ParticleProcessMaterial_xfxds")
+draw_pass_1 = SubResource("BoxMesh_hj22y")
+
+[node name="ThrusterParticles2" type="GPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.61, -0.356, 3.15)
+lifetime = 0.3
+process_material = SubResource("ParticleProcessMaterial_xfxds")
+draw_pass_1 = SubResource("BoxMesh_hj22y")
+
+[node name="ThrusterParticles3" type="GPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.601, -0.347, 3.15)
+lifetime = 0.3
+process_material = SubResource("ParticleProcessMaterial_xfxds")
+draw_pass_1 = SubResource("BoxMesh_hj22y")
+
+[node name="MouseFlightController" type="Node" parent="." node_paths=PackedStringArray("ship")]
+script = ExtResource("7_55hpd")
+ship = NodePath("..")
+
+[node name="StatAggregator" type="Node" parent="."]
+script = ExtResource("8_u5tnu")
+
+[node name="TurretController" type="Node3D" parent="." node_paths=PackedStringArray("detector", "detector_shape")]
+script = ExtResource("9_g6urh")
+detector = NodePath("Detector")
+detector_shape = NodePath("Detector/CollisionShape3D")
+detection_radius = 1000.0
+assign_mode = 2
+
+[node name="Detector" type="Area3D" parent="TurretController"]
+collision_layer = 0
+collision_mask = 4
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TurretController/Detector"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.007508278, 0.014812231, 0.013970852)
+shape = SubResource("SphereShape3D_iyjb8")
+
+[node name="HardpointManager" type="Node3D" parent="TurretController"]
+script = ExtResource("10_t1apb")
+assembly_scene = ExtResource("11_vpycd")
+policy = ExtResource("12_abrxb")
+anchors_root_path = NodePath("../../VisualRoot/Anchors")
+
+[node name="CockpitSocket" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.6)
+visible = false
+
+[node name="CameraPivot" type="Marker3D" parent="."]
+
+[node name="CameraRig" type="Node3D" parent="CameraPivot" node_paths=PackedStringArray("ship", "camera")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 10)
+script = ExtResource("13_kbtsb")
+ship = NodePath("../..")
+camera = NodePath("Camera3D")
+height_offset = 5.0
+distance_offset = 15.0
+la_gain = -0.5
+
+[node name="Camera3D" type="Camera3D" parent="CameraPivot/CameraRig"]
+current = true
+
+[node name="CameraLight" type="OmniLight3D" parent="CameraPivot/CameraRig/Camera3D"]
+transform = Transform3D(1, 0, 0, 0, 0.99044216, 0.13792859, 0, -0.13792859, 0.99044216, 5.343026, 2.834952, -4.6635275)
+light_color = Color(0.7977378, 0.7977378, 0.7977378, 1)
+light_energy = 3.0
+light_cull_mask = 4293918721
+shadow_caster_mask = 4293918721
+omni_range = 40.0
+omni_attenuation = -0.5
+
+[node name="Audio" type="Node3D" parent="."]
+
+[node name="ShieldHitAudio" type="AudioStreamPlayer3D" parent="Audio"]
+stream = ExtResource("14_5eo34")
+attenuation_model = 3
+max_polyphony = 10
+
+[node name="HullHitAudio" type="AudioStreamPlayer3D" parent="Audio"]
+stream = ExtResource("15_8tsht")
+attenuation_model = 3
+max_polyphony = 10
+
+[node name="ShieldLowAlarm" type="AudioStreamPlayer3D" parent="Audio"]
+stream = ExtResource("16_stfhq")
+attenuation_model = 3
+volume_db = -4.0
+
+[node name="HullLowAlarm" type="AudioStreamPlayer3D" parent="Audio"]
+stream = ExtResource("17_4kpn7")
+attenuation_model = 3
+volume_db = -4.0
