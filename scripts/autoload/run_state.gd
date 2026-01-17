@@ -4,6 +4,11 @@ extends Node
 signal score_changed(total: int, delta: int, reason: String)
 signal nanobots_updated(amount: int) # called by ship when nanobots collected
 signal nanobots_spent(amount: int) # called by pause menu
+signal weapon_purchased_count_changed(count: int)
+
+# --- Weapon Pricing ---
+var weapons_purchased: int = 0
+var weapon_price_multiplier: float = 1.5  # Each weapon costs 1.5x more than previous
 
 # --- Nanobots ---
 # base scaling
@@ -43,6 +48,22 @@ var run_score: int = 0
 
 func start_run() -> void:
 	reset_score()
+	reset_weapons_purchased()
+
+
+func reset_weapons_purchased() -> void:
+	weapons_purchased = 0
+	weapon_purchased_count_changed.emit(weapons_purchased)
+
+
+func record_weapon_purchase() -> void:
+	weapons_purchased += 1
+	weapon_purchased_count_changed.emit(weapons_purchased)
+
+
+func get_weapon_cost(base_cost: int) -> int:
+	# Progressive pricing: base_cost * (multiplier ^ weapons_purchased)
+	return int(round(base_cost * pow(weapon_price_multiplier, weapons_purchased)))
 
 func set_state(state: State) -> void:
 	run_state = state

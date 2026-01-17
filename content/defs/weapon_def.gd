@@ -4,7 +4,7 @@ class_name WeaponDef
 
 @export var weapon_id: String
 @export var display_name: String
-@export var cost: int = 1500
+@export var cost: int = 5000
 
 @export_category("Firing / Targeting")
 

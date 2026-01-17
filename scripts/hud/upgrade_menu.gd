@@ -152,10 +152,11 @@ func _update_buttons() -> void:
 			btn.visible = true
 			btn.disabled = upgrade.cost > nb
 		elif i == _buttons.size() - 1 and _weapon_choice != null:
-			# Weapon button (last button)
-			btn.text = "+ %s (%d)" % [_weapon_choice.display_name, _weapon_choice.cost]
+			# Weapon button (last button) - uses progressive pricing
+			var weapon_cost: int = RunState.get_weapon_cost(_weapon_choice.cost)
+			btn.text = "+ %s (%d)" % [_weapon_choice.display_name, weapon_cost]
 			btn.visible = true
-			btn.disabled = _weapon_choice.cost > nb
+			btn.disabled = weapon_cost > nb
 		else:
 			btn.visible = false
 
@@ -170,10 +171,11 @@ func _on_button_pressed(index: int) -> void:
 		_apply_upgrade(upgrade)
 		upgrade_selected.emit(upgrade)
 	elif index == _buttons.size() - 1 and _weapon_choice != null:
-		# Weapon selected
-		if _weapon_choice.cost > _current_nanobots:
+		# Weapon selected - uses progressive pricing
+		var weapon_cost: int = RunState.get_weapon_cost(_weapon_choice.cost)
+		if weapon_cost > _current_nanobots:
 			return  # Can't afford
-		_spend_nanobots(_weapon_choice.cost)
+		_spend_nanobots(weapon_cost)
 		_apply_weapon(_weapon_choice)
 		weapon_selected.emit(_weapon_choice)
 	
@@ -203,6 +205,7 @@ func _apply_upgrade(upgrade: Upgrade) -> void:
 
 
 func _apply_weapon(weapon: WeaponDef) -> void:
+	RunState.record_weapon_purchase()
 	EventBus.add_gun_requested.emit(weapon)
 
 

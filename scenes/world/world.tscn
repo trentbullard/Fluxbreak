@@ -41,7 +41,7 @@
 [ext_resource type="PackedScene" path="res://scenes/pois/poi_placeholder.tscn" id="poi_scene"]
 [ext_resource type="Script" uid="uid://d1ddx3ctljet4" path="res://systems/spawning/poi_spawner.gd" id="poi_spawner_script"]
 [ext_resource type="Resource" path="res://content/data/pois/utility_station.tres" id="poi_utility_def"]
-[ext_resource type="PackedScene" path="res://scenes/hud/upgrade_menu.tscn" id="upgrade_menu_scene"]
+[ext_resource type="PackedScene" uid="uid://vui0na1ujbtt" path="res://scenes/hud/upgrade_menu.tscn" id="upgrade_menu_scene"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_1fp7r"]
 panorama = ExtResource("1_dphjl")
@@ -143,8 +143,6 @@ spawn_radius = 600.0
 [node name="WaveDirector" type="Node" parent="."]
 script = ExtResource("7_m114p")
 spawner_path = NodePath("../Spawner")
-pressure_target_burst = 1
-pressure_target_point_budget = 1
 wave_timeout_sec = 60.0
 threat_director_path = NodePath("../ThreatDirector")
 wave_budgeter_path = NodePath("../WaveBudgeter")
