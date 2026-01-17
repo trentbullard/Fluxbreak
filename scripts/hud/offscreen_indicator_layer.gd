@@ -5,7 +5,7 @@ extends Control
 class_name OffscreenIndicatorLayer
 
 @export var ship_path: NodePath
-@export var edge_margin: float = 40.0  # Distance from screen edge for icons
+@export var edge_margin: float = 10.0  # Distance from screen edge for icons
 @export var min_distance: float = 50.0  # Don't show indicators for very close objects
 @export var max_distance: float = 2000.0  # Don't show indicators beyond this range
 @export var fade_near_edge: bool = true  # Fade icons as they approach screen edge
@@ -103,9 +103,7 @@ func _sync_tracked_objects() -> void:
 	# Add objects from relevant groups
 	_sync_group("targets", "")  # Will auto-detect enemy vs target via meta
 	_sync_group("drops", "drop")  # Nanobot swarms and other drops
-	
-	# You can add more groups here as needed:
-	# _sync_group("poi", "poi")
+	_sync_group("poi", "")       # Points of interest - auto-detect type
 
 func _sync_group(group_name: String, forced_kind: String) -> void:
 	var nodes: Array[Node] = get_tree().get_nodes_in_group(group_name)
@@ -127,12 +125,25 @@ func _sync_group(group_name: String, forced_kind: String) -> void:
 				obj.tree_exited.connect(_on_object_removed.bind(obj))
 
 func _detect_kind(obj: Node3D) -> String:
-	if obj.has_meta("kind"):
-		return String(obj.get_meta("kind"))
 	if obj is Enemy:
 		return "enemy"
 	if obj is TargetObject:
 		return "target"
+	if obj is PoiInstance:
+		var poi: PoiInstance = obj as PoiInstance
+		match poi.poi_type:
+			PoiDef.PoiType.OFFENSE:
+				return "poi_offense"
+			PoiDef.PoiType.DEFENSE:
+				return "poi_defense"
+			PoiDef.PoiType.UTILITY:
+				return "poi_utility"
+			_:
+				return "poi"
+	if obj.has_meta("kind"):
+		var kind_meta: String = String(obj.get_meta("kind"))
+		if kind_meta != "":
+			return kind_meta
 	return "unknown"
 
 func _on_object_removed(obj: Node3D) -> void:

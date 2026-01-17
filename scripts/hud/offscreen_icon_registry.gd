@@ -32,7 +32,7 @@ func _init() -> void:
 func _register_defaults() -> void:
 	# Enemies - red triangles (hostile, aggressive)
 	var enemy_entry := IconEntry.new(IconShape.TRIANGLE, Color(1.0, 0.3, 0.3, 0.9), 14.0)
-	enemy_entry.outline_color = Color(0.2, 0.0, 0.0, 1.0)
+	enemy_entry.outline_color = Color(0.6, 0.4, 0.4, 1.0)
 	register("enemy", enemy_entry)
 	
 	# Targets (asteroids, wrecks) - orange squares (neutral, destructible)
@@ -45,10 +45,28 @@ func _register_defaults() -> void:
 	drop_entry.outline_color = Color(0.0, 0.2, 0.05, 1.0)
 	register("drop", drop_entry)
 	
-	# POI/waypoint - cyan circle (informational)
+	# POI/waypoint - cyan circle (generic fallback)
 	var poi_entry := IconEntry.new(IconShape.CIRCLE, Color(0.3, 0.9, 1.0, 0.9), 14.0)
 	poi_entry.outline_color = Color(0.0, 0.2, 0.3, 1.0)
 	register("poi", poi_entry)
+	
+	# POI Offense - red/orange circle with larger size
+	var poi_offense := IconEntry.new(IconShape.CIRCLE, Color(1.0, 0.4, 0.3, 0.95), 16.0)
+	poi_offense.outline_color = Color(0.3, 0.1, 0.05, 1.0)
+	poi_offense.outline_width = 2.5
+	register("poi_offense", poi_offense)
+	
+	# POI Defense - green circle
+	var poi_defense := IconEntry.new(IconShape.CIRCLE, Color(0.3, 0.9, 0.5, 0.95), 16.0)
+	poi_defense.outline_color = Color(0.05, 0.25, 0.1, 1.0)
+	poi_defense.outline_width = 2.5
+	register("poi_defense", poi_defense)
+	
+	# POI Utility - yellow/gold circle
+	var poi_utility := IconEntry.new(IconShape.CIRCLE, Color(1.0, 0.85, 0.3, 0.95), 16.0)
+	poi_utility.outline_color = Color(0.3, 0.25, 0.05, 1.0)
+	poi_utility.outline_width = 2.5
+	register("poi_utility", poi_utility)
 
 func register(kind: String, entry: IconEntry) -> void:
 	_entries[kind] = entry

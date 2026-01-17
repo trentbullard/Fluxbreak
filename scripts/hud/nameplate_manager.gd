@@ -3,7 +3,7 @@ extends Control
 class_name NameplateManager
 
 @export var nameplate_scene: PackedScene
-@export var show_within_meters := 1000
+@export var show_within_meters := 20000
 @export var pixel_offset_up := 35
 
 var _camera: Camera3D
@@ -22,6 +22,8 @@ func _process(_dt: float) -> void:
 
 func _sync_targets() -> void:
 	var targets: Array = get_tree().get_nodes_in_group("targets")
+	var pois: Array = get_tree().get_nodes_in_group("pois")
+	targets.append_array(pois)
 	
 	for t in targets:
 		var target: Node3D = t
@@ -72,6 +74,13 @@ func _sync_targets() -> void:
 						int(round(d)),
 						int(round(max(target.hull, 0.0)))
 					]
+				elif kind.contains("poi"):
+					var type_tag: String = _get_poi_type_tag(target)
+					label.text = "%s [%s]\n%dm" % [
+						target.display_name,
+						type_tag,
+						int(round(d))
+					]
 
 			_place_center_bottom(ui, sp, vp_size)
 		else:
@@ -100,6 +109,28 @@ func _place_center_bottom(ui: Control, screen_pos: Vector2, vp_size: Vector2) ->
 func _kind_of(node: Object) -> String:
 	if not is_instance_valid(node):
 		return "unknown"
+	# Check POI first (before meta) to ensure proper type detection
+	if node is Enemy:
+		return "enemy"
+	if node is TargetObject:
+		return "target"
+	if node is PoiInstance:
+		return "poi"
 	if node.has_meta("kind"):
-		return String(node.get_meta("kind"))
-	return "enemy" if node.is_class("Enemy") else "target"
+		var kind_meta: String = String(node.get_meta("kind"))
+		if kind_meta != "":
+			return kind_meta
+	return "unknown"
+
+
+func _get_poi_type_tag(poi: Node3D) -> String:
+	if poi is PoiInstance:
+		var p: PoiInstance = poi as PoiInstance
+		match p.poi_type:
+			PoiDef.PoiType.OFFENSE:
+				return "ATK"
+			PoiDef.PoiType.DEFENSE:
+				return "DEF"
+			PoiDef.PoiType.UTILITY:
+				return "UTL"
+	return "POI"

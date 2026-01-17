@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="PoiDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://content/defs/poi_def.gd" id="1_poi"]
+
+[resource]
+script = ExtResource("1_poi")
+poi_id = "offense_station"
+display_name = "Weapons Platform"
+poi_type = 0
+spawn_distance = 3000.0
+min_separation = 800.0
+emission_color = Color(1.0, 0.3, 0.2, 1.0)
+emission_energy = 2.5
+docking_radius = 200.0
+docking_time = 3.0
+upgrade_choices = 3
+upgrade_tags = Array[String](["offense", "weapons", "damage"])

@@ -1,0 +1,33 @@
+[gd_scene load_steps=12 format=3 uid="uid://vui0na1ujbtt"]
+
+[ext_resource type="Script" uid="uid://yd5vh5eayilh" path="res://scripts/hud/upgrade_menu.gd" id="1_upgrade"]
+[ext_resource type="Script" uid="uid://f3a4tqbwupk2" path="res://content/defs/upgrade_def.gd" id="2_b55ha"]
+[ext_resource type="Resource" uid="uid://cjl7i8ndls66u" path="res://content/data/upgrades/upgrade_reinforced_bulkheads_1.tres" id="2_bulkhead"]
+[ext_resource type="Resource" uid="uid://co8i1xw33rdoh" path="res://content/data/upgrades/upgrade_adaptive_shield_matrix_1.tres" id="3_shield"]
+[ext_resource type="Resource" uid="uid://boee0f2x3pc3l" path="res://content/data/upgrades/upgrade_precision_targeting_suite_1.tres" id="4_targeting"]
+[ext_resource type="Resource" uid="uid://d1nhfdmnn8g72" path="res://content/data/upgrades/upgrade_systems_optimization_1.tres" id="5_systems"]
+[ext_resource type="Resource" uid="uid://bs1n4ls1c4is4" path="res://content/data/upgrades/upgrade_salvage_magnet_1.tres" id="6_salvage"]
+[ext_resource type="Resource" uid="uid://bepfsw50andu" path="res://content/data/upgrades/upgrade_vectoring_thrusters_1.tres" id="7_thrusters"]
+[ext_resource type="Resource" uid="uid://dvy0gac2vg1b6" path="res://content/data/weapons/pulse_mk1.tres" id="8_pulse"]
+[ext_resource type="Resource" uid="uid://bskk7qmspf063" path="res://content/data/weapons/laser_bolt_mk1.tres" id="9_laser"]
+[ext_resource type="Script" uid="uid://dby70n1hr4uk3" path="res://content/defs/weapon_def.gd" id="9_tt14d"]
+
+[node name="UpgradeMenu" type="CanvasLayer"]
+layer = 3
+script = ExtResource("1_upgrade")
+available_upgrades = Array[ExtResource("2_b55ha")]([ExtResource("2_bulkhead"), ExtResource("3_shield"), ExtResource("4_targeting"), ExtResource("5_systems"), ExtResource("6_salvage"), ExtResource("7_thrusters")])
+available_weapons = Array[ExtResource("9_tt14d")]([ExtResource("8_pulse"), ExtResource("9_laser")])
+
+[node name="Close" type="Button" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -75.0
+offset_bottom = 75.0
+grow_horizontal = 0
+tooltip_text = "Close menu without purchasing"
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 47
+text = "×"
+flat = true
+icon_alignment = 1

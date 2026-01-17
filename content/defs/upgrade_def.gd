@@ -7,5 +7,6 @@ class_name Upgrade
 @export var display_name: String
 @export var descripton: String
 @export var icon: Texture2D
+@export var cost: int = 1000
 
 @export var modifiers: Array[StatModifier] = []

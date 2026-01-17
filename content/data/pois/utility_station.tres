@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="PoiDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://content/defs/poi_def.gd" id="1_poi"]
+
+[resource]
+script = ExtResource("1_poi")
+poi_id = "utility_station"
+display_name = "Repair Depot"
+poi_type = 2
+spawn_distance = 3000.0
+min_separation = 800.0
+emission_color = Color(0.9, 0.7, 0.2, 1.0)
+emission_energy = 2.5
+docking_radius = 200.0
+docking_time = 3.0
+upgrade_choices = 3
+upgrade_tags = Array[String](["utility", "repair", "misc"])
