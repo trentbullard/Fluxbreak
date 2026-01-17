@@ -1,8 +1,9 @@
-[gd_scene load_steps=14 format=3 uid="uid://drrnshnyy4682"]
+[gd_scene load_steps=15 format=3 uid="uid://drrnshnyy4682"]
 
 [ext_resource type="Script" uid="uid://ctypdxlxrxqme" path="res://scripts/main_menu/main_menu.gd" id="1_0ebjn"]
 [ext_resource type="PackedScene" uid="uid://ppgr7fveqbrd" path="res://scenes/world/world.tscn" id="2_ob46e"]
 [ext_resource type="Script" uid="uid://bp86upa6vqbpe" path="res://scripts/main_menu/high_score_container.gd" id="3_ob46e"]
+[ext_resource type="Resource" path="res://content/data/pilots/pilot_roster.tres" id="4_pilot_roster"]
 
 [sub_resource type="SystemFont" id="SystemFont_0ebjn"]
 font_names = PackedStringArray("Marlett")
@@ -52,6 +53,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_0ebjn")
 practice_scene = ExtResource("2_ob46e")
+pilot_roster = ExtResource("4_pilot_roster")
 
 [node name="CenterContainer" type="CenterContainer" parent="."]
 layout_mode = 1
@@ -75,6 +77,24 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="ButtonsContainer" type="VBoxContainer" parent="CenterContainer/MainMenuContainer"]
+layout_mode = 2
+
+[node name="PilotContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonsContainer"]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/MainMenuContainer/ButtonsContainer/PilotContainer"]
+layout_mode = 2
+theme_override_constants/margin_bottom = 10
+
+[node name="Row" type="HBoxContainer" parent="CenterContainer/MainMenuContainer/ButtonsContainer/PilotContainer/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="CenterContainer/MainMenuContainer/ButtonsContainer/PilotContainer/MarginContainer/Row"]
+layout_mode = 2
+text = "Pilot:"
+
+[node name="PilotPicker" type="OptionButton" parent="CenterContainer/MainMenuContainer/ButtonsContainer/PilotContainer/MarginContainer/Row"]
 layout_mode = 2
 
 [node name="PracticeContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonsContainer"]

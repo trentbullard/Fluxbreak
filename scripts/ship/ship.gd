@@ -4,6 +4,8 @@ class_name Ship
 
 @export var loadout: ShipLoadoutDef
 @export_range(0, 16, 1) var starting_weapons: int = 1
+@export var ship_override: ShipDef
+@export var pilot_override: PilotDef
 
 @export var explosion_scene: PackedScene
 @export var return_to_menu_delay: float = 3.0
@@ -84,8 +86,11 @@ var _emission_value: float = 0.0
 
 func _ready() -> void:
 	add_to_group("player")
+	_apply_selected_defs()
 	RunState.start_run()
 	_refresh_effective_stats()
+	hull = eff_max_hull
+	shield = eff_max_shield
 	_initialize_shield_material()
 	_initialize_thruster_material()
 	_update_shield_mesh_visibility()
@@ -116,6 +121,55 @@ func _ready() -> void:
 	# --- weapon manager ---
 	if hardpoint_manager != null:
 		hardpoint_manager.apply_loadout(loadout, starting_weapons)
+
+func _apply_selected_defs() -> void:
+	var selected_ship_def: ShipDef = ship_override
+
+	var selected_pilot: PilotDef = pilot_override
+	if selected_pilot == null:
+		selected_pilot = GameFlow.selected_pilot
+
+	if selected_pilot != null and selected_pilot.ship != null:
+		selected_ship_def = selected_pilot.ship
+
+	if selected_ship_def != null:
+		_apply_ship_def(selected_ship_def)
+
+func _apply_ship_def(def: ShipDef) -> void:
+	if def == null:
+		return
+
+	if def.loadout != null:
+		loadout = def.loadout
+	starting_weapons = def.starting_weapons
+	if def.explosion_scene != null:
+		explosion_scene = def.explosion_scene
+
+	max_hull = def.max_hull
+	overheal = def.overheal
+	max_shield = def.max_shield
+	shield_regen = def.shield_regen
+	base_evasion = def.base_evasion
+
+	max_speed_forward = def.max_speed_forward
+	max_speed_reverse = def.max_speed_reverse
+	drag = def.drag
+	accel_forward = def.accel_forward
+	accel_reverse = def.accel_reverse
+	boost_mult = def.boost_mult
+
+	pickup_range = def.pickup_range
+	nanobot_gain_mult = def.nanobot_gain_mult
+	score_gain_mult = def.score_gain_mult
+
+	max_ang_rate = Vector3(
+		deg_to_rad(def.max_ang_rate_deg.x),
+		deg_to_rad(def.max_ang_rate_deg.y),
+		deg_to_rad(def.max_ang_rate_deg.z))
+	angular_accel = Vector3(
+		deg_to_rad(def.angular_accel_deg.x),
+		deg_to_rad(def.angular_accel_deg.y),
+		deg_to_rad(def.angular_accel_deg.z))
 
 # --- public api for upgrades/ui ---
 

@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="TargetDef" load_steps=2 format=3 uid="uid://csohgxk4eco6e"]
+[gd_resource type="Resource" script_class="TargetDef" load_steps=3 format=3 uid="uid://csohgxk4eco6e"]
 
 [ext_resource type="Script" uid="uid://bitk3uva0wi2v" path="res://content/defs/target_def.gd" id="1_2ug1x"]
+[ext_resource type="PackedScene" uid="uid://ckqimj36cc5fj" path="res://scenes/targets/medium_wreck.tscn" id="2_5t6n6"]
 
 [resource]
 script = ExtResource("1_2ug1x")
@@ -11,4 +12,7 @@ threat_cost = 2
 bounty_scrap = 2
 max_hull = 200.0
 score_on_kill = 30
+angular_spin = Vector3(5, 5, 5)
+drift = Vector3(0, 0.1, 0)
+model_scene = ExtResource("2_5t6n6")
 metadata/_custom_type_script = "uid://bitk3uva0wi2v"
