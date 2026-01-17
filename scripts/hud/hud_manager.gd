@@ -13,6 +13,7 @@ extends CanvasLayer
 @onready var nameplates: NameplateManager = $ScreenRoot/NameplateLayer
 @onready var effects: FloatingTextLayer = $ScreenRoot/EffectsLayer
 @onready var ship_hud: ShipHud = $ScreenRoot/BottomDock/Centerer/ShipHud
+@onready var offscreen_indicators: OffscreenIndicatorLayer = $ScreenRoot/OffscreenIndicatorLayer
 
 var camera: Camera3D
 var _director: Node = null
@@ -32,6 +33,8 @@ func _ready() -> void:
 		ship_hud.init(ship)
 	if effects != null and camera != null:
 		effects.init(camera)
+	if offscreen_indicators != null and camera != null and ship != null:
+		offscreen_indicators.init(camera, ship)
 	
 	if wave_director_path != NodePath(""):
 		_director = get_node_or_null(wave_director_path)

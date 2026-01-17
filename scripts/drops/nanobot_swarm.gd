@@ -20,6 +20,8 @@ var _player: Ship
 var _picked: bool = false
 
 func _ready() -> void:
+	add_to_group("drops")
+	set_meta("kind", "drop")
 	_player = get_tree().get_first_node_in_group("player") as RigidBody3D
 	particles.emitting = true
 	attractor.radius = attract_radius_start
