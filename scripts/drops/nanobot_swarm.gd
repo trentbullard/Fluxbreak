@@ -19,6 +19,9 @@ var _magnet_started_ts: float = 0.0
 var _player: Ship
 var _picked: bool = false
 
+# Invisible collection hitbox position (decoupled from visual particles)
+var _collection_pos: Vector3
+
 func _ready() -> void:
 	add_to_group("drops")
 	set_meta("kind", "drop")
@@ -26,21 +29,24 @@ func _ready() -> void:
 	particles.emitting = true
 	attractor.radius = attract_radius_start
 	attractor.strength = 0.0
+	# Initialize collection position to spawn location
+	_collection_pos = global_transform.origin
 
 func _process(delta: float) -> void:
 	if _player == null:
 		return
 	
-	var cur_pos: Vector3 = global_transform.origin
+	# Collection hitbox (_collection_pos) moves toward player independently
 	var player_pos: Vector3 = _player.global_transform.origin
-	var dist_sq: float = cur_pos.distance_squared_to(player_pos)
 	
-	var trigger_range: float = 0.0
-	trigger_range = _player.get_effective_pickup_range()
+	# Use collection position for trigger/pickup checks
+	var dist_to_collection_sq: float = _collection_pos.distance_squared_to(player_pos)
+	
+	var trigger_range: float = _player.get_effective_pickup_range()
 
 	if not _magnet_on:
 		var trigger_sq: float = trigger_range * trigger_range
-		if dist_sq <= trigger_sq:
+		if dist_to_collection_sq <= trigger_sq:
 			_magnet_on = true
 			_magnet_started_ts = 0.0
 			attractor.strength = attract_strength_start
@@ -53,22 +59,34 @@ func _process(delta: float) -> void:
 		var t: float = clamp((_magnet_started_ts - magnet_delay) / ramp_time, 0.0, 1.0)
 		attractor.strength = lerp(attract_strength_start, attract_strength_max, t)
 		
-		var dir: Vector3 = player_pos - cur_pos
-		var dir_len: float = dir.length()
-		if dir_len > 0.001:
-			var step: Vector3 = (dir / dir_len) * move_towards_player_speed * delta
-			if step.length() >= dir_len:
+		# Move the invisible collection hitbox toward player
+		var collection_dir: Vector3 = player_pos - _collection_pos
+		var collection_dir_len_sq: float = collection_dir.length_squared()
+		if collection_dir_len_sq > 0.000001:
+			var step_dist: float = move_towards_player_speed * delta
+			if step_dist * step_dist >= collection_dir_len_sq:
+				_collection_pos = player_pos
+			else:
+				_collection_pos += (collection_dir / sqrt(collection_dir_len_sq)) * step_dist
+		
+		# Move the visual particles toward player (original cur_pos behavior)
+		var cur_pos: Vector3 = global_transform.origin
+		var visual_dir: Vector3 = player_pos - cur_pos
+		var visual_dir_len_sq: float = visual_dir.length_squared()
+		if visual_dir_len_sq > 0.000001:
+			var visual_step_dist: float = move_towards_player_speed * delta
+			if visual_step_dist * visual_step_dist >= visual_dir_len_sq:
 				cur_pos = player_pos
 			else:
-				cur_pos += step
-			var txf: Transform3D = global_transform
-			txf.origin = cur_pos
-			global_transform = txf
+				cur_pos += (visual_dir / sqrt(visual_dir_len_sq)) * visual_step_dist
+			global_transform.origin = cur_pos
 	
+	# Attractor always follows player so visible particles swarm correctly
 	attractor.global_transform.origin = player_pos
 	
+	# Check pickup against the invisible collection hitbox, not visual position
 	var pickup_sq: float = pickup_distance * pickup_distance
-	if not _picked and dist_sq <= pickup_sq:
+	if not _picked and dist_to_collection_sq <= pickup_sq:
 		_picked = true
 		particles.emitting = false
 		attractor.strength = attract_strength_max * 2.0

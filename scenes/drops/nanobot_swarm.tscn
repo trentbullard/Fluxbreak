@@ -41,6 +41,7 @@ material = SubResource("StandardMaterial3D_72fs5")
 [node name="NanobotSwarm" type="GPUParticles3D" node_paths=PackedStringArray("particles", "attractor")]
 amount = 1000
 lifetime = 2.0
+visibility_aabb = AABB(-1000, -1000, -1000, 2000, 2000, 2000)
 process_material = SubResource("ParticleProcessMaterial_fyv4k")
 draw_pass_1 = SubResource("PointMesh_jifgu")
 script = ExtResource("1_k4eqp")
