@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://dywsechusg01y"]
+[gd_scene load_steps=3 format=3 uid="uid://dywsechusg01y"]
 
 [ext_resource type="Script" uid="uid://bapsjbior1dq4" path="res://scripts/hud/pause_menu.gd" id="1_xxxx0"]
+[ext_resource type="Script" uid="uid://n8f7g08pbmb5" path="res://scripts/hud/stat_panel.gd" id="2_stat_panel"]
 
 [node name="PauseMenu" type="CanvasLayer"]
 layer = 2
@@ -22,6 +23,22 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.5)
+
+[node name="StatPanel" type="ScrollContainer" parent="ScreenRoot"]
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 320.0
+offset_bottom = -20.0
+grow_vertical = 2
+horizontal_scroll_mode = 0
+script = ExtResource("2_stat_panel")
+
+[node name="StatContainer" type="VBoxContainer" parent="ScreenRoot/StatPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="CenterContainer" type="CenterContainer" parent="ScreenRoot"]
 layout_mode = 1

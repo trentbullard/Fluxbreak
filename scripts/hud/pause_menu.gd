@@ -7,6 +7,7 @@ class_name PauseMenu
 @onready var btn_restart: Button = $ScreenRoot/CenterContainer/VBox/Restart
 @onready var btn_menu: Button = $ScreenRoot/CenterContainer/VBox/MainMenu
 @onready var btn_quit: Button = $ScreenRoot/CenterContainer/VBox/Quit
+@onready var stat_panel: StatPanel = $ScreenRoot/StatPanel
 
 func _ready() -> void:
 	visible = false
@@ -23,6 +24,8 @@ func _on_paused_changed(is_paused: bool) -> void:
 	visible = is_paused
 	if is_paused:
 		btn_resume.grab_focus()
+		if stat_panel != null:
+			stat_panel.refresh()
 
 func _on_resume_clicked() -> void:
 	PauseManager.resume_requested.emit()
