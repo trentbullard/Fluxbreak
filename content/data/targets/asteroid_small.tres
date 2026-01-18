@@ -7,7 +7,7 @@
 script = ExtResource("1_6v4vb")
 id = "asteroid_small"
 display_name = "Asteroid"
-max_hull = 100.0
+max_hull = 500.0
 score_on_kill = 15
 angular_spin = Vector3(10, 10, 10)
 drift = Vector3(0, 0.1, 0)

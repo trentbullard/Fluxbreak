@@ -14,9 +14,9 @@ var weapon_price_multiplier: float = 1.5  # Each weapon costs 1.5x more than pre
 # base scaling
 var base_drop: float = 150.0
 var tier_factor: float = 50.0
-var threat_factor: float = 10.0
-var wave_linear: float = 1.2
-var wave_quadratic: float = 0.02
+var threat_factor: float = 30.0
+var wave_linear: float = 1.5
+var wave_quadratic: float = 0.03
 
 # performance coupling
 var pps_reference: float = 40
@@ -37,8 +37,8 @@ var _target_budget: int = 0
 
 # static nanobot drops for non-enemy targets (by size_band)
 var target_nanobot_drop_by_size: Dictionary = {
-	1: 6000,  # e.g. small asteroids
-	2: 10000, # e.g. medium wrecks
+	1: 1000,  # e.g. small asteroids
+	2: 3000, # e.g. medium wrecks
 }
 
 enum State { IN_WAVE, DOWNTIME }

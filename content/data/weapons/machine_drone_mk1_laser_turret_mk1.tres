@@ -8,8 +8,9 @@
 [resource]
 script = ExtResource("1_syeq7")
 weapon_id = "machine_drone_mk1_laser_turret_mk1"
+display_name = "Machine Drone Mk1 Laser Turret Mk1"
 fire_rate = 1.0
-base_accuracy = 0.5
+base_accuracy = 0.4
 base_range = 400.0
 crit_chance = 0.0
 projectile_scene = ExtResource("1_lo0ir")

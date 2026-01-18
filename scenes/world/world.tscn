@@ -172,11 +172,14 @@ target_catalog_path = NodePath("../TargetCatalog")
 script = ExtResource("poi_spawner_script")
 ship_path = NodePath("../Ship")
 poi_scene = ExtResource("poi_scene")
-min_poi_separation = 2000.0
-min_distance_from_player = 2000.0
+spawn_interval_min = 20.0
+spawn_interval_max = 40.0
+min_poi_separation = 1000.0
+min_distance_from_player = 1000.0
 offense_def = ExtResource("poi_offense_def")
 defense_def = ExtResource("poi_defense_def")
 utility_def = ExtResource("poi_utility_def")
+debug_logging = false
 
 [node name="DockingManager" type="Node" parent="."]
 script = ExtResource("docking_manager_script")

@@ -27,14 +27,16 @@ signal poi_counts_changed(offense: int, defense: int, utility: int, total: int)
 @export var spawn_interval_max: float = 180.0
 
 @export_group("Spawn Distances")
-## Distance from origin for the first POI
-@export var first_poi_distance: float = 3000.0
-## Distance increment per POI index
-@export var distance_step: float = 500.0
-## Random jitter applied to spawn distance
-@export var distance_jitter: float = 300.0
+## Initial spawn radius at game start
+@export var initial_spawn_radius: float = 2000.0
+## Maximum spawn radius after growth completes
+@export var max_spawn_radius: float = 10000.0
+## Time in seconds for radius to grow from initial to max (30 min = 1800s)
+@export var radius_growth_time: float = 1800.0
+## Minimum spawn radius from origin (inner boundary)
+@export var min_spawn_radius: float = 500.0
 ## Minimum separation between POIs
-@export var min_poi_separation: float = 800.0
+@export var min_poi_separation: float = 1000.0
 ## Minimum distance from player when spawning
 @export var min_distance_from_player: float = 500.0
 ## Maximum placement attempts before relaxing constraints
@@ -98,6 +100,9 @@ var _total_spawned: int = 0
 ## Whether first POI has been spawned
 var _first_poi_spawned: bool = false
 
+## Elapsed time since spawner started (for radius growth)
+var _elapsed_time: float = 0.0
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Lifecycle
@@ -123,6 +128,10 @@ func _ready() -> void:
 	_spawn_timer.start(initial_spawn_delay)
 	
 	_log("PoiSpawner initialized. First POI in %.1f seconds." % initial_spawn_delay)
+
+
+func _process(delta: float) -> void:
+	_elapsed_time += delta
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -301,26 +310,30 @@ func _get_def_for_type(type: PoiDef.PoiType) -> PoiDef:
 # Position Selection
 # ─────────────────────────────────────────────────────────────────────────────
 
+## Get the current spawn radius based on elapsed time
+func get_current_spawn_radius() -> float:
+	var progress: float = clampf(_elapsed_time / radius_growth_time, 0.0, 1.0)
+	return lerpf(initial_spawn_radius, max_spawn_radius, progress)
+
+
 func _pick_spawn_position() -> Vector3:
-	var spawn_index: int = _total_spawned
-	var base_distance: float = first_poi_distance + (spawn_index * distance_step)
-	
 	var current_separation: float = min_poi_separation
+	var current_min_player_dist: float = min_distance_from_player
+	var current_spawn_radius: float = get_current_spawn_radius()
 	var attempts: int = 0
 	
+	_log("Current spawn radius: %.1f (%.1f%% of max)" % [
+		current_spawn_radius, 
+		(current_spawn_radius / max_spawn_radius) * 100.0
+	])
+	
 	while attempts < max_placement_attempts * 3:
-		# Pick a random direction on the XZ plane (space is horizontal)
-		var angle: float = _rng.randf() * TAU
-		var direction: Vector3 = Vector3(cos(angle), 0.0, sin(angle))
-		
-		# Apply distance with jitter
-		var jitter: float = _rng.randf_range(-distance_jitter, distance_jitter)
-		var distance: float = base_distance + jitter
-		
-		var candidate: Vector3 = direction * distance
+		# Generate a random point within a 3D sphere
+		var candidate: Vector3 = _random_point_in_sphere(min_spawn_radius, current_spawn_radius)
 		
 		# Validate position
-		if _is_valid_position(candidate, current_separation):
+		if _is_valid_position(candidate, current_separation, current_min_player_dist):
+			var distance: float = candidate.length()
 			_log("Position found after %d attempts at distance %.1f" % [attempts + 1, distance])
 			return candidate
 		
@@ -329,22 +342,43 @@ func _pick_spawn_position() -> Vector3:
 		# Relax constraints every max_placement_attempts
 		if attempts > 0 and attempts % max_placement_attempts == 0:
 			current_separation *= separation_relaxation
-			base_distance *= 1.1  # Also expand search radius
-			_log("Relaxing constraints: separation=%.1f, base_distance=%.1f" % [
-				current_separation, base_distance
+			current_min_player_dist *= separation_relaxation
+			_log("Relaxing constraints: separation=%.1f, min_player_dist=%.1f" % [
+				current_separation, current_min_player_dist
 			])
 	
-	# Fallback: just return something valid distance-wise
+	# Fallback: just return a random point, ignoring constraints
 	push_warning("PoiSpawner: Could not find valid position after %d attempts!" % attempts)
-	var fallback_angle: float = _rng.randf() * TAU
-	return Vector3(cos(fallback_angle), 0.0, sin(fallback_angle)) * base_distance
+	return _random_point_in_sphere(min_spawn_radius, current_spawn_radius)
 
 
-func _is_valid_position(pos: Vector3, separation: float) -> bool:
+## Generate a uniformly distributed random point within a spherical shell
+func _random_point_in_sphere(min_radius: float, max_radius: float) -> Vector3:
+	# Use spherical coordinates for uniform distribution
+	# theta: azimuthal angle [0, 2*PI]
+	# phi: polar angle from cos distribution for uniform sphere surface
+	var theta: float = _rng.randf() * TAU
+	var cos_phi: float = _rng.randf_range(-1.0, 1.0)
+	var sin_phi: float = sqrt(1.0 - cos_phi * cos_phi)
+	
+	# For uniform distribution within volume, use cube root of random for radius
+	var radius_factor: float = _rng.randf()
+	# Map to the shell between min_radius and max_radius
+	var radius: float = lerp(min_radius, max_radius, pow(radius_factor, 1.0 / 3.0))
+	
+	# Convert to Cartesian coordinates
+	return Vector3(
+		radius * sin_phi * cos(theta),
+		radius * cos_phi,
+		radius * sin_phi * sin(theta)
+	)
+
+
+func _is_valid_position(pos: Vector3, separation: float, min_player_dist: float) -> bool:
 	# Check distance from player
 	if _player_ship != null:
 		var player_dist: float = pos.distance_to(_player_ship.global_position)
-		if player_dist < min_distance_from_player:
+		if player_dist < min_player_dist:
 			return false
 	
 	# Check distance from other POIs

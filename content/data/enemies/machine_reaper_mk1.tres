@@ -1,8 +1,25 @@
-[gd_resource type="Resource" script_class="EnemyDef" load_steps=4 format=3 uid="uid://d3ufm3pj66s60"]
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=8 format=3 uid="uid://d3ufm3pj66s60"]
 
 [ext_resource type="PackedScene" uid="uid://cva25tbpxf8uj" path="res://scenes/enemies/machine_reaper_mk1.tscn" id="1_0sgp6"]
 [ext_resource type="Script" uid="uid://bx6wive40u6f" path="res://content/defs/enemy_def.gd" id="1_48bbe"]
-[ext_resource type="Resource" uid="uid://dtcage8b6gq5e" path="res://content/data/weapons/machine_drone_mk1_laser_turret_mk1.tres" id="3_oml5f"]
+[ext_resource type="PackedScene" uid="uid://bso2dpcl7d5tx" path="res://scenes/weapons/laser_bolt.tscn" id="3_xk7bo"]
+[ext_resource type="Script" uid="uid://dby70n1hr4uk3" path="res://content/defs/weapon_def.gd" id="4_k23yp"]
+[ext_resource type="AudioStream" uid="uid://cg2afukmlkc53" path="res://assets/sounds/laser_bolt.wav" id="5_3ib2t"]
+[ext_resource type="Script" uid="uid://bc5o0q4rptsnq" path="res://content/defs/status_effect_def.gd" id="6_rapr1"]
+
+[sub_resource type="Resource" id="Resource_klx7b"]
+script = ExtResource("4_k23yp")
+weapon_id = "Machine Reaper Mk1 Laser Turret Mk1"
+display_name = "Machine Reaper Mk1 Laser Turret Mk1"
+fire_rate = 1.0
+base_accuracy = 0.6
+base_range = 500.0
+crit_chance = 0.0
+damage_min = 13.0
+damage_max = 18.0
+projectile_scene = ExtResource("3_xk7bo")
+shot_sound = ExtResource("5_3ib2t")
+metadata/_custom_type_script = "uid://dby70n1hr4uk3"
 
 [resource]
 script = ExtResource("1_48bbe")
@@ -19,6 +36,6 @@ max_hull = 120.0
 max_shield = 40.0
 shield_regen = 5.0
 thrust = 60.0
-weapon = ExtResource("3_oml5f")
+weapon = SubResource("Resource_klx7b")
 model_scene = ExtResource("1_0sgp6")
 metadata/_custom_type_script = "uid://bx6wive40u6f"
