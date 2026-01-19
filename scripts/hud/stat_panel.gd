@@ -15,6 +15,7 @@ const COLOR_WEAPON_NAME: Color = Color(0.9, 0.8, 0.5)  # Gold for weapon names
 
 var _stat_rows: Dictionary = {}  # stat_id -> { base_label, net_label }
 var _turret_sections: Array[Dictionary] = []  # Array of turret UI references
+var _weapon_ui_nodes: Array[Node] = []  # UI nodes for weapon sections (cleared on rebuild)
 var _ship: Ship = null
 
 # Define which stats to show and their display names
@@ -241,3 +242,248 @@ func _get_net_value(stat_id: int) -> float:
 		Stat.NANOBOT_GAIN_MULT: return _ship.eff_nanobot_gain_mult
 		Stat.SCORE_GAIN_MULT: return _ship.eff_score_gain_mult
 	return 0.0
+
+# --- Weapon Stats Collection ---
+
+## Collected weapon stats for each turret. Populated by _rebuild_turret_sections().
+## Each entry is a Dictionary with:
+##   - weapon: WeaponDef (or null)
+##   - display_name: String
+##   - mount_index: int
+##   - base: Dictionary of base stat values from WeaponDef
+##   - effective: Dictionary of effective stat values from PlayerTurret
+var _collected_weapon_stats: Array[Dictionary] = []
+
+func get_collected_weapon_stats() -> Array[Dictionary]:
+	"""Returns the collected weapon stats for external use (e.g., UI building)."""
+	return _collected_weapon_stats.duplicate()
+
+func _rebuild_turret_sections() -> void:
+	"""Collects weapon stats from all turrets on the player ship and builds UI."""
+	_collected_weapon_stats.clear()
+	_turret_sections.clear()
+	
+	# Clear previous weapon UI nodes
+	for node in _weapon_ui_nodes:
+		if is_instance_valid(node):
+			node.queue_free()
+	_weapon_ui_nodes.clear()
+	
+	if _ship == null:
+		return
+	
+	var hpm: TurretHardpointManager = _ship.hardpoint_manager
+	if hpm == null:
+		return
+	
+	var assemblies: Array[TurretAssembly] = hpm.get_turret_assemblies()
+	
+	# Add weapons header
+	if not assemblies.is_empty():
+		_add_weapons_header()
+	
+	for assembly in assemblies:
+		if assembly == null or not assembly.has_weapon():
+			continue
+		
+		var turret: PlayerTurret = assembly.turret
+		if turret == null:
+			continue
+		
+		var weapon: WeaponDef = turret.get_weapon()
+		if weapon == null:
+			continue
+		
+		var weapon_data: Dictionary = _collect_weapon_stats(weapon, turret, assembly.mount_index)
+		_collected_weapon_stats.append(weapon_data)
+		
+		# Build UI for this weapon
+		_add_weapon_section(weapon_data)
+
+		# Store reference for potential UI updates later
+		_turret_sections.append({
+			"assembly": assembly,
+			"turret": turret,
+			"weapon": weapon,
+			"data": weapon_data,
+		})
+
+func _add_weapons_header() -> void:
+	"""Adds a 'WEAPONS' category header."""
+	var spacer := Control.new()
+	spacer.custom_minimum_size = Vector2(0, 12)
+	stat_container.add_child(spacer)
+	_weapon_ui_nodes.append(spacer)
+	
+	var header := Label.new()
+	header.text = "WEAPONS"
+	header.add_theme_font_size_override("font_size", 14)
+	header.add_theme_color_override("font_color", COLOR_HEADER)
+	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	stat_container.add_child(header)
+	_weapon_ui_nodes.append(header)
+
+func _add_weapon_section(weapon_data: Dictionary) -> void:
+	"""Adds UI elements for a single weapon's stats."""
+	var display_name: String = weapon_data["display_name"]
+	var base: Dictionary = weapon_data["base"]
+	var effective: Dictionary = weapon_data["effective"]
+	
+	# Weapon name sub-header
+	var spacer := Control.new()
+	spacer.custom_minimum_size = Vector2(0, 6)
+	stat_container.add_child(spacer)
+	_weapon_ui_nodes.append(spacer)
+	
+	var name_label := Label.new()
+	name_label.text = display_name
+	name_label.add_theme_font_size_override("font_size", 13)
+	name_label.add_theme_color_override("font_color", COLOR_WEAPON_NAME)
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	stat_container.add_child(name_label)
+	_weapon_ui_nodes.append(name_label)
+	
+	# Add stat rows for each turret stat
+	for info in TURRET_STAT_INFO:
+		var row: HBoxContainer = _create_weapon_stat_row(info, base, effective)
+		stat_container.add_child(row)
+		_weapon_ui_nodes.append(row)
+
+func _create_weapon_stat_row(info: Dictionary, base: Dictionary, effective: Dictionary) -> HBoxContainer:
+	"""Creates a single stat row for weapon stats."""
+	var key: String = info["key"]
+	var stat_name: String = info["name"]
+	var format_str: String = info.get("format", "%.1f")
+	var is_percent: bool = info.get("is_percent", false)
+	var is_range: bool = info.get("is_range", false)
+	var invert: bool = info.get("invert", false)
+	
+	var row := HBoxContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	
+	# Stat name label (indented)
+	var name_label := Label.new()
+	name_label.text = "  " + stat_name
+	name_label.add_theme_font_size_override("font_size", 12)
+	name_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.custom_minimum_size = Vector2(120, 0)
+	row.add_child(name_label)
+	
+	# Get base and effective values
+	var base_val_1: float = 0.0
+	var base_val_2: float = 0.0
+	var eff_val_1: float = 0.0
+	var eff_val_2: float = 0.0
+	
+	if is_range:
+		# Damage range uses min/max
+		base_val_1 = base.get("damage_min", 0.0)
+		base_val_2 = base.get("damage_max", 0.0)
+		eff_val_1 = effective.get("damage_min", 0.0)
+		eff_val_2 = effective.get("damage_max", 0.0)
+	else:
+		base_val_1 = base.get(key, 0.0)
+		eff_val_1 = effective.get(key, 0.0)
+	
+	# Apply percent conversion
+	if is_percent:
+		base_val_1 *= 100.0
+		base_val_2 *= 100.0
+		eff_val_1 *= 100.0
+		eff_val_2 *= 100.0
+	
+	# Base value label
+	var base_label := Label.new()
+	base_label.add_theme_font_size_override("font_size", 12)
+	base_label.add_theme_color_override("font_color", COLOR_BASE)
+	base_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	base_label.custom_minimum_size = Vector2(70, 0)
+	if is_range:
+		base_label.text = format_str % [base_val_1, base_val_2]
+	else:
+		base_label.text = format_str % base_val_1
+	row.add_child(base_label)
+	
+	# Arrow separator
+	var arrow := Label.new()
+	arrow.text = " → "
+	arrow.add_theme_font_size_override("font_size", 12)
+	arrow.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
+	row.add_child(arrow)
+	
+	# Net value label
+	var net_label := Label.new()
+	net_label.add_theme_font_size_override("font_size", 12)
+	net_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	net_label.custom_minimum_size = Vector2(70, 0)
+	if is_range:
+		net_label.text = format_str % [eff_val_1, eff_val_2]
+	else:
+		net_label.text = format_str % eff_val_1
+	
+	# Determine color based on buff/debuff
+	var color: Color = COLOR_BASE
+	var base_compare: float = base_val_1 if not is_range else (base_val_1 + base_val_2)
+	var eff_compare: float = eff_val_1 if not is_range else (eff_val_1 + eff_val_2)
+	
+	if not is_equal_approx(base_compare, eff_compare):
+		var is_buff: bool = eff_compare > base_compare
+		if invert:
+			is_buff = not is_buff
+		color = COLOR_NET_POSITIVE if is_buff else COLOR_NET_NEGATIVE
+	
+	net_label.add_theme_color_override("font_color", color)
+	row.add_child(net_label)
+	
+	return row
+
+func _collect_weapon_stats(weapon: WeaponDef, turret: PlayerTurret, mount_index: int) -> Dictionary:
+	"""Collects base and effective stats for a single weapon/turret pair."""
+	var base_stats: Dictionary = _get_weapon_base_stats(weapon)
+	var effective_stats: Dictionary = _get_turret_effective_stats(turret)
+	
+	return {
+		"weapon": weapon,
+		"display_name": weapon.display_name if weapon.display_name != "" else weapon.weapon_id,
+		"mount_index": mount_index,
+		"base": base_stats,
+		"effective": effective_stats,
+	}
+
+func _get_weapon_base_stats(weapon: WeaponDef) -> Dictionary:
+	"""Extracts base stat values directly from the WeaponDef."""
+	return {
+		"damage_min": weapon.damage_min,
+		"damage_max": weapon.damage_max,
+		"fire_rate": weapon.fire_rate,
+		"accuracy": weapon.base_accuracy,
+		"range": weapon.base_range,
+		"falloff": weapon.accuracy_range_falloff,
+		"crit_chance": weapon.crit_chance,
+		"crit_mult": weapon.crit_mult,
+		"graze_on_hit": weapon.graze_on_hit,
+		"graze_on_miss": weapon.graze_on_miss,
+		"graze_mult": weapon.graze_mult,
+	}
+
+func _get_turret_effective_stats(turret: PlayerTurret) -> Dictionary:
+	"""Extracts effective (modified) stat values from the PlayerTurret."""
+	return {
+		"damage_min": turret.eff_damage_min,
+		"damage_max": turret.eff_damage_max,
+		"fire_rate": turret.eff_fire_rate,
+		"accuracy": turret.eff_base_accuracy,
+		"range": turret.eff_base_range,
+		"falloff": turret.eff_range_falloff,
+		"crit_chance": turret.eff_crit_chance,
+		"crit_mult": turret.eff_crit_mult,
+		"graze_on_hit": turret.eff_graze_on_hit,
+		"graze_on_miss": turret.eff_graze_on_miss,
+		"graze_mult": turret.eff_graze_mult,
+		"range_bonus": turret.eff_range_bonus_add,
+		"systems_bonus": turret.eff_systems_bonus_add,
+		"projectile_speed": turret.eff_projectile_speed,
+		"projectile_life": turret.eff_projectile_life,
+		"projectile_spread": turret.eff_projectile_spread_deg,
+	}

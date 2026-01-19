@@ -25,6 +25,9 @@ func get_weapons() -> Array[WeaponDef]:
 func get_weapon_count() -> int:
 	return _weapons.size()
 
+func get_turret_assemblies() -> Array[TurretAssembly]:
+	return _pool.duplicate()
+
 func apply_loadout(loadout: ShipLoadoutDef, take: int) -> void:
 	_weapons.clear()
 	if loadout != null and not loadout.mounts.is_empty():
