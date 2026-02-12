@@ -17,15 +17,18 @@ var _accum := 0.0
 @onready var _hull_val: Label = $ShipStatsContainer/ShieldHullContainer/Hull/Value
 @onready var _vel_val: Label = $ShipStatsContainer/VelocityContainer/Label
 @onready var _repair_label: Label = $AbilitiesContainer/RepairPanel/RepairLabel
+@onready var _repair_cooldown_label: Label = $AbilitiesContainer/RepairPanel/CooldownLabel
 
 func init(ship: Node3D) -> void:
 	_ship = ship as Ship
 	_update_repair_widget_text()
+	_update_repair_cooldown_ui()
 
 func _ready() -> void:
 	_style_bar(_shield_bar, shield_color)
 	_style_bar(_hull_bar, hull_color)
 	_update_repair_widget_text()
+	_update_repair_cooldown_ui()
 
 func _process(delta: float) -> void:
 	_accum += delta
@@ -35,6 +38,9 @@ func _process(delta: float) -> void:
 	_update_values()
 
 func _update_values() -> void:
+	if _ship == null:
+		return
+
 	var shield_pair := _read_pair("shield", "eff_max_shield", 100.0, 100.0)
 	var shield: float = shield_pair[0]
 	var shield_max: float = shield_pair[1]
@@ -42,6 +48,7 @@ func _update_values() -> void:
 	var hull_pair := _read_pair("hull", "eff_max_hull", 100.0, 100.0)
 	var hull: float = hull_pair[0]
 	var hull_max: float = hull_pair[1]
+	_update_repair_cooldown_ui()
 	
 	_apply_bar(_shield_bar, _shield_val, shield, shield_max)
 	_apply_bar(_hull_bar, _hull_val, hull, hull_max)
@@ -54,6 +61,21 @@ func _update_values() -> void:
 	max_fwd = max(caps.y, 1.0)
 	
 	_apply_speed(_vel_val, fwd_speed, max_fwd)
+
+func _update_repair_cooldown_ui() -> void:
+	if _repair_cooldown_label == null:
+		return
+	if _ship == null:
+		_repair_cooldown_label.text = ""
+		return
+
+	var remaining: float = max(_ship.get_hull_repair_cooldown_remaining(), 0.0)
+
+	if remaining <= 0.0:
+		_repair_cooldown_label.text = ""
+		return
+
+	_repair_cooldown_label.text = "%.2f" % remaining
 
 func _apply_bar(bar: ProgressBar, label: Label, val: float, maxv: float) -> void:
 	maxv = max(maxv, 1.0)

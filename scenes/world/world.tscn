@@ -1,4 +1,4 @@
-[gd_scene load_steps=58 format=3 uid="uid://ppgr7fveqbrd"]
+[gd_scene load_steps=59 format=3 uid="uid://ppgr7fveqbrd"]
 
 [ext_resource type="Texture2D" uid="uid://d3x23q2en3ng1" path="res://assets/plain_starfield_1.png" id="1_dphjl"]
 [ext_resource type="PackedScene" uid="uid://bsm2da0co8h01" path="res://scenes/ship/ship.tscn" id="2_6m72w"]
@@ -101,7 +101,13 @@ font_size = 11
 [sub_resource type="LabelSettings" id="LabelSettings_2m0ga"]
 line_spacing = 0.0
 font_size = 11
-outline_size = 1
+outline_size = 2
+outline_color = Color(0, 0, 0, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_ovomx"]
+line_spacing = 0.0
+font_size = 11
+outline_size = 2
 outline_color = Color(0, 0, 0, 1)
 
 [sub_resource type="SystemFont" id="SystemFont_dlabj"]
@@ -417,10 +423,19 @@ vertical_alignment = 1
 
 [node name="HotkeyLabel" type="Label" parent="HUD/ScreenRoot/BottomDock/ShipHud/AbilitiesContainer/RepairPanel"]
 layout_mode = 2
-size_flags_vertical = 1
+size_flags_horizontal = 8
+size_flags_vertical = 8
 text = "R"
 label_settings = SubResource("LabelSettings_2m0ga")
 horizontal_alignment = 2
+vertical_alignment = 2
+
+[node name="CooldownLabel" type="Label" parent="HUD/ScreenRoot/BottomDock/ShipHud/AbilitiesContainer/RepairPanel"]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 8
+text = "0.0"
+label_settings = SubResource("LabelSettings_ovomx")
 vertical_alignment = 2
 
 [node name="ShipStatsContainer" type="VBoxContainer" parent="HUD/ScreenRoot/BottomDock/ShipHud"]
