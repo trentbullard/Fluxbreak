@@ -1,14 +1,16 @@
 # main_menu.gd (Godot 4.5)
 extends Control
 
+signal practice_requested
+
 @export var practice_scene: PackedScene
 @export var pilot_roster: PilotRoster
 @export var default_pilot_index: int = 0
 
-@onready var btn_practice: Button = $CenterContainer/MainMenuContainer/ButtonsContainer/PracticeContainer/Practice
-@onready var btn_settings: Button = $CenterContainer/MainMenuContainer/ButtonsContainer/SettingsContainer/Settings
-@onready var btn_exit: Button = $CenterContainer/MainMenuContainer/ButtonsContainer/ExitContainer/Exit
-@onready var pilot_picker: OptionButton = $CenterContainer/MainMenuContainer/ButtonsContainer/PilotContainer/Row/PilotPicker
+@onready var btn_practice: Button = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PracticeContainer/Practice
+@onready var btn_settings: Button = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/SettingsContainer/Settings
+@onready var btn_exit: Button = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/ExitContainer/Exit
+@onready var pilot_picker: OptionButton = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PilotContainer/Row/PilotPicker
 
 func _ready() -> void:
 	btn_practice.pressed.connect(_on_practice_pressed)
@@ -18,9 +20,11 @@ func _ready() -> void:
 	_refresh_pilot_picker()
 
 func _on_practice_pressed() -> void:
+	_apply_current_pilot_selection()
 	if practice_scene != null:
-		_apply_current_pilot_selection()
 		get_tree().change_scene_to_packed(practice_scene)
+		return
+	practice_requested.emit()
 
 func _on_settings_pressed() -> void:
 	print("Settings clicked — not implemented yet.")

@@ -62,7 +62,7 @@ func _on_menu() -> void:
 	get_tree().paused = false
 	is_paused = false
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-	get_tree().change_scene_to_file("res://scenes/main_menu/main_menu.tscn")
+	get_tree().change_scene_to_file("res://scenes/world/world.tscn")
 
 func _on_quit() -> void:
 	get_tree().quit()

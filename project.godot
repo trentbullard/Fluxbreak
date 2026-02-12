@@ -15,7 +15,7 @@ config_version=5
 config/name="Voidbreaker"
 config/description="Rogue-Like Space Auto-Battler"
 config/version="0.1.0"
-run/main_scene="uid://drrnshnyy4682"
+run/main_scene="uid://ppgr7fveqbrd"
 config/features=PackedStringArray("4.5", "Forward Plus")
 config/icon="res://icon.svg"
 

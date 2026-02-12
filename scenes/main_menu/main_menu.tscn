@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://drrnshnyy4682"]
+[gd_scene load_steps=16 format=3 uid="uid://drrnshnyy4682"]
 
 [ext_resource type="Script" uid="uid://ctypdxlxrxqme" path="res://scripts/main_menu/main_menu.gd" id="1_0ebjn"]
 [ext_resource type="PackedScene" uid="uid://ppgr7fveqbrd" path="res://scenes/world/world.tscn" id="2_ob46e"]
@@ -7,6 +7,7 @@
 
 [sub_resource type="SystemFont" id="SystemFont_0ebjn"]
 font_names = PackedStringArray("Marlett")
+subpixel_positioning = 0
 
 [sub_resource type="LabelSettings" id="LabelSettings_ob46e"]
 line_spacing = 0.0
@@ -18,19 +19,25 @@ shadow_size = 10
 shadow_color = Color(0, 0, 0, 1)
 shadow_offset = Vector2(3, 3)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_uqeha"]
+bg_color = Color(0, 0, 0, 0.6)
+
 [sub_resource type="SystemFont" id="SystemFont_uqeha"]
+subpixel_positioning = 0
 
 [sub_resource type="Theme" id="Theme_wem23"]
 default_font = SubResource("SystemFont_uqeha")
 default_font_size = 30
 
 [sub_resource type="SystemFont" id="SystemFont_3ovsr"]
+subpixel_positioning = 0
 
 [sub_resource type="Theme" id="Theme_5seab"]
 default_font = SubResource("SystemFont_3ovsr")
 default_font_size = 30
 
 [sub_resource type="SystemFont" id="SystemFont_4xg86"]
+subpixel_positioning = 0
 
 [sub_resource type="Theme" id="Theme_thkx5"]
 default_font = SubResource("SystemFont_4xg86")
@@ -38,6 +45,7 @@ default_font_size = 30
 
 [sub_resource type="SystemFont" id="SystemFont_wem23"]
 font_names = PackedStringArray("Consolas")
+subpixel_positioning = 0
 
 [sub_resource type="LabelSettings" id="LabelSettings_3ovsr"]
 font = SubResource("SystemFont_wem23")
@@ -77,44 +85,55 @@ label_settings = SubResource("LabelSettings_ob46e")
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="ButtonsContainer" type="VBoxContainer" parent="CenterContainer/MainMenuContainer"]
+[node name="ButtonPanel" type="PanelContainer" parent="CenterContainer/MainMenuContainer"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_uqeha")
+
+[node name="ButtonMargins" type="MarginContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="ButtonsContainer" type="VBoxContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins"]
 layout_mode = 2
 theme_override_constants/separation = 20
 
-[node name="PilotContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonsContainer"]
+[node name="PilotContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer"]
 layout_mode = 2
 
-[node name="Row" type="HBoxContainer" parent="CenterContainer/MainMenuContainer/ButtonsContainer/PilotContainer"]
+[node name="Row" type="HBoxContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PilotContainer"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="PilotLabel" type="Label" parent="CenterContainer/MainMenuContainer/ButtonsContainer/PilotContainer/Row"]
+[node name="PilotLabel" type="Label" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PilotContainer/Row"]
 layout_mode = 2
 text = "Pilot:"
 
-[node name="PilotPicker" type="OptionButton" parent="CenterContainer/MainMenuContainer/ButtonsContainer/PilotContainer/Row"]
+[node name="PilotPicker" type="OptionButton" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PilotContainer/Row"]
 layout_mode = 2
 
-[node name="PracticeContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonsContainer"]
+[node name="PracticeContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer"]
 layout_mode = 2
 
-[node name="Practice" type="Button" parent="CenterContainer/MainMenuContainer/ButtonsContainer/PracticeContainer"]
+[node name="Practice" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PracticeContainer"]
 layout_mode = 2
 theme = SubResource("Theme_wem23")
 text = "Practice"
 
-[node name="SettingsContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonsContainer"]
+[node name="SettingsContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer"]
 layout_mode = 2
 
-[node name="Settings" type="Button" parent="CenterContainer/MainMenuContainer/ButtonsContainer/SettingsContainer"]
+[node name="Settings" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/SettingsContainer"]
 layout_mode = 2
 theme = SubResource("Theme_5seab")
 text = "Settings"
 
-[node name="ExitContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonsContainer"]
+[node name="ExitContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer"]
 layout_mode = 2
 
-[node name="Exit" type="Button" parent="CenterContainer/MainMenuContainer/ButtonsContainer/ExitContainer"]
+[node name="Exit" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/ExitContainer"]
 layout_mode = 2
 theme = SubResource("Theme_thkx5")
 text = "Exit"

@@ -3,7 +3,7 @@ extends Node
 
 signal high_score_updated(new_score: int, old_score: int)
 
-const MENU := "res://scenes/main_menu/main_menu.tscn"
+const MENU := "res://scenes/world/world.tscn"
 const DEFAULT_PILOT_ROSTER: String = "res://content/data/pilots/pilot_roster.tres"
 const SAVE_PATH: String = "user://highscore.cfg"
 const SAVE_SECTION: String = "scores"

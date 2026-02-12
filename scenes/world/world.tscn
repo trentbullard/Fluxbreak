@@ -1,6 +1,7 @@
-[gd_scene load_steps=59 format=3 uid="uid://ppgr7fveqbrd"]
+[gd_scene load_steps=61 format=3 uid="uid://ppgr7fveqbrd"]
 
 [ext_resource type="Texture2D" uid="uid://d3x23q2en3ng1" path="res://assets/plain_starfield_1.png" id="1_dphjl"]
+[ext_resource type="Script" uid="uid://bksswhha71raw" path="res://scripts/world/world_bootstrap.gd" id="1_ovomx"]
 [ext_resource type="PackedScene" uid="uid://bsm2da0co8h01" path="res://scenes/ship/ship.tscn" id="2_6m72w"]
 [ext_resource type="Script" uid="uid://o2d5kgipj00g" path="res://scripts/vfx/starfield_follower.gd" id="2_v5dby"]
 [ext_resource type="PackedScene" uid="uid://e7u5rwibgucu" path="res://scenes/enemies/enemy.tscn" id="6_5qq27"]
@@ -32,6 +33,7 @@
 [ext_resource type="Script" uid="uid://b554csvoi1u8w" path="res://scripts/hud/debug_wave_hud.gd" id="19_wbwoo"]
 [ext_resource type="Resource" uid="uid://csohgxk4eco6e" path="res://content/data/targets/wreck_medium.tres" id="20_5o5dd"]
 [ext_resource type="Script" uid="uid://dxmdaw34bmt8c" path="res://scripts/hud/offscreen_indicator_layer.gd" id="21_osil"]
+[ext_resource type="PackedScene" uid="uid://drrnshnyy4682" path="res://scenes/main_menu/main_menu.tscn" id="29_kx0xk"]
 [ext_resource type="PackedScene" uid="uid://dywsechusg01y" path="res://scenes/hud/pause_menu.tscn" id="32_5o5dd"]
 [ext_resource type="Script" uid="uid://ciqwfvtmjs36w" path="res://scripts/hud/docking_hud.gd" id="docking_hud_script"]
 [ext_resource type="Script" uid="uid://nc1iigswua3o" path="res://scripts/poi/docking_manager.gd" id="docking_manager_script"]
@@ -138,6 +140,7 @@ outline_size = 4
 outline_color = Color(0, 0, 0, 1)
 
 [node name="World" type="Node3D"]
+script = ExtResource("1_ovomx")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_v5dby")
@@ -213,6 +216,8 @@ script = ExtResource("docking_manager_script")
 ship_path = NodePath("../Ship")
 poi_spawner_path = NodePath("../PoiSpawner")
 upgrade_menu_path = NodePath("../UpgradeMenu")
+
+[node name="MainMenuOverlay" parent="." instance=ExtResource("29_kx0xk")]
 
 [node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("8_1yooq")
