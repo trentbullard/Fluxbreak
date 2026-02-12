@@ -5,10 +5,10 @@ extends Control
 @export var pilot_roster: PilotRoster
 @export var default_pilot_index: int = 0
 
-@onready var btn_practice: Button = $CenterContainer/MainMenuContainer/ButtonsContainer/PracticeContainer/MarginContainer/Practice
-@onready var btn_settings: Button = $CenterContainer/MainMenuContainer/ButtonsContainer/SettingsContainer/MarginContainer/Settings
+@onready var btn_practice: Button = $CenterContainer/MainMenuContainer/ButtonsContainer/PracticeContainer/Practice
+@onready var btn_settings: Button = $CenterContainer/MainMenuContainer/ButtonsContainer/SettingsContainer/Settings
 @onready var btn_exit: Button = $CenterContainer/MainMenuContainer/ButtonsContainer/ExitContainer/Exit
-@onready var pilot_picker: OptionButton = $CenterContainer/MainMenuContainer/ButtonsContainer/PilotContainer/MarginContainer/Row/PilotPicker
+@onready var pilot_picker: OptionButton = $CenterContainer/MainMenuContainer/ButtonsContainer/PilotContainer/Row/PilotPicker
 
 func _ready() -> void:
 	btn_practice.pressed.connect(_on_practice_pressed)
