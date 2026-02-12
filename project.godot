@@ -13,6 +13,8 @@ config_version=5
 [application]
 
 config/name="Voidbreaker"
+config/description="Rogue-Like Space Auto-Battler"
+config/version="0.1.0"
 run/main_scene="uid://drrnshnyy4682"
 config/features=PackedStringArray("4.5", "Forward Plus")
 config/icon="res://icon.svg"
