@@ -26,6 +26,9 @@ class_name Ship
 @export var pickup_range: float = 40.0
 @export var nanobot_gain_mult: float = 1.0
 @export var score_gain_mult: float = 1.0
+@export var hull_repair_cost: int = 500
+@export var hull_repair_amount: float = 50.0
+@export var hull_repair_cooldown: float = 5.0
 
 @export var max_ang_rate := Vector3( # caps the rate the *ship* can actually reach
 	deg_to_rad(120.0),  # pitch
@@ -80,6 +83,7 @@ var _dead: bool = false
 var _regen_timer: Timer
 var _stack: Array[WeaponDef] = []
 var _nanobots: int = 0
+var _hull_repair_cooldown_remaining: float = 0.0
 var _shield_mat: StandardMaterial3D
 var _shield_base_albedo: Color = Color.WHITE
 var _emission_value: float = 0.0
@@ -198,6 +202,15 @@ func spend_nanobots(amount: int) -> void:
 func get_nanobots() -> int:
 	return _nanobots
 
+func get_hull_repair_cost() -> int:
+	return max(hull_repair_cost, 0)
+
+func get_hull_repair_cooldown_remaining() -> float:
+	return max(_hull_repair_cooldown_remaining, 0.0)
+
+func get_hull_repair_cooldown() -> float:
+	return max(hull_repair_cooldown, 0.0)
+
 # --- private methods ---
 
 func _refresh() -> void:
@@ -206,6 +219,11 @@ func _refresh() -> void:
 	hardpoint_manager.realign_and_apply(_stack)
 
 func _physics_process(delta: float) -> void:
+	if _hull_repair_cooldown_remaining > 0.0:
+		_hull_repair_cooldown_remaining = max(_hull_repair_cooldown_remaining - delta, 0.0)
+	if Input.is_action_just_pressed("hull_repair"):
+		_try_use_hull_repair()
+
 	_update_translation()
 	
 	var thrusting: bool = Input.is_action_pressed("thrust")
@@ -387,6 +405,23 @@ func _on_regen_tick() -> void:
 	_update_shield_mesh_visibility()
 	update_alarms()
 
+func _try_use_hull_repair() -> void:
+	if _dead:
+		return
+	if _hull_repair_cooldown_remaining > 0.0:
+		return
+	if hull >= eff_max_hull:
+		return
+
+	var cost: int = max(hull_repair_cost, 0)
+	if _nanobots < cost:
+		return
+
+	if cost > 0:
+		spend_nanobots(cost)
+	_on_heal_hull_requested(hull_repair_amount, 0.0)
+	_hull_repair_cooldown_remaining = max(hull_repair_cooldown, 0.0)
+
 func _refresh_effective_stats() -> void:
 	var aggr: StatAggregator = stat_aggregator
 	if aggr == null:
@@ -479,6 +514,7 @@ func _on_heal_hull_requested(amount: float, percent: float) -> void:
 	var cap: float = eff_max_hull * overheal_cap_mult
 	
 	hull = min(cap, hull + total_heal)
+	update_alarms()
 
 func _die() -> void:
 	if _dead:

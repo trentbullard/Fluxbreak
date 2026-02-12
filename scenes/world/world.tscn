@@ -1,4 +1,4 @@
-[gd_scene load_steps=55 format=3 uid="uid://ppgr7fveqbrd"]
+[gd_scene load_steps=58 format=3 uid="uid://ppgr7fveqbrd"]
 
 [ext_resource type="Texture2D" uid="uid://d3x23q2en3ng1" path="res://assets/plain_starfield_1.png" id="1_dphjl"]
 [ext_resource type="PackedScene" uid="uid://bsm2da0co8h01" path="res://scenes/ship/ship.tscn" id="2_6m72w"]
@@ -81,6 +81,28 @@ billboard_mode = 1
 [sub_resource type="QuadMesh" id="QuadMesh_t5ptc"]
 material = SubResource("StandardMaterial3D_v5dby")
 size = Vector2(0.5, 0.5)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1cxds"]
+bg_color = Color(0.94905585, 0.19966345, 0.19966345, 0.95000005)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.5, 0.08, 0.08, 1)
+corner_radius_top_left = 64
+corner_radius_top_right = 64
+corner_radius_bottom_right = 64
+corner_radius_bottom_left = 64
+
+[sub_resource type="LabelSettings" id="LabelSettings_1cxds"]
+line_spacing = 1.0
+font_size = 11
+
+[sub_resource type="LabelSettings" id="LabelSettings_2m0ga"]
+line_spacing = 0.0
+font_size = 11
+outline_size = 1
+outline_color = Color(0, 0, 0, 1)
 
 [sub_resource type="SystemFont" id="SystemFont_dlabj"]
 font_names = PackedStringArray("Consolas")
@@ -174,7 +196,6 @@ ship_path = NodePath("../Ship")
 poi_scene = ExtResource("poi_scene")
 spawn_interval_min = 20.0
 spawn_interval_max = 40.0
-min_poi_separation = 1000.0
 min_distance_from_player = 1000.0
 offense_def = ExtResource("poi_offense_def")
 defense_def = ExtResource("poi_defense_def")
@@ -356,79 +377,115 @@ anchors_preset = -1
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 16.0
+offset_right = -16.0
 offset_bottom = -16.0
 grow_horizontal = 2
 grow_vertical = 0
 
-[node name="Centerer" type="CenterContainer" parent="HUD/ScreenRoot/BottomDock"]
-layout_mode = 2
-
-[node name="ShipHud" type="Control" parent="HUD/ScreenRoot/BottomDock/Centerer"]
+[node name="ShipHud" type="Control" parent="HUD/ScreenRoot/BottomDock"]
 layout_mode = 2
 mouse_filter = 2
 script = ExtResource("11_5qq27")
 back_color = Color(0.24705882, 0.24705882, 0.24705882, 0.75686276)
 
-[node name="VBox" type="VBoxContainer" parent="HUD/ScreenRoot/BottomDock/Centerer/ShipHud"]
+[node name="AbilitiesContainer" type="HBoxContainer" parent="HUD/ScreenRoot/BottomDock/ShipHud"]
 layout_mode = 1
-anchors_preset = 7
+anchors_preset = -1
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_right = -130.0
+grow_vertical = 2
+theme_override_constants/separation = 20
+alignment = 2
+
+[node name="RepairPanel" type="PanelContainer" parent="HUD/ScreenRoot/BottomDock/ShipHud/AbilitiesContainer"]
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_1cxds")
+
+[node name="RepairLabel" type="Label" parent="HUD/ScreenRoot/BottomDock/ShipHud/AbilitiesContainer/RepairPanel"]
+layout_mode = 2
+text = "Hull Repair
+(500)"
+label_settings = SubResource("LabelSettings_1cxds")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HotkeyLabel" type="Label" parent="HUD/ScreenRoot/BottomDock/ShipHud/AbilitiesContainer/RepairPanel"]
+layout_mode = 2
+size_flags_vertical = 1
+text = "R"
+label_settings = SubResource("LabelSettings_2m0ga")
+horizontal_alignment = 2
+vertical_alignment = 2
+
+[node name="ShipStatsContainer" type="VBoxContainer" parent="HUD/ScreenRoot/BottomDock/ShipHud"]
+layout_mode = 1
+anchors_preset = -1
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -94.0
-offset_top = -70.0
-offset_right = 93.0
-offset_bottom = 56.99994
 grow_horizontal = 2
 grow_vertical = 0
 
-[node name="ShieldHullContainer" type="HBoxContainer" parent="HUD/ScreenRoot/BottomDock/Centerer/ShipHud/VBox"]
+[node name="ShieldHullContainer" type="HBoxContainer" parent="HUD/ScreenRoot/BottomDock/ShipHud/ShipStatsContainer"]
 layout_mode = 2
 theme_override_constants/separation = 7
 
-[node name="Hull" type="HBoxContainer" parent="HUD/ScreenRoot/BottomDock/Centerer/ShipHud/VBox/ShieldHullContainer"]
+[node name="Hull" type="HBoxContainer" parent="HUD/ScreenRoot/BottomDock/ShipHud/ShipStatsContainer/ShieldHullContainer"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Value" type="Label" parent="HUD/ScreenRoot/BottomDock/Centerer/ShipHud/VBox/ShieldHullContainer/Hull"]
+[node name="Value" type="Label" parent="HUD/ScreenRoot/BottomDock/ShipHud/ShipStatsContainer/ShieldHullContainer/Hull"]
 layout_mode = 2
 text = "100/100"
 label_settings = SubResource("LabelSettings_srmg5")
 
-[node name="Bar" type="ProgressBar" parent="HUD/ScreenRoot/BottomDock/Centerer/ShipHud/VBox/ShieldHullContainer/Hull"]
+[node name="Bar" type="ProgressBar" parent="HUD/ScreenRoot/BottomDock/ShipHud/ShipStatsContainer/ShieldHullContainer/Hull"]
 custom_minimum_size = Vector2(20, 100)
 layout_mode = 2
 value = 50.0
 fill_mode = 3
 show_percentage = false
 
-[node name="Shield" type="HBoxContainer" parent="HUD/ScreenRoot/BottomDock/Centerer/ShipHud/VBox/ShieldHullContainer"]
+[node name="Shield" type="HBoxContainer" parent="HUD/ScreenRoot/BottomDock/ShipHud/ShipStatsContainer/ShieldHullContainer"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Bar" type="ProgressBar" parent="HUD/ScreenRoot/BottomDock/Centerer/ShipHud/VBox/ShieldHullContainer/Shield"]
+[node name="Bar" type="ProgressBar" parent="HUD/ScreenRoot/BottomDock/ShipHud/ShipStatsContainer/ShieldHullContainer/Shield"]
 custom_minimum_size = Vector2(20, 100)
 layout_mode = 2
 value = 50.0
 fill_mode = 3
 show_percentage = false
 
-[node name="Value" type="Label" parent="HUD/ScreenRoot/BottomDock/Centerer/ShipHud/VBox/ShieldHullContainer/Shield"]
+[node name="Value" type="Label" parent="HUD/ScreenRoot/BottomDock/ShipHud/ShipStatsContainer/ShieldHullContainer/Shield"]
 layout_mode = 2
 text = "100/100"
 label_settings = SubResource("LabelSettings_dlabj")
 
-[node name="VelocityContainer" type="CenterContainer" parent="HUD/ScreenRoot/BottomDock/Centerer/ShipHud/VBox"]
+[node name="VelocityContainer" type="CenterContainer" parent="HUD/ScreenRoot/BottomDock/ShipHud/ShipStatsContainer"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="HUD/ScreenRoot/BottomDock/Centerer/ShipHud/VBox/VelocityContainer"]
+[node name="Label" type="Label" parent="HUD/ScreenRoot/BottomDock/ShipHud/ShipStatsContainer/VelocityContainer"]
 layout_mode = 2
 text = "180m/s"
 label_settings = SubResource("LabelSettings_umvgx")
 
-[node name="InteractionLayer" type="Control" parent="HUD/ScreenRoot/BottomDock/Centerer"]
-layout_mode = 2
+[node name="WeaponsContainer" type="HBoxContainer" parent="HUD/ScreenRoot/BottomDock/ShipHud"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = 130.0
+grow_vertical = 2
 
 [node name="DebugWaveHUD" type="MarginContainer" parent="HUD/ScreenRoot/BottomDock"]
 layout_mode = 2

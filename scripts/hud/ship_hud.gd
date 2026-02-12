@@ -5,23 +5,27 @@ class_name ShipHud
 @export var shield_color: Color = Color(0.2, 0.6, 1.0)
 @export var hull_color: Color = Color(1.0, 0.22, 0.22, 1.0)
 @export var back_color: Color = Color(0, 0, 0, 0.6)
+@export var repair_color: Color = Color(0.95, 0.2, 0.2, 0.95)
 @export var ui_hz: float = 20.0
 
 var _ship: Ship
 var _accum := 0.0
 
-@onready var _shield_bar: ProgressBar = $VBox/ShieldHullContainer/Shield/Bar
-@onready var _shield_val: Label = $VBox/ShieldHullContainer/Shield/Value
-@onready var _hull_bar: ProgressBar = $VBox/ShieldHullContainer/Hull/Bar
-@onready var _hull_val: Label = $VBox/ShieldHullContainer/Hull/Value
-@onready var _vel_val: Label = $VBox/VelocityContainer/Label
+@onready var _shield_bar: ProgressBar = $ShipStatsContainer/ShieldHullContainer/Shield/Bar
+@onready var _shield_val: Label = $ShipStatsContainer/ShieldHullContainer/Shield/Value
+@onready var _hull_bar: ProgressBar = $ShipStatsContainer/ShieldHullContainer/Hull/Bar
+@onready var _hull_val: Label = $ShipStatsContainer/ShieldHullContainer/Hull/Value
+@onready var _vel_val: Label = $ShipStatsContainer/VelocityContainer/Label
+@onready var _repair_label: Label = $AbilitiesContainer/RepairPanel/RepairLabel
 
 func init(ship: Node3D) -> void:
 	_ship = ship as Ship
+	_update_repair_widget_text()
 
 func _ready() -> void:
 	_style_bar(_shield_bar, shield_color)
 	_style_bar(_hull_bar, hull_color)
+	_update_repair_widget_text()
 
 func _process(delta: float) -> void:
 	_accum += delta
@@ -88,3 +92,11 @@ func _read_pair(component_name: String, component_max: String, def_v: float, def
 		if typeof(got_v) in [TYPE_INT, TYPE_FLOAT]: v = float(got_v)
 		if typeof(got_m) in [TYPE_INT, TYPE_FLOAT]: m = float(got_m)
 	return [v, m]
+
+func _update_repair_widget_text() -> void:
+	if _repair_label == null:
+		return
+	var cost: int = 500
+	if _ship != null and _ship.has_method("get_hull_repair_cost"):
+		cost = int(_ship.call("get_hull_repair_cost"))
+	_repair_label.text = "Hull Repair\n(%d)" % cost

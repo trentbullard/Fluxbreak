@@ -12,7 +12,7 @@ extends CanvasLayer
 @onready var ship: Node3D = get_node_or_null(ship_path)
 @onready var nameplates: NameplateManager = $ScreenRoot/NameplateLayer
 @onready var effects: FloatingTextLayer = $ScreenRoot/EffectsLayer
-@onready var ship_hud: ShipHud = $ScreenRoot/BottomDock/Centerer/ShipHud
+@onready var ship_hud: ShipHud = $ScreenRoot/BottomDock/ShipHud
 @onready var offscreen_indicators: OffscreenIndicatorLayer = $ScreenRoot/OffscreenIndicatorLayer
 
 var camera: Camera3D
