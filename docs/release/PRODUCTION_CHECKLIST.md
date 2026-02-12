@@ -4,6 +4,9 @@ Use this checklist before shipping any public build.
 
 ## Release Identity
 
+- [ ] Bump version with script:
+  - [ ] `scripts/release/bump_version.ps1 -Revision`
+  - [ ] Use one switch only: `-Major`, `-Minor`, `-Revision`, or `-Hotfix`
 - [ ] Confirm `project.godot` values:
   - [ ] `config/name`
   - [ ] `config/description`
