@@ -1,0 +1,46 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=7 format=3]
+
+[ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="1_mod"]
+[ext_resource type="Script" uid="uid://f3a4tqbwupk2" path="res://content/defs/upgrade_def.gd" id="2_upg"]
+
+[sub_resource type="Resource" id="Resource_pickup"]
+script = ExtResource("1_mod")
+stat = 46
+op = 1
+value = 1.45
+source_id = "salvage_magnet_2"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_nanobots"]
+script = ExtResource("1_mod")
+stat = 47
+op = 1
+value = 1.35
+source_id = "salvage_magnet_2"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_score"]
+script = ExtResource("1_mod")
+stat = 48
+op = 1
+value = 1.25
+source_id = "salvage_magnet_2"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_scanner"]
+script = ExtResource("1_mod")
+stat = 49
+value = 300.0
+source_id = "salvage_magnet_2"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[resource]
+script = ExtResource("2_upg")
+id = "salvage_magnet_2"
+display_name = "Salvage Magnet II"
+descripton = "Industrial tractor suite for wider pulls and richer recovery."
+cost = 1380
+tags = Array[String](["utility", "misc", "repair"])
+tier = 2
+modifiers = Array[ExtResource("1_mod")]([SubResource("Resource_pickup"), SubResource("Resource_nanobots"), SubResource("Resource_score"), SubResource("Resource_scanner")])
+metadata/_custom_type_script = "uid://f3a4tqbwupk2"

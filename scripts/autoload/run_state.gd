@@ -5,6 +5,7 @@ signal score_changed(total: int, delta: int, reason: String)
 signal nanobots_updated(amount: int) # called by ship when nanobots collected
 signal nanobots_spent(amount: int) # called by pause menu
 signal weapon_purchased_count_changed(count: int)
+signal upgrade_purchased(upgrade_id: String)
 
 # --- Weapon Pricing ---
 var weapons_purchased: int = 0
@@ -45,10 +46,12 @@ enum State { IN_WAVE, DOWNTIME }
 
 var run_state: State = State.DOWNTIME
 var run_score: int = 0
+var _purchased_upgrade_ids: Array[String] = []
 
 func start_run() -> void:
 	reset_score()
 	reset_weapons_purchased()
+	reset_upgrades_purchased()
 
 
 func reset_weapons_purchased() -> void:
@@ -64,6 +67,22 @@ func record_weapon_purchase() -> void:
 func get_weapon_cost(base_cost: int) -> int:
 	# Progressive pricing: base_cost * (multiplier ^ weapons_purchased)
 	return int(round(base_cost * pow(weapon_price_multiplier, weapons_purchased)))
+
+func record_upgrade_purchase(upgrade_id: String) -> void:
+	var id: String = upgrade_id.strip_edges().to_lower()
+	if id == "":
+		return
+	_purchased_upgrade_ids.append(id)
+	upgrade_purchased.emit(id)
+
+func reset_upgrades_purchased() -> void:
+	_purchased_upgrade_ids.clear()
+
+func get_purchased_upgrade_ids() -> Array[String]:
+	return _purchased_upgrade_ids.duplicate()
+
+func get_wave_index() -> int:
+	return _wave_index
 
 func set_state(state: State) -> void:
 	run_state = state

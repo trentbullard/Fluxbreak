@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=8 format=3]
+
+[ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="1_mod"]
+[ext_resource type="Script" uid="uid://f3a4tqbwupk2" path="res://content/defs/upgrade_def.gd" id="2_upg"]
+
+[sub_resource type="Resource" id="Resource_fire_rate"]
+script = ExtResource("1_mod")
+stat = 19
+op = 1
+value = 0.8
+source_id = "overcharged_capacitors_2"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_damage_min"]
+script = ExtResource("1_mod")
+stat = 28
+value = 6.0
+source_id = "overcharged_capacitors_2"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_damage_max"]
+script = ExtResource("1_mod")
+stat = 29
+value = 8.0
+source_id = "overcharged_capacitors_2"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_projectile_speed"]
+script = ExtResource("1_mod")
+stat = 44
+value = 300.0
+source_id = "overcharged_capacitors_2"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_crit_chance"]
+script = ExtResource("1_mod")
+stat = 23
+value = 0.03
+source_id = "overcharged_capacitors_2"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[resource]
+script = ExtResource("2_upg")
+id = "overcharged_capacitors_2"
+display_name = "Overcharged Capacitors II"
+descripton = "Aggressive tuning: faster volleys, heavier hits, hotter shots."
+cost = 1800
+tags = Array[String](["offense", "weapons", "damage"])
+tier = 2
+modifiers = Array[ExtResource("1_mod")]([SubResource("Resource_fire_rate"), SubResource("Resource_damage_min"), SubResource("Resource_damage_max"), SubResource("Resource_projectile_speed"), SubResource("Resource_crit_chance")])
+metadata/_custom_type_script = "uid://f3a4tqbwupk2"

@@ -29,5 +29,7 @@ script = ExtResource("2_h4aac")
 id = "precision_targeting_suite_1"
 display_name = "Precision Targeting Suite I"
 descripton = "Lasers hit where you point them. Weak on spray, strong on elites."
+cost = 880
+tags = Array[String](["offense", "weapons", "damage"])
 modifiers = Array[ExtResource("1_swfr7")]([SubResource("Resource_swfr7"), SubResource("Resource_h4aac"), SubResource("Resource_ta2ub")])
 metadata/_custom_type_script = "uid://f3a4tqbwupk2"

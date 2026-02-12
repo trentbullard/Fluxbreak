@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=7 format=3]
+
+[ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="1_mod"]
+[ext_resource type="Script" uid="uid://f3a4tqbwupk2" path="res://content/defs/upgrade_def.gd" id="2_upg"]
+
+[sub_resource type="Resource" id="Resource_accuracy"]
+script = ExtResource("1_mod")
+stat = 20
+value = 0.08
+source_id = "targeting_link_array_1"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_range_bonus"]
+script = ExtResource("1_mod")
+stat = 30
+value = 120.0
+source_id = "targeting_link_array_1"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_falloff"]
+script = ExtResource("1_mod")
+stat = 22
+value = -0.08
+source_id = "targeting_link_array_1"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_crit_chance"]
+script = ExtResource("1_mod")
+stat = 23
+value = 0.02
+source_id = "targeting_link_array_1"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[resource]
+script = ExtResource("2_upg")
+id = "targeting_link_array_1"
+display_name = "Targeting Link Array I"
+descripton = "Networked aiming boosts lock quality and keeps shots lethal at range."
+cost = 930
+tags = Array[String](["offense", "weapons", "damage"])
+modifiers = Array[ExtResource("1_mod")]([SubResource("Resource_accuracy"), SubResource("Resource_range_bonus"), SubResource("Resource_falloff"), SubResource("Resource_crit_chance")])
+metadata/_custom_type_script = "uid://f3a4tqbwupk2"

@@ -22,5 +22,7 @@ script = ExtResource("2_hlxwi")
 id = "adaptive_shield_matrix_1"
 display_name = "Adaptive Shield Matrix I"
 descripton = "Energy tank, shrugs off chip damage."
+cost = 840
+tags = Array[String](["defense", "shields"])
 modifiers = Array[ExtResource("1_o4mvm")]([SubResource("Resource_o4mvm"), SubResource("Resource_hlxwi")])
 metadata/_custom_type_script = "uid://f3a4tqbwupk2"

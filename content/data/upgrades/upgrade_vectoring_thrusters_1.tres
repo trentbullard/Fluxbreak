@@ -63,5 +63,7 @@ script = ExtResource("2_t3q77")
 id = "vectoring_thrusters_1"
 display_name = "Vectoring Thrusters I"
 descripton = "Sharper turns and better throttle response"
+cost = 850
+tags = Array[String](["utility", "misc"])
 modifiers = Array[ExtResource("1_m0hei")]([SubResource("Resource_m0hei"), SubResource("Resource_t3q77"), SubResource("Resource_ibbii"), SubResource("Resource_aa8vw"), SubResource("Resource_vxmry"), SubResource("Resource_j603h"), SubResource("Resource_6bt18")])
 metadata/_custom_type_script = "uid://f3a4tqbwupk2"

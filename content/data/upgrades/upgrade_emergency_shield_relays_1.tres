@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=6 format=3]
+
+[ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="1_mod"]
+[ext_resource type="Script" uid="uid://f3a4tqbwupk2" path="res://content/defs/upgrade_def.gd" id="2_upg"]
+
+[sub_resource type="Resource" id="Resource_shield"]
+script = ExtResource("1_mod")
+stat = 13
+value = 70.0
+source_id = "emergency_shield_relays_1"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_regen"]
+script = ExtResource("1_mod")
+stat = 14
+value = 3.0
+source_id = "emergency_shield_relays_1"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_damage_taken"]
+script = ExtResource("1_mod")
+stat = 16
+op = 1
+value = 0.96
+source_id = "emergency_shield_relays_1"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[resource]
+script = ExtResource("2_upg")
+id = "emergency_shield_relays_1"
+display_name = "Emergency Shield Relays I"
+descripton = "Bigger capacitor bank and faster recharge under fire."
+cost = 920
+tags = Array[String](["defense", "shields"])
+modifiers = Array[ExtResource("1_mod")]([SubResource("Resource_shield"), SubResource("Resource_regen"), SubResource("Resource_damage_taken")])
+metadata/_custom_type_script = "uid://f3a4tqbwupk2"

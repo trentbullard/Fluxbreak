@@ -40,5 +40,7 @@ script = ExtResource("2_0t1dx")
 id = "systems_optimization_1"
 display_name = "Systems Optimization I"
 descripton = "Boring but efficient - legendary-lite."
+cost = 860
+tags = Array[String](["utility", "misc", "repair"])
 modifiers = Array[ExtResource("1_qlkcg")]([SubResource("Resource_qlkcg"), SubResource("Resource_0t1dx"), SubResource("Resource_d8sut"), SubResource("Resource_hahl6")])
 metadata/_custom_type_script = "uid://f3a4tqbwupk2"

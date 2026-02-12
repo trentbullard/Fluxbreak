@@ -29,5 +29,7 @@ script = ExtResource("2_s0n1b")
 id = "overcharged_capacitors_1"
 display_name = "Overcharged Capacitors I"
 descripton = "Shoots faster, hits harder."
+cost = 900
+tags = Array[String](["offense", "weapons", "damage"])
 modifiers = Array[ExtResource("1_8l3ah")]([SubResource("Resource_8l3ah"), SubResource("Resource_s0n1b"), SubResource("Resource_qf8jg")])
 metadata/_custom_type_script = "uid://f3a4tqbwupk2"

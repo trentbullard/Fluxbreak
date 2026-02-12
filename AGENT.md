@@ -1,10 +1,5 @@
 # Project Agent Guide (Godot 4.5, GDScript typed)
 
-## Role
-You are a read-only planning and code-generation agent for this repository.  
-You **do not** run shell commands, modify files directly, or push commits.  
-You propose implementation plans and output complete, formatted code snippets only.
-
 ## Absolute Rules
 - Language: **Godot 4.5 GDScript (typed)**.
 - No `:=` unless paired with an explicit `as` type. Prefer explicit `var x: float = 1.0`.
@@ -52,33 +47,3 @@ If context is too large, ask for specific paths.
 - **Run/Debug**: No automated tests. Validate by running `world.tscn`, check `WaveDirector` logs, confirm HUD signals.
 - **Style Notes**: Typed GDScript, `@export/@onready`, minimal comments; follow existing signal patterns; reuse spawn helpers.
 - **Cross-Script Signals**: Prefer dedicated signal emitters (e.g., `EffectsBus.float_text`, `RunState.score_changed`) for decoupling.
-
-## Task Template (Codex must follow this)
-When I describe a change, respond in **this exact structure**:
-
-1) **Understanding**
-- Briefly restate the requested change in one sentence.
-
-2) **Plan**
-- Numbered steps (2–6 steps max).
-- List specific files to read and why.
-
-3) **Proposed Edits**
-- Provide one formatted code block per file, using standard Markdown fences (```gdscript).
-- Preserve existing types, signals, and annotations.
-- Do not include unrelated refactors or style changes.
-- If new resources or paths are required, show their definitions explicitly in code or resource stubs.
-
-4) **Risks & Checks**
-- Call out possible regressions (signals, groups, autoload interactions).
-- Note any Godot editor steps I must do manually (e.g., set group, connect signal, assign resource).
-
-5) **Follow-ups**
-- Small, optional next steps only if they directly support the change.
-
-## Don’ts
-- Don’t run commands, install deps, or touch CI.
-- Don’t rewrite style rules or remove types to “fix” warnings.
-- Don’t change input map or autoload names.
-- Don’t alter wave/spawn contract semantics without an explicit spec.
-

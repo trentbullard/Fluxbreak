@@ -32,5 +32,7 @@ script = ExtResource("2_7wuqf")
 id = "salvage_magnet_1"
 display_name = "Salvage Magnet I"
 descripton = "Wider pickup radius and better yields"
+cost = 780
+tags = Array[String](["utility", "misc", "repair"])
 modifiers = Array[ExtResource("1_td3ek")]([SubResource("Resource_td3ek"), SubResource("Resource_7wuqf"), SubResource("Resource_dqdnr")])
 metadata/_custom_type_script = "uid://f3a4tqbwupk2"

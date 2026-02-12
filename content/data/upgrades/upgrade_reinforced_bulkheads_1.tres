@@ -23,5 +23,7 @@ script = ExtResource("2_ytepu")
 id = "reinforced_bulkheads_1"
 display_name = "Reinforced Bulkheads I"
 descripton = "Thickener armor plating: +50 hull, -5% incoming damage."
+cost = 820
+tags = Array[String](["defense", "hull"])
 modifiers = Array[ExtResource("1_vomjb")]([SubResource("Resource_vomjb"), SubResource("Resource_ytepu")])
 metadata/_custom_type_script = "uid://f3a4tqbwupk2"

@@ -1,0 +1,79 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=11 format=3]
+
+[ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="1_mod"]
+[ext_resource type="Script" uid="uid://f3a4tqbwupk2" path="res://content/defs/upgrade_def.gd" id="2_upg"]
+
+[sub_resource type="Resource" id="Resource_speed_fwd"]
+script = ExtResource("1_mod")
+stat = 0
+op = 1
+value = 1.1
+source_id = "vectoring_thrusters_2"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_accel_fwd"]
+script = ExtResource("1_mod")
+stat = 2
+op = 1
+value = 1.18
+source_id = "vectoring_thrusters_2"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_accel_rev"]
+script = ExtResource("1_mod")
+stat = 3
+op = 1
+value = 1.12
+source_id = "vectoring_thrusters_2"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_boost"]
+script = ExtResource("1_mod")
+stat = 4
+op = 1
+value = 1.1
+source_id = "vectoring_thrusters_2"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_drag"]
+script = ExtResource("1_mod")
+stat = 5
+op = 1
+value = 0.88
+source_id = "vectoring_thrusters_2"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_rate_pitch"]
+script = ExtResource("1_mod")
+stat = 6
+op = 1
+value = 1.15
+source_id = "vectoring_thrusters_2"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_rate_yaw"]
+script = ExtResource("1_mod")
+stat = 7
+op = 1
+value = 1.15
+source_id = "vectoring_thrusters_2"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_rate_roll"]
+script = ExtResource("1_mod")
+stat = 8
+op = 1
+value = 1.15
+source_id = "vectoring_thrusters_2"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[resource]
+script = ExtResource("2_upg")
+id = "vectoring_thrusters_2"
+display_name = "Vectoring Thrusters II"
+descripton = "High-authority control surfaces for aggressive repositioning."
+cost = 1560
+tags = Array[String](["utility", "misc"])
+tier = 2
+modifiers = Array[ExtResource("1_mod")]([SubResource("Resource_speed_fwd"), SubResource("Resource_accel_fwd"), SubResource("Resource_accel_rev"), SubResource("Resource_boost"), SubResource("Resource_drag"), SubResource("Resource_rate_pitch"), SubResource("Resource_rate_yaw"), SubResource("Resource_rate_roll")])
+metadata/_custom_type_script = "uid://f3a4tqbwupk2"
