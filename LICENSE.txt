@@ -1,0 +1,17 @@
+Voidbreaker
+Copyright (c) 2026 p4ndepravity
+
+All rights reserved.
+
+No part of this repository, including source code, game logic, art, audio,
+music, names, logos, text, and other assets, may be copied, modified,
+distributed, sublicensed, used in derivative works, or used in other projects
+without prior written permission from the copyright holder.
+
+Contact: p4ndepravity@gmail.com
+
+Third-party exceptions:
+- Godot Engine components are licensed under MIT (see docs/release/THIRD_PARTY_NOTICES.txt).
+- The starfield texture at assets/plain_starfield_1.png is used under
+  Creative Commons 4.0 terms as documented in docs/release/ATTRIBUTIONS.md and
+  docs/release/THIRD_PARTY_NOTICES.txt.

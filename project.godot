@@ -8,12 +8,11 @@
 
 config_version=5
 
-"ï»¿config_version"=5
 
 [application]
 
 config/name="Voidbreaker"
-config/description="Rogue-Like Space Auto-Battler"
+config/description="Roguelike space auto-battler"
 config/version="0.1.0"
 run/main_scene="uid://ppgr7fveqbrd"
 config/features=PackedStringArray("4.5", "Forward Plus")

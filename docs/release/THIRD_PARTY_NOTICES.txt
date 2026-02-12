@@ -1,0 +1,55 @@
+VOIDBREAKER - THIRD-PARTY NOTICES
+
+This product includes third-party software and content.
+
+------------------------------------------------------------
+Godot Engine
+------------------------------------------------------------
+Website: https://godotengine.org
+License: MIT License
+Copyright:
+Copyright (c) 2014-present Godot Engine contributors.
+Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.
+
+MIT License text:
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+------------------------------------------------------------
+Spacesphere Maps - Plain Starfield Spheremaps
+------------------------------------------------------------
+Source: https://www.spacespheremaps.com/plain-starfield-spheremaps/
+Used file: assets/plain_starfield_1.png
+Attribution:
+"Plain Starfield Spheremaps" by Spacesphere Maps.
+Changes made: none (used as provided).
+
+License information:
+The source site states usage is granted under Creative Commons 4.0 terms.
+Reference license URL: https://creativecommons.org/licenses/by/4.0/
+
+Note:
+Spacesphere Maps usage terms and conditions should be reviewed at source.
+
+------------------------------------------------------------
+Project Ownership Notice
+------------------------------------------------------------
+Unless otherwise stated in this file, all code, art, audio, music, text,
+design, and other content in Voidbreaker are proprietary and all rights are
+reserved by p4ndepravity.

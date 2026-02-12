@@ -1,0 +1,40 @@
+VOIDBREAKER END USER LICENSE AGREEMENT
+
+1. License Grant
+You are granted a non-exclusive, non-transferable, revocable license to
+install and use Voidbreaker for personal entertainment purposes only.
+
+2. Ownership
+Voidbreaker and all related intellectual property are owned by:
+p4ndepravity (also publishing as p4ndepravitygaming).
+All rights are reserved except where third-party licenses explicitly apply.
+
+3. Restrictions
+You may not:
+- Reverse engineer, decompile, or disassemble the game except where law allows.
+- Redistribute, sublicense, rent, lease, or commercially exploit the game.
+- Reuse any code, art, audio, music, names, logos, branding, or other game
+  content in another project without written permission.
+- Remove copyright or trademark notices.
+
+4. Third-Party Components
+Voidbreaker includes third-party software and assets. License terms and
+notices are provided in THIRD_PARTY_NOTICES.txt.
+
+5. Warranty Disclaimer
+The game is provided "AS IS", without warranties of any kind, express or
+implied, including merchantability, fitness for a particular purpose, and
+non-infringement.
+
+6. Limitation of Liability
+To the maximum extent permitted by law, the licensors are not liable for any
+indirect, incidental, or consequential damages arising from use of the game.
+
+7. Termination
+This license terminates automatically if you breach its terms.
+
+8. Governing Law
+United States, unless superseded by mandatory local consumer law.
+
+9. Contact
+p4ndepravity@gmail.com
