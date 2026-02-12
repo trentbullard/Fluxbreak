@@ -19,12 +19,19 @@ extends Node
 
 var _aim := Vector2.ZERO
 var _target_aim := Vector2.ZERO
+var _controller_aim := Vector2.ZERO
+var _controller_active: bool = false
 
 func get_aim_px() -> Vector2:
 	return _aim
 
 func get_radius_px() -> float:
 	return radius_px
+
+func set_controller_aim(normalized_aim: Vector2, is_active: bool) -> void:
+	_controller_active = is_active
+	var clamped: Vector2 = normalized_aim.clamp(Vector2(-1.0, -1.0), Vector2(1.0, 1.0))
+	_controller_aim = clamped * radius_px
 
 func _ready() -> void:
 	if lock_mouse_on_start:
@@ -37,8 +44,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			_target_aim = _target_aim.normalized() * radius_px
 
 func _process(_dt: float) -> void:
+	var input_aim: Vector2 = _controller_aim if _controller_active else _target_aim
+
 	# light smoothing without the springiness
-	_aim = _aim.lerp(_target_aim, 0.35)
+	_aim = _aim.lerp(input_aim, 0.35)
 
 	var a := _aim
 	if a.length() < deadzone_px:
@@ -62,6 +71,6 @@ func _process(_dt: float) -> void:
 
 	ship.set_target_angular_rates(
 		Vector3( deg_to_rad(target_pitch_rate),  # X (pitch)
-				 deg_to_rad(target_yaw_rate),    # Y (yaw)
-				 deg_to_rad(target_roll_rate) )  # Z (roll)
+				 		 deg_to_rad(target_yaw_rate),    # Y (yaw)
+				 		 deg_to_rad(target_roll_rate) )  # Z (roll)
 	)
