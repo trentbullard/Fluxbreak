@@ -8,5 +8,5 @@ script = ExtResource("1")
 id = &"rookie"
 display_name = "Rookie"
 description = "Baseline pilot for practice runs."
+sort_order = 0
 ship = ExtResource("2")
-

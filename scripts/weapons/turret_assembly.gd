@@ -31,7 +31,7 @@ func apply_weapon(w: WeaponDef, keep_cooldown: bool) -> void:
 
 func swap_weapon(w: WeaponDef, keep_cooldown: bool) -> void:
 	if turret == null: return
-	turret.swap_weapon(w, keep_cooldown)
+	turret.swap_weapon(w, keep_cooldown, team_id)
 	weapon_changed.emit(w)
 	_update_visual_for_weapon(w)
 

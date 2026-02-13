@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://drrnshnyy4682"]
+[gd_scene load_steps=17 format=3 uid="uid://drrnshnyy4682"]
 
 [ext_resource type="Script" uid="uid://ctypdxlxrxqme" path="res://scripts/main_menu/main_menu.gd" id="1_0ebjn"]
 [ext_resource type="Script" uid="uid://bp86upa6vqbpe" path="res://scripts/main_menu/high_score_container.gd" id="3_ob46e"]
@@ -39,11 +39,19 @@ default_font_size = 30
 default_font = ExtResource("5_3ovsr")
 default_font_size = 30
 
+[sub_resource type="LabelSettings" id="LabelSettings_thkx5"]
+line_spacing = 0.0
+font = ExtResource("5_3ovsr")
+
 [sub_resource type="LabelSettings" id="LabelSettings_3ovsr"]
 font = ExtResource("5_3ovsr")
 font_size = 20
 outline_size = 4
 outline_color = Color(0, 0, 0, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_4xg86"]
+font = ExtResource("5_3ovsr")
+font_size = 12
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -136,6 +144,22 @@ layout_mode = 2
 theme = SubResource("Theme_thkx5")
 text = "Exit"
 
+[node name="InstructionPanel" type="PanelContainer" parent="CenterContainer/MainMenuContainer"]
+layout_mode = 2
+
+[node name="InstructionsLabel" type="Label" parent="CenterContainer/MainMenuContainer/InstructionPanel"]
+layout_mode = 2
+text = "Instructions (for now)
+
+Autobattler - guns will fire on closest/best target
+Enemies and objects drop NANOBOTS
+NANOBOTS are used to purchase upgrades and weapons
+Dock with POIs to purchase
+NANOBOTS can also be used to repair the ship's hull
+Survive as long as you can"
+label_settings = SubResource("LabelSettings_thkx5")
+horizontal_alignment = 1
+
 [node name="HighScoreContainer" type="Control" parent="."]
 layout_mode = 1
 anchors_preset = 0
@@ -151,3 +175,36 @@ offset_right = 83.0
 offset_bottom = 23.0
 text = "High Score: 0"
 label_settings = SubResource("LabelSettings_3ovsr")
+
+[node name="RoadmapPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -188.0
+offset_top = -122.0
+offset_bottom = 122.0
+grow_horizontal = 0
+grow_vertical = 2
+
+[node name="RoadmapLabel" type="Label" parent="RoadmapPanel"]
+layout_mode = 2
+text = "Roadmap:
+- Upgrade POIs Finished
+- Bosses
+- New Maps
+- Many new upgrades
+   and build paths
+- Lots of new weapons
+   and ammo/damage types
+- Many new ships
+- New pilots with
+   inherent stat bonuses
+- 5 enemy 'races' with
+   many distinct enemies
+- Music (need help)
+- Improved flight mechanics
+- Lore/Story"
+label_settings = SubResource("LabelSettings_4xg86")

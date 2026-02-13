@@ -20,6 +20,14 @@ func _ready() -> void:
 func start_new_run() -> void:
 	RunState.start_run()
 
+func set_selected_pilot(pilot: PilotDef) -> void:
+	if pilot == null:
+		return
+	if not pilot.is_selectable():
+		push_warning("Ignoring non-selectable pilot: %s" % pilot.resource_path)
+		return
+	selected_pilot = pilot
+
 func player_died():
 	_end_run_and_return_to_menu()
 
@@ -58,6 +66,9 @@ func _ensure_default_pilot() -> void:
 	if selected_pilot != null:
 		return
 	var roster: PilotRoster = load(DEFAULT_PILOT_ROSTER) as PilotRoster
-	if roster == null or roster.pilots.is_empty():
+	if roster == null:
 		return
-	selected_pilot = roster.pilots[0]
+	var pilots: Array[PilotDef] = roster.get_pilots()
+	if pilots.is_empty():
+		return
+	selected_pilot = pilots[0]

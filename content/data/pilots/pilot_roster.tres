@@ -7,4 +7,3 @@
 [resource]
 script = ExtResource("1")
 pilots = Array[Resource]([ExtResource("2"), ExtResource("3")])
-

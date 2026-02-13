@@ -10,6 +10,7 @@ signal practice_requested
 @onready var btn_settings: Button = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/SettingsContainer/Settings
 @onready var btn_exit: Button = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/ExitContainer/Exit
 @onready var pilot_picker: OptionButton = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PilotContainer/Row/PilotPicker
+var _available_pilots: Array[PilotDef] = []
 
 func _ready() -> void:
 	btn_practice.pressed.connect(_on_practice_pressed)
@@ -30,17 +31,18 @@ func _on_exit_pressed() -> void:
 
 func _refresh_pilot_picker() -> void:
 	pilot_picker.clear()
-	if pilot_roster == null or pilot_roster.pilots.is_empty():
+	_available_pilots = pilot_roster.get_pilots() if pilot_roster != null else []
+	if _available_pilots.is_empty():
 		pilot_picker.disabled = true
 		pilot_picker.add_item("Default")
 		return
 
 	pilot_picker.disabled = false
-	for p in pilot_roster.pilots:
-		var display_name: String = p.display_name if p != null else "Unknown"
+	for p in _available_pilots:
+		var display_name: String = p.get_display_name_or_default() if p != null else "Unknown"
 		pilot_picker.add_item(display_name)
 
-	var idx: int = clamp(default_pilot_index, 0, pilot_roster.pilots.size() - 1)
+	var idx: int = clamp(default_pilot_index, 0, _available_pilots.size() - 1)
 	pilot_picker.select(idx)
 	_apply_current_pilot_selection()
 
@@ -48,9 +50,9 @@ func _on_pilot_selected(_index: int) -> void:
 	_apply_current_pilot_selection()
 
 func _apply_current_pilot_selection() -> void:
-	if pilot_roster == null or pilot_roster.pilots.is_empty():
+	if _available_pilots.is_empty():
 		return
-	var idx: int = pilot_picker.get_selected_id()
-	if idx < 0 or idx >= pilot_roster.pilots.size():
-		idx = clamp(default_pilot_index, 0, pilot_roster.pilots.size() - 1)
-	GameFlow.selected_pilot = pilot_roster.pilots[idx]
+	var idx: int = pilot_picker.get_selected()
+	if idx < 0 or idx >= _available_pilots.size():
+		idx = clamp(default_pilot_index, 0, _available_pilots.size() - 1)
+	GameFlow.set_selected_pilot(_available_pilots[idx])

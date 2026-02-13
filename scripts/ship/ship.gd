@@ -90,11 +90,8 @@ var _emission_value: float = 0.0
 
 func _ready() -> void:
 	add_to_group("player")
-	_apply_selected_defs()
+	reconfigure_from_selected_pilot()
 	RunState.start_run()
-	_refresh_effective_stats()
-	hull = eff_max_hull
-	shield = eff_max_shield
 	_initialize_shield_material()
 	_initialize_thruster_material()
 	_update_shield_mesh_visibility()
@@ -123,15 +120,23 @@ func _ready() -> void:
 	add_child(_regen_timer)
 
 	# --- weapon manager ---
+	if hardpoint_manager != null and hardpoint_manager.get_weapon_count() <= 0:
+		hardpoint_manager.apply_loadout(loadout, starting_weapons)
+
+func reconfigure_from_selected_pilot(reset_current_health: bool = true) -> void:
+	_apply_selected_defs()
+	_refresh_effective_stats()
+	if reset_current_health:
+		hull = eff_max_hull
+		shield = eff_max_shield
+	_update_shield_mesh_visibility()
+	update_alarms()
 	if hardpoint_manager != null:
 		hardpoint_manager.apply_loadout(loadout, starting_weapons)
 
 func _apply_selected_defs() -> void:
 	var selected_ship_def: ShipDef = ship_override
-
-	var selected_pilot: PilotDef = pilot_override
-	if selected_pilot == null:
-		selected_pilot = GameFlow.selected_pilot
+	var selected_pilot: PilotDef = _resolve_selected_pilot()
 
 	if selected_pilot != null and selected_pilot.ship != null:
 		selected_ship_def = selected_pilot.ship
@@ -139,13 +144,63 @@ func _apply_selected_defs() -> void:
 	if selected_ship_def != null:
 		_apply_ship_def(selected_ship_def)
 
+	if selected_pilot != null:
+		_apply_pilot_def(selected_pilot)
+	else:
+		_apply_pilot_stat_profile(null)
+
+func _resolve_selected_pilot() -> PilotDef:
+	if pilot_override != null:
+		return pilot_override
+	return GameFlow.selected_pilot
+
+func _apply_pilot_def(def: PilotDef) -> void:
+	if def == null:
+		_apply_pilot_stat_profile(null)
+		return
+
+	if def.loadout_override != null:
+		loadout = def.loadout_override
+	starting_weapons = max(0, def.get_effective_starting_weapons(starting_weapons))
+
+	if hardpoint_manager != null and def.mount_layout_policy_override != null:
+		hardpoint_manager.policy = def.mount_layout_policy_override
+
+	_apply_pilot_stat_profile(def)
+
+func _apply_pilot_stat_profile(def: PilotDef) -> void:
+	if stat_aggregator == null:
+		return
+	stat_aggregator.clear()
+	if def == null:
+		return
+
+	var pilot_source_id: String = "pilot:%s" % String(def.get_pilot_id())
+	for mod in def.stat_modifiers:
+		if mod == null:
+			continue
+		var mod_copy: StatModifier = mod.duplicate(true) as StatModifier
+		if mod_copy == null:
+			continue
+		if mod_copy.source_id == "":
+			mod_copy.source_id = pilot_source_id
+		stat_aggregator.add_modifier(mod_copy)
+
+	for upgrade in def.starting_upgrades:
+		if upgrade == null:
+			continue
+		var upgrade_copy: Upgrade = upgrade.duplicate(true) as Upgrade
+		if upgrade_copy == null:
+			continue
+		stat_aggregator.add_upgrade(upgrade_copy)
+
 func _apply_ship_def(def: ShipDef) -> void:
 	if def == null:
 		return
 
 	if def.loadout != null:
 		loadout = def.loadout
-	starting_weapons = def.starting_weapons
+	starting_weapons = max(def.starting_weapons, 0)
 	if def.explosion_scene != null:
 		explosion_scene = def.explosion_scene
 

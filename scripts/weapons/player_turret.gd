@@ -62,8 +62,16 @@ func _exit_tree() -> void:
 # --- public api ---
 
 func apply_weapon(w: WeaponDef, team_id_val: int) -> void:
+	var previous_team: int = team_id
+	if _controller != null and previous_team != team_id_val:
+		_controller.unregister_turret(self, previous_team)
+
 	_weapon = w
 	team_id = team_id_val
+
+	if _controller != null and previous_team != team_id:
+		_controller.register_turret(self, team_id)
+
 	weapon_changed.emit(_weapon)
 	if shot_sound != null and w != null:
 		shot_sound.stream = w.shot_sound
@@ -73,9 +81,9 @@ func apply_weapon(w: WeaponDef, team_id_val: int) -> void:
 func get_weapon() -> WeaponDef:
 	return _weapon
 
-func swap_weapon(new_weapon: WeaponDef, keep_cooldown: bool = true) -> void:
+func swap_weapon(new_weapon: WeaponDef, keep_cooldown: bool = true, team_id_val: int = team_id) -> void:
 	var prev_cd: float = _cooldown
-	apply_weapon(new_weapon, team_id)
+	apply_weapon(new_weapon, team_id_val)
 	_cooldown = prev_cd if keep_cooldown else 0.0
 
 func set_visual_controller(vc: LaserTurretVisualController) -> void:

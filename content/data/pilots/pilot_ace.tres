@@ -8,5 +8,5 @@ script = ExtResource("1")
 id = &"ace"
 display_name = "Ace"
 description = "Starts with more weapons, trades speed for durability."
+sort_order = 10
 ship = ExtResource("2")
-
