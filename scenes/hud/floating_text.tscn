@@ -1,8 +1,10 @@
-[gd_scene load_steps=3 format=3 uid="uid://dfwkrpcwwyo3c"]
+[gd_scene load_steps=4 format=3 uid="uid://dfwkrpcwwyo3c"]
 
 [ext_resource type="Script" uid="uid://dcpwcrhvajiwd" path="res://scripts/hud/floating_text.gd" id="1_mymkm"]
+[ext_resource type="FontFile" uid="uid://dtkmmkanjxyxd" path="res://assets/fonts/Orbitron/Orbitron-Regular.ttf" id="2_a722y"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_mymkm"]
+font = ExtResource("2_a722y")
 outline_size = 4
 outline_color = Color(0, 0, 0, 1)
 

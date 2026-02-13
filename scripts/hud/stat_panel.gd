@@ -11,6 +11,8 @@ const COLOR_NET_NEGATIVE: Color = Color(1.0, 0.4, 0.4)  # Red for debuffs
 const COLOR_HEADER: Color = Color(0.7, 0.7, 0.7)
 const COLOR_WEAPON_NAME: Color = Color(0.9, 0.8, 0.5)  # Gold for weapon names
 
+@export var menu_font: FontFile = preload("res://assets/fonts/Oxanium/Oxanium-Regular.ttf")
+
 @onready var stat_container: VBoxContainer = $StatContainer
 
 var _stat_rows: Dictionary = {}  # stat_id -> { base_label, net_label }
@@ -66,7 +68,15 @@ const TURRET_STAT_INFO: Array[Dictionary] = [
 ]
 
 func _ready() -> void:
+	_apply_menu_font_theme()
 	_build_stat_rows()
+
+func _apply_menu_font_theme() -> void:
+	if menu_font == null:
+		return
+	var theme: Theme = Theme.new()
+	theme.default_font = menu_font
+	self.theme = theme
 
 func refresh() -> void:
 	_ship = get_tree().get_first_node_in_group("player") as Ship
@@ -90,7 +100,7 @@ func _build_stat_rows() -> void:
 func _add_category_header(title: String) -> void:
 	var header := Label.new()
 	header.text = title
-	header.add_theme_font_size_override("font_size", 14)
+	header.add_theme_font_size_override("font_size", 16)
 	header.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
 	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	
@@ -112,7 +122,7 @@ func _add_stat_row(info: Dictionary) -> void:
 	# Stat name label
 	var name_label := Label.new()
 	name_label.text = stat_name
-	name_label.add_theme_font_size_override("font_size", 12)
+	name_label.add_theme_font_size_override("font_size", 14)
 	name_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_label.custom_minimum_size = Vector2(120, 0)

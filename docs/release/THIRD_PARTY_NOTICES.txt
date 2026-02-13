@@ -48,6 +48,51 @@ Note:
 Spacesphere Maps usage terms and conditions should be reviewed at source.
 
 ------------------------------------------------------------
+Orbitron Font
+------------------------------------------------------------
+Source: https://github.com/theleagueof/orbitron
+Used file: assets/fonts/Orbitron/Orbitron-Regular.ttf
+License: SIL Open Font License 1.1 (OFL-1.1)
+Copyright:
+Copyright 2018 The Orbitron Project Authors
+(https://github.com/theleagueof/orbitron)
+
+License information:
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+Reference license URL: https://openfontlicense.org/open-font-license-official-text/
+
+------------------------------------------------------------
+Chakra Petch Font
+------------------------------------------------------------
+Source: https://github.com/cadsondemak/Chakra-Petch
+Used file: assets/fonts/Chakra_Petch/ChakraPetch-Light.ttf
+License: SIL Open Font License 1.1 (OFL-1.1)
+Copyright:
+Copyright 2018 The Chakra Petch Project Authors
+(https://github.com/m4rc1e/Chakra-Petch.git)
+
+License information:
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+Reference license URL: https://openfontlicense.org/open-font-license-official-text/
+
+------------------------------------------------------------
+Oxanium Font
+------------------------------------------------------------
+Source: https://github.com/sevmeyer/oxanium
+Used files:
+- assets/fonts/Oxanium/Oxanium-Light.ttf
+- assets/fonts/Oxanium/Oxanium-Regular.ttf
+- assets/fonts/Oxanium/Oxanium-Medium.ttf
+License: SIL Open Font License 1.1 (OFL-1.1)
+Copyright:
+Copyright 2019 The Oxanium Project Authors
+(https://github.com/sevmeyer/oxanium)
+
+License information:
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+Reference license URL: https://openfontlicense.org/open-font-license-official-text/
+
+------------------------------------------------------------
 Project Ownership Notice
 ------------------------------------------------------------
 Unless otherwise stated in this file, all code, art, audio, music, text,

@@ -1,7 +1,20 @@
-[gd_scene load_steps=4 format=3 uid="uid://dywsechusg01y"]
+[gd_scene load_steps=9 format=3 uid="uid://dywsechusg01y"]
 
 [ext_resource type="Script" uid="uid://bapsjbior1dq4" path="res://scripts/hud/pause_menu.gd" id="1_xxxx0"]
+[ext_resource type="FontFile" uid="uid://dtkmmkanjxyxd" path="res://assets/fonts/Orbitron/Orbitron-Regular.ttf" id="2_5h01g"]
 [ext_resource type="Script" uid="uid://n8f7g08pbmb5" path="res://scripts/hud/stat_panel.gd" id="2_stat_panel"]
+
+[sub_resource type="Theme" id="Theme_wiae1"]
+default_font = ExtResource("2_5h01g")
+
+[sub_resource type="Theme" id="Theme_cgdix"]
+default_font = ExtResource("2_5h01g")
+
+[sub_resource type="Theme" id="Theme_u2ajk"]
+default_font = ExtResource("2_5h01g")
+
+[sub_resource type="Theme" id="Theme_46l5v"]
+default_font = ExtResource("2_5h01g")
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_statpanel"]
 content_margin_left = 10.0
@@ -53,19 +66,22 @@ layout_mode = 2
 
 [node name="Resume" type="Button" parent="ScreenRoot/CenterContainer/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
+theme = SubResource("Theme_wiae1")
 text = "Resume"
 
 [node name="Restart" type="Button" parent="ScreenRoot/CenterContainer/VBox"]
 layout_mode = 2
+theme = SubResource("Theme_cgdix")
 text = "Restart"
 
 [node name="MainMenu" type="Button" parent="ScreenRoot/CenterContainer/VBox"]
 layout_mode = 2
+theme = SubResource("Theme_u2ajk")
 text = "Main Menu"
 
 [node name="Quit" type="Button" parent="ScreenRoot/CenterContainer/VBox"]
 layout_mode = 2
+theme = SubResource("Theme_46l5v")
 text = "Quit"
 
 [node name="StatPanel" type="ScrollContainer" parent="ScreenRoot"]

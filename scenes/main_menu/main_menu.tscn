@@ -1,53 +1,46 @@
-[gd_scene load_steps=16 format=3 uid="uid://drrnshnyy4682"]
+[gd_scene load_steps=15 format=3 uid="uid://drrnshnyy4682"]
 
 [ext_resource type="Script" uid="uid://ctypdxlxrxqme" path="res://scripts/main_menu/main_menu.gd" id="1_0ebjn"]
 [ext_resource type="Script" uid="uid://bp86upa6vqbpe" path="res://scripts/main_menu/high_score_container.gd" id="3_ob46e"]
+[ext_resource type="Texture2D" uid="uid://c8r3d4xeppq31" path="res://assets/logo/voidbreaker.png" id="3_uqeha"]
 [ext_resource type="Resource" path="res://content/data/pilots/pilot_roster.tres" id="4_pilot_roster"]
-
-[sub_resource type="SystemFont" id="SystemFont_0ebjn"]
-font_names = PackedStringArray("Marlett")
-subpixel_positioning = 0
+[ext_resource type="FontFile" uid="uid://bajq4o7ypmdmu" path="res://assets/fonts/Chakra_Petch/ChakraPetch-Light.ttf" id="4_wem23"]
+[ext_resource type="FontFile" uid="uid://dtkmmkanjxyxd" path="res://assets/fonts/Orbitron/Orbitron-Regular.ttf" id="5_3ovsr"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_ob46e"]
 line_spacing = 0.0
-font = SubResource("SystemFont_0ebjn")
-font_size = 100
-outline_size = 10
+font = ExtResource("4_wem23")
+font_size = 120
+outline_size = 4
 outline_color = Color(0, 0, 0, 1)
-shadow_size = 10
+shadow_size = 0
 shadow_color = Color(0, 0, 0, 1)
-shadow_offset = Vector2(3, 3)
+shadow_offset = Vector2(0, 0)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_uqeha"]
 bg_color = Color(0, 0, 0, 0.6)
 
-[sub_resource type="SystemFont" id="SystemFont_uqeha"]
-subpixel_positioning = 0
+[sub_resource type="LabelSettings" id="LabelSettings_5seab"]
+font = ExtResource("5_3ovsr")
+font_size = 20
+
+[sub_resource type="Theme" id="Theme_4xg86"]
+default_font = ExtResource("5_3ovsr")
 
 [sub_resource type="Theme" id="Theme_wem23"]
-default_font = SubResource("SystemFont_uqeha")
+default_font = ExtResource("5_3ovsr")
 default_font_size = 30
-
-[sub_resource type="SystemFont" id="SystemFont_3ovsr"]
-subpixel_positioning = 0
 
 [sub_resource type="Theme" id="Theme_5seab"]
-default_font = SubResource("SystemFont_3ovsr")
+default_font = ExtResource("5_3ovsr")
 default_font_size = 30
-
-[sub_resource type="SystemFont" id="SystemFont_4xg86"]
-subpixel_positioning = 0
 
 [sub_resource type="Theme" id="Theme_thkx5"]
-default_font = SubResource("SystemFont_4xg86")
+default_font = ExtResource("5_3ovsr")
 default_font_size = 30
 
-[sub_resource type="SystemFont" id="SystemFont_wem23"]
-font_names = PackedStringArray("Consolas")
-subpixel_positioning = 0
-
 [sub_resource type="LabelSettings" id="LabelSettings_3ovsr"]
-font = SubResource("SystemFont_wem23")
+font = ExtResource("5_3ovsr")
 font_size = 20
 outline_size = 4
 outline_color = Color(0, 0, 0, 1)
@@ -75,6 +68,11 @@ layout_mode = 2
 
 [node name="TitleContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer"]
 layout_mode = 2
+
+[node name="Logo" type="Sprite2D" parent="CenterContainer/MainMenuContainer/TitleContainer"]
+position = Vector2(25.99999, 75.00001)
+scale = Vector2(0.28857422, 0.28857422)
+texture = ExtResource("3_uqeha")
 
 [node name="Title" type="Label" parent="CenterContainer/MainMenuContainer/TitleContainer"]
 layout_mode = 2
@@ -108,9 +106,11 @@ theme_override_constants/separation = 10
 [node name="PilotLabel" type="Label" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PilotContainer/Row"]
 layout_mode = 2
 text = "Pilot:"
+label_settings = SubResource("LabelSettings_5seab")
 
 [node name="PilotPicker" type="OptionButton" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PilotContainer/Row"]
 layout_mode = 2
+theme = SubResource("Theme_4xg86")
 
 [node name="PracticeContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer"]
 layout_mode = 2

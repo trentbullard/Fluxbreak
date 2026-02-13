@@ -1,12 +1,10 @@
 [gd_scene load_steps=3 format=3 uid="uid://icnhxdf4gt2c"]
 
-[sub_resource type="SystemFont" id="SystemFont_xj1lc"]
-font_names = PackedStringArray("Consolas")
-subpixel_positioning = 0
+[ext_resource type="FontFile" uid="uid://b2akoj58tcs10" path="res://assets/fonts/Oxanium/Oxanium-Light.ttf" id="1_wligs"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_wligs"]
-font = SubResource("SystemFont_xj1lc")
-font_size = 18
+font = ExtResource("1_wligs")
+font_size = 20
 outline_size = 8
 outline_color = Color(0, 0, 0, 1)
 

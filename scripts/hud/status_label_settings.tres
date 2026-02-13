@@ -1,5 +1,8 @@
-[gd_resource type="LabelSettings" format=3 uid="uid://coy4ocfodghm4"]
+[gd_resource type="LabelSettings" load_steps=2 format=3 uid="uid://coy4ocfodghm4"]
+
+[ext_resource type="FontFile" uid="uid://cw5jphskic8ug" path="res://assets/fonts/Oxanium/Oxanium-Medium.ttf" id="1_5dbep"]
 
 [resource]
+font = ExtResource("1_5dbep")
 outline_size = 4
 outline_color = Color(0, 0, 0, 1)

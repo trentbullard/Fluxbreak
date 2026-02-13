@@ -14,6 +14,7 @@ signal menu_closed
 
 @export_group("Display")
 @export var num_upgrade_choices: int = 3
+@export var menu_font: FontFile = preload("res://assets/fonts/Oxanium/Oxanium-Regular.ttf")
 
 @onready var btn_close: Button = $Close
 const UPGRADE_COST_VARIANCE: float = 0.05
@@ -50,6 +51,7 @@ func _build_ui() -> void:
 	_root = Control.new()
 	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_root.mouse_filter = Control.MOUSE_FILTER_STOP
+	_apply_menu_font_theme()
 	add_child(_root)
 	
 	# Dim background
@@ -104,6 +106,14 @@ func _build_ui() -> void:
 		btn.pressed.connect(_on_button_pressed.bind(i))
 		_container.add_child(btn)
 		_buttons.append(btn)
+
+
+func _apply_menu_font_theme() -> void:
+	if _root == null or menu_font == null:
+		return
+	var theme: Theme = Theme.new()
+	theme.default_font = menu_font
+	_root.theme = theme
 
 
 func show_for_poi(poi: PoiInstance) -> void:

@@ -135,9 +135,12 @@ func _start_pressure_loop() -> void:
 	_pressure_token += 1
 	_run_pressure_coroutine(_pressure_token)
 
+func _create_pausable_timer(seconds: float) -> SceneTreeTimer:
+	return get_tree().create_timer(seconds, false)
+
 func _run_pressure_coroutine(token: int) -> void:
 	while true:
-		var t: SceneTreeTimer = get_tree().create_timer(pressure_interval_sec)
+		var t: SceneTreeTimer = _create_pausable_timer(pressure_interval_sec)
 		await t.timeout
 		if token != _pressure_token:
 			return
@@ -214,7 +217,7 @@ func _run_requests_coroutine(reqs: Array[SpawnRequest], card: WaveCard, token: i
 			else:
 				spawned0 = _spawner.spawn_target_burst(first.target_def, n0)
 			remaining[0] = max(remaining[0] - spawned0, 0)
-		var timer0: SceneTreeTimer = get_tree().create_timer(inter_batch_delay)
+		var timer0: SceneTreeTimer = _create_pausable_timer(inter_batch_delay)
 		await timer0.timeout
 		if token != _wave_token:
 			return
@@ -243,14 +246,14 @@ func _run_requests_coroutine(reqs: Array[SpawnRequest], card: WaveCard, token: i
 		
 		if spawned == 0:
 			# cap is full; wait a short while for space, then try again
-			var wait_cap: SceneTreeTimer = get_tree().create_timer(0.35)
+			var wait_cap: SceneTreeTimer = _create_pausable_timer(0.35)
 			await wait_cap.timeout
 			if token != _wave_token:
 				return
 		else:
 			remaining[req_index] = max(remaining[req_index] - spawned, 0)
 			# per-request inter-batch delay
-			var wait: SceneTreeTimer = get_tree().create_timer(req.inter_batch_sec)
+			var wait: SceneTreeTimer = _create_pausable_timer(req.inter_batch_sec)
 			await wait.timeout
 			if token != _wave_token:
 				return
@@ -273,7 +276,7 @@ func _clear_or_timeout_then_downtime(token: int) -> void:
 			emit_signal("wave_cleared", _wave_index, _wave_timer)
 			_start_downtime()
 			return
-		var t: SceneTreeTimer = get_tree().create_timer(0.5)
+		var t: SceneTreeTimer = _create_pausable_timer(0.5)
 		await t.timeout
 	
 	emit_signal("wave_forced_next", _wave_index)
