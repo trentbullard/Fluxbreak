@@ -15,7 +15,9 @@ config/description="Roguelike space auto-battler"
 config/version="0.1.0"
 run/main_scene="uid://ppgr7fveqbrd"
 config/features=PackedStringArray("4.5", "Forward Plus")
-config/icon="res://icon.svg"
+config/icon="uid://c8r3d4xeppq31"
+config/macos_native_icon="res://assets/logo/voidbreaker.icns"
+config/windows_native_icon="res://assets/logo/voidbreaker.ico"
 
 [autoload]
 
