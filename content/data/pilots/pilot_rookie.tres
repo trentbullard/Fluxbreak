@@ -1,12 +1,14 @@
-[gd_resource type="Resource" script_class="PilotDef" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="PilotDef" load_steps=6 format=3 uid="uid://cjem4ot6d0tkb"]
 
-[ext_resource type="Script" path="res://content/defs/pilot_def.gd" id="1"]
-[ext_resource type="Resource" path="res://content/data/ships/starter_fighter.tres" id="2"]
+[ext_resource type="Script" uid="uid://bcwfpgffm7rus" path="res://content/defs/pilot_def.gd" id="1"]
+[ext_resource type="Resource" uid="uid://da52xasn5mssy" path="res://content/data/ships/starter_fighter.tres" id="2"]
+[ext_resource type="Script" uid="uid://f3a4tqbwupk2" path="res://content/defs/upgrade_def.gd" id="3_qaevb"]
+[ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="4_kd616"]
+[ext_resource type="Script" uid="uid://01gohq2rb404" path="res://content/defs/pilot_unlock_requirement.gd" id="5_fi0ck"]
 
 [resource]
 script = ExtResource("1")
 id = &"rookie"
 display_name = "Rookie"
 description = "Baseline pilot for practice runs."
-sort_order = 0
 ship = ExtResource("2")

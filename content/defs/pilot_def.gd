@@ -2,12 +2,20 @@
 extends Resource
 class_name PilotDef
 
+enum UnlockRequirementMode {
+	ALL,
+	ANY,
+}
+
 @export var id: StringName = &""
 @export var display_name: String = "Pilot"
 @export_multiline var description: String = ""
 
 @export var enabled: bool = true
 @export var sort_order: int = 0
+@export var starts_unlocked: bool = true
+@export var unlock_requirement_mode: UnlockRequirementMode = UnlockRequirementMode.ALL
+@export var unlock_requirements: Array[PilotUnlockRequirement] = []
 
 @export var ship: ShipDef
 @export var loadout_override: ShipLoadoutDef

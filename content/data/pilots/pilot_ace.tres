@@ -1,7 +1,11 @@
-[gd_resource type="Resource" script_class="PilotDef" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="PilotDef" load_steps=7 format=3 uid="uid://duj3tgm8uy8n"]
 
-[ext_resource type="Script" path="res://content/defs/pilot_def.gd" id="1"]
-[ext_resource type="Resource" path="res://content/data/ships/heavy_bruiser.tres" id="2"]
+[ext_resource type="Script" uid="uid://bcwfpgffm7rus" path="res://content/defs/pilot_def.gd" id="1"]
+[ext_resource type="Resource" uid="uid://c7qhxtfi262nw" path="res://content/data/ships/heavy_bruiser.tres" id="2"]
+[ext_resource type="Resource" path="res://content/data/pilots/unlock_ace_wave10_rookie.tres" id="3"]
+[ext_resource type="Script" uid="uid://f3a4tqbwupk2" path="res://content/defs/upgrade_def.gd" id="3_4cfw0"]
+[ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="4_aah2x"]
+[ext_resource type="Script" uid="uid://01gohq2rb404" path="res://content/defs/pilot_unlock_requirement.gd" id="5_e66eo"]
 
 [resource]
 script = ExtResource("1")
@@ -9,4 +13,6 @@ id = &"ace"
 display_name = "Ace"
 description = "Starts with more weapons, trades speed for durability."
 sort_order = 10
+starts_unlocked = false
+unlock_requirements = Array[ExtResource("5_e66eo")]([ExtResource("3")])
 ship = ExtResource("2")

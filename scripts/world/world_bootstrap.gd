@@ -13,6 +13,7 @@ func _ready() -> void:
   menu.practice_requested.connect(_on_start_pressed)
 
 func _on_start_pressed() -> void:
+  GameFlow.start_new_run()
   if ship != null:
     ship.reconfigure_from_selected_pilot(true)
   menu.visible = false

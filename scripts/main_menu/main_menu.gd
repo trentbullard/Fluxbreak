@@ -21,6 +21,8 @@ func _ready() -> void:
 
 func _on_practice_pressed() -> void:
 	_apply_current_pilot_selection()
+	if GameFlow.selected_pilot == null or not GameFlow.is_pilot_unlocked(GameFlow.selected_pilot):
+		return
 	practice_requested.emit()
 
 func _on_settings_pressed() -> void:
@@ -34,15 +36,32 @@ func _refresh_pilot_picker() -> void:
 	_available_pilots = pilot_roster.get_pilots() if pilot_roster != null else []
 	if _available_pilots.is_empty():
 		pilot_picker.disabled = true
+		btn_practice.disabled = true
 		pilot_picker.add_item("Default")
 		return
 
+	var unlocked_indices: Array[int] = []
 	pilot_picker.disabled = false
-	for p in _available_pilots:
+	for i in _available_pilots.size():
+		var p: PilotDef = _available_pilots[i]
 		var display_name: String = p.get_display_name_or_default() if p != null else "Unknown"
+		var unlocked: bool = GameFlow.is_pilot_unlocked(p)
+		if not unlocked:
+			display_name = "%s (Locked)" % display_name
 		pilot_picker.add_item(display_name)
+		if not unlocked:
+			pilot_picker.set_item_disabled(i, true)
+		else:
+			unlocked_indices.append(i)
 
-	var idx: int = clamp(default_pilot_index, 0, _available_pilots.size() - 1)
+	if unlocked_indices.is_empty():
+		pilot_picker.disabled = true
+		btn_practice.disabled = true
+		pilot_picker.select(0)
+		return
+
+	btn_practice.disabled = false
+	var idx: int = _resolve_initial_selection(unlocked_indices)
 	pilot_picker.select(idx)
 	_apply_current_pilot_selection()
 
@@ -53,6 +72,26 @@ func _apply_current_pilot_selection() -> void:
 	if _available_pilots.is_empty():
 		return
 	var idx: int = pilot_picker.get_selected()
-	if idx < 0 or idx >= _available_pilots.size():
-		idx = clamp(default_pilot_index, 0, _available_pilots.size() - 1)
+	if idx < 0 or idx >= _available_pilots.size() or not GameFlow.is_pilot_unlocked(_available_pilots[idx]):
+		idx = _first_unlocked_index()
+	if idx < 0:
+		return
+	if pilot_picker.get_selected() != idx:
+		pilot_picker.select(idx)
 	GameFlow.set_selected_pilot(_available_pilots[idx])
+
+func _resolve_initial_selection(unlocked_indices: Array[int]) -> int:
+	if GameFlow.selected_pilot != null:
+		for i in unlocked_indices:
+			if _available_pilots[i] == GameFlow.selected_pilot:
+				return i
+	var default_idx: int = clamp(default_pilot_index, 0, _available_pilots.size() - 1)
+	if GameFlow.is_pilot_unlocked(_available_pilots[default_idx]):
+		return default_idx
+	return unlocked_indices[0]
+
+func _first_unlocked_index() -> int:
+	for i in _available_pilots.size():
+		if GameFlow.is_pilot_unlocked(_available_pilots[i]):
+			return i
+	return -1

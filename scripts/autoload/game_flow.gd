@@ -2,23 +2,65 @@
 extends Node
 
 signal high_score_updated(new_score: int, old_score: int)
+signal pilot_stats_updated(pilot_id: StringName, stats: Dictionary)
+signal pilot_unlocked(pilot_id: StringName)
 
 const MENU := "res://scenes/world/world.tscn"
 const DEFAULT_PILOT_ROSTER: String = "res://content/data/pilots/pilot_roster.tres"
 const SAVE_PATH: String = "user://highscore.cfg"
-const SAVE_SECTION: String = "scores"
-const SAVE_KEY: String = "high_score"
+
+const SCORE_SECTION: String = "scores"
+const SCORE_KEY_HIGH_SCORE: String = "high_score"
+const META_SECTION: String = "meta"
+const META_KEY_SELECTED_PILOT: String = "selected_pilot_id"
+const PILOT_STATS_SECTION_PREFIX: String = "pilot_stats."
+
+const STAT_HIGHEST_SCORE: StringName = &"highest_score"
+const STAT_LONGEST_RUN_SECONDS: StringName = &"longest_run_seconds"
+const STAT_DEATH_RUNS: StringName = &"death_runs"
+const STAT_TOTAL_NANOBOTS_IN_RUN: StringName = &"total_nanobots_in_run"
+const STAT_HIGHEST_NANOBOTS_IN_RUN: StringName = &"highest_nanobots_in_run"
+const STAT_HIGHEST_WAVE_REACHED: StringName = &"highest_wave_reached"
+
+const PILOT_STAT_DEFAULTS: Dictionary = {
+	STAT_HIGHEST_SCORE: 0,
+	STAT_LONGEST_RUN_SECONDS: 0,
+	STAT_DEATH_RUNS: 0,
+	STAT_TOTAL_NANOBOTS_IN_RUN: 0,
+	STAT_HIGHEST_NANOBOTS_IN_RUN: 0,
+	STAT_HIGHEST_WAVE_REACHED: 0,
+}
 
 var high_score: int = 0
 var selected_pilot: PilotDef = null
 
+var _pilot_stats_by_id: Dictionary = {}
+var _cached_roster: PilotRoster = null
+var _loaded_selected_pilot_id: StringName = &""
+
+var _run_active: bool = false
+var _run_started_msec: int = 0
+var _run_pilot_id: StringName = &""
+var _run_total_nanobots_collected: int = 0
+var _run_peak_nanobots: int = 0
+var _run_last_nanobots_value: int = 0
+
 func _ready() -> void:
-	_load_high_score()
+	_load_user_data()
 	_ensure_default_pilot()
+	if not RunState.nanobots_updated.is_connected(_on_run_nanobots_updated):
+		RunState.nanobots_updated.connect(_on_run_nanobots_updated)
 	await get_tree().process_frame
 
 func start_new_run() -> void:
 	RunState.start_run()
+	_run_active = true
+	_run_started_msec = Time.get_ticks_msec()
+	_run_total_nanobots_collected = 0
+	_run_peak_nanobots = 0
+	_run_last_nanobots_value = 0
+	var active_pilot: PilotDef = _resolve_selected_or_default_pilot()
+	_run_pilot_id = active_pilot.get_pilot_id() if active_pilot != null else &""
 
 func set_selected_pilot(pilot: PilotDef) -> void:
 	if pilot == null:
@@ -26,15 +68,20 @@ func set_selected_pilot(pilot: PilotDef) -> void:
 	if not pilot.is_selectable():
 		push_warning("Ignoring non-selectable pilot: %s" % pilot.resource_path)
 		return
+	if not is_pilot_unlocked(pilot):
+		push_warning("Ignoring locked pilot: %s" % String(pilot.get_pilot_id()))
+		return
 	selected_pilot = pilot
+	_save_user_data()
 
-func player_died():
-	_end_run_and_return_to_menu()
+func player_died() -> void:
+	_end_run_and_return_to_menu(true)
 
 func _on_time_over() -> void:
-	_end_run_and_return_to_menu()
+	_end_run_and_return_to_menu(false)
 
-func _end_run_and_return_to_menu() -> void:
+func _end_run_and_return_to_menu(count_as_death: bool) -> void:
+	_finalize_run_stats(count_as_death)
 	check_and_update_high_score(RunState.run_score)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	get_tree().change_scene_to_file(MENU)
@@ -43,32 +90,263 @@ func check_and_update_high_score(final_run_score: int) -> void:
 	if final_run_score > high_score:
 		var old: int = high_score
 		high_score = final_run_score
-		_save_high_score()
+		_save_user_data()
 		high_score_updated.emit(high_score, old)
 
-func _load_high_score() -> void:
-	var cfg: ConfigFile = ConfigFile.new()
-	var err: int = cfg.load(SAVE_PATH)
-	if err == OK:
-		high_score = int(cfg.get_value(SAVE_SECTION, SAVE_KEY, 0))
-	else:
-		high_score = 0
+func get_pilot_stats(pilot_id: StringName) -> Dictionary:
+	var key: String = String(pilot_id)
+	if key == "":
+		return _make_default_pilot_stats()
+	if not _pilot_stats_by_id.has(key):
+		return _make_default_pilot_stats()
+	return (_pilot_stats_by_id[key] as Dictionary).duplicate(true)
 
-func _save_high_score() -> void:
-	var cfg: ConfigFile = ConfigFile.new()
-	cfg.load(SAVE_PATH)
-	cfg.set_value(SAVE_SECTION, SAVE_KEY, high_score)
-	var err: int = cfg.save(SAVE_PATH)
-	if err != OK:
-		push_warning("Failed to save high score to %s (err %d)".format([SAVE_PATH, err]))
+func is_pilot_unlocked(pilot: PilotDef) -> bool:
+	if pilot == null:
+		return false
+	if not pilot.is_selectable():
+		return false
+	if pilot.starts_unlocked:
+		return true
+
+	var requirements: Array[PilotUnlockRequirement] = pilot.unlock_requirements
+	if requirements.is_empty():
+		return false
+
+	var require_all: bool = pilot.unlock_requirement_mode == PilotDef.UnlockRequirementMode.ALL
+	var found_valid_requirement: bool = false
+	for req in requirements:
+		if req == null:
+			continue
+		found_valid_requirement = true
+		var met: bool = _is_unlock_requirement_met(req)
+		if require_all and not met:
+			return false
+		if not require_all and met:
+			return true
+
+	if not found_valid_requirement:
+		return false
+	return require_all
+
+func get_all_pilots() -> Array[PilotDef]:
+	var roster: PilotRoster = _get_roster()
+	if roster == null:
+		return []
+	return roster.get_pilots()
+
+func _get_roster() -> PilotRoster:
+	if _cached_roster != null:
+		return _cached_roster
+	_cached_roster = load(DEFAULT_PILOT_ROSTER) as PilotRoster
+	return _cached_roster
+
+func _resolve_selected_or_default_pilot() -> PilotDef:
+	if selected_pilot != null and selected_pilot.is_selectable() and is_pilot_unlocked(selected_pilot):
+		return selected_pilot
+	_ensure_default_pilot()
+	return selected_pilot
 
 func _ensure_default_pilot() -> void:
-	if selected_pilot != null:
+	if selected_pilot != null and selected_pilot.is_selectable() and is_pilot_unlocked(selected_pilot):
 		return
-	var roster: PilotRoster = load(DEFAULT_PILOT_ROSTER) as PilotRoster
-	if roster == null:
-		return
-	var pilots: Array[PilotDef] = roster.get_pilots()
+
+	var pilots: Array[PilotDef] = get_all_pilots()
 	if pilots.is_empty():
 		return
+
+	if _loaded_selected_pilot_id != &"":
+		var saved_choice: PilotDef = _find_pilot_by_id(_loaded_selected_pilot_id)
+		if saved_choice != null and is_pilot_unlocked(saved_choice):
+			selected_pilot = saved_choice
+			return
+
+	for pilot in pilots:
+		if pilot != null and is_pilot_unlocked(pilot):
+			selected_pilot = pilot
+			return
+
 	selected_pilot = pilots[0]
+
+func _find_pilot_by_id(pilot_id: StringName) -> PilotDef:
+	if pilot_id == &"":
+		return null
+	for pilot in get_all_pilots():
+		if pilot == null:
+			continue
+		if pilot.get_pilot_id() == pilot_id:
+			return pilot
+	return null
+
+func _on_run_nanobots_updated(amount: int) -> void:
+	if not _run_active:
+		return
+
+	if amount > _run_peak_nanobots:
+		_run_peak_nanobots = amount
+
+	if amount > _run_last_nanobots_value:
+		_run_total_nanobots_collected += amount - _run_last_nanobots_value
+
+	_run_last_nanobots_value = amount
+
+func _finalize_run_stats(count_as_death: bool) -> void:
+	if not _run_active:
+		return
+	_run_active = false
+
+	var pilot_id: StringName = _run_pilot_id
+	if pilot_id == &"":
+		var active_pilot: PilotDef = _resolve_selected_or_default_pilot()
+		pilot_id = active_pilot.get_pilot_id() if active_pilot != null else &""
+	if pilot_id == &"":
+		return
+
+	var before_unlocks: Dictionary = _build_unlock_state()
+	var stats: Dictionary = _get_or_create_stats_for_pilot(pilot_id)
+
+	var run_seconds: int = 0
+	if _run_started_msec > 0:
+		var elapsed_msec: int = max(Time.get_ticks_msec() - _run_started_msec, 0)
+		run_seconds = int(round(float(elapsed_msec) / 1000.0))
+
+	var final_score: int = max(RunState.run_score, 0)
+	var final_wave: int = max(RunState.get_wave_index(), 0)
+	var total_nanobots: int = max(_run_total_nanobots_collected, 0)
+	var peak_nanobots: int = max(_run_peak_nanobots, 0)
+
+	stats[STAT_HIGHEST_SCORE] = max(int(stats[STAT_HIGHEST_SCORE]), final_score)
+	stats[STAT_LONGEST_RUN_SECONDS] = max(int(stats[STAT_LONGEST_RUN_SECONDS]), run_seconds)
+	stats[STAT_TOTAL_NANOBOTS_IN_RUN] = max(int(stats[STAT_TOTAL_NANOBOTS_IN_RUN]), total_nanobots)
+	stats[STAT_HIGHEST_NANOBOTS_IN_RUN] = max(int(stats[STAT_HIGHEST_NANOBOTS_IN_RUN]), peak_nanobots)
+	stats[STAT_HIGHEST_WAVE_REACHED] = max(int(stats[STAT_HIGHEST_WAVE_REACHED]), final_wave)
+	if count_as_death:
+		stats[STAT_DEATH_RUNS] = int(stats[STAT_DEATH_RUNS]) + 1
+
+	_pilot_stats_by_id[String(pilot_id)] = stats
+	_save_user_data()
+	pilot_stats_updated.emit(pilot_id, stats.duplicate(true))
+	_emit_new_unlocks(before_unlocks, _build_unlock_state())
+
+func _build_unlock_state() -> Dictionary:
+	var result: Dictionary = {}
+	for pilot in get_all_pilots():
+		if pilot == null:
+			continue
+		result[String(pilot.get_pilot_id())] = is_pilot_unlocked(pilot)
+	return result
+
+func _emit_new_unlocks(before: Dictionary, after: Dictionary) -> void:
+	for key in after.keys():
+		var now_unlocked: bool = bool(after[key])
+		var was_unlocked: bool = bool(before.get(key, false))
+		if now_unlocked and not was_unlocked:
+			pilot_unlocked.emit(StringName(key))
+
+func _is_unlock_requirement_met(requirement: PilotUnlockRequirement) -> bool:
+	if requirement == null:
+		return false
+	return _get_requirement_stat_value(requirement) >= max(requirement.minimum_value, 0)
+
+func _get_requirement_stat_value(requirement: PilotUnlockRequirement) -> int:
+	if requirement.source_pilot_id != &"":
+		return _get_pilot_stat_value(requirement.source_pilot_id, requirement.stat)
+	return _get_global_stat_value(requirement.stat)
+
+func _get_pilot_stat_value(pilot_id: StringName, stat: PilotUnlockRequirement.PilotStat) -> int:
+	var key: StringName = _map_unlock_stat_to_key(stat)
+	var stats: Dictionary = get_pilot_stats(pilot_id)
+	return int(stats.get(key, 0))
+
+func _get_global_stat_value(stat: PilotUnlockRequirement.PilotStat) -> int:
+	if stat == PilotUnlockRequirement.PilotStat.HIGHEST_SCORE:
+		return high_score
+
+	if stat == PilotUnlockRequirement.PilotStat.DEATH_RUNS:
+		var total_runs: int = 0
+		for pilot_stats in _pilot_stats_by_id.values():
+			var stats: Dictionary = pilot_stats as Dictionary
+			total_runs += int(stats.get(STAT_DEATH_RUNS, 0))
+		return total_runs
+
+	var key: StringName = _map_unlock_stat_to_key(stat)
+	var best: int = 0
+	for pilot_stats in _pilot_stats_by_id.values():
+		var stats: Dictionary = pilot_stats as Dictionary
+		best = max(best, int(stats.get(key, 0)))
+	return best
+
+func _map_unlock_stat_to_key(stat: PilotUnlockRequirement.PilotStat) -> StringName:
+	match stat:
+		PilotUnlockRequirement.PilotStat.HIGHEST_SCORE:
+			return STAT_HIGHEST_SCORE
+		PilotUnlockRequirement.PilotStat.LONGEST_RUN_SECONDS:
+			return STAT_LONGEST_RUN_SECONDS
+		PilotUnlockRequirement.PilotStat.DEATH_RUNS:
+			return STAT_DEATH_RUNS
+		PilotUnlockRequirement.PilotStat.TOTAL_NANOBOTS_IN_RUN:
+			return STAT_TOTAL_NANOBOTS_IN_RUN
+		PilotUnlockRequirement.PilotStat.HIGHEST_NANOBOTS_IN_RUN:
+			return STAT_HIGHEST_NANOBOTS_IN_RUN
+		PilotUnlockRequirement.PilotStat.HIGHEST_WAVE_REACHED:
+			return STAT_HIGHEST_WAVE_REACHED
+	return STAT_HIGHEST_SCORE
+
+func _get_or_create_stats_for_pilot(pilot_id: StringName) -> Dictionary:
+	var key: String = String(pilot_id)
+	if key == "":
+		return _make_default_pilot_stats()
+	if not _pilot_stats_by_id.has(key):
+		_pilot_stats_by_id[key] = _make_default_pilot_stats()
+	return (_pilot_stats_by_id[key] as Dictionary).duplicate(true)
+
+func _make_default_pilot_stats() -> Dictionary:
+	return PILOT_STAT_DEFAULTS.duplicate(true)
+
+func _load_user_data() -> void:
+	_pilot_stats_by_id.clear()
+	_loaded_selected_pilot_id = &""
+	high_score = 0
+
+	var cfg: ConfigFile = ConfigFile.new()
+	var err: int = cfg.load(SAVE_PATH)
+	if err != OK:
+		return
+
+	high_score = int(cfg.get_value(SCORE_SECTION, SCORE_KEY_HIGH_SCORE, 0))
+	_loaded_selected_pilot_id = StringName(String(cfg.get_value(META_SECTION, META_KEY_SELECTED_PILOT, "")))
+
+	for section in cfg.get_sections():
+		if not section.begins_with(PILOT_STATS_SECTION_PREFIX):
+			continue
+		var pilot_id: String = section.trim_prefix(PILOT_STATS_SECTION_PREFIX)
+		if pilot_id == "":
+			continue
+		var loaded_stats: Dictionary = _make_default_pilot_stats()
+		for key in PILOT_STAT_DEFAULTS.keys():
+			var stat_key: StringName = key as StringName
+			var default_value: int = int(PILOT_STAT_DEFAULTS[stat_key])
+			loaded_stats[stat_key] = max(0, int(cfg.get_value(section, String(stat_key), default_value)))
+		_pilot_stats_by_id[pilot_id] = loaded_stats
+
+func _save_user_data() -> void:
+	var cfg: ConfigFile = ConfigFile.new()
+	cfg.load(SAVE_PATH)
+
+	cfg.set_value(SCORE_SECTION, SCORE_KEY_HIGH_SCORE, high_score)
+	cfg.set_value(META_SECTION, META_KEY_SELECTED_PILOT, String(selected_pilot.get_pilot_id()) if selected_pilot != null else "")
+
+	for section in cfg.get_sections():
+		if section.begins_with(PILOT_STATS_SECTION_PREFIX):
+			cfg.erase_section(section)
+
+	for pilot_id in _pilot_stats_by_id.keys():
+		var section: String = "%s%s" % [PILOT_STATS_SECTION_PREFIX, String(pilot_id)]
+		var stats: Dictionary = _pilot_stats_by_id[pilot_id] as Dictionary
+		for key in PILOT_STAT_DEFAULTS.keys():
+			var stat_key: StringName = key as StringName
+			cfg.set_value(section, String(stat_key), max(0, int(stats.get(stat_key, 0))))
+
+	var err: int = cfg.save(SAVE_PATH)
+	if err != OK:
+		push_warning("Failed to save user data to %s (err %d)".format([SAVE_PATH, err]))

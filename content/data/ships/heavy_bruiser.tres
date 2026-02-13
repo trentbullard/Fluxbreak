@@ -1,14 +1,21 @@
-[gd_resource type="Resource" script_class="ShipDef" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="ShipDef" load_steps=7 format=3 uid="uid://c7qhxtfi262nw"]
 
-[ext_resource type="Script" path="res://content/defs/ship_def.gd" id="1"]
-[ext_resource type="Resource" path="res://content/data/weapons/ship_loadouts/player_default_loadout.tres" id="2"]
-[ext_resource type="PackedScene" path="res://scenes/explosion.tscn" id="3"]
+[ext_resource type="Script" uid="uid://bvxxmlbxopb4b" path="res://content/defs/ship_def.gd" id="1"]
+[ext_resource type="Script" uid="uid://dhvgo1sv28rx3" path="res://content/defs/mount_loadout_def.gd" id="2_4xy8s"]
+[ext_resource type="PackedScene" uid="uid://yo2mi8h7ihfj" path="res://scenes/explosion.tscn" id="3"]
+[ext_resource type="Resource" uid="uid://bwex6asskxuot" path="res://content/data/weapons/mount_loadouts/pulse_default.tres" id="3_jmuen"]
+[ext_resource type="Script" uid="uid://c35jeiv6o1idc" path="res://content/defs/ship_loadout_def.gd" id="4_jb3yy"]
+
+[sub_resource type="Resource" id="Resource_hwqxc"]
+script = ExtResource("4_jb3yy")
+mounts = Array[ExtResource("2_4xy8s")]([ExtResource("3_jmuen"), ExtResource("3_jmuen")])
+metadata/_custom_type_script = "uid://c35jeiv6o1idc"
 
 [resource]
 script = ExtResource("1")
 id = &"heavy_bruiser"
 display_name = "Heavy Bruiser"
-loadout = ExtResource("2")
+loadout = SubResource("Resource_hwqxc")
 starting_weapons = 2
 explosion_scene = ExtResource("3")
 max_hull = 140.0
@@ -22,4 +29,3 @@ accel_forward = 85.0
 accel_reverse = 55.0
 boost_mult = 1.35
 pickup_range = 45.0
-

@@ -156,7 +156,8 @@ Enemies and objects drop NANOBOTS
 NANOBOTS are used to purchase upgrades and weapons
 Dock with POIs to purchase
 NANOBOTS can also be used to repair the ship's hull
-Survive as long as you can"
+Survive as long as you can
+Unlock Ace by dying after wave 10"
 label_settings = SubResource("LabelSettings_thkx5")
 horizontal_alignment = 1
 

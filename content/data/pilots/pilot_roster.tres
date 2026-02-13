@@ -1,9 +1,10 @@
-[gd_resource type="Resource" script_class="PilotRoster" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="PilotRoster" load_steps=5 format=3 uid="uid://cgc248sqmyo6r"]
 
-[ext_resource type="Script" path="res://content/defs/pilot_roster.gd" id="1"]
+[ext_resource type="Script" uid="uid://r10cxyoenu0l" path="res://content/defs/pilot_roster.gd" id="1"]
+[ext_resource type="Script" uid="uid://bcwfpgffm7rus" path="res://content/defs/pilot_def.gd" id="1_1lpqg"]
 [ext_resource type="Resource" path="res://content/data/pilots/pilot_rookie.tres" id="2"]
-[ext_resource type="Resource" path="res://content/data/pilots/pilot_ace.tres" id="3"]
+[ext_resource type="Resource" uid="uid://duj3tgm8uy8n" path="res://content/data/pilots/pilot_ace.tres" id="3"]
 
 [resource]
 script = ExtResource("1")
-pilots = Array[Resource]([ExtResource("2"), ExtResource("3")])
+pilots = Array[ExtResource("1_1lpqg")]([ExtResource("2"), ExtResource("3")])
