@@ -3,7 +3,6 @@ extends Control
 
 signal practice_requested
 
-@export var practice_scene: PackedScene
 @export var pilot_roster: PilotRoster
 @export var default_pilot_index: int = 0
 
@@ -21,9 +20,6 @@ func _ready() -> void:
 
 func _on_practice_pressed() -> void:
 	_apply_current_pilot_selection()
-	if practice_scene != null:
-		get_tree().change_scene_to_packed(practice_scene)
-		return
 	practice_requested.emit()
 
 func _on_settings_pressed() -> void:

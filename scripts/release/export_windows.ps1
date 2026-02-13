@@ -14,6 +14,26 @@ if (-not (Test-Path $GodotExe)) {
     throw "Godot executable was not found: $GodotExe"
 }
 
+function Get-TemplateVersionFromGodot {
+    param([string]$ExePath)
+
+    $versionLine = (& $ExePath --version 2>&1 | Select-Object -First 1 | Out-String).Trim()
+    if ([string]::IsNullOrWhiteSpace($versionLine)) {
+        return $null
+    }
+
+    $match = [System.Text.RegularExpressions.Regex]::Match(
+        $versionLine,
+        '^(?:Godot Engine\s+v)?(?<version>\d+\.\d+\.[A-Za-z0-9]+(?:\.mono)?)'
+    )
+
+    if ($match.Success) {
+        return $match.Groups["version"].Value
+    }
+
+    return $null
+}
+
 $projectRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
 $outputDir = Join-Path $projectRoot "build\windows"
 $installerScript = Join-Path $projectRoot "installer\windows\Voidbreaker.iss"
@@ -24,6 +44,28 @@ $exePath = Join-Path $outputDir "Voidbreaker.exe"
 $pckPath = Join-Path $outputDir "Voidbreaker.pck"
 $presetName = "Windows Desktop"
 $exportFlag = if ($BuildType -eq "debug") { "--export-debug" } else { "--export-release" }
+
+$templateVersion = Get-TemplateVersionFromGodot -ExePath $GodotExe
+if ($templateVersion) {
+    $templateRoot = Join-Path $env:APPDATA "Godot\export_templates\$templateVersion"
+    $requiredTemplates = @(
+        (Join-Path $templateRoot "windows_debug_x86_64.exe"),
+        (Join-Path $templateRoot "windows_release_x86_64.exe")
+    )
+    $missingTemplates = $requiredTemplates | Where-Object { -not (Test-Path $_) }
+
+    if ($missingTemplates.Count -gt 0) {
+        $missingList = ($missingTemplates -join "`n - ")
+        throw @"
+Missing Godot export templates for version '$templateVersion'.
+Expected files:
+ - $missingList
+
+Install matching export templates in Godot:
+Editor -> Manage Export Templates -> Install/Download (same version as your editor, including mono).
+"@
+    }
+}
 
 Write-Host "Exporting $BuildType build using preset '$presetName'..."
 & $GodotExe --headless --path $projectRoot $exportFlag $presetName $exePath
