@@ -37,6 +37,8 @@ class_name ShipDef
 @export var counter_thrust_brake_mult: float = 1.35
 @export var thrust_drag_scale: float = 0.2
 @export var coast_drag_scale: float = 1.0
+@export var forward_drag_scale_throttle: float = 0.0
+@export var forward_drag_scale_coast: float = 0.35
 
 @export var pickup_range: float = 40.0
 @export var nanobot_gain_mult: float = 1.0

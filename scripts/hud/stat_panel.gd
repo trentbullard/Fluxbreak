@@ -3,6 +3,11 @@ extends ScrollContainer
 class_name StatPanel
 
 const Stat = StatTypes.Stat
+const PILOT_STAT_G_TOLERANCE: int = -1001
+const PILOT_STAT_G_HARD_LIMIT: int = -1002
+const PILOT_STAT_PERCEPTION: int = -1003
+const PILOT_STAT_CHARISMA: int = -1004
+const PILOT_STAT_INGENUITY: int = -1005
 
 # Color constants
 const COLOR_BASE: Color = Color.WHITE
@@ -37,7 +42,7 @@ const STAT_DISPLAY_INFO: Array[Dictionary] = [
 	{ "stat": Stat.ACCEL_FORWARD, "name": "Acceleration", "format": "%.0f" },
 	{ "stat": Stat.ACCEL_REVERSE, "name": "Reverse Accel", "format": "%.0f" },
 	{ "stat": Stat.BOOST_MULT, "name": "Boost Mult", "format": "%.1fx" },
-	{ "stat": Stat.DRAG, "name": "Drag", "format": "%.3f", "invert": true },
+	{ "stat": Stat.DRAG, "name": "Passive Drag", "format": "%.3f", "invert": true },
 	
 	# --- Rotation ---
 	{ "category": "ROTATION" },
@@ -53,6 +58,14 @@ const STAT_DISPLAY_INFO: Array[Dictionary] = [
 	{ "stat": Stat.PICKUP_RANGE, "name": "Pickup Range", "format": "%.0f" },
 	{ "stat": Stat.NANOBOT_GAIN_MULT, "name": "Nanobot Gain", "format": "%.0f%%", "is_percent": true },
 	{ "stat": Stat.SCORE_GAIN_MULT, "name": "Score Gain", "format": "%.0f%%", "is_percent": true },
+
+	# --- Pilot ---
+	{ "category": "PILOT" },
+	{ "stat": PILOT_STAT_G_TOLERANCE, "name": "G Tolerance", "format": "%.1fG" },
+	{ "stat": PILOT_STAT_G_HARD_LIMIT, "name": "G Hard Limit", "format": "%.1fG" },
+	{ "stat": PILOT_STAT_PERCEPTION, "name": "Perception", "format": "%.1f" },
+	{ "stat": PILOT_STAT_CHARISMA, "name": "Charisma", "format": "%.1f" },
+	{ "stat": PILOT_STAT_INGENUITY, "name": "Ingenuity", "format": "%.1f" },
 ]
 
 # Turret stat display info
@@ -224,6 +237,11 @@ func _get_base_value(stat_id: int) -> float:
 		Stat.PICKUP_RANGE: return _ship.pickup_range
 		Stat.NANOBOT_GAIN_MULT: return _ship.nanobot_gain_mult
 		Stat.SCORE_GAIN_MULT: return _ship.score_gain_mult
+		PILOT_STAT_G_TOLERANCE: return _ship.get_pilot_g_tolerance()
+		PILOT_STAT_G_HARD_LIMIT: return _ship.get_pilot_g_hard_limit()
+		PILOT_STAT_PERCEPTION: return _ship.get_pilot_perception()
+		PILOT_STAT_CHARISMA: return _ship.get_pilot_charisma()
+		PILOT_STAT_INGENUITY: return _ship.get_pilot_ingenuity()
 	return 0.0
 
 func _get_net_value(stat_id: int) -> float:
@@ -251,6 +269,11 @@ func _get_net_value(stat_id: int) -> float:
 		Stat.PICKUP_RANGE: return _ship.eff_pickup_range
 		Stat.NANOBOT_GAIN_MULT: return _ship.eff_nanobot_gain_mult
 		Stat.SCORE_GAIN_MULT: return _ship.eff_score_gain_mult
+		PILOT_STAT_G_TOLERANCE: return _ship.get_pilot_g_tolerance()
+		PILOT_STAT_G_HARD_LIMIT: return _ship.get_pilot_g_hard_limit()
+		PILOT_STAT_PERCEPTION: return _ship.get_pilot_perception()
+		PILOT_STAT_CHARISMA: return _ship.get_pilot_charisma()
+		PILOT_STAT_INGENUITY: return _ship.get_pilot_ingenuity()
 	return 0.0
 
 # --- Weapon Stats Collection ---

@@ -37,6 +37,17 @@ class_name Ship
 @export var counter_thrust_brake_mult: float = 1.35
 @export var thrust_drag_scale: float = 0.2
 @export var coast_drag_scale: float = 1.0
+@export var forward_drag_scale_throttle: float = 0.0
+@export var forward_drag_scale_coast: float = 0.35
+
+# Default pilot forward-load tolerance fallback (used if no pilot is assigned).
+@export var default_forward_g_tolerance: float = 6.0
+@export var default_forward_g_hard_limit: float = 10.0
+@export_range(0.0, 1.0, 0.01) var default_forward_accel_min_scale: float = 0.35
+@export_range(0.0, 1.0, 0.01) var default_forward_speed_min_scale: float = 0.55
+@export var default_forward_g_from_ang_rate: float = 3.0
+@export var default_forward_g_from_ang_accel: float = 3.0
+@export var default_forward_g_smoothing_hz: float = 8.0
 
 @export var pickup_range: float = 40.0
 @export var nanobot_gain_mult: float = 1.0
@@ -99,6 +110,17 @@ var _thrusting: bool = false
 var _reversing: bool = false
 var _boosting: bool = false
 var _dead: bool = false
+var _pilot_forward_g_tolerance: float = 6.0
+var _pilot_forward_g_hard_limit: float = 10.0
+var _pilot_forward_accel_min_scale: float = 0.35
+var _pilot_forward_speed_min_scale: float = 0.55
+var _pilot_forward_g_from_ang_rate: float = 3.0
+var _pilot_forward_g_from_ang_accel: float = 3.0
+var _pilot_forward_g_smoothing_hz: float = 8.0
+var _smoothed_forward_g: float = 1.0
+var _pilot_perception: float = 5.0
+var _pilot_charisma: float = 5.0
+var _pilot_ingenuity: float = 5.0
 var _regen_timer: Timer
 var _stack: Array[WeaponDef] = []
 var _nanobots: int = 0
@@ -167,6 +189,8 @@ func _apply_selected_defs() -> void:
 	if selected_pilot != null:
 		_apply_pilot_def(selected_pilot)
 	else:
+		_apply_pilot_forward_load_profile(null)
+		_apply_pilot_attributes(null)
 		_apply_pilot_stat_profile(null)
 
 func _resolve_selected_pilot() -> PilotDef:
@@ -176,6 +200,8 @@ func _resolve_selected_pilot() -> PilotDef:
 
 func _apply_pilot_def(def: PilotDef) -> void:
 	if def == null:
+		_apply_pilot_forward_load_profile(null)
+		_apply_pilot_attributes(null)
 		_apply_pilot_stat_profile(null)
 		return
 
@@ -186,7 +212,38 @@ func _apply_pilot_def(def: PilotDef) -> void:
 	if hardpoint_manager != null and def.mount_layout_policy_override != null:
 		hardpoint_manager.policy = def.mount_layout_policy_override
 
+	_apply_pilot_forward_load_profile(def)
+	_apply_pilot_attributes(def)
 	_apply_pilot_stat_profile(def)
+
+func _apply_pilot_forward_load_profile(def: PilotDef) -> void:
+	if def == null:
+		_pilot_forward_g_tolerance = max(default_forward_g_tolerance, 0.0)
+		_pilot_forward_g_hard_limit = max(default_forward_g_hard_limit, _pilot_forward_g_tolerance + 0.01)
+		_pilot_forward_accel_min_scale = clamp(default_forward_accel_min_scale, 0.0, 1.0)
+		_pilot_forward_speed_min_scale = clamp(default_forward_speed_min_scale, 0.0, 1.0)
+		_pilot_forward_g_from_ang_rate = max(default_forward_g_from_ang_rate, 0.0)
+		_pilot_forward_g_from_ang_accel = max(default_forward_g_from_ang_accel, 0.0)
+		_pilot_forward_g_smoothing_hz = max(default_forward_g_smoothing_hz, 0.0)
+	else:
+		_pilot_forward_g_tolerance = max(def.forward_g_tolerance, 0.0)
+		_pilot_forward_g_hard_limit = max(def.forward_g_hard_limit, _pilot_forward_g_tolerance + 0.01)
+		_pilot_forward_accel_min_scale = clamp(def.forward_accel_min_scale, 0.0, 1.0)
+		_pilot_forward_speed_min_scale = clamp(def.forward_speed_min_scale, 0.0, 1.0)
+		_pilot_forward_g_from_ang_rate = max(def.forward_g_from_ang_rate, 0.0)
+		_pilot_forward_g_from_ang_accel = max(def.forward_g_from_ang_accel, 0.0)
+		_pilot_forward_g_smoothing_hz = max(def.forward_g_smoothing_hz, 0.0)
+	_smoothed_forward_g = 1.0
+
+func _apply_pilot_attributes(def: PilotDef) -> void:
+	if def == null:
+		_pilot_perception = 5.0
+		_pilot_charisma = 5.0
+		_pilot_ingenuity = 5.0
+		return
+	_pilot_perception = max(def.perception, 0.0)
+	_pilot_charisma = max(def.charisma, 0.0)
+	_pilot_ingenuity = max(def.ingenuity, 0.0)
 
 func _apply_pilot_stat_profile(def: PilotDef) -> void:
 	if stat_aggregator == null:
@@ -250,6 +307,8 @@ func _apply_ship_def(def: ShipDef) -> void:
 	counter_thrust_brake_mult = def.counter_thrust_brake_mult
 	thrust_drag_scale = def.thrust_drag_scale
 	coast_drag_scale = def.coast_drag_scale
+	forward_drag_scale_throttle = def.forward_drag_scale_throttle
+	forward_drag_scale_coast = def.forward_drag_scale_coast
 
 	pickup_range = def.pickup_range
 	nanobot_gain_mult = def.nanobot_gain_mult
@@ -349,22 +408,33 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	
 	state.angular_velocity = transform.basis * next_local
 
+	var ang_accel_local: Vector3 = Vector3.ZERO
+	if dt > 0.0:
+		ang_accel_local = (next_local - w_local) / dt
+
 	var lv_local: Vector3 = basis_inv * state.linear_velocity
-	var drag_speed: float = lv_local.length()
-	if drag_speed > 0.0:
-		var drag_scale: float = thrust_drag_scale if absf(_throttle_input) > 0.001 else coast_drag_scale
-		var drag_coeff: float = max(eff_drag, 0.0) * max(drag_scale, 0.0)
-		var drag_factor: float = 1.0 / (1.0 + drag_coeff * drag_speed * dt)
-		lv_local *= drag_factor
+	var lateral_drag_scale: float = thrust_drag_scale if absf(_throttle_input) > 0.001 else coast_drag_scale
+	var vertical_drag_scale: float = lateral_drag_scale
+	var forward_drag_scale: float = forward_drag_scale_throttle if absf(_throttle_input) > 0.001 else forward_drag_scale_coast
+	var base_drag_coeff: float = max(eff_drag, 0.0)
+	lv_local.x = _apply_axis_quadratic_drag(lv_local.x, base_drag_coeff * max(lateral_drag_scale, 0.0), dt)
+	lv_local.y = _apply_axis_quadratic_drag(lv_local.y, base_drag_coeff * max(vertical_drag_scale, 0.0), dt)
+	lv_local.z = _apply_axis_quadratic_drag(lv_local.z, base_drag_coeff * max(forward_drag_scale, 0.0), dt)
 
 	var assist_scale: float = _get_assist_scale()
 	var desired_forward: float = 0.0
 	var forward_rate: float = max(coast_brake_accel * assist_scale, 0.0)
 	var boost: float = eff_boost_mult if _boosting else 1.0
+	var g_limited_forward_cap: float = eff_max_speed_forward
+	var g_limited_accel_scale: float = 1.0
 
 	if _throttle_input > 0.0:
-		desired_forward = eff_max_speed_forward
-		forward_rate = max(eff_accel_forward * boost, 0.0)
+		var current_forward_g: float = _compute_forward_g_load(w_local, ang_accel_local, dt)
+		g_limited_accel_scale = _compute_g_limiter_scale(current_forward_g, _pilot_forward_accel_min_scale)
+		var g_limited_speed_scale: float = _compute_g_limiter_scale(current_forward_g, _pilot_forward_speed_min_scale)
+		g_limited_forward_cap = eff_max_speed_forward * g_limited_speed_scale
+		desired_forward = g_limited_forward_cap
+		forward_rate = max(eff_accel_forward * boost * g_limited_accel_scale, 0.0)
 	elif _throttle_input < 0.0:
 		desired_forward = -eff_max_speed_reverse
 		forward_rate = max(eff_accel_reverse * boost, 0.0)
@@ -374,7 +444,7 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		forward_rate *= max(counter_thrust_brake_mult, 0.0)
 
 	forward_speed = move_toward(forward_speed, desired_forward, forward_rate * dt)
-	forward_speed = clamp(forward_speed, -eff_max_speed_reverse, eff_max_speed_forward)
+	forward_speed = clamp(forward_speed, -eff_max_speed_reverse, g_limited_forward_cap)
 	lv_local.z = -forward_speed
 
 	var yaw_norm: float = absf(w_local.y) / max(eff_max_ang_rate.y, 0.0001)
@@ -430,6 +500,21 @@ func get_effective_nanobot_gain_mult() -> float:
 
 func get_effective_score_gain_mult() -> float:
 	return eff_score_gain_mult
+
+func get_pilot_g_tolerance() -> float:
+	return _pilot_forward_g_tolerance
+
+func get_pilot_g_hard_limit() -> float:
+	return _pilot_forward_g_hard_limit
+
+func get_pilot_perception() -> float:
+	return _pilot_perception
+
+func get_pilot_charisma() -> float:
+	return _pilot_charisma
+
+func get_pilot_ingenuity() -> float:
+	return _pilot_ingenuity
 
 func apply_damage(amount: float) -> void:
 	if _dead:
@@ -516,6 +601,37 @@ func _update_translation() -> void:
 
 func _get_assist_scale() -> float:
 	return lerp(1.6, 0.4, clamp(base_spaciness, 0.0, 1.0))
+
+func _apply_axis_quadratic_drag(component: float, drag_coeff: float, dt: float) -> float:
+	if dt <= 0.0 or drag_coeff <= 0.0:
+		return component
+	var abs_component: float = absf(component)
+	if abs_component <= 0.00001:
+		return component
+	var drag_factor: float = 1.0 / (1.0 + drag_coeff * abs_component * dt)
+	return component * drag_factor
+
+func _compute_forward_g_load(w_local: Vector3, ang_accel_local: Vector3, dt: float) -> float:
+	var rate_cap: float = max(eff_max_ang_rate.length(), 0.0001)
+	var accel_cap: float = max(eff_angular_accel.length(), 0.0001)
+	var rate_ratio: float = clamp(w_local.length() / rate_cap, 0.0, 2.0)
+	var accel_ratio: float = clamp(ang_accel_local.length() / accel_cap, 0.0, 2.0)
+	var target_g: float = 1.0 + _pilot_forward_g_from_ang_rate * rate_ratio + _pilot_forward_g_from_ang_accel * accel_ratio
+	var smoothing_hz: float = max(_pilot_forward_g_smoothing_hz, 0.0)
+	if dt > 0.0 and smoothing_hz > 0.0:
+		var t: float = 1.0 - exp(-smoothing_hz * dt)
+		_smoothed_forward_g = lerp(_smoothed_forward_g, target_g, t)
+	else:
+		_smoothed_forward_g = target_g
+	return _smoothed_forward_g
+
+func _compute_g_limiter_scale(current_g: float, min_scale: float) -> float:
+	var tolerance: float = max(_pilot_forward_g_tolerance, 0.0)
+	var hard_limit: float = max(_pilot_forward_g_hard_limit, tolerance + 0.01)
+	if current_g <= tolerance:
+		return 1.0
+	var overload_alpha: float = clamp((current_g - tolerance) / (hard_limit - tolerance), 0.0, 1.0)
+	return lerp(1.0, clamp(min_scale, 0.0, 1.0), overload_alpha)
 
 func _apply_rigidbody_damping() -> void:
 	linear_damp_mode = rigidbody_linear_damp_mode as RigidBody3D.DampMode
