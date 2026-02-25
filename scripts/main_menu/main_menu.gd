@@ -10,14 +10,44 @@ signal practice_requested
 @onready var btn_settings: Button = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/SettingsContainer/Settings
 @onready var btn_exit: Button = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/ExitContainer/Exit
 @onready var pilot_picker: OptionButton = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PilotContainer/Row/PilotPicker
+@onready var music: AudioStreamPlayer = $MenuMusic
 var _available_pilots: Array[PilotDef] = []
+var _music_tween: Tween
 
 func _ready() -> void:
+	visibility_changed.connect(_on_visibility_changed)
+	_on_visibility_changed()
 	btn_practice.pressed.connect(_on_practice_pressed)
 	btn_settings.pressed.connect(_on_settings_pressed)
 	btn_exit.pressed.connect(_on_exit_pressed)
 	pilot_picker.item_selected.connect(_on_pilot_selected)
 	_refresh_pilot_picker()
+
+func _fade_in_music() -> void:
+	if _music_tween != null:
+		_music_tween.kill()
+	_music_tween = create_tween()
+	_music_tween.tween_property(music, "volume_db", 0.0, 5.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+
+func _on_visibility_changed() -> void:
+	if visible:
+		_start_music()
+	else:
+		_stop_music()
+
+func _start_music() -> void:
+	if music.playing:
+		return
+	music.volume_db = -80
+	music.play()
+	_fade_in_music()
+
+func _stop_music() -> void:
+	if _music_tween != null:
+		_music_tween.kill()
+		_music_tween = null
+	if music.playing:
+		music.stop()
 
 func _on_practice_pressed() -> void:
 	_apply_current_pilot_selection()
