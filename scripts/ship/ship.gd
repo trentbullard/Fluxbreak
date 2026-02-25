@@ -516,6 +516,9 @@ func get_pilot_charisma() -> float:
 func get_pilot_ingenuity() -> float:
 	return _pilot_ingenuity
 
+func is_alive() -> bool:
+	return not _dead
+
 func apply_damage(amount: float) -> void:
 	if _dead:
 		return
@@ -762,6 +765,11 @@ func _die() -> void:
 	if _dead:
 		return
 	_dead = true
+	_switch_alarm(null)
+	if shield_low_alarm_audio != null and shield_low_alarm_audio.playing:
+		shield_low_alarm_audio.stop()
+	if hull_low_alarm_audio != null and hull_low_alarm_audio.playing:
+		hull_low_alarm_audio.stop()
 	
 	var mode = Input.get_mouse_mode()
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED if mode == Input.MOUSE_MODE_VISIBLE else Input.MOUSE_MODE_VISIBLE)

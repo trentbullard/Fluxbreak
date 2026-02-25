@@ -52,7 +52,9 @@ func _ready() -> void:
 	add_child(_target_topup)
 
 func spawn_one_with_def(kind: int, def: Resource) -> Node3D:
-	if enemy_scene == null or target_scene == null or _player_ship == null:
+	if enemy_scene == null or target_scene == null:
+		return null
+	if not _can_spawn_now():
 		return null
 	if not _has_room_for(kind):
 		return null
@@ -70,7 +72,11 @@ func spawn_one_with_def(kind: int, def: Resource) -> Node3D:
 	elif kind == SpawnKind.TARGET and def is TargetDef and inst.has_method("configure_target"):
 		inst.call("configure_target", def as TargetDef)
 	
-	get_tree().current_scene.add_child(inst)
+	var tree: SceneTree = get_tree()
+	if tree == null or tree.current_scene == null:
+		inst.queue_free()
+		return null
+	tree.current_scene.add_child(inst)
 	inst.global_position = pos
 	
 	_alive += 1
@@ -91,7 +97,9 @@ func spawn_one_with_def(kind: int, def: Resource) -> Node3D:
 	return inst
 
 func spawn_one(kind: int) -> Node3D:
-	if enemy_scene == null or target_scene == null or _player_ship == null:
+	if enemy_scene == null or target_scene == null:
+		return null
+	if not _can_spawn_now():
 		return null
 	
 	if not _has_room_for(kind):
@@ -110,7 +118,11 @@ func spawn_one(kind: int) -> Node3D:
 	if inst.has_method("set_ship"):
 		inst.call("set_ship", _player_ship)
 	
-	get_tree().current_scene.add_child(inst)
+	var tree: SceneTree = get_tree()
+	if tree == null or tree.current_scene == null:
+		inst.queue_free()
+		return null
+	tree.current_scene.add_child(inst)
 	inst.global_position = pos
 	
 	_alive += 1
@@ -219,3 +231,11 @@ func _has_room_for(kind: int) -> bool:
 		return _alive_enemies < max_enemies_alive
 	else:
 		return _alive_targets < max_targets_alive
+
+func _can_spawn_now() -> bool:
+	if not is_instance_valid(_player_ship):
+		return false
+	if _player_ship.has_method("is_alive") and not bool(_player_ship.call("is_alive")):
+		return false
+	var tree: SceneTree = get_tree()
+	return tree != null and tree.current_scene != null
