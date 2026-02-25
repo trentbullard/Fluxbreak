@@ -22,6 +22,10 @@ class_name ShipDef
 @export var accel_forward: float = 100.0
 @export var accel_reverse: float = 60.0
 @export var boost_mult: float = 1.5
+@export_enum("Combine", "Replace") var rigidbody_linear_damp_mode: int = RigidBody3D.DAMP_MODE_REPLACE
+@export var rigidbody_linear_damp: float = 0.0
+@export_enum("Combine", "Replace") var rigidbody_angular_damp_mode: int = RigidBody3D.DAMP_MODE_REPLACE
+@export var rigidbody_angular_damp: float = 0.0
 
 # Translation assist tuning (base handling before upgrades)
 @export_range(0.0, 1.0, 0.01) var base_spaciness: float = 0.35  # 0=tight arcade, 1=floaty/newtonian

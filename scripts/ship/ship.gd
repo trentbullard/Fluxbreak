@@ -22,6 +22,10 @@ class_name Ship
 @export var accel_forward: float = 100.0     # the amount of acceleration being applied by thrust
 @export var accel_reverse: float = 60.0      # see above
 @export var boost_mult: float = 1.5          # multiplies accel
+@export_enum("Combine", "Replace") var rigidbody_linear_damp_mode: int = RigidBody3D.DAMP_MODE_REPLACE
+@export var rigidbody_linear_damp: float = 0.0
+@export_enum("Combine", "Replace") var rigidbody_angular_damp_mode: int = RigidBody3D.DAMP_MODE_REPLACE
+@export var rigidbody_angular_damp: float = 0.0
 
 # Translation assist tuning (base handling before upgrades)
 @export_range(0.0, 1.0, 0.01) var base_spaciness: float = 0.35  # 0=tight arcade, 1=floaty/newtonian
@@ -106,6 +110,7 @@ var _emission_value: float = 0.0
 func _ready() -> void:
 	add_to_group("player")
 	reconfigure_from_selected_pilot()
+	_apply_rigidbody_damping()
 	RunState.start_run()
 	_initialize_shield_material()
 	_initialize_thruster_material()
@@ -231,6 +236,11 @@ func _apply_ship_def(def: ShipDef) -> void:
 	accel_forward = def.accel_forward
 	accel_reverse = def.accel_reverse
 	boost_mult = def.boost_mult
+	rigidbody_linear_damp_mode = def.rigidbody_linear_damp_mode
+	rigidbody_linear_damp = def.rigidbody_linear_damp
+	rigidbody_angular_damp_mode = def.rigidbody_angular_damp_mode
+	rigidbody_angular_damp = def.rigidbody_angular_damp
+	_apply_rigidbody_damping()
 	base_spaciness = def.base_spaciness
 	coast_brake_accel = def.coast_brake_accel
 	lateral_brake_accel = def.lateral_brake_accel
@@ -506,6 +516,12 @@ func _update_translation() -> void:
 
 func _get_assist_scale() -> float:
 	return lerp(1.6, 0.4, clamp(base_spaciness, 0.0, 1.0))
+
+func _apply_rigidbody_damping() -> void:
+	linear_damp_mode = rigidbody_linear_damp_mode as RigidBody3D.DampMode
+	linear_damp = max(rigidbody_linear_damp, 0.0)
+	angular_damp_mode = rigidbody_angular_damp_mode as RigidBody3D.DampMode
+	angular_damp = max(rigidbody_angular_damp, 0.0)
 
 func _on_regen_tick() -> void:
 	if _dead:
