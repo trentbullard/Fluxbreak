@@ -213,4 +213,4 @@ label_settings = SubResource("LabelSettings_4xg86")
 
 [node name="MenuMusic" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("7_5seab")
-autoplay = true
+autoplay = false

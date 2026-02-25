@@ -36,10 +36,9 @@ func _on_visibility_changed() -> void:
 		_stop_music()
 
 func _start_music() -> void:
-	if music.playing:
-		return
-	music.volume_db = -80
-	music.play()
+	music.volume_db = -80.0
+	if not music.playing:
+		music.play()
 	_fade_in_music()
 
 func _stop_music() -> void:
