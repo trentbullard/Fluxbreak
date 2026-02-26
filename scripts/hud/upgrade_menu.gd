@@ -72,6 +72,7 @@ func _build_ui() -> void:
 	# Reparent the close button into the root so it's above the dim background
 	if btn_close != null:
 		btn_close.reparent(_root)
+		btn_close.focus_mode = Control.FOCUS_ALL
 		btn_close.pressed.connect(_close_without_purchase)
 	
 	# Margin inside panel
@@ -102,10 +103,16 @@ func _build_ui() -> void:
 	for i in 4:
 		var btn: Button = Button.new()
 		btn.custom_minimum_size = Vector2(400, 50)
+		btn.focus_mode = Control.FOCUS_ALL
+		btn.focus_neighbor_right = btn.get_path_to(btn_close)
 		btn.add_theme_font_size_override("font_size", 16)
 		btn.pressed.connect(_on_button_pressed.bind(i))
 		_container.add_child(btn)
 		_buttons.append(btn)
+
+	if btn_close != null and _buttons.size() > 0:
+		btn_close.focus_neighbor_bottom = btn_close.get_path_to(_buttons[0])
+		_buttons[0].focus_neighbor_top = _buttons[0].get_path_to(btn_close)
 
 
 func _apply_menu_font_theme() -> void:
@@ -129,8 +136,7 @@ func show_for_poi(poi: PoiInstance) -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	
 	# Focus first button
-	if _buttons.size() > 0:
-		_buttons[0].grab_focus()
+	_focus_default_control()
 
 
 func _randomize_choices(poi: PoiInstance) -> void:
@@ -451,6 +457,15 @@ func _update_buttons() -> void:
 		else:
 			btn.visible = false
 
+	if visible:
+		var focus_owner: Control = get_viewport().gui_get_focus_owner()
+		if focus_owner == null:
+			call_deferred("_focus_default_control")
+		else:
+			var focused_button: Button = focus_owner as Button
+			if focused_button != null and (not focused_button.visible or focused_button.disabled):
+				call_deferred("_focus_default_control")
+
 
 func _on_button_pressed(index: int) -> void:
 	if index < _upgrade_choices.size():
@@ -546,6 +561,27 @@ func _on_nanobots_updated(amount: int) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
-	if event.is_action_pressed("pause"):
+	if _is_controller_event(event) and get_viewport().gui_get_focus_owner() == null:
+		call_deferred("_focus_default_control")
+	if event.is_action_pressed("pause") or event.is_action_pressed("ui_cancel"):
 		get_viewport().set_input_as_handled()
 		_close_without_purchase()
+
+func _focus_default_control() -> void:
+	for btn: Button in _buttons:
+		if btn.visible and not btn.disabled:
+			btn.grab_focus()
+			return
+	for btn: Button in _buttons:
+		if btn.visible:
+			btn.grab_focus()
+			return
+	if btn_close != null and btn_close.visible:
+		btn_close.grab_focus()
+
+func _is_controller_event(event: InputEvent) -> bool:
+	var joy_button: InputEventJoypadButton = event as InputEventJoypadButton
+	if joy_button != null:
+		return joy_button.pressed
+	var joy_motion: InputEventJoypadMotion = event as InputEventJoypadMotion
+	return joy_motion != null and absf(joy_motion.axis_value) >= 0.5

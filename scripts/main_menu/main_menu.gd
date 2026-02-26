@@ -21,7 +21,10 @@ func _ready() -> void:
 	btn_settings.pressed.connect(_on_settings_pressed)
 	btn_exit.pressed.connect(_on_exit_pressed)
 	pilot_picker.item_selected.connect(_on_pilot_selected)
+	_set_focus_modes()
 	_refresh_pilot_picker()
+	if visible and _has_connected_controller():
+		call_deferred("_focus_default_control")
 
 func _fade_in_music() -> void:
 	if _music_tween != null:
@@ -32,8 +35,19 @@ func _fade_in_music() -> void:
 func _on_visibility_changed() -> void:
 	if visible:
 		_start_music()
+		if _has_connected_controller():
+			call_deferred("_focus_default_control")
 	else:
 		_stop_music()
+
+func _input(event: InputEvent) -> void:
+	if not visible:
+		return
+	if not _is_controller_event(event):
+		return
+	if get_viewport().gui_get_focus_owner() != null:
+		return
+	call_deferred("_focus_default_control")
 
 func _start_music() -> void:
 	music.volume_db = -80.0
@@ -124,3 +138,34 @@ func _first_unlocked_index() -> int:
 		if GameFlow.is_pilot_unlocked(_available_pilots[i]):
 			return i
 	return -1
+
+func _set_focus_modes() -> void:
+	pilot_picker.focus_mode = Control.FOCUS_ALL
+	btn_practice.focus_mode = Control.FOCUS_ALL
+	btn_settings.focus_mode = Control.FOCUS_ALL
+	btn_exit.focus_mode = Control.FOCUS_ALL
+
+func _focus_default_control() -> void:
+	if not visible:
+		return
+	if not btn_practice.disabled:
+		btn_practice.grab_focus()
+		return
+	if not pilot_picker.disabled:
+		pilot_picker.grab_focus()
+		return
+	if not btn_settings.disabled:
+		btn_settings.grab_focus()
+		return
+	if not btn_exit.disabled:
+		btn_exit.grab_focus()
+
+func _has_connected_controller() -> bool:
+	return Input.get_connected_joypads().size() > 0
+
+func _is_controller_event(event: InputEvent) -> bool:
+	var joy_button: InputEventJoypadButton = event as InputEventJoypadButton
+	if joy_button != null:
+		return joy_button.pressed
+	var joy_motion: InputEventJoypadMotion = event as InputEventJoypadMotion
+	return joy_motion != null and absf(joy_motion.axis_value) >= 0.5

@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://dywsechusg01y"]
+[gd_scene load_steps=10 format=3 uid="uid://dywsechusg01y"]
 
 [ext_resource type="Script" uid="uid://bapsjbior1dq4" path="res://scripts/hud/pause_menu.gd" id="1_xxxx0"]
 [ext_resource type="FontFile" uid="uid://dtkmmkanjxyxd" path="res://assets/fonts/Orbitron/Orbitron-Regular.ttf" id="2_5h01g"]
@@ -31,6 +31,18 @@ corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5h01g"]
+bg_color = Color(0, 0, 0, 0)
+draw_center = false
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
 
 [node name="PauseMenu" type="CanvasLayer"]
 layer = 2
@@ -66,21 +78,37 @@ layout_mode = 2
 
 [node name="Resume" type="Button" parent="ScreenRoot/CenterContainer/VBox"]
 layout_mode = 2
+focus_neighbor_left = NodePath("../../../StatPanel")
+focus_neighbor_bottom = NodePath("../Restart")
+focus_next = NodePath("../Restart")
 theme = SubResource("Theme_wiae1")
 text = "Resume"
 
 [node name="Restart" type="Button" parent="ScreenRoot/CenterContainer/VBox"]
 layout_mode = 2
+focus_neighbor_left = NodePath("../../../StatPanel")
+focus_neighbor_top = NodePath("../Resume")
+focus_neighbor_bottom = NodePath("../MainMenu")
+focus_next = NodePath("../MainMenu")
+focus_previous = NodePath("../Resume")
 theme = SubResource("Theme_cgdix")
 text = "Restart"
 
 [node name="MainMenu" type="Button" parent="ScreenRoot/CenterContainer/VBox"]
 layout_mode = 2
+focus_neighbor_left = NodePath("../../../StatPanel")
+focus_neighbor_top = NodePath("../Restart")
+focus_neighbor_bottom = NodePath("../Quit")
+focus_next = NodePath("../Quit")
+focus_previous = NodePath("../Restart")
 theme = SubResource("Theme_u2ajk")
 text = "Main Menu"
 
 [node name="Quit" type="Button" parent="ScreenRoot/CenterContainer/VBox"]
 layout_mode = 2
+focus_neighbor_left = NodePath("../../../StatPanel")
+focus_neighbor_top = NodePath("../MainMenu")
+focus_previous = NodePath("../MainMenu")
 theme = SubResource("Theme_46l5v")
 text = "Quit"
 
@@ -93,7 +121,14 @@ offset_top = 20.0
 offset_right = 320.0
 offset_bottom = -20.0
 grow_vertical = 2
+focus_neighbor_right = NodePath("../CenterContainer/VBox/Resume")
+focus_mode = 2
+focus_behavior_recursive = 2
+mouse_filter = 0
+mouse_force_pass_scroll_events = false
 theme_override_styles/panel = SubResource("StyleBoxFlat_statpanel")
+theme_override_styles/focus = SubResource("StyleBoxFlat_5h01g")
+draw_focus_border = true
 horizontal_scroll_mode = 0
 script = ExtResource("2_stat_panel")
 

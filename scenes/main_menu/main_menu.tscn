@@ -119,6 +119,8 @@ label_settings = SubResource("LabelSettings_5seab")
 
 [node name="PilotPicker" type="OptionButton" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PilotContainer/Row"]
 layout_mode = 2
+focus_neighbor_bottom = NodePath("../../../PracticeContainer/Practice")
+focus_next = NodePath("../../../PracticeContainer/Practice")
 theme = SubResource("Theme_4xg86")
 
 [node name="PracticeContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer"]
@@ -126,6 +128,10 @@ layout_mode = 2
 
 [node name="Practice" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PracticeContainer"]
 layout_mode = 2
+focus_neighbor_top = NodePath("../../PilotContainer/Row/PilotPicker")
+focus_neighbor_bottom = NodePath("../../SettingsContainer/Settings")
+focus_next = NodePath("../../SettingsContainer/Settings")
+focus_previous = NodePath("../../PilotContainer/Row/PilotPicker")
 theme = SubResource("Theme_wem23")
 text = "Practice"
 
@@ -134,6 +140,10 @@ layout_mode = 2
 
 [node name="Settings" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/SettingsContainer"]
 layout_mode = 2
+focus_neighbor_top = NodePath("../../PracticeContainer/Practice")
+focus_neighbor_bottom = NodePath("../../ExitContainer/Exit")
+focus_next = NodePath("../../ExitContainer/Exit")
+focus_previous = NodePath("../../PracticeContainer/Practice")
 theme = SubResource("Theme_5seab")
 disabled = true
 text = "Settings"
@@ -143,6 +153,8 @@ layout_mode = 2
 
 [node name="Exit" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/ExitContainer"]
 layout_mode = 2
+focus_neighbor_top = NodePath("../../SettingsContainer/Settings")
+focus_previous = NodePath("../../SettingsContainer/Settings")
 theme = SubResource("Theme_thkx5")
 text = "Exit"
 
