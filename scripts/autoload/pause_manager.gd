@@ -24,11 +24,19 @@ func _ready() -> void:
 
 func _unhandled_input(_event: InputEvent) -> void:
 	if Input.is_action_just_pressed("pause"):
-		# Avoid pausing on the main menu
-		var cs: Node = get_tree().current_scene
-		if cs != null and cs.name == "MainMenu":
+		if _is_main_menu_active():
 			return
 		toggle_pause()
+
+func _is_main_menu_active() -> bool:
+	var cs: Node = get_tree().current_scene
+	if cs == null:
+		return false
+	if cs.name == "MainMenu":
+		return true
+
+	var main_menu_overlay: CanvasItem = cs.get_node_or_null("MainMenuOverlay") as CanvasItem
+	return main_menu_overlay != null and main_menu_overlay.visible
 
 func toggle_pause() -> void:
 	if is_paused:
