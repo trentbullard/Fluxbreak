@@ -15,7 +15,11 @@ const SCORE_KEY_HIGH_SCORE: String = "high_score"
 const META_SECTION: String = "meta"
 const META_KEY_SELECTED_PILOT: String = "selected_pilot_id"
 const META_KEY_SELECTED_SHIP_ID: String = "selected_ship_id"
+const META_KEY_SAVE_SCHEMA_VERSION: String = "save_schema_version"
+const META_KEY_GAME_VERSION: String = "game_version"
 const PILOT_STATS_SECTION_PREFIX: String = "pilot_stats."
+const ARCHIVE_SECTION_PREFIX: String = "archive."
+const CURRENT_SAVE_SCHEMA_VERSION: int = 1
 
 const STAT_HIGHEST_SCORE: StringName = &"highest_score"
 const STAT_LONGEST_RUN_SECONDS: StringName = &"longest_run_seconds"
@@ -352,6 +356,48 @@ func _get_or_create_stats_for_pilot(pilot_id: StringName) -> Dictionary:
 func _make_default_pilot_stats() -> Dictionary:
 	return PILOT_STAT_DEFAULTS.duplicate(true)
 
+func _get_current_game_version() -> String:
+	var value: String = String(ProjectSettings.get_setting("application/config/version", "")).strip_edges()
+	return value if value != "" else "dev"
+
+func _should_reset_save(saved_schema_version: int, saved_game_version: String, current_game_version: String) -> bool:
+	if saved_schema_version > 0 and saved_schema_version != CURRENT_SAVE_SCHEMA_VERSION:
+		return true
+	if saved_game_version != "" and saved_game_version != current_game_version:
+		return true
+	return false
+
+func _archive_current_save(cfg: ConfigFile, saved_schema_version: int, saved_game_version: String, current_game_version: String) -> void:
+	var archive_stamp: int = int(Time.get_unix_time_from_system())
+	var archive_base: String = "%s%d" % [ARCHIVE_SECTION_PREFIX, archive_stamp]
+	var sections: PackedStringArray = cfg.get_sections()
+	for section in sections:
+		if section.begins_with(ARCHIVE_SECTION_PREFIX):
+			continue
+		var keys: PackedStringArray = cfg.get_section_keys(section)
+		for key in keys:
+			cfg.set_value("%s.%s" % [archive_base, section], key, cfg.get_value(section, key))
+	cfg.set_value("%s.meta" % archive_base, "reason", "version_mismatch")
+	cfg.set_value("%s.meta" % archive_base, "saved_schema_version", saved_schema_version)
+	cfg.set_value("%s.meta" % archive_base, "saved_game_version", saved_game_version)
+	cfg.set_value("%s.meta" % archive_base, "current_schema_version", CURRENT_SAVE_SCHEMA_VERSION)
+	cfg.set_value("%s.meta" % archive_base, "current_game_version", current_game_version)
+	cfg.set_value("%s.meta" % archive_base, "archived_at_unix", archive_stamp)
+
+func _clear_live_save_sections(cfg: ConfigFile) -> void:
+	var sections: PackedStringArray = cfg.get_sections()
+	for section in sections:
+		if section.begins_with(ARCHIVE_SECTION_PREFIX):
+			continue
+		cfg.erase_section(section)
+
+func _write_default_live_save(cfg: ConfigFile, game_version: String) -> void:
+	cfg.set_value(SCORE_SECTION, SCORE_KEY_HIGH_SCORE, 0)
+	cfg.set_value(META_SECTION, META_KEY_SELECTED_PILOT, "")
+	cfg.set_value(META_SECTION, META_KEY_SELECTED_SHIP_ID, "")
+	cfg.set_value(META_SECTION, META_KEY_SAVE_SCHEMA_VERSION, CURRENT_SAVE_SCHEMA_VERSION)
+	cfg.set_value(META_SECTION, META_KEY_GAME_VERSION, game_version)
+
 func _load_user_data() -> void:
 	_pilot_stats_by_id.clear()
 	_loaded_selected_pilot_id = &""
@@ -361,6 +407,18 @@ func _load_user_data() -> void:
 	var cfg: ConfigFile = ConfigFile.new()
 	var err: int = cfg.load(SAVE_PATH)
 	if err != OK:
+		return
+
+	var current_game_version: String = _get_current_game_version()
+	var saved_schema_version: int = int(cfg.get_value(META_SECTION, META_KEY_SAVE_SCHEMA_VERSION, -1))
+	var saved_game_version: String = String(cfg.get_value(META_SECTION, META_KEY_GAME_VERSION, "")).strip_edges()
+	if _should_reset_save(saved_schema_version, saved_game_version, current_game_version):
+		_archive_current_save(cfg, saved_schema_version, saved_game_version, current_game_version)
+		_clear_live_save_sections(cfg)
+		_write_default_live_save(cfg, current_game_version)
+		var reset_err: int = cfg.save(SAVE_PATH)
+		if reset_err != OK:
+			push_warning("Failed to write reset save data to %s (err %d)".format([SAVE_PATH, reset_err]))
 		return
 
 	high_score = int(cfg.get_value(SCORE_SECTION, SCORE_KEY_HIGH_SCORE, 0))
@@ -387,6 +445,8 @@ func _save_user_data() -> void:
 	cfg.set_value(SCORE_SECTION, SCORE_KEY_HIGH_SCORE, high_score)
 	cfg.set_value(META_SECTION, META_KEY_SELECTED_PILOT, String(selected_pilot.get_pilot_id()) if selected_pilot != null else "")
 	cfg.set_value(META_SECTION, META_KEY_SELECTED_SHIP_ID, String(_get_ship_id(selected_ship)))
+	cfg.set_value(META_SECTION, META_KEY_SAVE_SCHEMA_VERSION, CURRENT_SAVE_SCHEMA_VERSION)
+	cfg.set_value(META_SECTION, META_KEY_GAME_VERSION, _get_current_game_version())
 
 	for section in cfg.get_sections():
 		if section.begins_with(PILOT_STATS_SECTION_PREFIX):
