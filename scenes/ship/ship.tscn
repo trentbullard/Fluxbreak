@@ -38,14 +38,14 @@ material = SubResource("StandardMaterial3D_roibb")
 radius = 7.0
 height = 16.0
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wkb1m"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_r75st"]
 albedo_color = Color(0, 0, 0, 1)
 emission_enabled = true
 emission = Color(0, 1, 1, 1)
 emission_energy_multiplier = 0.1
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_r75st"]
-material = SubResource("StandardMaterial3D_wkb1m")
+material = SubResource("StandardMaterial3D_r75st")
 top_radius = 0.3
 bottom_radius = 0.3
 height = 0.1
@@ -58,14 +58,14 @@ direction = Vector3(0, 0, 1)
 initial_velocity_min = 3.0
 initial_velocity_max = 6.0
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qos36"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_q6f52"]
 albedo_color = Color(1, 0.40392157, 0, 1)
 emission_enabled = true
 emission = Color(0.40224198, 0.6187108, 0.99999744, 1)
 emission_energy_multiplier = 1.5
 
 [sub_resource type="BoxMesh" id="BoxMesh_hj22y"]
-material = SubResource("StandardMaterial3D_qos36")
+material = SubResource("StandardMaterial3D_q6f52")
 size = Vector3(0.1, 0.1, 0.2)
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_iyjb8"]
@@ -204,7 +204,7 @@ current = true
 far = 10000.0
 
 [node name="CameraLight" type="OmniLight3D" parent="CameraPivot/CameraRig/Camera3D"]
-transform = Transform3D(1, 0, 0, 0, 0.99044216, 0.13792859, 0, -0.13792859, 0.99044216, 5.343026, 2.834952, -4.6635275)
+transform = Transform3D(1, 0, 0, 0, 0.99044216, 0.13792859, 0, -0.13792859, 0.99044216, 5.343026, 2.8349524, -4.6635275)
 light_color = Color(0.7977378, 0.7977378, 0.7977378, 1)
 light_energy = 3.0
 light_cull_mask = 4293918721

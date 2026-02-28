@@ -7,6 +7,7 @@ class_name ShipDef
 
 @export var loadout: ShipLoadoutDef
 @export_range(0, 16, 1) var starting_weapons: int = 1
+@export var visuals: ShipVisualDef
 
 @export var explosion_scene: PackedScene
 

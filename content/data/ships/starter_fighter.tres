@@ -1,12 +1,120 @@
-[gd_resource type="Resource" script_class="ShipDef" load_steps=4 format=3 uid="uid://da52xasn5mssy"]
+[gd_resource type="Resource" script_class="ShipDef" load_steps=25 format=3 uid="uid://da52xasn5mssy"]
 
 [ext_resource type="Script" uid="uid://bvxxmlbxopb4b" path="res://content/defs/ship_def.gd" id="1"]
 [ext_resource type="Resource" uid="uid://bmjdosjus5db0" path="res://content/data/weapons/ship_loadouts/player_default_loadout.tres" id="2"]
 [ext_resource type="PackedScene" uid="uid://yo2mi8h7ihfj" path="res://scenes/explosion.tscn" id="3"]
+[ext_resource type="PackedScene" uid="uid://bt8noxg4b1lvq" path="res://scenes/ship/starter_fighter_mk1_layout.tscn" id="4_tup14"]
+[ext_resource type="PackedScene" uid="uid://bmt72uludsmi4" path="res://assets/meshes/fighter_mk1.glb" id="5_tup14"]
+[ext_resource type="Script" uid="uid://c62ptiux8ivvl" path="res://content/defs/ship_visual_def.gd" id="6_n73qf"]
+[ext_resource type="Script" uid="uid://d0g8qkgplpfwq" path="res://content/defs/ship_shield_def.gd" id="7_n73qf"]
+[ext_resource type="Script" uid="uid://kmmrm5to02a2" path="res://content/defs/ship_thruster_def.gd" id="7_vb2be"]
+[ext_resource type="Script" uid="uid://gm176i27cxj6" path="res://content/defs/ship_anchor_def.gd" id="8_dlk1n"]
+
+[sub_resource type="Resource" id="Resource_vb2be"]
+script = ExtResource("7_n73qf")
+marker_path = NodePath("ShieldSocket")
+metadata/_custom_type_script = "uid://d0g8qkgplpfwq"
+
+[sub_resource type="Resource" id="Resource_tup14"]
+script = ExtResource("7_vb2be")
+thruster_name = &"ThrusterL"
+marker_path = NodePath("Thrusters/Thruster2")
+color = Color(1, 0.40392157, 0, 1)
+emission_color = Color(0.40392157, 0.61960787, 1, 1)
+emission_energy = 1.5
+metadata/_custom_type_script = "uid://kmmrm5to02a2"
+
+[sub_resource type="Resource" id="Resource_n73qf"]
+script = ExtResource("7_vb2be")
+thruster_name = &"ThrusterR"
+marker_path = NodePath("Thrusters/Thruster")
+color = Color(1, 0.40392157, 0, 1)
+emission_color = Color(0.40392157, 0.61960787, 1, 1)
+emission_energy = 1.5
+metadata/_custom_type_script = "uid://kmmrm5to02a2"
+
+[sub_resource type="Resource" id="Resource_dlk1n"]
+script = ExtResource("8_dlk1n")
+anchor_name = &"TopMiddle"
+marker_path = NodePath("Anchors/TopMiddle")
+metadata/_custom_type_script = "uid://gm176i27cxj6"
+
+[sub_resource type="Resource" id="Resource_dgpbk"]
+script = ExtResource("8_dlk1n")
+anchor_name = &"TopL"
+marker_path = NodePath("Anchors/TopL")
+metadata/_custom_type_script = "uid://gm176i27cxj6"
+
+[sub_resource type="Resource" id="Resource_hcovg"]
+script = ExtResource("8_dlk1n")
+anchor_name = &"TopR"
+marker_path = NodePath("Anchors/TopR")
+metadata/_custom_type_script = "uid://gm176i27cxj6"
+
+[sub_resource type="Resource" id="Resource_phag5"]
+script = ExtResource("8_dlk1n")
+anchor_name = &"WingLT"
+marker_path = NodePath("Anchors/WingLT")
+metadata/_custom_type_script = "uid://gm176i27cxj6"
+
+[sub_resource type="Resource" id="Resource_noawc"]
+script = ExtResource("8_dlk1n")
+anchor_name = &"WingRT"
+marker_path = NodePath("Anchors/WingRT")
+metadata/_custom_type_script = "uid://gm176i27cxj6"
+
+[sub_resource type="Resource" id="Resource_1mofl"]
+script = ExtResource("8_dlk1n")
+anchor_name = &"WingLB"
+marker_path = NodePath("Anchors/WingLB")
+metadata/_custom_type_script = "uid://gm176i27cxj6"
+
+[sub_resource type="Resource" id="Resource_jg2fe"]
+script = ExtResource("8_dlk1n")
+anchor_name = &"WingRB"
+marker_path = NodePath("Anchors/WingRB")
+metadata/_custom_type_script = "uid://gm176i27cxj6"
+
+[sub_resource type="Resource" id="Resource_xrsle"]
+script = ExtResource("8_dlk1n")
+anchor_name = &"BottomMiddle"
+marker_path = NodePath("Anchors/BottomMiddle")
+metadata/_custom_type_script = "uid://gm176i27cxj6"
+
+[sub_resource type="Resource" id="Resource_xtwps"]
+script = ExtResource("8_dlk1n")
+anchor_name = &"BottomL"
+marker_path = NodePath("Anchors/BottomL")
+metadata/_custom_type_script = "uid://gm176i27cxj6"
+
+[sub_resource type="Resource" id="Resource_uvtrp"]
+script = ExtResource("8_dlk1n")
+anchor_name = &"BottomR"
+marker_path = NodePath("Anchors/BottomR")
+metadata/_custom_type_script = "uid://gm176i27cxj6"
+
+[sub_resource type="Resource" id="Resource_0lt2l"]
+script = ExtResource("8_dlk1n")
+anchor_name = &"StowParking"
+marker_path = NodePath("Anchors/StowParking")
+metadata/_custom_type_script = "uid://gm176i27cxj6"
+
+[sub_resource type="Resource" id="Resource_h3va4"]
+script = ExtResource("6_n73qf")
+layout_scene = ExtResource("4_tup14")
+model_scene = ExtResource("5_tup14")
+turret_anchors = Array[ExtResource("8_dlk1n")]([SubResource("Resource_dlk1n"), SubResource("Resource_dgpbk"), SubResource("Resource_hcovg"), SubResource("Resource_phag5"), SubResource("Resource_noawc"), SubResource("Resource_1mofl"), SubResource("Resource_jg2fe"), SubResource("Resource_xrsle"), SubResource("Resource_xtwps"), SubResource("Resource_uvtrp"), SubResource("Resource_0lt2l")])
+shield = SubResource("Resource_vb2be")
+camera_height = 2.0
+camera_distance = 10.0
+camera_fov = 75.0
+thrusters = Array[ExtResource("7_vb2be")]([SubResource("Resource_tup14"), SubResource("Resource_n73qf")])
+metadata/_custom_type_script = "uid://c62ptiux8ivvl"
 
 [resource]
 script = ExtResource("1")
 id = &"starter_fighter"
 display_name = "Fighter Mk1"
 loadout = ExtResource("2")
+visuals = SubResource("Resource_h3va4")
 explosion_scene = ExtResource("3")

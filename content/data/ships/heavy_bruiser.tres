@@ -1,15 +1,49 @@
-[gd_resource type="Resource" script_class="ShipDef" load_steps=7 format=3 uid="uid://c7qhxtfi262nw"]
+[gd_resource type="Resource" script_class="ShipDef" load_steps=17 format=3 uid="uid://c7qhxtfi262nw"]
 
 [ext_resource type="Script" uid="uid://bvxxmlbxopb4b" path="res://content/defs/ship_def.gd" id="1"]
 [ext_resource type="Script" uid="uid://dhvgo1sv28rx3" path="res://content/defs/mount_loadout_def.gd" id="2_4xy8s"]
 [ext_resource type="PackedScene" uid="uid://yo2mi8h7ihfj" path="res://scenes/explosion.tscn" id="3"]
 [ext_resource type="Resource" uid="uid://bwex6asskxuot" path="res://content/data/weapons/mount_loadouts/pulse_default.tres" id="3_jmuen"]
 [ext_resource type="Script" uid="uid://c35jeiv6o1idc" path="res://content/defs/ship_loadout_def.gd" id="4_jb3yy"]
+[ext_resource type="PackedScene" uid="uid://b13i0tpg75vq2" path="res://scenes/ship/heavy_bruiser_mk1_layout.tscn" id="6_4tb3i"]
+[ext_resource type="Script" uid="uid://c62ptiux8ivvl" path="res://content/defs/ship_visual_def.gd" id="6_hwqxc"]
+[ext_resource type="Script" uid="uid://kmmrm5to02a2" path="res://content/defs/ship_thruster_def.gd" id="7_n1kv6"]
+[ext_resource type="PackedScene" uid="uid://clkp4ep4h1grp" path="res://assets/meshes/heavy_bruiser_mk1.glb" id="7_oetnl"]
+[ext_resource type="Script" uid="uid://gm176i27cxj6" path="res://content/defs/ship_anchor_def.gd" id="8_8x1w2"]
+[ext_resource type="Script" uid="uid://d0g8qkgplpfwq" path="res://content/defs/ship_shield_def.gd" id="9_2symp"]
 
 [sub_resource type="Resource" id="Resource_hwqxc"]
 script = ExtResource("4_jb3yy")
 mounts = Array[ExtResource("2_4xy8s")]([ExtResource("3_jmuen"), ExtResource("3_jmuen")])
 metadata/_custom_type_script = "uid://c35jeiv6o1idc"
+
+[sub_resource type="Resource" id="Resource_di4rg"]
+script = ExtResource("9_2symp")
+marker_path = NodePath("ShieldSocket")
+metadata/_custom_type_script = "uid://d0g8qkgplpfwq"
+
+[sub_resource type="Resource" id="Resource_xxy5q"]
+script = ExtResource("7_n1kv6")
+thruster_name = &"ThrusterL"
+marker_path = NodePath("Thrusters/ThrusterL")
+color = Color(0, 0, 0, 1)
+emission_color = Color(0, 1, 1, 1)
+metadata/_custom_type_script = "uid://kmmrm5to02a2"
+
+[sub_resource type="Resource" id="Resource_r4vr2"]
+script = ExtResource("7_n1kv6")
+thruster_name = &"ThrusterR"
+marker_path = NodePath("Thrusters/ThrusterR")
+emission_color = Color(0, 1, 1, 1)
+metadata/_custom_type_script = "uid://kmmrm5to02a2"
+
+[sub_resource type="Resource" id="Resource_4tb3i"]
+script = ExtResource("6_hwqxc")
+layout_scene = ExtResource("6_4tb3i")
+model_scene = ExtResource("7_oetnl")
+shield = SubResource("Resource_di4rg")
+thrusters = Array[ExtResource("7_n1kv6")]([SubResource("Resource_xxy5q"), SubResource("Resource_r4vr2")])
+metadata/_custom_type_script = "uid://c62ptiux8ivvl"
 
 [resource]
 script = ExtResource("1")
@@ -17,6 +51,7 @@ id = &"heavy_bruiser"
 display_name = "Heavy Bruiser"
 loadout = SubResource("Resource_hwqxc")
 starting_weapons = 2
+visuals = SubResource("Resource_4tb3i")
 explosion_scene = ExtResource("3")
 max_hull = 140.0
 max_shield = 70.0
