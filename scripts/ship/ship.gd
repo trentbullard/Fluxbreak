@@ -66,19 +66,13 @@ class_name Ship
 	deg_to_rad(500.0),
 	deg_to_rad(500.0))
 
-@onready var thruster1: MeshInstance3D = $VisualRoot/Thruster
-@onready var thruster2: MeshInstance3D = $VisualRoot/Thruster2
-@onready var thruster_mat1: StandardMaterial3D = thruster1.get_active_material(0).duplicate()
-@onready var thruster_mat2: StandardMaterial3D = thruster2.get_active_material(0).duplicate()
-@onready var thruster_particles1: GPUParticles3D = $VisualRoot/ThrusterParticles1
-@onready var thruster_particles2: GPUParticles3D = $VisualRoot/ThrusterParticles2
-@onready var camera_pivot: Marker3D = $CameraPivot
+@onready var visual_root: Node3D = $VisualRoot
+@onready var camera_rig = $CameraPivot/CameraRig
 @onready var hardpoint_manager: TurretHardpointManager = $TurretController/HardpointManager
 @onready var stat_aggregator: StatAggregator = $StatAggregator
 const Stat = StatTypes.Stat
 @onready var shield_hit_audio: AudioStreamPlayer3D = $Audio/ShieldHitAudio
 @onready var hull_hit_audio: AudioStreamPlayer3D = $Audio/HullHitAudio
-@onready var shield_mesh: MeshInstance3D = $VisualRoot/Shield
 @onready var shield_low_alarm_audio: AudioStreamPlayer3D = $Audio/ShieldLowAlarm
 @onready var hull_low_alarm_audio: AudioStreamPlayer3D = $Audio/HullLowAlarm
 const LOW_ALARM_THRESHOLD: float = 0.2
@@ -125,9 +119,16 @@ var _regen_timer: Timer
 var _stack: Array[WeaponDef] = []
 var _nanobots: int = 0
 var _hull_repair_cooldown_remaining: float = 0.0
+var shield_mesh: MeshInstance3D
 var _shield_mat: StandardMaterial3D
 var _shield_base_albedo: Color = Color.WHITE
 var _emission_value: float = 0.0
+var _runtime_layout_root: Node3D
+var _runtime_model_root: Node3D
+var _runtime_anchors_root: Node3D
+var _runtime_thruster_nodes: Array[Node3D] = []
+var _runtime_thruster_materials: Array[BaseMaterial3D] = []
+var _runtime_thruster_particles: Array[GPUParticles3D] = []
 
 func _ready() -> void:
 	add_to_group("player")
@@ -135,7 +136,6 @@ func _ready() -> void:
 	_apply_rigidbody_damping()
 	RunState.start_run()
 	_initialize_shield_material()
-	_initialize_thruster_material()
 	_update_shield_mesh_visibility()
 	EventBus.heal_hull_requested.connect(_on_heal_hull_requested)
 	RunState.nanobots_spent.connect(spend_nanobots)
@@ -177,10 +177,12 @@ func reconfigure_from_selected_pilot(reset_current_health: bool = true) -> void:
 		hardpoint_manager.apply_loadout(loadout, starting_weapons)
 
 func _apply_selected_defs() -> void:
-	var selected_ship_def: ShipDef = ship_override
 	var selected_pilot: PilotDef = _resolve_selected_pilot()
+	var selected_ship_def: ShipDef = ship_override
+	if selected_ship_def == null:
+		selected_ship_def = GameFlow.get_selected_ship()
 
-	if selected_pilot != null and selected_pilot.ship != null:
+	if selected_ship_def == null and selected_pilot != null and selected_pilot.ship != null:
 		selected_ship_def = selected_pilot.ship
 
 	if selected_ship_def != null:
@@ -322,6 +324,7 @@ func _apply_ship_def(def: ShipDef) -> void:
 		deg_to_rad(def.angular_accel_deg.x),
 		deg_to_rad(def.angular_accel_deg.y),
 		deg_to_rad(def.angular_accel_deg.z))
+	_apply_ship_visuals(def.visuals)
 
 # --- public api for upgrades/ui ---
 
@@ -364,7 +367,7 @@ func get_hull_repair_cooldown() -> float:
 func _refresh() -> void:
 	if hardpoint_manager == null:
 		return
-	hardpoint_manager.realign_and_apply(_stack)
+	hardpoint_manager.rebuild_anchor_cache()
 
 func _physics_process(delta: float) -> void:
 	if _hull_repair_cooldown_remaining > 0.0:
@@ -380,19 +383,20 @@ func _physics_process(delta: float) -> void:
 	
 	_emission_value = lerp(_emission_value, target_emission, delta * 8.0)
 	
-	if thruster_mat1 and thruster_mat2:
-		thruster_mat1.emission_energy_multiplier = _emission_value
-		thruster_mat2.emission_energy_multiplier = _emission_value
+	for mat in _runtime_thruster_materials:
+		if mat != null:
+			mat.emission_energy_multiplier = _emission_value
 
-	if thruster_particles1 and thruster_particles2:
+	if not _runtime_thruster_particles.is_empty():
 		var forward_vel: float = linear_velocity.dot(-transform.basis.z)
 		var main_emit: bool = _thrusting and not _reversing
 		var particle_cap: float = max(eff_max_speed_forward * (eff_boost_mult if _boosting else 1.0), 1.0)
-
-		thruster_particles1.emitting = main_emit
-		thruster_particles2.emitting = main_emit
-		thruster_particles1.amount_ratio = clamp(max(forward_vel, 0.0) / particle_cap, 0.15, 1.0)
-		thruster_particles2.amount_ratio = clamp(max(forward_vel, 0.0) / particle_cap, 0.15, 1.0)
+		var ratio: float = clamp(max(forward_vel, 0.0) / particle_cap, 0.15, 1.0)
+		for particles in _runtime_thruster_particles:
+			if particles == null:
+				continue
+			particles.emitting = main_emit
+			particles.amount_ratio = ratio
 
 func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	var dt: float = state.step
@@ -713,36 +717,322 @@ func _refresh_effective_stats() -> void:
 	eff_score_gain_mult = aggr.compute(Stat.SCORE_GAIN_MULT, score_gain_mult)
 	_update_shield_mesh_visibility()
 
+func _apply_ship_visuals(visuals: ShipVisualDef) -> void:
+	_clear_runtime_visual_nodes()
+	_refresh_runtime_layout(visuals)
+	_sync_camera_from_visuals(visuals)
+	_build_runtime_model(visuals)
+	_build_runtime_anchor_markers(visuals)
+	_build_runtime_thrusters(visuals)
+	var shield_def: ShipShieldDef = visuals.shield if visuals != null else null
+	_build_runtime_shield_mesh(shield_def)
+	_configure_hardpoint_anchors(visuals)
+
+func _clear_runtime_visual_nodes() -> void:
+	if shield_mesh != null:
+		shield_mesh.queue_free()
+	shield_mesh = null
+	_shield_mat = null
+
+	for particles in _runtime_thruster_particles:
+		if particles != null:
+			particles.queue_free()
+	_runtime_thruster_particles.clear()
+
+	for node in _runtime_thruster_nodes:
+		if node != null:
+			node.queue_free()
+	_runtime_thruster_nodes.clear()
+	_runtime_thruster_materials.clear()
+
+	if _runtime_model_root != null:
+		_runtime_model_root.queue_free()
+		_runtime_model_root = null
+
+	if _runtime_anchors_root != null:
+		_runtime_anchors_root = null
+
+	if _runtime_layout_root != null:
+		_runtime_layout_root.queue_free()
+		_runtime_layout_root = null
+
+func _refresh_runtime_layout(visuals: ShipVisualDef) -> void:
+	if visuals == null or visuals.layout_scene == null or visual_root == null:
+		return
+	var inst: Node = visuals.layout_scene.instantiate()
+	var root: Node3D = inst as Node3D
+	if root == null:
+		if inst != null:
+			inst.queue_free()
+		return
+	root.name = "RuntimeLayout"
+	root.visible = true
+	visual_root.add_child(root)
+	_runtime_layout_root = root
+
+func _resolve_layout_socket(path: NodePath) -> Node3D:
+	if _runtime_layout_root == null or path == NodePath(""):
+		return null
+	return _runtime_layout_root.get_node_or_null(path) as Node3D
+
+func _resolve_layout_socket_with_root(root_path: NodePath, marker_path: NodePath) -> Node3D:
+	if _runtime_layout_root == null or marker_path == NodePath(""):
+		return null
+	var direct: Node3D = _runtime_layout_root.get_node_or_null(marker_path) as Node3D
+	if direct != null:
+		return direct
+	if root_path == NodePath(""):
+		return null
+	var combined_path: NodePath = NodePath("%s/%s" % [String(root_path), String(marker_path)])
+	return _runtime_layout_root.get_node_or_null(combined_path) as Node3D
+
+func _sync_camera_from_visuals(visuals: ShipVisualDef) -> void:
+	if camera_rig == null or visuals == null:
+		return
+	camera_rig.height_offset = visuals.camera_height
+	camera_rig.distance_offset = visuals.camera_distance
+	camera_rig.angle_offset_deg = visuals.camera_angle_deg
+	camera_rig.fov = visuals.camera_fov
+	camera_rig.position = Vector3(0.0, camera_rig.height_offset, -camera_rig.distance_offset)
+	var cam: Camera3D = camera_rig.get_node_or_null("Camera3D") as Camera3D
+	if cam != null:
+		cam.fov = visuals.camera_fov
+
+func _build_runtime_model(visuals: ShipVisualDef) -> void:
+	if visuals == null or visuals.model_scene == null:
+		return
+	var model_instance: Node3D = visuals.model_scene.instantiate() as Node3D
+	if model_instance == null:
+		return
+	model_instance.name = "RuntimeModel"
+	var socket: Node3D = _resolve_layout_socket(visuals.model_marker_path)
+	if socket == null:
+		model_instance.queue_free()
+		push_warning("Ship visuals missing model marker path: %s" % String(visuals.model_marker_path))
+		return
+	socket.add_child(model_instance)
+	model_instance.transform = Transform3D.IDENTITY
+	_runtime_model_root = model_instance
+
+func _build_runtime_anchor_markers(visuals: ShipVisualDef) -> void:
+	_runtime_anchors_root = null
+	if visuals == null:
+		return
+	if _runtime_layout_root == null:
+		return
+	var anchors_root: Node3D = _resolve_layout_socket(visuals.anchors_root_path)
+	if anchors_root == null:
+		push_warning("Ship anchors root not found in layout: %s" % String(visuals.anchors_root_path))
+		return
+	_runtime_anchors_root = anchors_root
+
+func _configure_hardpoint_anchors(visuals: ShipVisualDef) -> void:
+	if hardpoint_manager == null:
+		return
+	if _runtime_anchors_root == null:
+		return
+	if visuals != null and visuals.mount_layout_policy != null:
+		hardpoint_manager.policy = visuals.mount_layout_policy
+	hardpoint_manager.anchors_root_path = hardpoint_manager.get_path_to(_runtime_anchors_root)
+	if visuals != null:
+		var stow_name: String = String(visuals.stow_anchor_name).strip_edges()
+		if stow_name != "":
+			hardpoint_manager.stow_anchor_name = stow_name
+	hardpoint_manager.rebuild_anchor_cache()
+
+func _build_runtime_thrusters(visuals: ShipVisualDef) -> void:
+	if visuals == null:
+		return
+	for thruster_def in visuals.thrusters:
+		if thruster_def == null:
+			continue
+		var thruster_name: String = String(thruster_def.thruster_name).strip_edges()
+		if thruster_name == "":
+			thruster_name = "Thruster"
+		var socket: Node3D = _resolve_thruster_socket(visuals, thruster_def, thruster_name)
+		if socket == null:
+			push_warning("Ship thruster marker not found for '%s': %s" % [thruster_name, String(thruster_def.marker_path)])
+			continue
+		var particles_parent: Node3D = _resolve_thruster_particles_parent(socket, thruster_name)
+
+		if thruster_def.mesh != null:
+			var mesh_instance: MeshInstance3D = MeshInstance3D.new()
+			mesh_instance.name = thruster_name
+			var runtime_mesh: Mesh = thruster_def.mesh.duplicate(true) as Mesh
+			mesh_instance.mesh = runtime_mesh if runtime_mesh != null else thruster_def.mesh
+			socket.add_child(mesh_instance)
+			mesh_instance.transform = Transform3D.IDENTITY
+			if absf(thruster_def.scale_multiplier - 1.0) > 0.001:
+				mesh_instance.scale *= thruster_def.scale_multiplier
+
+			var runtime_material: Material = null
+			if thruster_def.material != null:
+				runtime_material = thruster_def.material.duplicate(true) as Material
+			elif mesh_instance.mesh != null and mesh_instance.mesh.get_surface_count() > 0:
+				var embedded: Material = mesh_instance.mesh.surface_get_material(0)
+				if embedded != null:
+					runtime_material = embedded.duplicate(true) as Material
+			if runtime_material != null:
+				mesh_instance.set_surface_override_material(0, runtime_material)
+
+			var base_material: BaseMaterial3D = mesh_instance.get_active_material(0) as BaseMaterial3D
+			if base_material != null:
+				var mat_copy: BaseMaterial3D = base_material.duplicate(true) as BaseMaterial3D
+				if mat_copy != null:
+					mat_copy.albedo_color = thruster_def.color
+					mat_copy.emission_enabled = true
+					mat_copy.emission = thruster_def.emission_color
+					mat_copy.emission_energy_multiplier = thruster_def.emission_energy
+					mesh_instance.set_surface_override_material(0, mat_copy)
+					_runtime_thruster_materials.append(mat_copy)
+
+			_runtime_thruster_nodes.append(mesh_instance)
+
+		var particles_scene: PackedScene = thruster_def.particles_scene
+		if particles_scene == null:
+			continue
+		var particles: GPUParticles3D = particles_scene.instantiate() as GPUParticles3D
+		if particles == null:
+			continue
+		particles.name = "%sParticles" % thruster_name
+		particles_parent.add_child(particles)
+		particles.transform = Transform3D.IDENTITY
+		particles.emitting = false
+		_apply_thruster_particles_visuals(particles, thruster_def)
+		_runtime_thruster_particles.append(particles)
+
+func _resolve_thruster_socket(visuals: ShipVisualDef, thruster_def: ShipThrusterDef, thruster_name: String) -> Node3D:
+	var by_path: Node3D = _resolve_layout_socket_with_root(visuals.thrusters_root_path, thruster_def.marker_path)
+	if by_path != null:
+		return by_path
+	if thruster_name == "":
+		return null
+	var thrusters_root: Node3D = _resolve_layout_socket(visuals.thrusters_root_path)
+	if thrusters_root != null:
+		var by_name_under_root: Node3D = thrusters_root.get_node_or_null(NodePath(thruster_name)) as Node3D
+		if by_name_under_root != null:
+			return by_name_under_root
+	if _runtime_layout_root != null:
+		return _runtime_layout_root.find_child(thruster_name, true, false) as Node3D
+	return null
+
+func _resolve_thruster_particles_parent(socket: Node3D, thruster_name: String) -> Node3D:
+	if socket == null:
+		return null
+	if thruster_name != "":
+		var child_anchor: Node3D = socket.get_node_or_null(NodePath(thruster_name)) as Node3D
+		if child_anchor != null:
+			return child_anchor
+	var particles_socket: Node3D = socket.get_node_or_null(NodePath("ParticlesSocket")) as Node3D
+	if particles_socket != null:
+		return particles_socket
+	var particles_marker: Node3D = socket.get_node_or_null(NodePath("Particles")) as Node3D
+	if particles_marker != null:
+		return particles_marker
+	return socket
+
+func _apply_thruster_particles_visuals(particles: GPUParticles3D, thruster_def: ShipThrusterDef) -> void:
+	if particles == null:
+		return
+	var draw_mesh: Mesh = particles.draw_pass_1
+	if draw_mesh == null:
+		return
+	var mesh_copy: Mesh = draw_mesh.duplicate(true) as Mesh
+	if mesh_copy == null:
+		mesh_copy = draw_mesh
+	particles.draw_pass_1 = mesh_copy
+	if mesh_copy.get_surface_count() <= 0:
+		return
+	var base_material: BaseMaterial3D = mesh_copy.surface_get_material(0) as BaseMaterial3D
+	if base_material == null:
+		return
+	var mat_copy: BaseMaterial3D = base_material.duplicate(true) as BaseMaterial3D
+	if mat_copy == null:
+		return
+	mat_copy.albedo_color = thruster_def.color
+	mat_copy.emission_enabled = true
+	mat_copy.emission = thruster_def.emission_color
+	mat_copy.emission_energy_multiplier = thruster_def.emission_energy
+	mesh_copy.surface_set_material(0, mat_copy)
+
+func _build_runtime_shield_mesh(shield_def: ShipShieldDef) -> void:
+	shield_mesh = null
+	_shield_mat = null
+	if shield_def == null or shield_def.mesh == null:
+		return
+	var socket: Node3D = _resolve_layout_socket(shield_def.marker_path)
+	if socket == null:
+		push_warning("Ship shield marker not found: %s" % String(shield_def.marker_path))
+		return
+
+	var runtime_mesh: Mesh = shield_def.mesh.duplicate(true) as Mesh
+	if runtime_mesh == null:
+		runtime_mesh = shield_def.mesh
+	if runtime_mesh is SphereMesh:
+		var sphere: SphereMesh = runtime_mesh as SphereMesh
+		if sphere != null:
+			var base_radius: float = max(sphere.radius, 0.0001)
+			if shield_def.radius > 0.0:
+				sphere.radius = shield_def.radius
+				if shield_def.height > 0.0:
+					sphere.height = shield_def.height
+				else:
+					sphere.height = sphere.height * (shield_def.radius / base_radius)
+			elif shield_def.height > 0.0:
+				sphere.height = shield_def.height
+
+	var runtime_shield: MeshInstance3D = MeshInstance3D.new()
+	runtime_shield.name = String(shield_def.shield_name) if String(shield_def.shield_name).strip_edges() != "" else "RuntimeShield"
+	runtime_shield.mesh = runtime_mesh
+
+	if shield_def.shader_material != null:
+		runtime_shield.set_surface_override_material(0, shield_def.shader_material.duplicate(true) as Material)
+	elif shield_def.shader_definition != null:
+		var shader_material: ShaderMaterial = ShaderMaterial.new()
+		shader_material.shader = shield_def.shader_definition
+		runtime_shield.set_surface_override_material(0, shader_material)
+	elif shield_def.material != null:
+		runtime_shield.set_surface_override_material(0, shield_def.material.duplicate(true) as Material)
+
+	socket.add_child(runtime_shield)
+	runtime_shield.transform = Transform3D.IDENTITY
+
+	shield_mesh = runtime_shield
+	_initialize_shield_material()
+	if _shield_mat != null:
+		var color: Color = shield_def.color
+		_shield_mat.albedo_color = Color(color.r, color.g, color.b, _shield_mat.albedo_color.a)
+		_shield_mat.emission_enabled = true
+		_shield_mat.emission = shield_def.emission_color
+		_shield_mat.emission_energy_multiplier = shield_def.emission_energy
+		_shield_base_albedo = _shield_mat.albedo_color
+
 func _initialize_shield_material() -> void:
 	if shield_mesh == null:
 		return
 	if _shield_mat != null:
 		return
-	var mat: StandardMaterial3D = shield_mesh.get_active_material(0)
-	if mat == null:
+	var mat: Material = shield_mesh.get_active_material(0)
+	var standard_mat: StandardMaterial3D = mat as StandardMaterial3D
+	if standard_mat == null:
 		return
-	_shield_mat = mat.duplicate()
+	_shield_mat = standard_mat.duplicate()
 	_shield_base_albedo = _shield_mat.albedo_color
 	if _shield_mat.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED:
 		_shield_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	shield_mesh.set_surface_override_material(0, _shield_mat)
 
-func _initialize_thruster_material() -> void:
-	thruster1.set_surface_override_material(0, thruster_mat1)
-	thruster2.set_surface_override_material(0, thruster_mat2)
-
 func _update_shield_mesh_visibility() -> void:
 	if shield_mesh == null:
 		return
 	_initialize_shield_material()
-	if _shield_mat == null:
-		return
 	var ratio: float = 0.0
 	if eff_max_shield > 0.0:
 		ratio = clamp(shield / eff_max_shield, 0.0, 1.0)
-	var color: Color = _shield_base_albedo
-	color.a = ratio
-	_shield_mat.albedo_color = color
+	if _shield_mat != null:
+		var color: Color = _shield_base_albedo
+		color.a = ratio
+		_shield_mat.albedo_color = color
 	shield_mesh.visible = ratio > 0.0
 
 func _on_stats_changed(_affected: Array[int]) -> void:

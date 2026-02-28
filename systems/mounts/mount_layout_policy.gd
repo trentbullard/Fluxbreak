@@ -2,7 +2,7 @@
 extends Resource
 class_name MountLayoutPolicy
 
-@export var anchors_by_count: Dictionary[int, PackedStringArray] = {} # Dictionary[int, PackedStringArray]
+@export var anchors_by_count: Dictionary[int, PackedStringArray] = {} # key = installed weapon count
 
 func get_anchor_names_for(count: int) -> PackedStringArray:
 	var best: PackedStringArray = PackedStringArray()

@@ -5,13 +5,13 @@
 [resource]
 script = ExtResource("1_gy3d7")
 anchors_by_count = Dictionary[int, PackedStringArray]({
-0: PackedStringArray("TopMiddle"),
-1: PackedStringArray("WingLT", "WingRT"),
-2: PackedStringArray("TopMiddle", "WingLT", "WingRT"),
-3: PackedStringArray("WingLT", "WingRT", "WingLB", "WingRB"),
-4: PackedStringArray("TopMiddle", "WingLT", "WingRT", "WingLB", "WingRB"),
-5: PackedStringArray("TopL", "TopR", "WingLT", "WingRT", "WingLB", "WingRB"),
-6: PackedStringArray("TopL", "TopR", "WingLT", "WingRT", "WingLB", "WingRB", "BottomMiddle"),
-7: PackedStringArray("TopL", "TopR", "WingLT", "WingRT", "WingLB", "WingRB", "BottomL", "BottomR")
+1: PackedStringArray("TopMiddle"),
+2: PackedStringArray("WingLT", "WingRT"),
+3: PackedStringArray("TopMiddle", "WingLT", "WingRT"),
+4: PackedStringArray("WingLT", "WingRT", "WingLB", "WingRB"),
+5: PackedStringArray("TopMiddle", "WingLT", "WingRT", "WingLB", "WingRB"),
+6: PackedStringArray("TopL", "TopR", "WingLT", "WingRT", "WingLB", "WingRB"),
+7: PackedStringArray("TopL", "TopR", "WingLT", "WingRT", "WingLB", "WingRB", "BottomMiddle"),
+8: PackedStringArray("TopL", "TopR", "WingLT", "WingRT", "WingLB", "WingRB", "BottomL", "BottomR")
 })
 metadata/_custom_type_script = "uid://cmxqylyj6csvd"

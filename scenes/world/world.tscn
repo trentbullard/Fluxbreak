@@ -141,6 +141,7 @@ outline_color = Color(0, 0, 0, 1)
 
 [node name="World" type="Node3D"]
 script = ExtResource("1_ovomx")
+ship_scene = ExtResource("2_6m72w")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_v5dby")
@@ -150,7 +151,7 @@ light_energy = 2.0
 shadow_enabled = true
 directional_shadow_mode = 0
 
-[node name="Starfield" type="GPUParticles3D" parent="." node_paths=PackedStringArray("ship")]
+[node name="Starfield" type="GPUParticles3D" parent="." node_paths=PackedStringArray("ship_path")]
 amount = 2000
 lifetime = 12.0
 preprocess = 12.0
@@ -160,9 +161,7 @@ trail_lifetime = 0.14
 process_material = SubResource("ParticleProcessMaterial_dphjl")
 draw_pass_1 = SubResource("QuadMesh_t5ptc")
 script = ExtResource("2_v5dby")
-ship = NodePath("../Ship")
-
-[node name="Ship" parent="." instance=ExtResource("2_6m72w")]
+ship_path = NodePath("../Ship")
 
 [node name="Spawner" type="Node3D" parent="."]
 script = ExtResource("6_bq33v")

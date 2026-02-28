@@ -4,7 +4,7 @@ class_name TurretHardpointManager
 
 @export var assembly_scene: PackedScene
 @export var policy: MountLayoutPolicy
-@export var anchors_root_path: NodePath = NodePath("Anchors")
+@export var anchors_root_path: NodePath = NodePath("")
 @export var stow_anchor_name: String = "StowParking"
 @export var max_assemblies: int = 8
 
@@ -179,6 +179,10 @@ func _build_anchor_cache() -> void:
 		if c is Node3D:
 			_anchor_cache[String(c.name)] = c
 
+func rebuild_anchor_cache() -> void:
+	_build_anchor_cache()
+	_realign_and_apply_current()
+
 func ensure_pool_size(n: int) -> void:
 	var target: int = clamp(n, 0, max_assemblies)
 	while _pool.size() < target and assembly_scene != null:
@@ -220,7 +224,7 @@ func _resolve_anchor_nodes(count: int) -> Array[Node3D]:
 	var out: Array[Node3D] = []
 	if policy == null or count <= 0:
 		return out
-	var names: PackedStringArray = policy.get_anchor_names_for(count - 1)
+	var names: PackedStringArray = policy.get_anchor_names_for(count)
 	for n in names:
 		if _anchor_cache.has(n):
 			out.append(_anchor_cache[n])

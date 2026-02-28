@@ -1,16 +1,32 @@
-[gd_resource type="Resource" script_class="ShipDef" load_steps=17 format=3 uid="uid://c7qhxtfi262nw"]
+[gd_resource type="Resource" script_class="ShipDef" load_steps=32 format=3 uid="uid://c7qhxtfi262nw"]
 
 [ext_resource type="Script" uid="uid://bvxxmlbxopb4b" path="res://content/defs/ship_def.gd" id="1"]
+
 [ext_resource type="Script" uid="uid://dhvgo1sv28rx3" path="res://content/defs/mount_loadout_def.gd" id="2_4xy8s"]
+
 [ext_resource type="PackedScene" uid="uid://yo2mi8h7ihfj" path="res://scenes/explosion.tscn" id="3"]
+
 [ext_resource type="Resource" uid="uid://bwex6asskxuot" path="res://content/data/weapons/mount_loadouts/pulse_default.tres" id="3_jmuen"]
+
 [ext_resource type="Script" uid="uid://c35jeiv6o1idc" path="res://content/defs/ship_loadout_def.gd" id="4_jb3yy"]
+
 [ext_resource type="PackedScene" uid="uid://b13i0tpg75vq2" path="res://scenes/ship/heavy_bruiser_mk1_layout.tscn" id="6_4tb3i"]
+
 [ext_resource type="Script" uid="uid://c62ptiux8ivvl" path="res://content/defs/ship_visual_def.gd" id="6_hwqxc"]
+
 [ext_resource type="Script" uid="uid://kmmrm5to02a2" path="res://content/defs/ship_thruster_def.gd" id="7_n1kv6"]
+
 [ext_resource type="PackedScene" uid="uid://clkp4ep4h1grp" path="res://assets/meshes/heavy_bruiser_mk1.glb" id="7_oetnl"]
-[ext_resource type="Script" uid="uid://gm176i27cxj6" path="res://content/defs/ship_anchor_def.gd" id="8_8x1w2"]
+
 [ext_resource type="Script" uid="uid://d0g8qkgplpfwq" path="res://content/defs/ship_shield_def.gd" id="9_2symp"]
+
+[ext_resource type="Material" uid="uid://dye8ie53a0ych" path="res://content/materials/shield.tres" id="9_di4rg"]
+
+[ext_resource type="SphereMesh" uid="uid://dnsbqag21mm1l" path="res://assets/meshes/shield.tres" id="10_xxy5q"]
+
+[ext_resource type="PackedScene" uid="uid://bj012u42vcetv" path="res://scenes/ship/thruster_particles.tscn" id="11_n7a5e"]
+
+[ext_resource type="Resource" uid="uid://dcssl41w3hvhr" path="res://content/data/weapons/mount_layouts/player_policy.tres" id="12_h7u8o"]
 
 [sub_resource type="Resource" id="Resource_hwqxc"]
 script = ExtResource("4_jb3yy")
@@ -20,12 +36,15 @@ metadata/_custom_type_script = "uid://c35jeiv6o1idc"
 [sub_resource type="Resource" id="Resource_di4rg"]
 script = ExtResource("9_2symp")
 marker_path = NodePath("ShieldSocket")
+mesh = ExtResource("10_xxy5q")
+material = ExtResource("9_di4rg")
 metadata/_custom_type_script = "uid://d0g8qkgplpfwq"
 
 [sub_resource type="Resource" id="Resource_xxy5q"]
 script = ExtResource("7_n1kv6")
 thruster_name = &"ThrusterL"
 marker_path = NodePath("Thrusters/ThrusterL")
+particles_scene = ExtResource("11_n7a5e")
 color = Color(0, 0, 0, 1)
 emission_color = Color(0, 1, 1, 1)
 metadata/_custom_type_script = "uid://kmmrm5to02a2"
@@ -34,6 +53,7 @@ metadata/_custom_type_script = "uid://kmmrm5to02a2"
 script = ExtResource("7_n1kv6")
 thruster_name = &"ThrusterR"
 marker_path = NodePath("Thrusters/ThrusterR")
+particles_scene = ExtResource("11_n7a5e")
 emission_color = Color(0, 1, 1, 1)
 metadata/_custom_type_script = "uid://kmmrm5to02a2"
 
@@ -41,7 +61,9 @@ metadata/_custom_type_script = "uid://kmmrm5to02a2"
 script = ExtResource("6_hwqxc")
 layout_scene = ExtResource("6_4tb3i")
 model_scene = ExtResource("7_oetnl")
+mount_layout_policy = ExtResource("12_h7u8o")
 shield = SubResource("Resource_di4rg")
+camera_fov = 75.0
 thrusters = Array[ExtResource("7_n1kv6")]([SubResource("Resource_xxy5q"), SubResource("Resource_r4vr2")])
 metadata/_custom_type_script = "uid://c62ptiux8ivvl"
 

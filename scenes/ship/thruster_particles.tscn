@@ -1,0 +1,24 @@
+[gd_scene load_steps=4 format=3 uid="uid://bj012u42vcetv"]
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_xfxds"]
+emission_shape_scale = Vector3(0.2, 0.2, 0.1)
+emission_shape = 3
+emission_box_extents = Vector3(1, 1, 1)
+direction = Vector3(0, 0, 1)
+initial_velocity_min = 3.0
+initial_velocity_max = 6.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_q6f52"]
+albedo_color = Color(1, 0.40392157, 0, 1)
+emission_enabled = true
+emission = Color(0.40224198, 0.6187108, 0.99999744, 1)
+emission_energy_multiplier = 1.5
+
+[sub_resource type="BoxMesh" id="BoxMesh_hj22y"]
+material = SubResource("StandardMaterial3D_q6f52")
+size = Vector3(0.1, 0.1, 0.2)
+
+[node name="ThrusterParticles1" type="GPUParticles3D"]
+lifetime = 0.3
+process_material = SubResource("ParticleProcessMaterial_xfxds")
+draw_pass_1 = SubResource("BoxMesh_hj22y")

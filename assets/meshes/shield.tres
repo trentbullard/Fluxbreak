@@ -1,0 +1,8 @@
+[gd_resource type="SphereMesh" load_steps=2 format=3 uid="uid://dnsbqag21mm1l"]
+
+[ext_resource type="Material" uid="uid://dye8ie53a0ych" path="res://content/materials/shield.tres" id="1_sborh"]
+
+[resource]
+material = ExtResource("1_sborh")
+radius = 10.0
+height = 10.0

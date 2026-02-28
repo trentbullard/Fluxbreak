@@ -1,19 +1,24 @@
 extends GPUParticles3D
-@export var ship: Ship
+@export var ship_path: NodePath = NodePath("")
 @export var box_extents: Vector3 = Vector3(500, 500, 500)
 @export var margin: float = 400.0
 @export var snap_step: float = 50.0
 
 var _home: Vector3
+var _ship: Ship
 
 func _ready() -> void:
 	_home = global_position
+	if ship_path != NodePath(""):
+		_ship = get_node_or_null(ship_path) as Ship
 
 func _process(_dt: float) -> void:
-	if ship == null:
-		return
+	if _ship == null:
+		_ship = get_tree().get_first_node_in_group("player") as Ship
+		if _ship == null:
+			return
 
-	var to_ship = ship.global_position - global_position
+	var to_ship: Vector3 = _ship.global_position - global_position
 
 	var moved := false
 	var new_pos := global_position

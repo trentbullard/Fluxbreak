@@ -4,6 +4,7 @@ extends Node
 signal high_score_updated(new_score: int, old_score: int)
 signal pilot_stats_updated(pilot_id: StringName, stats: Dictionary)
 signal pilot_unlocked(pilot_id: StringName)
+signal selection_changed(pilot: PilotDef, ship: ShipDef)
 
 const MENU := "res://scenes/world/world.tscn"
 const DEFAULT_PILOT_ROSTER: String = "res://content/data/pilots/pilot_roster.tres"
@@ -13,6 +14,7 @@ const SCORE_SECTION: String = "scores"
 const SCORE_KEY_HIGH_SCORE: String = "high_score"
 const META_SECTION: String = "meta"
 const META_KEY_SELECTED_PILOT: String = "selected_pilot_id"
+const META_KEY_SELECTED_SHIP_ID: String = "selected_ship_id"
 const PILOT_STATS_SECTION_PREFIX: String = "pilot_stats."
 
 const STAT_HIGHEST_SCORE: StringName = &"highest_score"
@@ -33,10 +35,12 @@ const PILOT_STAT_DEFAULTS: Dictionary = {
 
 var high_score: int = 0
 var selected_pilot: PilotDef = null
+var selected_ship: ShipDef = null
 
 var _pilot_stats_by_id: Dictionary = {}
 var _cached_roster: PilotRoster = null
 var _loaded_selected_pilot_id: StringName = &""
+var _loaded_selected_ship_id: StringName = &""
 
 var _run_active: bool = false
 var _run_started_msec: int = 0
@@ -61,6 +65,7 @@ func start_new_run() -> void:
 	_run_last_nanobots_value = 0
 	var active_pilot: PilotDef = _resolve_selected_or_default_pilot()
 	_run_pilot_id = active_pilot.get_pilot_id() if active_pilot != null else &""
+	_resolve_selected_or_default_ship()
 
 func set_selected_pilot(pilot: PilotDef) -> void:
 	if pilot == null:
@@ -72,7 +77,17 @@ func set_selected_pilot(pilot: PilotDef) -> void:
 		push_warning("Ignoring locked pilot: %s" % String(pilot.get_pilot_id()))
 		return
 	selected_pilot = pilot
+	selected_ship = pilot.ship
 	_save_user_data()
+	selection_changed.emit(selected_pilot, selected_ship)
+
+func set_selected_ship(ship: ShipDef) -> void:
+	selected_ship = ship
+	_save_user_data()
+	selection_changed.emit(selected_pilot, selected_ship)
+
+func get_selected_ship() -> ShipDef:
+	return _resolve_selected_or_default_ship()
 
 func player_died() -> void:
 	_end_run_and_return_to_menu(true)
@@ -147,8 +162,18 @@ func _resolve_selected_or_default_pilot() -> PilotDef:
 	_ensure_default_pilot()
 	return selected_pilot
 
+func _resolve_selected_or_default_ship() -> ShipDef:
+	if selected_ship != null:
+		return selected_ship
+	var pilot: PilotDef = _resolve_selected_or_default_pilot()
+	if pilot != null:
+		selected_ship = pilot.ship
+	return selected_ship
+
 func _ensure_default_pilot() -> void:
 	if selected_pilot != null and selected_pilot.is_selectable() and is_pilot_unlocked(selected_pilot):
+		if selected_ship == null:
+			selected_ship = selected_pilot.ship
 		return
 
 	var pilots: Array[PilotDef] = get_all_pilots()
@@ -159,14 +184,19 @@ func _ensure_default_pilot() -> void:
 		var saved_choice: PilotDef = _find_pilot_by_id(_loaded_selected_pilot_id)
 		if saved_choice != null and is_pilot_unlocked(saved_choice):
 			selected_pilot = saved_choice
+			selected_ship = _load_ship_from_id(_loaded_selected_ship_id)
+			if selected_ship == null:
+				selected_ship = saved_choice.ship
 			return
 
 	for pilot in pilots:
 		if pilot != null and is_pilot_unlocked(pilot):
 			selected_pilot = pilot
+			selected_ship = pilot.ship
 			return
 
 	selected_pilot = pilots[0]
+	selected_ship = selected_pilot.ship if selected_pilot != null else null
 
 func _find_pilot_by_id(pilot_id: StringName) -> PilotDef:
 	if pilot_id == &"":
@@ -177,6 +207,25 @@ func _find_pilot_by_id(pilot_id: StringName) -> PilotDef:
 		if pilot.get_pilot_id() == pilot_id:
 			return pilot
 	return null
+
+func _load_ship_from_id(ship_id: StringName) -> ShipDef:
+	if ship_id == &"":
+		return null
+	for pilot in get_all_pilots():
+		if pilot == null or pilot.ship == null:
+			continue
+		if _get_ship_id(pilot.ship) == ship_id:
+			return pilot.ship
+	return null
+
+func _get_ship_id(ship: ShipDef) -> StringName:
+	if ship == null:
+		return &""
+	if ship.id != &"":
+		return ship.id
+	if ship.resource_path != "":
+		return StringName(ship.resource_path.get_file().get_basename())
+	return &""
 
 func _on_run_nanobots_updated(amount: int) -> void:
 	if not _run_active:
@@ -306,6 +355,7 @@ func _make_default_pilot_stats() -> Dictionary:
 func _load_user_data() -> void:
 	_pilot_stats_by_id.clear()
 	_loaded_selected_pilot_id = &""
+	_loaded_selected_ship_id = &""
 	high_score = 0
 
 	var cfg: ConfigFile = ConfigFile.new()
@@ -315,6 +365,7 @@ func _load_user_data() -> void:
 
 	high_score = int(cfg.get_value(SCORE_SECTION, SCORE_KEY_HIGH_SCORE, 0))
 	_loaded_selected_pilot_id = StringName(String(cfg.get_value(META_SECTION, META_KEY_SELECTED_PILOT, "")))
+	_loaded_selected_ship_id = StringName(String(cfg.get_value(META_SECTION, META_KEY_SELECTED_SHIP_ID, "")))
 
 	for section in cfg.get_sections():
 		if not section.begins_with(PILOT_STATS_SECTION_PREFIX):
@@ -335,6 +386,7 @@ func _save_user_data() -> void:
 
 	cfg.set_value(SCORE_SECTION, SCORE_KEY_HIGH_SCORE, high_score)
 	cfg.set_value(META_SECTION, META_KEY_SELECTED_PILOT, String(selected_pilot.get_pilot_id()) if selected_pilot != null else "")
+	cfg.set_value(META_SECTION, META_KEY_SELECTED_SHIP_ID, String(_get_ship_id(selected_ship)))
 
 	for section in cfg.get_sections():
 		if section.begins_with(PILOT_STATS_SECTION_PREFIX):

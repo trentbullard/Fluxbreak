@@ -1,4 +1,4 @@
-[gd_scene load_steps=27 format=3 uid="uid://bsm2da0co8h01"]
+[gd_scene load_steps=19 format=3 uid="uid://bsm2da0co8h01"]
 
 [ext_resource type="Script" uid="uid://ijoiya8g5w2t" path="res://scripts/ship/ship.gd" id="1_dkinh"]
 [ext_resource type="PackedScene" uid="uid://yo2mi8h7ihfj" path="res://scenes/explosion.tscn" id="2_0s5ox"]
@@ -6,7 +6,6 @@
 [ext_resource type="Script" uid="uid://bg8wrq5keroaf" path="res://scripts/ship/camera_rig.gd" id="2_c54or"]
 [ext_resource type="Script" uid="uid://b6l13a7bry0bf" path="res://scripts/ship/visual_root.gd" id="2_dh1m8"]
 [ext_resource type="Script" uid="uid://b8t0af6cqqigx" path="res://scripts/input/mouse_flight_controller.gd" id="2_u5c2e"]
-[ext_resource type="PackedScene" uid="uid://bmt72uludsmi4" path="res://assets/meshes/fighter_mk1.glb" id="5_wkb1m"]
 [ext_resource type="Script" uid="uid://cu02qkegoh0bh" path="res://scripts/ship/turret_controller.gd" id="6_37jfo"]
 [ext_resource type="Script" uid="uid://b4ndbh6vmj638" path="res://scripts/input/controller_flight_controller.gd" id="6_r75st"]
 [ext_resource type="Script" uid="uid://bjdmr046qcn4y" path="res://systems/stats/stat_aggregator.gd" id="8_8ks32"]
@@ -20,53 +19,6 @@
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_2l2hl"]
 size = Vector3(1.5, 0.5, 4)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_roibb"]
-transparency = 1
-blend_mode = 3
-depth_draw_mode = 2
-albedo_color = Color(0, 0.78214186, 1, 0.010000001)
-metallic_specular = 0.0
-roughness = 0.0
-emission_enabled = true
-emission = Color(1, 1, 1, 1)
-rim_enabled = true
-rim_tint = 1.0
-
-[sub_resource type="SphereMesh" id="SphereMesh_wkb1m"]
-material = SubResource("StandardMaterial3D_roibb")
-radius = 7.0
-height = 16.0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_r75st"]
-albedo_color = Color(0, 0, 0, 1)
-emission_enabled = true
-emission = Color(0, 1, 1, 1)
-emission_energy_multiplier = 0.1
-
-[sub_resource type="CylinderMesh" id="CylinderMesh_r75st"]
-material = SubResource("StandardMaterial3D_r75st")
-top_radius = 0.3
-bottom_radius = 0.3
-height = 0.1
-
-[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_xfxds"]
-emission_shape_scale = Vector3(0.2, 0.2, 0.1)
-emission_shape = 3
-emission_box_extents = Vector3(1, 1, 1)
-direction = Vector3(0, 0, 1)
-initial_velocity_min = 3.0
-initial_velocity_max = 6.0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_q6f52"]
-albedo_color = Color(1, 0.40392157, 0, 1)
-emission_enabled = true
-emission = Color(0.40224198, 0.6187108, 0.99999744, 1)
-emission_energy_multiplier = 1.5
-
-[sub_resource type="BoxMesh" id="BoxMesh_hj22y"]
-material = SubResource("StandardMaterial3D_q6f52")
-size = Vector3(0.1, 0.1, 0.2)
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_iyjb8"]
 radius = 200.0
@@ -87,71 +39,6 @@ debug_fill = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.465335)
 script = ExtResource("2_dh1m8")
 ship = NodePath("..")
-
-[node name="fighter_mk1" parent="VisualRoot" instance=ExtResource("5_wkb1m")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.465335)
-
-[node name="Anchors" type="Node3D" parent="VisualRoot"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.465335)
-
-[node name="TopMiddle" type="Marker3D" parent="VisualRoot/Anchors"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.54, 3.9)
-
-[node name="TopL" type="Marker3D" parent="VisualRoot/Anchors"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.90000004, 0.3, 3.8000002)
-
-[node name="TopR" type="Marker3D" parent="VisualRoot/Anchors"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, 0.3, 3.8)
-
-[node name="WingLT" type="Marker3D" parent="VisualRoot/Anchors"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.1000001, -0.1, 3.3)
-
-[node name="WingRT" type="Marker3D" parent="VisualRoot/Anchors"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.1, -0.1, 3.3)
-
-[node name="WingLB" type="Marker3D" parent="VisualRoot/Anchors"]
-transform = Transform3D(-1, -8.742278e-08, 0, 8.742278e-08, -1, 0, 0, 0, 1, -2.1, -0.32, 3.3)
-
-[node name="WingRB" type="Marker3D" parent="VisualRoot/Anchors"]
-transform = Transform3D(-1, -8.742278e-08, 0, 8.742278e-08, -1, 0, 0, 0, 1, 2.1, -0.32, 3.3)
-
-[node name="BottomMiddle" type="Marker3D" parent="VisualRoot/Anchors"]
-transform = Transform3D(-1, -8.742278e-08, 0, 8.742278e-08, -1, 0, 0, 0, 1, 0, -0.7, 1.8)
-
-[node name="BottomL" type="Marker3D" parent="VisualRoot/Anchors"]
-transform = Transform3D(-1, -8.742278e-08, 0, 8.742278e-08, -1, 0, 0, 0, 1, -0.466, -0.7, 1.8)
-
-[node name="BottomR" type="Marker3D" parent="VisualRoot/Anchors"]
-transform = Transform3D(-1, -8.742278e-08, 0, 8.742278e-08, -1, 0, 0, 0, 1, 0.466, -0.7, 1.8)
-
-[node name="StowParking" type="Marker3D" parent="VisualRoot/Anchors"]
-
-[node name="Shield" type="MeshInstance3D" parent="VisualRoot"]
-transform = Transform3D(1, 0, 0, 0, -4.3711385e-08, 0.99999994, 0, -0.99999994, -4.3711385e-08, 0, 0, 0.9)
-layers = 16
-mesh = SubResource("SphereMesh_wkb1m")
-skeleton = NodePath("../..")
-
-[node name="Thruster" type="MeshInstance3D" parent="VisualRoot"]
-transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0.60303926, -0.14565043, 6.1494675)
-mesh = SubResource("CylinderMesh_r75st")
-
-[node name="Thruster2" type="MeshInstance3D" parent="VisualRoot"]
-transform = Transform3D(1, 0, 0, 0, 1.3113416e-07, -1, 0, 1, 1.3113416e-07, -0.6016381, -0.14567982, 6.1499267)
-mesh = SubResource("CylinderMesh_r75st")
-skeleton = NodePath("../Thruster")
-
-[node name="ThrusterParticles1" type="GPUParticles3D" parent="VisualRoot"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6, -0.1, 6.465335)
-lifetime = 0.3
-process_material = SubResource("ParticleProcessMaterial_xfxds")
-draw_pass_1 = SubResource("BoxMesh_hj22y")
-
-[node name="ThrusterParticles2" type="GPUParticles3D" parent="VisualRoot"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6, -0.1, 6.465335)
-lifetime = 0.3
-process_material = SubResource("ParticleProcessMaterial_xfxds")
-draw_pass_1 = SubResource("BoxMesh_hj22y")
 
 [node name="ControllerFlightController" type="Node" parent="."]
 script = ExtResource("6_r75st")
@@ -182,7 +69,6 @@ shape = SubResource("SphereShape3D_iyjb8")
 script = ExtResource("12_8ks32")
 assembly_scene = ExtResource("10_0ipbl")
 policy = ExtResource("11_8ks32")
-anchors_root_path = NodePath("../../VisualRoot/Anchors")
 
 [node name="CockpitSocket" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.6)
@@ -233,5 +119,3 @@ volume_db = -4.0
 stream = ExtResource("16_m5j5p")
 attenuation_model = 3
 volume_db = -4.0
-
-[editable path="VisualRoot/fighter_mk1"]

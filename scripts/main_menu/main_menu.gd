@@ -2,6 +2,7 @@
 extends Control
 
 signal practice_requested
+signal selection_changed
 
 @export var pilot_roster: PilotRoster
 @export var default_pilot_index: int = 0
@@ -122,6 +123,7 @@ func _apply_current_pilot_selection() -> void:
 	if pilot_picker.get_selected() != idx:
 		pilot_picker.select(idx)
 	GameFlow.set_selected_pilot(_available_pilots[idx])
+	selection_changed.emit()
 
 func _resolve_initial_selection(unlocked_indices: Array[int]) -> int:
 	if GameFlow.selected_pilot != null:
