@@ -59,7 +59,6 @@ script = ExtResource("1")
 id = &"heavy_bruiser"
 display_name = "Heavy Bruiser"
 loadout = SubResource("Resource_hwqxc")
-starting_weapons = 2
 visuals = SubResource("Resource_4tb3i")
 explosion_scene = ExtResource("3")
 max_hull = 140.0

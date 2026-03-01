@@ -3,7 +3,6 @@ extends RigidBody3D
 class_name Ship
 
 @export var loadout: ShipLoadoutDef
-@export_range(0, 16, 1) var starting_weapons: int = 1
 @export var ship_override: ShipDef
 @export var pilot_override: PilotDef
 
@@ -116,7 +115,6 @@ var _pilot_perception: float = 5.0
 var _pilot_charisma: float = 5.0
 var _pilot_ingenuity: float = 5.0
 var _regen_timer: Timer
-var _stack: Array[WeaponDef] = []
 var _nanobots: int = 0
 var _hull_repair_cooldown_remaining: float = 0.0
 var shield_mesh: MeshInstance3D
@@ -163,7 +161,7 @@ func _ready() -> void:
 
 	# --- weapon manager ---
 	if hardpoint_manager != null and hardpoint_manager.get_weapon_count() <= 0:
-		hardpoint_manager.apply_loadout(loadout, starting_weapons)
+		hardpoint_manager.apply_loadout(loadout)
 
 func reconfigure_from_selected_pilot(reset_current_health: bool = true) -> void:
 	_apply_selected_defs()
@@ -174,7 +172,7 @@ func reconfigure_from_selected_pilot(reset_current_health: bool = true) -> void:
 	_update_shield_mesh_visibility()
 	update_alarms()
 	if hardpoint_manager != null:
-		hardpoint_manager.apply_loadout(loadout, starting_weapons)
+		hardpoint_manager.apply_loadout(loadout)
 
 func _apply_selected_defs() -> void:
 	var selected_pilot: PilotDef = _resolve_selected_pilot()
@@ -209,7 +207,6 @@ func _apply_pilot_def(def: PilotDef) -> void:
 
 	if def.loadout_override != null:
 		loadout = def.loadout_override
-	starting_weapons = max(0, def.get_effective_starting_weapons(starting_weapons))
 
 	if hardpoint_manager != null and def.mount_layout_policy_override != null:
 		hardpoint_manager.policy = def.mount_layout_policy_override
@@ -279,7 +276,6 @@ func _apply_ship_def(def: ShipDef) -> void:
 
 	if def.loadout != null:
 		loadout = def.loadout
-	starting_weapons = max(def.starting_weapons, 0)
 	if def.explosion_scene != null:
 		explosion_scene = def.explosion_scene
 

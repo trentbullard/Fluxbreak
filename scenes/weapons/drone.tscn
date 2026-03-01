@@ -1,0 +1,29 @@
+[gd_scene load_steps=4 format=3 uid="uid://bqn3c7xjednmf"]
+
+[ext_resource type="Script" uid="uid://dlguhvjm4ucax" path="res://scripts/weapons/drone_controller.gd" id="1_t8nxy"]
+[ext_resource type="PackedScene" uid="uid://lqb4ko30ihct" path="res://assets/meshes/drone.glb" id="2_xw7ck"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_t8nxy"]
+
+[node name="Drone" type="Node3D"]
+script = ExtResource("1_t8nxy")
+
+[node name="DroneMesh" parent="." instance=ExtResource("2_xw7ck")]
+
+[node name="WeaponRMuzzle" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.087, 0.033, -0.1)
+
+[node name="WeaponLMuzzle" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.087, 0.033, -0.1)
+
+[node name="AttackRange" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="AttackRange"]
+shape = SubResource("SphereShape3D_t8nxy")
+debug_fill = false
+
+[node name="RadioRange" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RadioRange"]
+shape = SubResource("SphereShape3D_t8nxy")
+debug_fill = false

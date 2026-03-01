@@ -34,11 +34,10 @@ func get_weapon_count() -> int:
 func get_turret_assemblies() -> Array[TurretAssembly]:
 	return _pool.duplicate()
 
-func apply_loadout(loadout: ShipLoadoutDef, take: int) -> void:
+func apply_loadout(loadout: ShipLoadoutDef) -> void:
 	_mount_stack.clear()
 	if loadout != null and not loadout.mounts.is_empty():
-		var want: int = clamp(take, 0, loadout.mounts.size())
-		for i in range(want):
+		for i in range(loadout.mounts.size()):
 			var ml: MountLoadoutDef = loadout.mounts[i]
 			var copy: MountLoadoutDef = _clone_mount_loadout(ml)
 			if copy != null and copy.weapon != null:

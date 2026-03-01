@@ -19,7 +19,6 @@ enum UnlockRequirementMode {
 
 @export var ship: ShipDef
 @export var loadout_override: ShipLoadoutDef
-@export_range(-1, 16, 1) var starting_weapons_override: int = -1
 @export var mount_layout_policy_override: MountLayoutPolicy
 
 # Forward-load tolerance (pilot physiology / training).
@@ -54,11 +53,6 @@ func get_display_name_or_default() -> String:
 	if from_id != "":
 		return from_id.capitalize()
 	return "Pilot"
-
-func get_effective_starting_weapons(base_value: int) -> int:
-	if starting_weapons_override >= 0:
-		return starting_weapons_override
-	return base_value
 
 func is_selectable() -> bool:
 	return enabled and ship != null
