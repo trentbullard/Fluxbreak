@@ -11,6 +11,7 @@ signal selection_changed
 @onready var btn_settings: Button = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/SettingsContainer/Settings
 @onready var btn_exit: Button = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/ExitContainer/Exit
 @onready var pilot_picker: OptionButton = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PilotContainer/Row/PilotPicker
+@onready var version_label: Label = $VersionContainer/VersionLabel
 @onready var music: AudioStreamPlayer = $MenuMusic
 var _available_pilots: Array[PilotDef] = []
 var _music_tween: Tween
@@ -22,10 +23,16 @@ func _ready() -> void:
 	btn_settings.pressed.connect(_on_settings_pressed)
 	btn_exit.pressed.connect(_on_exit_pressed)
 	pilot_picker.item_selected.connect(_on_pilot_selected)
+	_set_version_label()
 	_set_focus_modes()
 	_refresh_pilot_picker()
 	if visible and _has_connected_controller():
 		call_deferred("_focus_default_control")
+
+func _set_version_label() -> void:
+	var configured_version: String = str(ProjectSettings.get_setting("application/config/version", ""))
+	if not configured_version.is_empty():
+		version_label.text = configured_version
 
 func _fade_in_music() -> void:
 	if _music_tween != null:

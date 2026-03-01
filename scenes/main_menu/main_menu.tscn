@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://drrnshnyy4682"]
+[gd_scene load_steps=20 format=3 uid="uid://drrnshnyy4682"]
 
 [ext_resource type="Script" uid="uid://ctypdxlxrxqme" path="res://scripts/main_menu/main_menu.gd" id="1_0ebjn"]
 [ext_resource type="Script" uid="uid://bp86upa6vqbpe" path="res://scripts/main_menu/high_score_container.gd" id="3_ob46e"]
@@ -53,6 +53,12 @@ outline_color = Color(0, 0, 0, 1)
 [sub_resource type="LabelSettings" id="LabelSettings_4xg86"]
 font = ExtResource("5_3ovsr")
 font_size = 12
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_5seab"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_x2yjq"]
+line_spacing = 0.0
+font = ExtResource("5_3ovsr")
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -226,3 +232,20 @@ label_settings = SubResource("LabelSettings_4xg86")
 
 [node name="MenuMusic" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("7_5seab")
+
+[node name="VersionContainer" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 5.0
+offset_top = -23.0
+offset_right = 45.0
+offset_bottom = -2.0
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxEmpty_5seab")
+
+[node name="VersionLabel" type="Label" parent="VersionContainer"]
+layout_mode = 2
+label_settings = SubResource("LabelSettings_x2yjq")
+vertical_alignment = 2
