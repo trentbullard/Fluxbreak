@@ -51,7 +51,16 @@ func physics_process(delta: float) -> void:
 	_sync_slot_count()
 	_cooldown = max(0.0, _cooldown - delta)
 
-	var candidates: Array[Node3D] = _collect_enemy_candidates(controller.get_live_targets())
+	var base_range: float = max(0.0, turret.get_base_range())
+	var max_assign: float = max(base_range, turret.get_max_assign_range())
+	var range_bonus: float = max(0.0, max_assign - base_range)
+	var candidates: Array[Node3D] = controller.get_prioritized_live_targets(
+		turret,
+		base_range,
+		range_bonus,
+		_get_controller_priority_mode(),
+		false
+	)
 	_tick_slots(delta, candidates)
 	_try_launch(candidates)
 	_update_visual_charge()
@@ -108,14 +117,15 @@ func _tick_slots(delta: float, candidates: Array[Node3D]) -> void:
 				slot.return_remaining = 0.0
 				slot.set_target(null)
 			DRONE_STATE_ACTIVE:
-				slot.charge_remaining = max(0.0, slot.charge_remaining - delta)
+				var discharge_rate: float = _get_discharge_rate_for_target(slot.get_target())
+				slot.charge_remaining = max(0.0, slot.charge_remaining - delta * discharge_rate)
 				_sync_slot_drone_timers(slot)
 				if slot.charge_remaining <= 0.0:
 					_begin_return(slot)
 					continue
 				var current_target: Node3D = slot.get_target()
 				if not _is_target_valid_candidate(current_target, candidates):
-					var next_target: Node3D = _select_target(candidates)
+					var next_target: Node3D = _pick_first_candidate(candidates)
 					slot.set_target(next_target)
 					_command_drone_set_target(slot, next_target)
 			DRONE_STATE_RETURNING:
@@ -240,7 +250,7 @@ func _try_launch(candidates: Array[Node3D]) -> void:
 	var slot: DroneSlot = _first_docked_slot()
 	if slot == null:
 		return
-	var target: Node3D = _select_target(candidates)
+	var target: Node3D = _pick_first_candidate(candidates)
 	if target == null:
 		return
 
@@ -267,26 +277,6 @@ func _update_visual_charge() -> void:
 	var charge_t: float = 1.0 - clamp(_cooldown / interval, 0.0, 1.0)
 	turret.visual_controller.set_charge(charge_t)
 
-func _collect_enemy_candidates(detected: Array[Node3D]) -> Array[Node3D]:
-	var out: Array[Node3D] = []
-	for target in detected:
-		if target == null or not is_instance_valid(target):
-			continue
-		if _is_enemy_target(target):
-			out.append(target)
-	return out
-
-func _is_enemy_target(target: Node3D) -> bool:
-	if target.has_meta("kind"):
-		var kind: String = String(target.get_meta("kind"))
-		if kind == "enemy":
-			return true
-	if target.is_in_group("enemy"):
-		return true
-	if target.has_method("get_evasion") and target.has_method("apply_damage"):
-		return true
-	return false
-
 func _is_target_valid_candidate(target: Node3D, candidates: Array[Node3D]) -> bool:
 	if target == null:
 		return false
@@ -295,38 +285,10 @@ func _is_target_valid_candidate(target: Node3D, candidates: Array[Node3D]) -> bo
 			return true
 	return false
 
-func _select_target(candidates: Array[Node3D]) -> Node3D:
-	if candidates.is_empty() or turret == null:
+func _pick_first_candidate(candidates: Array[Node3D]) -> Node3D:
+	if candidates.is_empty():
 		return null
-
-	var best: Node3D = null
-	var best_score: float = INF
-	var best_dist_sq: float = INF
-	for candidate in candidates:
-		var score: float = _estimate_total_health(candidate)
-		var dist_sq: float = turret.global_position.distance_squared_to(candidate.global_position)
-		var is_better: bool = false
-		if score < best_score:
-			is_better = true
-		elif is_equal_approx(score, best_score) and dist_sq < best_dist_sq:
-			is_better = true
-		if is_better:
-			best = candidate
-			best_score = score
-			best_dist_sq = dist_sq
-	return best
-
-func _estimate_total_health(target: Node3D) -> float:
-	var hull: float = _read_float_property(target, "hull")
-	var shield: float = _read_float_property(target, "shield")
-	return max(0.0, hull) + max(0.0, shield)
-
-func _read_float_property(target: Object, property_name: String) -> float:
-	var raw: Variant = target.get(property_name)
-	var t: int = typeof(raw)
-	if t == TYPE_FLOAT or t == TYPE_INT:
-		return float(raw)
-	return 0.0
+	return candidates[0]
 
 func _first_docked_slot() -> DroneSlot:
 	for slot in _drone_slots:
@@ -347,6 +309,36 @@ func _get_launch_interval() -> float:
 	if _drone_bay_weapon == null:
 		return 0.25
 	return max(0.01, _drone_bay_weapon.launch_interval)
+
+func _get_controller_priority_mode() -> int:
+	if _drone_bay_weapon == null:
+		return TurretController.TargetPriorityMode.CLOSEST
+	match _drone_bay_weapon.target_priority:
+		DroneBayWeaponDef.TargetPriority.WEAKEST_TOTAL_HP:
+			return TurretController.TargetPriorityMode.WEAKEST_TOTAL_HP
+		_:
+			return TurretController.TargetPriorityMode.CLOSEST
+
+func _get_discharge_rate_for_target(target: Node3D) -> float:
+	if turret == null:
+		return 1.0
+	if target == null:
+		return 1.0
+	if _drone_bay_weapon == null:
+		return 1.0
+
+	var base_range: float = max(1.0, turret.get_base_range())
+	var max_range: float = max(base_range, turret.get_max_assign_range())
+	var base_sq: float = base_range * base_range
+	var max_sq: float = max_range * max_range
+	var dist_sq: float = turret.global_position.distance_squared_to(target.global_position)
+	if dist_sq <= base_sq:
+		return 1.0
+	if max_range <= base_range:
+		return 1.0
+	if dist_sq <= max_sq:
+		return max(1.0, _drone_bay_weapon.extended_range_discharge_mult)
+	return 1.0
 
 func _sync_slot_to_drone(slot: DroneSlot) -> void:
 	if slot == null or not _is_drone_valid(slot.drone):

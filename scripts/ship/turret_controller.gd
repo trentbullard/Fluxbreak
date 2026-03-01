@@ -10,6 +10,7 @@ class_name TurretController
 # How we distribute fire:
 enum AssignMode { FOCUS_ONE, FOCUS_PER_TEAM, FOCUS_PER_TURRET }
 @export var assign_mode: AssignMode = AssignMode.FOCUS_ONE
+enum TargetPriorityMode { CLOSEST, WEAKEST_TOTAL_HP }
 
 # Optional: how often to recompute assignments (sec). 0 = every physics frame.
 @export var assign_interval: float = 0.10
@@ -72,16 +73,86 @@ func get_assigned_target(turret: PlayerTurret, team_id: int) -> Node3D:
 		return t2
 	return null
 
-func get_live_targets() -> Array[Node3D]:
+func get_live_targets(origin: Node3D = null, base_range: float = -1.0, range_bonus: float = 0.0, enemy_only: bool = false) -> Array[Node3D]:
 	var live: Array[Node3D] = []
+	var query_origin: Node3D = origin if origin != null else self
+	var use_range_filter: bool = base_range > 0.0
+	var eff_base: float = max(base_range, 0.0)
+	var eff_bonus: float = max(range_bonus, 0.0)
+	var eff_max: float = eff_base + eff_bonus
+	if use_range_filter and eff_max < eff_base:
+		eff_max = eff_base
+	var eff_max_sq: float = eff_max * eff_max
+
 	for i in range(_targets.size() - 1, -1, -1):
 		var wr: WeakRef = _targets[i] as WeakRef
 		var target: Node3D = wr.get_ref() as Node3D if wr != null else null
 		if target == null:
 			_targets.remove_at(i)
 			continue
+		if enemy_only and not _is_enemy_target(target):
+			continue
+
+		if use_range_filter:
+			var d_sq: float = query_origin.global_position.distance_squared_to(target.global_position)
+			if d_sq > eff_max_sq:
+				continue
 		live.append(target)
+
+	if query_origin != null:
+		live.sort_custom(func(a: Node3D, b: Node3D) -> bool:
+			return query_origin.global_position.distance_squared_to(a.global_position) < query_origin.global_position.distance_squared_to(b.global_position)
+		)
+
 	return live
+
+func get_prioritized_live_targets(origin: Node3D = null, base_range: float = -1.0, range_bonus: float = 0.0, priority_mode: int = TargetPriorityMode.CLOSEST, enemy_only: bool = false) -> Array[Node3D]:
+	var live: Array[Node3D] = get_live_targets(origin, base_range, range_bonus, enemy_only)
+	if live.is_empty():
+		return live
+
+	var query_origin: Node3D = origin if origin != null else self
+	match priority_mode:
+		TargetPriorityMode.WEAKEST_TOTAL_HP:
+			live.sort_custom(func(a: Node3D, b: Node3D) -> bool:
+				var ha: float = _estimate_total_health(a)
+				var hb: float = _estimate_total_health(b)
+				if not is_equal_approx(ha, hb):
+					return ha < hb
+				return query_origin.global_position.distance_squared_to(a.global_position) < query_origin.global_position.distance_squared_to(b.global_position)
+			)
+		_:
+			# CLOSEST is already handled by get_live_targets sorting when origin is set.
+			pass
+
+	return live
+
+func _is_enemy_target(target: Node3D) -> bool:
+	if target == null:
+		return false
+	if target.has_meta("kind"):
+		var kind: String = String(target.get_meta("kind"))
+		if kind == "enemy":
+			return true
+	if target.is_in_group("enemy"):
+		return true
+	if target.has_method("get_evasion") and target.has_method("apply_damage"):
+		return true
+	return false
+
+func _estimate_total_health(target: Object) -> float:
+	var hull: float = _read_float_property(target, "hull")
+	var shield: float = _read_float_property(target, "shield")
+	return max(0.0, hull) + max(0.0, shield)
+
+func _read_float_property(target: Object, property_name: String) -> float:
+	if target == null:
+		return 0.0
+	var raw: Variant = target.get(property_name)
+	var t: int = typeof(raw)
+	if t == TYPE_FLOAT or t == TYPE_INT:
+		return float(raw)
+	return 0.0
 
 func _on_body_entered(body: Node) -> void:
 	if not (body is Node3D):

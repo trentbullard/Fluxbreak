@@ -14,4 +14,5 @@ enum TargetPriority {
 @export var drone_charge_time: float = 8.0
 @export var drone_redock_time: float = 1.5
 @export var launch_interval: float = 0.25
+@export var extended_range_discharge_mult: float = 1.15
 @export var target_priority: TargetPriority = TargetPriority.WEAKEST_TOTAL_HP
