@@ -41,7 +41,6 @@ $installerScript = Join-Path $projectRoot "installer\windows\Voidbreaker.iss"
 New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
 
 $exePath = Join-Path $outputDir "Voidbreaker.exe"
-$pckPath = Join-Path $outputDir "Voidbreaker.pck"
 $presetName = "Windows Desktop"
 $exportFlag = if ($BuildType -eq "debug") { "--export-debug" } else { "--export-release" }
 
@@ -78,13 +77,8 @@ if (-not (Test-Path $exePath)) {
     throw "Missing expected export output: $exePath"
 }
 
-if (-not (Test-Path $pckPath)) {
-    throw "Missing expected export output: $pckPath"
-}
-
 Write-Host "Export complete:"
 Write-Host " - $exePath"
-Write-Host " - $pckPath"
 
 if (-not $BuildInstaller) {
     return
