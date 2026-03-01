@@ -20,7 +20,7 @@ class_name PlayerTurret
 @export var max_range_override: float = 0.0
 
 var _weapon: WeaponDef = null
-var _cooldown := 0.0
+var _runtime: WeaponRuntime = null
 var _controller: TurretController = null
 var _detector: Area3D = null
 
@@ -45,8 +45,6 @@ var eff_projectile_speed: float = 0.0
 var eff_projectile_life: float = 0.0
 var eff_projectile_spread_deg: float = 0.0
 
-enum ShotResult { MISS, GRAZE, HIT, CRIT }
-
 signal weapon_changed(new_weapon: WeaponDef)
 
 func _ready() -> void:
@@ -56,6 +54,9 @@ func _enter_tree() -> void:
 	_bind_controller()
 
 func _exit_tree() -> void:
+	if _runtime != null:
+		_runtime.on_unequip()
+		_runtime = null
 	if _controller != null:
 		_controller.unregister_turret(self, team_id)
 
@@ -66,6 +67,10 @@ func apply_weapon(w: WeaponDef, team_id_val: int) -> void:
 	if _controller != null and previous_team != team_id_val:
 		_controller.unregister_turret(self, previous_team)
 
+	var next_runtime: WeaponRuntime = WeaponRuntimeFactory.create_for(self, w)
+	if _runtime != null:
+		_runtime.on_unequip()
+
 	_weapon = w
 	team_id = team_id_val
 
@@ -73,18 +78,22 @@ func apply_weapon(w: WeaponDef, team_id_val: int) -> void:
 		_controller.register_turret(self, team_id)
 
 	weapon_changed.emit(_weapon)
-	if shot_sound != null and w != null:
-		shot_sound.stream = w.shot_sound
+	if shot_sound != null:
+		shot_sound.stream = w.shot_sound if w != null else null
 		shot_sound.max_polyphony = max_shot_sounds
 	_refresh_effective_weapon_stats()
+	_runtime = next_runtime
+	if _runtime != null:
+		_runtime.on_equip()
 
 func get_weapon() -> WeaponDef:
 	return _weapon
 
 func swap_weapon(new_weapon: WeaponDef, keep_cooldown: bool = true, team_id_val: int = team_id) -> void:
-	var prev_cd: float = _cooldown
+	var prev_cd: float = _runtime.get_cooldown() if _runtime != null else 0.0
 	apply_weapon(new_weapon, team_id_val)
-	_cooldown = prev_cd if keep_cooldown else 0.0
+	if _runtime != null:
+		_runtime.set_cooldown(prev_cd if keep_cooldown else 0.0)
 
 func set_visual_controller(vc: LaserTurretVisualController) -> void:
 	visual_controller = vc
@@ -105,100 +114,15 @@ func get_max_assign_range() -> float:
 		return max_range_override
 	return base + range_bonus + eff_range_bonus_add
 
+func get_controller() -> TurretController:
+	return _controller
+
 # --- firing loop ---
 
 func _physics_process(delta: float) -> void:
-	if _weapon == null or _controller == null:
+	if _runtime == null:
 		return
-
-	_cooldown -= delta
-	if visual_controller != null and eff_fire_rate > 0.0:
-		var t_charge: float = 1.0 - clamp(_cooldown / eff_fire_rate, 0.0, 1.0)
-		visual_controller.set_charge(t_charge)
-	
-	if _cooldown > 0.0:
-		return
-
-	var tgt: Node3D = _controller.get_assigned_target(self, team_id)
-	if tgt == null:
-		return
-	
-	_fire_at_with_roll(tgt)
-	_cooldown = max(0.01, eff_fire_rate)
-
-func _effective_accuracy_vs(target: Node3D) -> float:
-	if _weapon == null:
-		return 0.0
-
-	var ev: float = 0.0
-	if target.has_method("get_evasion"):
-		ev = float(target.call("get_evasion"))
-
-	var dist: float = global_position.distance_to(target.global_position)
-	var base_r: float = max(1.0, eff_base_range)
-	var range_factor: float = clamp(dist / base_r, 0.0, 1.0)
-	var acc_base: float = max(eff_base_accuracy + systems_bonus + eff_systems_bonus_add, 0.0)
-	var acc_range_scaled: float = acc_base * lerp(1.0, 1.0 - eff_range_falloff, range_factor)
-	return clamp(acc_range_scaled - ev, 0.0, 1.0)
-
-func _fire_at_with_roll(target: Node3D) -> void:
-	if _weapon == null or _weapon.projectile_scene == null or not target.visible:
-		return
-
-	# Aim with optional spread
-	var dir: Vector3 = (target.global_position - muzzle.global_position).normalized()
-	if eff_projectile_spread_deg > 0.0:
-		dir = _apply_spread(dir, eff_projectile_spread_deg)
-	var aim_basis: Basis = Basis.looking_at(dir, Vector3.UP)
-	
-	var hit_chance: float = _effective_accuracy_vs(target)
-	var outcome: int = _resolve_shot(hit_chance)
-	var dmg_min: float = minf(eff_damage_min, eff_damage_max)
-	var dmg_max: float = maxf(eff_damage_min, eff_damage_max)
-	var dmg: float = randf_range(dmg_min, dmg_max)
-
-	var p: Projectile = _weapon.projectile_scene.instantiate() as Projectile
-	if p == null:
-		return
-
-	p.global_transform = Transform3D(aim_basis, muzzle.global_position)
-	if eff_projectile_speed > 0.0:
-		p.speed = eff_projectile_speed
-	if eff_projectile_life > 0.0:
-		p.max_lifetime = eff_projectile_life
-	p.configure_shot(self, target, outcome, dmg, eff_graze_mult, eff_crit_mult, _weapon.status_effects, true)
-	get_tree().current_scene.add_child(p)
-
-	if shot_sound != null:
-		shot_sound.pitch_scale = randf_range(0.80, 1.20)
-		shot_sound.play()
-	
-	if visual_controller != null:
-		visual_controller.reset_after_shot()
-
-func _resolve_shot(hit_chance: float) -> int:
-	var hc: float = clamp(hit_chance, 0.0, 1.0)
-	var cc: float = clamp(eff_crit_chance, 0.0, 1.0)
-	var gh: float = clamp(eff_graze_on_hit, 0.0, 1.0)
-	var gm: float = clamp(eff_graze_on_miss, 0.0, 1.0)
-
-	# If it hits at all…
-	var r1: float = randf()
-	if r1 <= hc:
-		# crit → graze-on-hit → normal
-		var r2: float = randf()
-		if r2 <= cc:
-			return ShotResult.CRIT
-		elif r2 <= cc + max(0.0, 1.0 - cc) * gh:
-			return ShotResult.GRAZE
-		else:
-			return ShotResult.HIT
-	else:
-		# miss → maybe graze-on-miss
-		var r3: float = randf()
-		if r3 <= gm:
-			return ShotResult.GRAZE
-		return ShotResult.MISS
+	_runtime.physics_process(delta)
 
 # --- private ---
 
@@ -298,18 +222,3 @@ func _refresh_effective_weapon_stats() -> void:
 	eff_projectile_speed = aggr.compute(Stat.PROJECTILE_SPEED, 0.0)
 	eff_projectile_life = aggr.compute(Stat.PROJECTILE_LIFE, 0.0)
 	eff_projectile_spread_deg = aggr.compute(Stat.PROJECTILE_SPREAD, 0.0)
-
-func _apply_spread(dir: Vector3, spread_deg: float) -> Vector3:
-	var angle_rad: float = deg_to_rad(spread_deg)
-	var up_vec: Vector3 = Vector3.UP
-	if abs(dir.dot(Vector3.UP)) > 0.99:
-		up_vec = Vector3.RIGHT
-	var tangent: Vector3 = dir.cross(up_vec).normalized()
-	var bitangent: Vector3 = dir.cross(tangent).normalized()
-	var u: float = randf()
-	var v: float = randf()
-	var theta: float = 2.0 * PI * u
-	var r: float = angle_rad * sqrt(v)
-	var offset: Vector3 = (tangent * cos(theta) + bitangent * sin(theta)) * tan(r)
-	var ndir: Vector3 = (dir + offset).normalized()
-	return ndir
