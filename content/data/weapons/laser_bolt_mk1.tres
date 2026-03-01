@@ -9,7 +9,7 @@
 [resource]
 script = ExtResource("1_tw0gp")
 weapon_id = "laser_mk1"
-display_name = "Laser Bolt"
+display_name = "Laser Bolt Mk I"
 fire_rate = 1.0
 base_range = 400.0
 accuracy_range_falloff = 0.15

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="WeaponDef" load_steps=3 format=3 uid="uid://b7qjg75iq2hov"]
+
+[ext_resource type="Script" uid="uid://dby70n1hr4uk3" path="res://content/defs/weapon_def.gd" id="1_xawy5"]
+[ext_resource type="Script" uid="uid://bc5o0q4rptsnq" path="res://content/defs/status_effect_def.gd" id="2_w4kci"]
+
+[resource]
+script = ExtResource("1_xawy5")
+weapon_id = "drone_bay_mk1"
+display_name = "Drone Bay Mk I"
+metadata/_custom_type_script = "uid://dby70n1hr4uk3"
