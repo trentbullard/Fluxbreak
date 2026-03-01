@@ -72,6 +72,17 @@ func get_assigned_target(turret: PlayerTurret, team_id: int) -> Node3D:
 		return t2
 	return null
 
+func get_live_targets() -> Array[Node3D]:
+	var live: Array[Node3D] = []
+	for i in range(_targets.size() - 1, -1, -1):
+		var wr: WeakRef = _targets[i] as WeakRef
+		var target: Node3D = wr.get_ref() as Node3D if wr != null else null
+		if target == null:
+			_targets.remove_at(i)
+			continue
+		live.append(target)
+	return live
+
 func _on_body_entered(body: Node) -> void:
 	if not (body is Node3D):
 		return
