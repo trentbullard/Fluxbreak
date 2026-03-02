@@ -140,7 +140,6 @@ func _move_toward_world_point(world_point: Vector3, max_speed: float, accel: flo
 
 	_velocity = _velocity.move_toward(desired_vel, accel * delta)
 	global_position += _velocity * delta
-	_update_trail()
 
 func _report_state(next_state: int) -> void:
 	state_reported.emit(origin_bay_id, slot_index, next_state)
