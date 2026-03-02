@@ -10,7 +10,8 @@ class_name ShipHud
 
 var _ship: Ship
 var _accum := 0.0
-var _last_weapon_signature: String = ""
+var _last_weapon_layout_signature: String = ""
+var _weapon_chip_nodes: Array[Dictionary] = []
 
 @onready var _shield_bar: ProgressBar = $ShipStatsContainer/ShieldHullContainer/Shield/Bar
 @onready var _shield_val: Label = $ShipStatsContainer/ShieldHullContainer/Shield/Value
@@ -198,32 +199,59 @@ func _refresh_weapons_ui(force: bool = false) -> void:
 	if _weapons_container == null:
 		return
 
-	var weapons: Array[WeaponDef] = []
-	if _ship != null and _ship.hardpoint_manager != null:
-		weapons = _ship.hardpoint_manager.get_weapons()
+	var entries: Array[Dictionary] = _collect_weapon_entries()
+	var layout_signature: String = _build_weapon_layout_signature(entries)
+	if force or layout_signature != _last_weapon_layout_signature:
+		_last_weapon_layout_signature = layout_signature
+		_rebuild_weapon_chips(entries)
+	_update_weapon_chip_values(entries)
 
-	var signature: String = _build_weapon_signature(weapons)
-	if not force and signature == _last_weapon_signature:
-		return
-	_last_weapon_signature = signature
+func _collect_weapon_entries() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if _ship == null or _ship.hardpoint_manager == null:
+		return out
 
-	for c in _weapons_container.get_children():
-		c.queue_free()
+	var assemblies: Array[TurretAssembly] = _ship.hardpoint_manager.get_turret_assemblies()
+	for assembly in assemblies:
+		if assembly == null or assembly.turret == null:
+			continue
+		var turret: PlayerTurret = assembly.turret
+		var weapon: WeaponDef = turret.get_weapon()
+		if weapon == null:
+			continue
+		var runtime: WeaponRuntime = turret.get_runtime()
+		out.append({
+			"weapon": weapon,
+			"runtime": runtime,
+			"mount_index": assembly.mount_index,
+		})
+	return out
 
-	for weapon in weapons:
-		_weapons_container.add_child(_build_weapon_chip(weapon))
-
-func _build_weapon_signature(weapons: Array[WeaponDef]) -> String:
-	if weapons.is_empty():
+func _build_weapon_layout_signature(entries: Array[Dictionary]) -> String:
+	if entries.is_empty():
 		return ""
 	var parts: Array[String] = []
-	for weapon in weapons:
-		parts.append(_weapon_display_name(weapon))
+	for entry in entries:
+		var weapon: WeaponDef = entry.get("weapon", null) as WeaponDef
+		var mount_index: int = int(entry.get("mount_index", -1))
+		parts.append("%d:%s" % [mount_index, _weapon_display_name(weapon)])
 	return "|".join(parts)
 
-func _build_weapon_chip(weapon: WeaponDef) -> Control:
+func _rebuild_weapon_chips(entries: Array[Dictionary]) -> void:
+	for c in _weapons_container.get_children():
+		c.queue_free()
+	_weapon_chip_nodes.clear()
+
+	for entry in entries:
+		var chip: Dictionary = _build_weapon_chip(entry.get("weapon", null) as WeaponDef)
+		_weapon_chip_nodes.append(chip)
+		var panel: PanelContainer = chip.get("panel", null) as PanelContainer
+		if panel != null:
+			_weapons_container.add_child(panel)
+
+func _build_weapon_chip(weapon: WeaponDef) -> Dictionary:
 	var panel: PanelContainer = PanelContainer.new()
-	panel.custom_minimum_size = Vector2(110.0, 26.0)
+	panel.custom_minimum_size = Vector2(130.0, 38.0)
 
 	var bg: StyleBoxFlat = StyleBoxFlat.new()
 	bg.bg_color = Color(0.08, 0.12, 0.16, 0.72)
@@ -238,11 +266,16 @@ func _build_weapon_chip(weapon: WeaponDef) -> Control:
 	bg.corner_radius_bottom_right = 4
 	panel.add_theme_stylebox_override("panel", bg)
 
+	var root: VBoxContainer = VBoxContainer.new()
+	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	root.add_theme_constant_override("separation", 2)
+	panel.add_child(root)
+
 	var row: HBoxContainer = HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_BEGIN
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_theme_constant_override("separation", 6)
-	panel.add_child(row)
+	root.add_child(row)
 
 	var icon: ColorRect = ColorRect.new()
 	icon.custom_minimum_size = Vector2(10.0, 10.0)
@@ -255,7 +288,35 @@ func _build_weapon_chip(weapon: WeaponDef) -> Control:
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(label)
 
-	return panel
+	var charge_label: Label = Label.new()
+	charge_label.clip_text = true
+	charge_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	charge_label.modulate = Color(0.7, 0.9, 1.0, 0.95)
+	charge_label.text = ""
+	root.add_child(charge_label)
+
+	return {
+		"panel": panel,
+		"name_label": label,
+		"charge_label": charge_label,
+	}
+
+func _update_weapon_chip_values(entries: Array[Dictionary]) -> void:
+	var count: int = min(entries.size(), _weapon_chip_nodes.size())
+	for i in range(count):
+		var entry: Dictionary = entries[i]
+		var nodes: Dictionary = _weapon_chip_nodes[i]
+		var weapon: WeaponDef = entry.get("weapon", null) as WeaponDef
+		var runtime: WeaponRuntime = entry.get("runtime", null) as WeaponRuntime
+		var name_label: Label = nodes.get("name_label", null) as Label
+		var charge_label: Label = nodes.get("charge_label", null) as Label
+
+		if name_label != null:
+			name_label.text = _weapon_display_name(weapon)
+		if charge_label != null:
+			var charges_text: String = _format_drone_slot_charges(weapon, runtime)
+			charge_label.text = charges_text
+			charge_label.visible = charges_text != ""
 
 func _weapon_display_name(weapon: WeaponDef) -> String:
 	if weapon == null:
@@ -265,6 +326,23 @@ func _weapon_display_name(weapon: WeaponDef) -> String:
 	if weapon.weapon_id != "":
 		return weapon.weapon_id
 	return "Weapon"
+
+func _format_drone_slot_charges(weapon: WeaponDef, runtime: WeaponRuntime) -> String:
+	if weapon == null or runtime == null:
+		return ""
+	if not (weapon is DroneBayWeaponDef):
+		return ""
+	var drone_runtime: DroneBayWeaponRuntime = runtime as DroneBayWeaponRuntime
+	if drone_runtime == null:
+		return ""
+
+	var charges: Array[float] = drone_runtime.get_slot_charge_values()
+	if charges.is_empty():
+		return ""
+	var parts: Array[String] = []
+	for c in charges:
+		parts.append("%.1f" % c)
+	return "Charge: %s" % "/".join(parts)
 
 func _update_repair_cooldown_ui() -> void:
 	if _repair_cooldown_label == null:

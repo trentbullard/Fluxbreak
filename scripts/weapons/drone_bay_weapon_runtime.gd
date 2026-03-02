@@ -99,6 +99,14 @@ func get_active_targets() -> Array[Node3D]:
 			out.append(target)
 	return out
 
+func get_slot_charge_values() -> Array[float]:
+	var out: Array[float] = []
+	for slot in _drone_slots:
+		if slot == null:
+			continue
+		out.append(max(0.0, slot.charge_remaining))
+	return out
+
 func _sync_slot_count() -> void:
 	var desired: int = _get_desired_drone_count()
 	while _drone_slots.size() < desired:

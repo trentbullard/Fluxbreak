@@ -89,6 +89,9 @@ func apply_weapon(w: WeaponDef, team_id_val: int) -> void:
 func get_weapon() -> WeaponDef:
 	return _weapon
 
+func get_runtime() -> WeaponRuntime:
+	return _runtime
+
 func swap_weapon(new_weapon: WeaponDef, keep_cooldown: bool = true, team_id_val: int = team_id) -> void:
 	var prev_cd: float = _runtime.get_cooldown() if _runtime != null else 0.0
 	apply_weapon(new_weapon, team_id_val)
