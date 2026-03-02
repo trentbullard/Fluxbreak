@@ -258,9 +258,19 @@ func _get_drone_spawn_transform() -> Transform3D:
 func _bind_drone_to_slot(drone_controller: DroneController, slot_index: int) -> void:
 	if drone_controller == null:
 		return
-	drone_controller.configure_drone(get_instance_id(), slot_index)
+	drone_controller.configure_drone(get_instance_id(), slot_index, _resolve_swarm_anchor())
 	if not drone_controller.state_reported.is_connected(_on_drone_state_reported):
 		drone_controller.state_reported.connect(_on_drone_state_reported)
+
+func _resolve_swarm_anchor() -> Node3D:
+	if turret == null:
+		return null
+	var turret_controller: TurretController = turret.get_controller()
+	if turret_controller != null and turret_controller.get_parent() is Node3D:
+		return turret_controller.get_parent() as Node3D
+	if turret.get_parent() is Node3D:
+		return turret.get_parent() as Node3D
+	return turret
 
 func _on_drone_state_reported(origin_bay_id: int, slot_index: int, next_state: int) -> void:
 	if origin_bay_id != get_instance_id():
