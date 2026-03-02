@@ -13,6 +13,7 @@ class DroneSlot extends RefCounted:
 	var state: int = 0
 	var charge_remaining: float = 0.0
 	var max_charge: float = 0.0
+	var must_recharge_full: bool = false
 	var return_remaining: float = 0.0
 	var target_ref: WeakRef = null
 	var drone: DroneController = null
@@ -71,7 +72,7 @@ func physics_process(delta: float) -> void:
 func get_docked_drone_count() -> int:
 	var count: int = 0
 	for slot in _drone_slots:
-		if slot.state == DRONE_STATE_DOCKED:
+		if _is_slot_fully_docked(slot):
 			count += 1
 	return count
 
@@ -123,6 +124,7 @@ func _make_slot(slot_index: int) -> DroneSlot:
 	slot.slot_index = slot_index
 	slot.max_charge = _get_charge_time()
 	slot.charge_remaining = slot.max_charge
+	slot.must_recharge_full = false
 	slot.return_remaining = 0.0
 	slot.state = DRONE_STATE_DOCKED
 	slot.set_target(null)
@@ -136,6 +138,8 @@ func _reindex_slots() -> void:
 		slot.slot_index = i
 		slot.max_charge = max(0.01, slot.max_charge)
 		slot.charge_remaining = clamp(slot.charge_remaining, 0.0, slot.max_charge)
+		if slot.charge_remaining >= slot.max_charge:
+			slot.must_recharge_full = false
 
 func _tick_slots(delta: float, candidates: Array[Node3D]) -> void:
 	for i in range(_drone_slots.size()):
@@ -165,6 +169,8 @@ func _tick_active_slot(slot: DroneSlot, _delta: float, candidates: Array[Node3D]
 	if current_target == null:
 		if previous_target != null:
 			_command_drone_idle(slot)
+		if _should_redock_active_slot(slot):
+			_begin_return(slot)
 		return
 
 	_command_drone_attack(slot, current_target)
@@ -186,6 +192,7 @@ func _tick_attacking_slot(slot: DroneSlot, delta: float, candidates: Array[Node3
 	slot.charge_remaining = max(0.0, slot.charge_remaining - delta * discharge_rate)
 	if slot.charge_remaining <= 0.0:
 		slot.charge_remaining = 0.0
+		slot.must_recharge_full = true
 		_begin_return(slot)
 
 func _tick_returning_slot(slot: DroneSlot, delta: float) -> void:
@@ -206,11 +213,10 @@ func _tick_grounded_slot(slot: DroneSlot, delta: float) -> void:
 		_command_drone_dock(slot)
 
 	if slot.charge_remaining < slot.max_charge:
-		slot.state = DRONE_STATE_CHARGING
 		slot.charge_remaining = min(slot.max_charge, slot.charge_remaining + delta * _get_charge_recovery_rate())
-	else:
-		slot.state = DRONE_STATE_DOCKED
+	if slot.charge_remaining >= slot.max_charge:
 		slot.charge_remaining = slot.max_charge
+		slot.must_recharge_full = false
 
 func _ensure_slot_drone(slot: DroneSlot, replay_state: bool = true) -> void:
 	if slot == null:
@@ -306,7 +312,9 @@ func _on_drone_state_reported(origin_bay_id: int, slot_index: int, next_state: i
 		DRONE_STATE_DOCKED:
 			slot.return_remaining = 0.0
 			slot.set_target(null)
-			slot.state = DRONE_STATE_CHARGING if slot.charge_remaining < slot.max_charge else DRONE_STATE_DOCKED
+			slot.state = DRONE_STATE_DOCKED
+			if slot.charge_remaining >= slot.max_charge:
+				slot.must_recharge_full = false
 			slot.drone = null
 
 func _despawn_slot_drone(slot: DroneSlot) -> void:
@@ -326,16 +334,18 @@ func _is_drone_valid(drone_controller: DroneController) -> bool:
 func _try_launch(candidates: Array[Node3D]) -> void:
 	if _cooldown > 0.0:
 		return
-	var slot: DroneSlot = _first_docked_slot()
+	var target: Node3D = _pick_first_candidate(candidates)
+	var slot: DroneSlot = _first_launchable_slot(target != null)
 	if slot == null:
 		return
-	var target: Node3D = _pick_first_candidate(candidates)
 
 	_ensure_slot_drone(slot, false)
 	if not _is_drone_valid(slot.drone):
 		return
 	slot.max_charge = max(0.01, slot.max_charge)
-	slot.charge_remaining = slot.max_charge
+	slot.charge_remaining = clamp(slot.charge_remaining, 0.0, slot.max_charge)
+	if slot.charge_remaining <= 0.0:
+		return
 	slot.return_remaining = 0.0
 	slot.set_target(target)
 	_command_drone_launch(slot, target)
@@ -374,11 +384,51 @@ func _pick_first_candidate(candidates: Array[Node3D]) -> Node3D:
 		return null
 	return candidates[0]
 
-func _first_docked_slot() -> DroneSlot:
+func _first_launchable_slot(has_target: bool) -> DroneSlot:
 	for slot in _drone_slots:
-		if slot.state == DRONE_STATE_DOCKED:
+		if not _is_slot_grounded(slot):
+			continue
+		if _is_slot_charging(slot):
+			continue
+		if slot.charge_remaining <= 0.0:
+			continue
+		return slot
+
+	if has_target:
+		for slot in _drone_slots:
+			if not _is_slot_grounded(slot):
+				continue
+			if not _is_slot_charging(slot):
+				continue
+			if slot.charge_remaining <= 0.0:
+				continue
+			if slot.must_recharge_full:
+				continue
 			return slot
+
 	return null
+
+func _is_slot_grounded(slot: DroneSlot) -> bool:
+	if slot == null:
+		return false
+	return slot.state == DRONE_STATE_DOCKED or slot.state == DRONE_STATE_CHARGING
+
+func _is_slot_charging(slot: DroneSlot) -> bool:
+	if slot == null:
+		return false
+	return _is_slot_grounded(slot) and slot.charge_remaining < slot.max_charge
+
+func _is_slot_fully_docked(slot: DroneSlot) -> bool:
+	if slot == null:
+		return false
+	return _is_slot_grounded(slot) and slot.charge_remaining >= slot.max_charge
+
+func _should_redock_active_slot(slot: DroneSlot) -> bool:
+	if slot == null:
+		return false
+	if slot.charge_remaining <= 0.0:
+		return true
+	return slot.charge_remaining < slot.max_charge
 
 func _get_desired_drone_count() -> int:
 	return max(0, _drone_bay_weapon.base_drone_count) if _drone_bay_weapon != null else 0
@@ -482,6 +532,8 @@ func _apply_slot_max_charge_override(slot: DroneSlot, next_max_charge: float, pr
 	if slot.max_charge <= 0.0:
 		slot.max_charge = next_max
 		slot.charge_remaining = clamp(slot.charge_remaining, 0.0, slot.max_charge)
+		if slot.charge_remaining >= slot.max_charge:
+			slot.must_recharge_full = false
 		return
 
 	if preserve_fill_ratio:
@@ -491,6 +543,8 @@ func _apply_slot_max_charge_override(slot: DroneSlot, next_max_charge: float, pr
 	else:
 		slot.max_charge = next_max
 		slot.charge_remaining = clamp(slot.charge_remaining, 0.0, slot.max_charge)
+	if slot.charge_remaining >= slot.max_charge:
+		slot.must_recharge_full = false
 
 func _prime_slots_full_charge() -> void:
 	var full_charge: float = _get_charge_time()
@@ -499,6 +553,7 @@ func _prime_slots_full_charge() -> void:
 			continue
 		slot.max_charge = full_charge
 		slot.charge_remaining = full_charge
+		slot.must_recharge_full = false
 		slot.return_remaining = 0.0
 		slot.state = DRONE_STATE_DOCKED
 		slot.set_target(null)
