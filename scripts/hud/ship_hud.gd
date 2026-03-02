@@ -2,6 +2,9 @@
 extends Control
 class_name ShipHud
 
+const WEAPON_CHIP_FONT: FontFile = preload("res://assets/fonts/Oxanium/Oxanium-Medium.ttf")
+const DRONE_CHARGE_VALUES_PER_LINE: int = 4
+
 @export var shield_color: Color = Color(0.2, 0.6, 1.0)
 @export var hull_color: Color = Color(1.0, 0.22, 0.22, 1.0)
 @export var back_color: Color = Color(0, 0, 0, 0.6)
@@ -18,7 +21,7 @@ var _weapon_chip_nodes: Array[Dictionary] = []
 @onready var _hull_bar: ProgressBar = $ShipStatsContainer/ShieldHullContainer/Hull/Bar
 @onready var _hull_val: Label = $ShipStatsContainer/ShieldHullContainer/Hull/Value
 @onready var _vel_val: Label = $ShipStatsContainer/VelocityContainer/Label
-@onready var _weapons_container: HBoxContainer = $WeaponsContainer
+@onready var _weapons_container: HFlowContainer = $WeaponsContainer
 @onready var _repair_label: Label = $AbilitiesContainer/RepairPanel/RepairLabel
 @onready var _repair_hotkey_label: Label = $AbilitiesContainer/RepairPanel/HotkeyLabel
 @onready var _repair_cooldown_label: Label = $AbilitiesContainer/RepairPanel/CooldownLabel
@@ -251,7 +254,7 @@ func _rebuild_weapon_chips(entries: Array[Dictionary]) -> void:
 
 func _build_weapon_chip(weapon: WeaponDef) -> Dictionary:
 	var panel: PanelContainer = PanelContainer.new()
-	panel.custom_minimum_size = Vector2(130.0, 38.0)
+	panel.custom_minimum_size = Vector2(138.0, 50.0)
 
 	var bg: StyleBoxFlat = StyleBoxFlat.new()
 	bg.bg_color = Color(0.08, 0.12, 0.16, 0.72)
@@ -286,12 +289,20 @@ func _build_weapon_chip(weapon: WeaponDef) -> Dictionary:
 	label.text = _weapon_display_name(weapon)
 	label.clip_text = true
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if WEAPON_CHIP_FONT != null:
+		label.add_theme_font_override("font", WEAPON_CHIP_FONT)
+	label.add_theme_font_size_override("font_size", 12)
 	row.add_child(label)
 
 	var charge_label: Label = Label.new()
-	charge_label.clip_text = true
+	charge_label.clip_text = false
 	charge_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	charge_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	charge_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	charge_label.modulate = Color(0.7, 0.9, 1.0, 0.95)
+	if WEAPON_CHIP_FONT != null:
+		charge_label.add_theme_font_override("font", WEAPON_CHIP_FONT)
+	charge_label.add_theme_font_size_override("font_size", 12)
 	charge_label.text = ""
 	root.add_child(charge_label)
 
@@ -339,10 +350,22 @@ func _format_drone_slot_charges(weapon: WeaponDef, runtime: WeaponRuntime) -> St
 	var charges: Array[float] = drone_runtime.get_slot_charge_values()
 	if charges.is_empty():
 		return ""
-	var parts: Array[String] = []
+	var parts: PackedStringArray = PackedStringArray()
 	for c in charges:
-		parts.append("%.1f" % c)
-	return "Charge: %s" % "/".join(parts)
+		parts.append(_format_charge_value(c))
+
+	var lines: PackedStringArray = PackedStringArray()
+	var i: int = 0
+	while i < parts.size():
+		var line_parts: PackedStringArray = PackedStringArray()
+		for j in range(i, min(i + DRONE_CHARGE_VALUES_PER_LINE, parts.size())):
+			line_parts.append(parts[j])
+		lines.append(" ".join(line_parts))
+		i += DRONE_CHARGE_VALUES_PER_LINE
+	return "\n".join(lines)
+
+func _format_charge_value(value: float) -> String:
+	return "%.1f" % value
 
 func _update_repair_cooldown_ui() -> void:
 	if _repair_cooldown_label == null:

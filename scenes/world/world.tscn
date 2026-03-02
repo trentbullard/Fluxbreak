@@ -501,7 +501,7 @@ layout_mode = 2
 text = "180m/s"
 label_settings = SubResource("LabelSettings_umvgx")
 
-[node name="WeaponsContainer" type="HBoxContainer" parent="HUD/ScreenRoot/BottomDock/ShipHud"]
+[node name="WeaponsContainer" type="HFlowContainer" parent="HUD/ScreenRoot/BottomDock/ShipHud"]
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.5
@@ -509,7 +509,9 @@ anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
 offset_left = 130.0
-grow_vertical = 2
+grow_vertical = 0
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 4
 
 [node name="DebugWaveHUD" type="MarginContainer" parent="HUD/ScreenRoot/BottomDock"]
 layout_mode = 2
