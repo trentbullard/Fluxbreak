@@ -57,6 +57,10 @@ func command_dock() -> void:
 	charge_remaining = 0.0
 	return_remaining = 0.0
 	command_set_target(null)
+	if is_inside_tree():
+		call_deferred("queue_free")
+	else:
+		queue_free()
 
 func command_sync_timers(active_charge_time: float, redock_time: float) -> void:
 	charge_remaining = max(0.0, active_charge_time)
