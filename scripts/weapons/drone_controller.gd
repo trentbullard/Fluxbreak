@@ -12,6 +12,7 @@ var origin_bay_id: int = -1
 var slot_index: int = -1
 var _target_ref: WeakRef = weakref(null)
 var _anchor_ref: WeakRef = weakref(null)
+var _drone_weapon: WeaponDef = null
 var _flight_state: int = STATE_DOCKED
 var _velocity: Vector3 = Vector3.ZERO
 var _swarm_clock: float = 0.0
@@ -27,6 +28,9 @@ var _attack_speed_scale: float = 1.0
 var _jitter_phase_a: float = 0.0
 var _jitter_phase_b: float = 0.0
 var _jitter_phase_c: float = 0.0
+var _shot_cooldown: float = 0.0
+var _muzzles: Array[Marker3D] = []
+var _muzzle_cursor: int = 0
 
 const ACTIVE_SPEED: float = 110.0
 const ACTIVE_ACCEL: float = 450.0
@@ -45,10 +49,14 @@ const TRAIL_WIDTH: float = 0.05
 const TRAIL_MIN_LIFETIME: float = 0.03
 const TRAIL_MAX_LIFETIME: float = 0.22
 
-func configure_drone(origin_bay_id_value: int, slot_index_value: int, anchor: Node3D = null) -> void:
+func _ready() -> void:
+	_cache_muzzles()
+
+func configure_drone(origin_bay_id_value: int, slot_index_value: int, anchor: Node3D = null, drone_weapon: WeaponDef = null) -> void:
 	origin_bay_id = origin_bay_id_value
 	slot_index = slot_index_value
 	_anchor_ref = weakref(anchor) if anchor != null else weakref(null)
+	_drone_weapon = drone_weapon
 	_seed_swarm_jitter()
 
 func _seed_swarm_jitter() -> void:
@@ -70,6 +78,7 @@ func _seed_swarm_jitter() -> void:
 
 func command_launch(target: Node3D) -> void:
 	_flight_state = STATE_ACTIVE
+	_shot_cooldown = 0.0
 	command_set_target(target)
 	_report_state(STATE_ACTIVE)
 
@@ -98,6 +107,7 @@ func command_begin_return() -> void:
 func command_dock() -> void:
 	_flight_state = STATE_DOCKED
 	_velocity = Vector3.ZERO
+	_shot_cooldown = 0.0
 	command_set_target(null)
 	_report_state(STATE_DOCKED)
 	if is_inside_tree():
@@ -116,6 +126,7 @@ func _physics_process(delta: float) -> void:
 		return
 
 	_swarm_clock += delta
+	_shot_cooldown = max(0.0, _shot_cooldown - delta)
 
 	match _flight_state:
 		STATE_ACTIVE:
@@ -129,6 +140,7 @@ func _physics_process(delta: float) -> void:
 				return
 			var attack_point: Vector3 = _compute_target_attack_point(target)
 			_move_toward_world_point(attack_point, ATTACK_SPEED, ATTACK_ACCEL, delta)
+			_tick_attack_fire(target)
 		STATE_RETURNING:
 			var return_point: Vector3 = anchor.global_position
 			_move_toward_world_point(return_point, RETURN_SPEED, RETURN_ACCEL, delta)
@@ -175,6 +187,59 @@ func _move_toward_world_point(world_point: Vector3, max_speed: float, accel: flo
 
 	_velocity = _velocity.move_toward(desired_vel, accel * delta)
 	global_position += _velocity * delta
+
+func _tick_attack_fire(target: Node3D) -> void:
+	if target == null or not is_instance_valid(target):
+		return
+	if _drone_weapon == null:
+		return
+	if _shot_cooldown > 0.0:
+		return
+
+	var next_interval: float = max(0.01, _drone_weapon.fire_rate)
+	_shot_cooldown = next_interval
+
+	var dmg_min: float = minf(_drone_weapon.damage_min, _drone_weapon.damage_max)
+	var dmg_max: float = maxf(_drone_weapon.damage_min, _drone_weapon.damage_max)
+	var dmg: float = randf_range(dmg_min, dmg_max)
+	if dmg > 0.0 and target.has_method("apply_damage"):
+		target.call("apply_damage", dmg)
+
+	_fire_projectile_visual(target)
+
+func _fire_projectile_visual(target: Node3D) -> void:
+	if _drone_weapon == null or _drone_weapon.projectile_scene == null:
+		return
+	var p: Projectile = _drone_weapon.projectile_scene.instantiate() as Projectile
+	if p == null:
+		return
+
+	var muzzle_xf: Transform3D = _get_next_muzzle_transform()
+	var dir: Vector3 = target.global_position - muzzle_xf.origin
+	if dir.length_squared() < 0.000001:
+		dir = -global_transform.basis.z
+	else:
+		dir = dir.normalized()
+	p.global_transform = Transform3D(Basis.looking_at(dir, Vector3.UP), muzzle_xf.origin)
+
+	var root: Node = get_tree().current_scene
+	if root == null:
+		root = self
+	root.add_child(p)
+
+func _cache_muzzles() -> void:
+	_muzzles.clear()
+	for path: String in ["WeaponRMuzzle", "WeaponLMuzzle", "Muzzle"]:
+		var m: Marker3D = get_node_or_null(path) as Marker3D
+		if m != null:
+			_muzzles.append(m)
+
+func _get_next_muzzle_transform() -> Transform3D:
+	if _muzzles.is_empty():
+		return global_transform
+	var m: Marker3D = _muzzles[_muzzle_cursor % _muzzles.size()]
+	_muzzle_cursor += 1
+	return m.global_transform
 
 func _report_state(next_state: int) -> void:
 	state_reported.emit(origin_bay_id, slot_index, next_state)

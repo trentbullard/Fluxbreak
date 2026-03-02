@@ -258,7 +258,12 @@ func _get_drone_spawn_transform() -> Transform3D:
 func _bind_drone_to_slot(drone_controller: DroneController, slot_index: int) -> void:
 	if drone_controller == null:
 		return
-	drone_controller.configure_drone(get_instance_id(), slot_index, _resolve_swarm_anchor())
+	drone_controller.configure_drone(
+		get_instance_id(),
+		slot_index,
+		_resolve_swarm_anchor(),
+		_drone_bay_weapon.drone_weapon if _drone_bay_weapon != null else null
+	)
 	if not drone_controller.state_reported.is_connected(_on_drone_state_reported):
 		drone_controller.state_reported.connect(_on_drone_state_reported)
 

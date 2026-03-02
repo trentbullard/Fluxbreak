@@ -1,11 +1,13 @@
-[gd_resource type="Resource" script_class="DroneBayWeaponDef" load_steps=4 format=3 uid="uid://b7qjg75iq2hov"]
+[gd_resource type="Resource" script_class="DroneBayWeaponDef" load_steps=5 format=3 uid="uid://b7qjg75iq2hov"]
 
-[ext_resource type="Script" path="res://content/defs/drone_bay_weapon_def.gd" id="1_xawy5"]
+[ext_resource type="Script" uid="uid://cn8dy8w3bqoi0" path="res://content/defs/drone_bay_weapon_def.gd" id="1_xawy5"]
+[ext_resource type="Resource" uid="uid://b6g58t7p1i3gt" path="res://content/data/weapons/drone_laser.tres" id="2_lpkoe"]
 [ext_resource type="Script" uid="uid://bc5o0q4rptsnq" path="res://content/defs/status_effect_def.gd" id="2_w4kci"]
 [ext_resource type="PackedScene" uid="uid://bqn3c7xjednmf" path="res://scenes/weapons/drone.tscn" id="3_44xqy"]
 
 [resource]
 script = ExtResource("1_xawy5")
 drone_scene = ExtResource("3_44xqy")
+drone_weapon = ExtResource("2_lpkoe")
 weapon_id = "drone_bay_mk1"
 display_name = "Drone Bay Mk I"
