@@ -60,6 +60,12 @@ ambient_light_color = Color(0, 0.18040457, 0.37047803, 1)
 ambient_light_sky_contribution = 0.15
 ambient_light_energy = 6.0
 reflected_light_source = 2
+glow_enabled = true
+glow_intensity = 0.5
+glow_strength = 0.4
+glow_bloom = 0.01
+glow_blend_mode = 0
+glow_hdr_threshold = 0.9
 volumetric_fog_density = 0.01
 volumetric_fog_albedo = Color(0.95468724, 0.95468724, 1, 1)
 volumetric_fog_emission = Color(0.24780053, 0.24780053, 0.3491902, 1)
@@ -151,7 +157,7 @@ light_energy = 2.0
 shadow_enabled = true
 directional_shadow_mode = 0
 
-[node name="Starfield" type="GPUParticles3D" parent="." node_paths=PackedStringArray("ship_path")]
+[node name="Starfield" type="GPUParticles3D" parent="."]
 amount = 2000
 lifetime = 12.0
 preprocess = 12.0
@@ -161,7 +167,6 @@ trail_lifetime = 0.14
 process_material = SubResource("ParticleProcessMaterial_dphjl")
 draw_pass_1 = SubResource("QuadMesh_t5ptc")
 script = ExtResource("2_v5dby")
-ship_path = NodePath("../Ship")
 
 [node name="Spawner" type="Node3D" parent="."]
 script = ExtResource("6_bq33v")
