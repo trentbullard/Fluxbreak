@@ -31,13 +31,16 @@ var _jitter_phase_c: float = 0.0
 var _shot_cooldown: float = 0.0
 var _muzzles: Array[Marker3D] = []
 var _muzzle_cursor: int = 0
+var _anchor_prev_position: Vector3 = Vector3.ZERO
+var _anchor_velocity: Vector3 = Vector3.ZERO
+var _has_anchor_sample: bool = false
 
 const ACTIVE_SPEED: float = 110.0
-const ACTIVE_ACCEL: float = 450.0
+const ACTIVE_ACCEL: float = 800.0
 const ATTACK_SPEED: float = 165.0
 const ATTACK_ACCEL: float = 700.0
-const RETURN_SPEED: float = 140.0
-const RETURN_ACCEL: float = 650.0
+const RETURN_SPEED: float = 220.0
+const RETURN_ACCEL: float = 900.0
 const SWARM_RADIUS_BASE: float = 4.0
 const SWARM_RADIUS_STEP: float = 1.15
 const SWARM_HEIGHT: float = 0.85
@@ -57,6 +60,8 @@ func configure_drone(origin_bay_id_value: int, slot_index_value: int, anchor: No
 	slot_index = slot_index_value
 	_anchor_ref = weakref(anchor) if anchor != null else weakref(null)
 	_drone_weapon = drone_weapon
+	_has_anchor_sample = false
+	_anchor_velocity = Vector3.ZERO
 	_seed_swarm_jitter()
 
 func _seed_swarm_jitter() -> void:
@@ -127,11 +132,12 @@ func _physics_process(delta: float) -> void:
 
 	_swarm_clock += delta
 	_shot_cooldown = max(0.0, _shot_cooldown - delta)
+	_update_anchor_velocity(anchor, delta)
 
 	match _flight_state:
 		STATE_ACTIVE:
 			var swarm_point: Vector3 = _compute_anchor_swarm_point(anchor)
-			_move_toward_world_point(swarm_point, ACTIVE_SPEED, ACTIVE_ACCEL, delta)
+			_move_toward_world_point(swarm_point, ACTIVE_SPEED, ACTIVE_ACCEL, delta, _anchor_velocity)
 		STATE_ATTACKING:
 			var target: Node3D = get_target()
 			if target == null or not is_instance_valid(target):
@@ -143,7 +149,7 @@ func _physics_process(delta: float) -> void:
 			_tick_attack_fire(target)
 		STATE_RETURNING:
 			var return_point: Vector3 = anchor.global_position
-			_move_toward_world_point(return_point, RETURN_SPEED, RETURN_ACCEL, delta)
+			_move_toward_world_point(return_point, RETURN_SPEED, RETURN_ACCEL, delta, _anchor_velocity)
 
 func _get_anchor() -> Node3D:
 	return _anchor_ref.get_ref() as Node3D if _anchor_ref != null else null
@@ -177,13 +183,28 @@ func _compute_target_attack_point(target: Node3D) -> Vector3:
 	)
 	return target.global_position + local_offset
 
-func _move_toward_world_point(world_point: Vector3, max_speed: float, accel: float, delta: float) -> void:
+func _update_anchor_velocity(anchor: Node3D, delta: float) -> void:
+	if anchor == null or delta <= 0.000001:
+		return
+	var pos: Vector3 = anchor.global_position
+	if not _has_anchor_sample:
+		_anchor_prev_position = pos
+		_anchor_velocity = Vector3.ZERO
+		_has_anchor_sample = true
+		return
+
+	var raw_velocity: Vector3 = (pos - _anchor_prev_position) / delta
+	_anchor_prev_position = pos
+	var smooth_t: float = clamp(12.0 * delta, 0.0, 1.0)
+	_anchor_velocity = _anchor_velocity.lerp(raw_velocity, smooth_t)
+
+func _move_toward_world_point(world_point: Vector3, max_speed: float, accel: float, delta: float, base_velocity: Vector3 = Vector3.ZERO) -> void:
 	var to_goal: Vector3 = world_point - global_position
 	var dist: float = to_goal.length()
-	var desired_vel: Vector3 = Vector3.ZERO
+	var desired_vel: Vector3 = base_velocity
 	if dist > 0.001:
 		var target_speed: float = min(max_speed, dist * 8.0)
-		desired_vel = to_goal / dist * target_speed
+		desired_vel += to_goal / dist * target_speed
 
 	_velocity = _velocity.move_toward(desired_vel, accel * delta)
 	global_position += _velocity * delta
