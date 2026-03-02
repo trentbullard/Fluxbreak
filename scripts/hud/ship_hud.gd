@@ -10,12 +10,14 @@ class_name ShipHud
 
 var _ship: Ship
 var _accum := 0.0
+var _last_weapon_signature: String = ""
 
 @onready var _shield_bar: ProgressBar = $ShipStatsContainer/ShieldHullContainer/Shield/Bar
 @onready var _shield_val: Label = $ShipStatsContainer/ShieldHullContainer/Shield/Value
 @onready var _hull_bar: ProgressBar = $ShipStatsContainer/ShieldHullContainer/Hull/Bar
 @onready var _hull_val: Label = $ShipStatsContainer/ShieldHullContainer/Hull/Value
 @onready var _vel_val: Label = $ShipStatsContainer/VelocityContainer/Label
+@onready var _weapons_container: HBoxContainer = $WeaponsContainer
 @onready var _repair_label: Label = $AbilitiesContainer/RepairPanel/RepairLabel
 @onready var _repair_hotkey_label: Label = $AbilitiesContainer/RepairPanel/HotkeyLabel
 @onready var _repair_cooldown_label: Label = $AbilitiesContainer/RepairPanel/CooldownLabel
@@ -106,6 +108,7 @@ func init(ship: Node3D) -> void:
 	_ship = ship as Ship
 	_update_repair_widget_text()
 	_update_repair_cooldown_ui()
+	_refresh_weapons_ui(true)
 
 func _ready() -> void:
 	_style_bar(_shield_bar, shield_color)
@@ -113,6 +116,10 @@ func _ready() -> void:
 	_update_repair_widget_text()
 	_update_repair_cooldown_ui()
 	_update_repair_hotkey_prompt()
+	_refresh_weapons_ui(true)
+	if EventBus != null and EventBus.has_signal("weapons_changed"):
+		if not EventBus.weapons_changed.is_connected(_on_weapons_changed):
+			EventBus.weapons_changed.connect(_on_weapons_changed)
 
 	if Input.has_signal("joy_connection_changed"):
 		if not Input.joy_connection_changed.is_connected(_on_joy_connection_changed):
@@ -161,6 +168,7 @@ func _process(delta: float) -> void:
 func _update_values() -> void:
 	if _ship == null:
 		return
+	_refresh_weapons_ui()
 
 	var shield_pair := _read_pair("shield", "eff_max_shield", 100.0, 100.0)
 	var shield: float = shield_pair[0]
@@ -182,6 +190,81 @@ func _update_values() -> void:
 	max_fwd = max(caps.y, 1.0)
 	
 	_apply_speed(_vel_val, fwd_speed, max_fwd)
+
+func _on_weapons_changed(_weapons: Array[WeaponDef]) -> void:
+	_refresh_weapons_ui(true)
+
+func _refresh_weapons_ui(force: bool = false) -> void:
+	if _weapons_container == null:
+		return
+
+	var weapons: Array[WeaponDef] = []
+	if _ship != null and _ship.hardpoint_manager != null:
+		weapons = _ship.hardpoint_manager.get_weapons()
+
+	var signature: String = _build_weapon_signature(weapons)
+	if not force and signature == _last_weapon_signature:
+		return
+	_last_weapon_signature = signature
+
+	for c in _weapons_container.get_children():
+		c.queue_free()
+
+	for weapon in weapons:
+		_weapons_container.add_child(_build_weapon_chip(weapon))
+
+func _build_weapon_signature(weapons: Array[WeaponDef]) -> String:
+	if weapons.is_empty():
+		return ""
+	var parts: Array[String] = []
+	for weapon in weapons:
+		parts.append(_weapon_display_name(weapon))
+	return "|".join(parts)
+
+func _build_weapon_chip(weapon: WeaponDef) -> Control:
+	var panel: PanelContainer = PanelContainer.new()
+	panel.custom_minimum_size = Vector2(110.0, 26.0)
+
+	var bg: StyleBoxFlat = StyleBoxFlat.new()
+	bg.bg_color = Color(0.08, 0.12, 0.16, 0.72)
+	bg.border_width_left = 1
+	bg.border_width_top = 1
+	bg.border_width_right = 1
+	bg.border_width_bottom = 1
+	bg.border_color = Color(0.24, 0.62, 0.96, 0.85)
+	bg.corner_radius_top_left = 4
+	bg.corner_radius_top_right = 4
+	bg.corner_radius_bottom_left = 4
+	bg.corner_radius_bottom_right = 4
+	panel.add_theme_stylebox_override("panel", bg)
+
+	var row: HBoxContainer = HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_BEGIN
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_theme_constant_override("separation", 6)
+	panel.add_child(row)
+
+	var icon: ColorRect = ColorRect.new()
+	icon.custom_minimum_size = Vector2(10.0, 10.0)
+	icon.color = Color(0.25, 0.82, 1.0, 1.0)
+	row.add_child(icon)
+
+	var label: Label = Label.new()
+	label.text = _weapon_display_name(weapon)
+	label.clip_text = true
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(label)
+
+	return panel
+
+func _weapon_display_name(weapon: WeaponDef) -> String:
+	if weapon == null:
+		return "Unknown Weapon"
+	if weapon.display_name != "":
+		return weapon.display_name
+	if weapon.weapon_id != "":
+		return weapon.weapon_id
+	return "Weapon"
 
 func _update_repair_cooldown_ui() -> void:
 	if _repair_cooldown_label == null:
