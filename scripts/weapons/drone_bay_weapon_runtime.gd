@@ -4,10 +4,12 @@ class_name DroneBayWeaponRuntime
 
 const DRONE_STATE_DOCKED: int = 0
 const DRONE_STATE_ACTIVE: int = 1
-const DRONE_STATE_RETURNING: int = 2
-const DRONE_STATE_CHARGING: int = 3
+const DRONE_STATE_ATTACKING: int = 2
+const DRONE_STATE_RETURNING: int = 3
+const DRONE_STATE_CHARGING: int = 4
 
 class DroneSlot extends RefCounted:
+	var slot_index: int = -1
 	var state: int = 0
 	var charge_remaining: float = 0.0
 	var max_charge: float = 0.0
@@ -34,7 +36,6 @@ func _init(turret_owner: PlayerTurret = null, weapon_def: WeaponDef = null) -> v
 func on_equip() -> void:
 	_sync_slot_count()
 	_prime_slots_full_charge()
-	_refresh_drone_context()
 	if turret != null and turret.visual_controller != null:
 		turret.visual_controller.set_charge(0.0)
 
@@ -77,7 +78,7 @@ func get_docked_drone_count() -> int:
 func get_active_drone_count() -> int:
 	var count: int = 0
 	for slot in _drone_slots:
-		if slot.state == DRONE_STATE_ACTIVE:
+		if slot.state == DRONE_STATE_ACTIVE or slot.state == DRONE_STATE_ATTACKING:
 			count += 1
 	return count
 
@@ -91,7 +92,7 @@ func get_returning_drone_count() -> int:
 func get_active_targets() -> Array[Node3D]:
 	var out: Array[Node3D] = []
 	for slot in _drone_slots:
-		if slot.state != DRONE_STATE_ACTIVE:
+		if slot.state != DRONE_STATE_ATTACKING:
 			continue
 		var target: Node3D = slot.get_target()
 		if target != null:
@@ -101,50 +102,92 @@ func get_active_targets() -> Array[Node3D]:
 func _sync_slot_count() -> void:
 	var desired: int = _get_desired_drone_count()
 	while _drone_slots.size() < desired:
-		var slot_new: DroneSlot = DroneSlot.new()
-		slot_new.max_charge = _get_charge_time()
-		slot_new.charge_remaining = slot_new.max_charge
-		slot_new.state = DRONE_STATE_DOCKED
+		var slot_new: DroneSlot = _make_slot(_drone_slots.size())
 		_drone_slots.append(slot_new)
 	while _drone_slots.size() > desired:
 		var slot_old: DroneSlot = _drone_slots[_drone_slots.size() - 1]
 		_despawn_slot_drone(slot_old)
 		_drone_slots.remove_at(_drone_slots.size() - 1)
+	_reindex_slots()
+
+func _make_slot(slot_index: int) -> DroneSlot:
+	var slot: DroneSlot = DroneSlot.new()
+	slot.slot_index = slot_index
+	slot.max_charge = _get_charge_time()
+	slot.charge_remaining = slot.max_charge
+	slot.return_remaining = 0.0
+	slot.state = DRONE_STATE_DOCKED
+	slot.set_target(null)
+	return slot
+
+func _reindex_slots() -> void:
 	for i in range(_drone_slots.size()):
 		var slot: DroneSlot = _drone_slots[i]
-		if slot != null and _is_slot_in_flight(slot):
-			_ensure_slot_drone(slot, i)
-		elif slot != null and _is_drone_valid(slot.drone):
-			_command_drone_dock(slot)
-
-func _tick_slots(delta: float, candidates: Array[Node3D]) -> void:
-	for slot in _drone_slots:
 		if slot == null:
 			continue
+		slot.slot_index = i
+		slot.max_charge = max(0.01, slot.max_charge)
+		slot.charge_remaining = clamp(slot.charge_remaining, 0.0, slot.max_charge)
+
+func _tick_slots(delta: float, candidates: Array[Node3D]) -> void:
+	for i in range(_drone_slots.size()):
+		var slot: DroneSlot = _drone_slots[i]
+		if slot == null:
+			continue
+		slot.slot_index = i
 
 		match slot.state:
 			DRONE_STATE_ACTIVE:
-				var discharge_rate: float = _get_discharge_rate_for_target(slot.get_target())
-				slot.charge_remaining = max(0.0, slot.charge_remaining - delta * discharge_rate)
-				_sync_slot_drone_timers(slot)
-				if slot.charge_remaining <= 0.0:
-					_begin_return(slot)
-					continue
-				var current_target: Node3D = slot.get_target()
-				if not _is_target_valid_candidate(current_target, candidates):
-					var next_target: Node3D = _pick_first_candidate(candidates)
-					slot.set_target(next_target)
-					_command_drone_set_target(slot, next_target)
+				_tick_active_slot(slot, delta, candidates)
+			DRONE_STATE_ATTACKING:
+				_tick_attacking_slot(slot, delta, candidates)
 			DRONE_STATE_RETURNING:
-				slot.return_remaining = max(0.0, slot.return_remaining - delta)
-				_sync_slot_drone_timers(slot)
-				if slot.return_remaining <= 0.0:
-					slot.state = DRONE_STATE_CHARGING if slot.charge_remaining < slot.max_charge else DRONE_STATE_DOCKED
-					slot.return_remaining = 0.0
-					slot.set_target(null)
-					_command_drone_dock(slot)
+				_tick_returning_slot(slot, delta)
 			_:
 				_tick_grounded_slot(slot, delta)
+
+func _tick_active_slot(slot: DroneSlot, _delta: float, candidates: Array[Node3D]) -> void:
+	_ensure_slot_drone(slot)
+	var previous_target: Node3D = slot.get_target()
+	var current_target: Node3D = previous_target
+	if not _is_target_valid_candidate(previous_target, candidates):
+		current_target = _pick_first_candidate(candidates)
+		slot.set_target(current_target)
+
+	if current_target == null:
+		if previous_target != null:
+			_command_drone_idle(slot)
+		return
+
+	_command_drone_attack(slot, current_target)
+
+func _tick_attacking_slot(slot: DroneSlot, delta: float, candidates: Array[Node3D]) -> void:
+	_ensure_slot_drone(slot)
+	var previous_target: Node3D = slot.get_target()
+	var current_target: Node3D = previous_target
+	if not _is_target_valid_candidate(previous_target, candidates):
+		current_target = _pick_first_candidate(candidates)
+		slot.set_target(current_target)
+		if current_target == null:
+			_command_drone_idle(slot)
+			return
+	if current_target != previous_target:
+		_command_drone_attack(slot, current_target)
+
+	var discharge_rate: float = _get_discharge_rate_for_target(current_target)
+	slot.charge_remaining = max(0.0, slot.charge_remaining - delta * discharge_rate)
+	if slot.charge_remaining <= 0.0:
+		slot.charge_remaining = 0.0
+		_begin_return(slot)
+
+func _tick_returning_slot(slot: DroneSlot, delta: float) -> void:
+	_ensure_slot_drone(slot)
+	slot.return_remaining = max(0.0, slot.return_remaining - delta)
+	if slot.return_remaining > 0.0:
+		return
+	slot.return_remaining = 0.0
+	slot.set_target(null)
+	_command_drone_dock(slot)
 
 func _tick_grounded_slot(slot: DroneSlot, delta: float) -> void:
 	if slot == null:
@@ -157,24 +200,22 @@ func _tick_grounded_slot(slot: DroneSlot, delta: float) -> void:
 	if slot.charge_remaining < slot.max_charge:
 		slot.state = DRONE_STATE_CHARGING
 		slot.charge_remaining = min(slot.max_charge, slot.charge_remaining + delta * _get_charge_recovery_rate())
-		_sync_slot_drone_timers(slot)
 	else:
 		slot.state = DRONE_STATE_DOCKED
 		slot.charge_remaining = slot.max_charge
 
-func _ensure_slot_drone(slot: DroneSlot, slot_index: int) -> void:
+func _ensure_slot_drone(slot: DroneSlot, replay_state: bool = true) -> void:
 	if slot == null:
 		return
-	if not _is_slot_in_flight(slot):
-		return
 	if _is_drone_valid(slot.drone):
-		_apply_context_to_drone(slot.drone, slot_index)
-		_sync_slot_to_drone(slot)
+		if slot.drone.origin_bay_id != get_instance_id() or slot.drone.slot_index != slot.slot_index:
+			_bind_drone_to_slot(slot.drone, slot.slot_index)
 		return
-	slot.drone = _spawn_drone(slot_index)
+	slot.drone = _spawn_drone(slot.slot_index)
 	if slot.drone != null:
-		_apply_context_to_drone(slot.drone, slot_index)
-		_sync_slot_to_drone(slot)
+		_bind_drone_to_slot(slot.drone, slot.slot_index)
+		if replay_state:
+			_sync_slot_to_drone(slot)
 
 func _spawn_drone(slot_index: int) -> DroneController:
 	if turret == null or _drone_bay_weapon == null:
@@ -214,45 +255,36 @@ func _get_drone_spawn_transform() -> Transform3D:
 		return m.global_transform
 	return turret.global_transform
 
-func _apply_context_to_drone(drone_controller: DroneController, slot_index: int) -> void:
+func _bind_drone_to_slot(drone_controller: DroneController, slot_index: int) -> void:
 	if drone_controller == null:
 		return
-	var context: Dictionary = _build_drone_context(slot_index)
-	drone_controller.configure_drone(context)
-	drone_controller.set_meta("team_id", context.get("team_id", 0))
-	drone_controller.set_meta("owner_ship", context.get("owner_ship", null))
-	drone_controller.set_meta("weapon_owner", context.get("weapon_owner", null))
-	drone_controller.set_meta("slot_index", slot_index)
+	drone_controller.configure_drone(get_instance_id(), slot_index)
+	if not drone_controller.state_reported.is_connected(_on_drone_state_reported):
+		drone_controller.state_reported.connect(_on_drone_state_reported)
 
-func _build_drone_context(slot_index: int) -> Dictionary:
-	var turret_controller: TurretController = turret.get_controller() if turret != null else null
-	var owner_ship: Node = _resolve_owner_ship(turret_controller)
-	var drone_weapon: WeaponDef = _drone_bay_weapon.drone_weapon if _drone_bay_weapon != null else null
-	return {
-		"team_id": turret.team_id if turret != null else 0,
-		"owner_ship": owner_ship,
-		"weapon_owner": turret,
-		"turret_owner": turret,
-		"turret_controller": turret_controller,
-		"bay_weapon": _drone_bay_weapon,
-		"drone_weapon": drone_weapon,
-		"slot_index": slot_index,
-	}
+func _on_drone_state_reported(origin_bay_id: int, slot_index: int, next_state: int) -> void:
+	if origin_bay_id != get_instance_id():
+		return
+	if slot_index < 0 or slot_index >= _drone_slots.size():
+		return
+	var slot: DroneSlot = _drone_slots[slot_index]
+	if slot == null:
+		return
 
-func _resolve_owner_ship(turret_controller: TurretController) -> Node:
-	if turret_controller != null:
-		return turret_controller.get_parent()
-	if turret != null:
-		return turret.get_parent()
-	return null
-
-func _refresh_drone_context() -> void:
-	for i in range(_drone_slots.size()):
-		var slot: DroneSlot = _drone_slots[i]
-		if slot == null or not _is_drone_valid(slot.drone):
-			continue
-		_apply_context_to_drone(slot.drone, i)
-		_sync_slot_to_drone(slot)
+	match next_state:
+		DRONE_STATE_ACTIVE:
+			slot.state = DRONE_STATE_ACTIVE
+		DRONE_STATE_ATTACKING:
+			slot.state = DRONE_STATE_ATTACKING
+		DRONE_STATE_RETURNING:
+			slot.state = DRONE_STATE_RETURNING
+			slot.return_remaining = max(slot.return_remaining, _get_redock_time())
+			slot.set_target(null)
+		DRONE_STATE_DOCKED:
+			slot.return_remaining = 0.0
+			slot.set_target(null)
+			slot.state = DRONE_STATE_CHARGING if slot.charge_remaining < slot.max_charge else DRONE_STATE_DOCKED
+			slot.drone = null
 
 func _despawn_slot_drone(slot: DroneSlot) -> void:
 	if slot == null:
@@ -271,33 +303,29 @@ func _is_drone_valid(drone_controller: DroneController) -> bool:
 func _try_launch(candidates: Array[Node3D]) -> void:
 	if _cooldown > 0.0:
 		return
-	if candidates.is_empty():
-		return
 	var slot: DroneSlot = _first_docked_slot()
 	if slot == null:
 		return
 	var target: Node3D = _pick_first_candidate(candidates)
-	if target == null:
-		return
 
-	var slot_index: int = _drone_slots.find(slot)
-	slot.state = DRONE_STATE_ACTIVE
+	_ensure_slot_drone(slot, false)
+	if not _is_drone_valid(slot.drone):
+		return
 	slot.max_charge = max(0.01, slot.max_charge)
 	slot.charge_remaining = slot.max_charge
 	slot.return_remaining = 0.0
 	slot.set_target(target)
-	if slot_index >= 0:
-		_ensure_slot_drone(slot, slot_index)
 	_command_drone_launch(slot, target)
 	_cooldown = _get_launch_interval()
 
 func _begin_return(slot: DroneSlot) -> void:
-	var slot_index: int = _drone_slots.find(slot)
-	slot.state = DRONE_STATE_RETURNING
+	if slot == null:
+		return
+	_ensure_slot_drone(slot)
+	if not _is_drone_valid(slot.drone):
+		return
 	slot.return_remaining = _get_redock_time()
 	slot.set_target(null)
-	if slot_index >= 0:
-		_ensure_slot_drone(slot, slot_index)
 	_command_drone_begin_return(slot)
 
 func _update_visual_charge() -> void:
@@ -381,32 +409,32 @@ func _sync_slot_to_drone(slot: DroneSlot) -> void:
 	if slot == null or not _is_drone_valid(slot.drone):
 		return
 	match slot.state:
-		DRONE_STATE_DOCKED, DRONE_STATE_CHARGING:
-			_command_drone_dock(slot)
 		DRONE_STATE_ACTIVE:
-			slot.drone.command_launch(slot.get_target(), slot.charge_remaining)
+			slot.drone.command_launch(slot.get_target())
+		DRONE_STATE_ATTACKING:
+			slot.drone.command_attack(slot.get_target())
 		DRONE_STATE_RETURNING:
-			slot.drone.command_begin_return(slot.return_remaining)
-
-func _sync_slot_drone_timers(slot: DroneSlot) -> void:
-	if slot == null or not _is_drone_valid(slot.drone):
-		return
-	slot.drone.command_sync_timers(slot.charge_remaining, slot.return_remaining)
+			slot.drone.command_begin_return()
 
 func _command_drone_launch(slot: DroneSlot, target: Node3D) -> void:
 	if slot == null or not _is_drone_valid(slot.drone):
 		return
-	slot.drone.command_launch(target, slot.charge_remaining)
+	slot.drone.command_launch(target)
 
-func _command_drone_set_target(slot: DroneSlot, target: Node3D) -> void:
+func _command_drone_attack(slot: DroneSlot, target: Node3D) -> void:
 	if slot == null or not _is_drone_valid(slot.drone):
 		return
-	slot.drone.command_set_target(target)
+	slot.drone.command_attack(target)
+
+func _command_drone_idle(slot: DroneSlot) -> void:
+	if slot == null or not _is_drone_valid(slot.drone):
+		return
+	slot.drone.command_idle()
 
 func _command_drone_begin_return(slot: DroneSlot) -> void:
 	if slot == null or not _is_drone_valid(slot.drone):
 		return
-	slot.drone.command_begin_return(slot.return_remaining)
+	slot.drone.command_begin_return()
 
 func _command_drone_dock(slot: DroneSlot) -> void:
 	if slot == null or not _is_drone_valid(slot.drone):
@@ -440,9 +468,6 @@ func _apply_slot_max_charge_override(slot: DroneSlot, next_max_charge: float, pr
 	else:
 		slot.max_charge = next_max
 		slot.charge_remaining = clamp(slot.charge_remaining, 0.0, slot.max_charge)
-
-func _is_slot_in_flight(slot: DroneSlot) -> bool:
-	return slot != null and (slot.state == DRONE_STATE_ACTIVE or slot.state == DRONE_STATE_RETURNING)
 
 func _prime_slots_full_charge() -> void:
 	var full_charge: float = _get_charge_time()
