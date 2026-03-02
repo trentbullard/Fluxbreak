@@ -19,6 +19,14 @@ var _slot_phase: float = 0.0
 var _trail_particles: GPUParticles3D = null
 var _trail_process: ParticleProcessMaterial = null
 var _trail_dir: Vector3 = Vector3.BACK
+var _swarm_radius_scale: float = 1.0
+var _swarm_height_scale: float = 1.0
+var _swarm_speed_scale: float = 1.0
+var _attack_radius_scale: float = 1.0
+var _attack_speed_scale: float = 1.0
+var _jitter_phase_a: float = 0.0
+var _jitter_phase_b: float = 0.0
+var _jitter_phase_c: float = 0.0
 
 const ACTIVE_SPEED: float = 110.0
 const ACTIVE_ACCEL: float = 450.0
@@ -41,7 +49,24 @@ func configure_drone(origin_bay_id_value: int, slot_index_value: int, anchor: No
 	origin_bay_id = origin_bay_id_value
 	slot_index = slot_index_value
 	_anchor_ref = weakref(anchor) if anchor != null else weakref(null)
-	_slot_phase = float(slot_index) * 0.917
+	_seed_swarm_jitter()
+
+func _seed_swarm_jitter() -> void:
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	var bay_bits: int = int(origin_bay_id) & 0x7fffffff
+	var slot_bits: int = int(slot_index) & 0x7fffffff
+	var seed_value: int = bay_bits * 73856093 + slot_bits * 19349663 + 83492791
+	rng.seed = int(seed_value & 0x7fffffff)
+
+	_slot_phase = float(slot_index) * 0.917 + rng.randf_range(0.0, TAU)
+	_swarm_radius_scale = rng.randf_range(0.82, 1.28)
+	_swarm_height_scale = rng.randf_range(0.72, 1.45)
+	_swarm_speed_scale = rng.randf_range(0.86, 1.22)
+	_attack_radius_scale = rng.randf_range(0.85, 1.35)
+	_attack_speed_scale = rng.randf_range(0.9, 1.25)
+	_jitter_phase_a = rng.randf_range(0.0, TAU)
+	_jitter_phase_b = rng.randf_range(0.0, TAU)
+	_jitter_phase_c = rng.randf_range(0.0, TAU)
 
 func command_launch(target: Node3D) -> void:
 	_flight_state = STATE_ACTIVE
@@ -112,21 +137,31 @@ func _get_anchor() -> Node3D:
 	return _anchor_ref.get_ref() as Node3D if _anchor_ref != null else null
 
 func _compute_anchor_swarm_point(anchor: Node3D) -> Vector3:
-	var radius: float = SWARM_RADIUS_BASE + SWARM_RADIUS_STEP * float(max(0, slot_index))
-	var angle: float = _swarm_clock * SWARM_ANGULAR_SPEED + _slot_phase
+	var base_radius: float = SWARM_RADIUS_BASE + SWARM_RADIUS_STEP * float(max(0, slot_index))
+	var wobble_t: float = _swarm_clock * (2.1 * _swarm_speed_scale) + _jitter_phase_b
+	var radius_wobble: float = 1.0 + 0.2 * sin(wobble_t)
+	var radius: float = base_radius * _swarm_radius_scale * radius_wobble
+	var angle: float = _swarm_clock * SWARM_ANGULAR_SPEED * _swarm_speed_scale + _slot_phase + _jitter_phase_a
+	var vertical_amp: float = SWARM_HEIGHT * _swarm_height_scale
+	var drift: Vector3 = Vector3(
+		sin(_swarm_clock * 1.7 + _jitter_phase_c),
+		0.0,
+		cos(_swarm_clock * 1.9 + _jitter_phase_b)
+	) * 0.35
 	var local_offset: Vector3 = Vector3(
 		cos(angle) * radius,
-		sin(angle * 1.6 + _slot_phase) * SWARM_HEIGHT,
+		sin(angle * 1.6 + _slot_phase + _jitter_phase_c) * vertical_amp,
 		sin(angle) * radius
-	)
+	) + drift
 	return anchor.global_position + anchor.global_transform.basis * local_offset
 
 func _compute_target_attack_point(target: Node3D) -> Vector3:
-	var angle: float = _swarm_clock * ATTACK_ANGULAR_SPEED + _slot_phase
+	var orbit_radius: float = ATTACK_ORBIT_RADIUS * _attack_radius_scale
+	var angle: float = _swarm_clock * ATTACK_ANGULAR_SPEED * _attack_speed_scale + _slot_phase + _jitter_phase_b
 	var local_offset: Vector3 = Vector3(
-		cos(angle) * ATTACK_ORBIT_RADIUS,
-		sin(angle * 2.0 + _slot_phase) * (SWARM_HEIGHT * 0.45),
-		sin(angle) * ATTACK_ORBIT_RADIUS
+		cos(angle) * orbit_radius,
+		sin(angle * 2.0 + _slot_phase + _jitter_phase_c) * (SWARM_HEIGHT * 0.45 * _swarm_height_scale),
+		sin(angle) * orbit_radius
 	)
 	return target.global_position + local_offset
 
