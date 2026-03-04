@@ -2,7 +2,7 @@
   "godotTools.editorPath.godot4": "${env:GODOT_EXE}",
   "godotTools.lsp.serverHost": "127.0.0.1",
   "godotTools.lsp.serverPort": 6008,
-  "godotTools.lsp.headless": true,
+  "godotTools.lsp.headless": false,
   "godotTools.lsp.autoReconnect.enabled": true,
   "godotTools.lsp.autoReconnect.attempts": 30,
   "godotTools.lsp.autoReconnect.cooldown": 1000
