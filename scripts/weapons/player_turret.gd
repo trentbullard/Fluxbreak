@@ -150,7 +150,7 @@ func _bind_controller() -> void:
 			_stats.stats_changed.connect(_on_stats_changed)
 		_refresh_effective_weapon_stats()
 
-func _on_stats_changed(_affected: Array[int]) -> void:
+func _on_stats_changed(_affected: Array[Stat]) -> void:
 	_refresh_effective_weapon_stats()
 
 func _refresh_effective_weapon_stats() -> void:

@@ -444,5 +444,5 @@ func _refresh_detection_radius() -> void:
 	if sphere != null:
 		sphere.radius = eff_detection_radius
 
-func _on_stats_changed(_affected: Array[int]) -> void:
+func _on_stats_changed(_affected: Array[Stat]) -> void:
 	_refresh_detection_radius()

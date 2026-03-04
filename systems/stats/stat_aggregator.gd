@@ -6,7 +6,7 @@ const Phase = StatTypes.Phase
 const Op = StatTypes.Op
 const Stat = StatTypes.Stat
 
-signal stats_changed(affected: Array[int])
+signal stats_changed(affected: Array[Stat])
 
 const PHASE_ORDER: Dictionary = {
 	Phase.PRE_OVERRIDE: 0,
@@ -34,7 +34,8 @@ func set_base_values(map: Dictionary) -> void:
 
 func clear() -> void:
 	_mods.clear()
-	stats_changed.emit([])
+	var affected: Array[Stat] = []
+	stats_changed.emit(affected)
 
 func add_modifier(m: StatModifier) -> void:
 	if m == null or not m.enabled:

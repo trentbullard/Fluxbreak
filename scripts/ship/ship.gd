@@ -1120,7 +1120,7 @@ func _update_shield_mesh_visibility() -> void:
 		_shield_mat.albedo_color = color
 	shield_mesh.visible = ratio > 0.0
 
-func _on_stats_changed(_affected: Array[int]) -> void:
+func _on_stats_changed(_affected: Array[Stat]) -> void:
 	_refresh_effective_stats()
 
 func _on_heal_hull_requested(amount: float, percent: float) -> void:

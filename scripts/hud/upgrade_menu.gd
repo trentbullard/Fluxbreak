@@ -104,10 +104,11 @@ func _build_ui() -> void:
 		var btn: Button = Button.new()
 		btn.custom_minimum_size = Vector2(400, 50)
 		btn.focus_mode = Control.FOCUS_ALL
-		btn.focus_neighbor_right = btn.get_path_to(btn_close)
 		btn.add_theme_font_size_override("font_size", 16)
 		btn.pressed.connect(_on_button_pressed.bind(i))
 		_container.add_child(btn)
+		if btn_close != null:
+			btn.focus_neighbor_right = btn.get_path_to(btn_close)
 		_buttons.append(btn)
 
 	if btn_close != null and _buttons.size() > 0:
