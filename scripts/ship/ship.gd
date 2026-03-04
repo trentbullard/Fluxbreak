@@ -94,6 +94,16 @@ var eff_angular_accel: Vector3
 var eff_pickup_range: float
 var eff_nanobot_gain_mult: float
 var eff_score_gain_mult: float
+var eff_pilot_g_tolerance: float
+var eff_pilot_g_hard_limit: float
+var eff_pilot_forward_accel_min_scale: float
+var eff_pilot_forward_speed_min_scale: float
+var eff_pilot_forward_g_from_ang_rate: float
+var eff_pilot_forward_g_from_ang_accel: float
+var eff_pilot_forward_g_smoothing_hz: float
+var eff_pilot_perception: float
+var eff_pilot_charisma: float
+var eff_pilot_ingenuity: float
 
 var hull: float = 100.0
 var shield: float = 100.0
@@ -232,6 +242,15 @@ func _apply_pilot_forward_load_profile(def: PilotDef) -> void:
 		_pilot_forward_g_from_ang_rate = max(def.forward_g_from_ang_rate, 0.0)
 		_pilot_forward_g_from_ang_accel = max(def.forward_g_from_ang_accel, 0.0)
 		_pilot_forward_g_smoothing_hz = max(def.forward_g_smoothing_hz, 0.0)
+
+	if stat_aggregator != null:
+		stat_aggregator.set_base_value(Stat.PILOT_G_TOLERANCE, _pilot_forward_g_tolerance)
+		stat_aggregator.set_base_value(Stat.PILOT_G_HARD_LIMIT, _pilot_forward_g_hard_limit)
+		stat_aggregator.set_base_value(Stat.PILOT_FORWARD_ACCEL_MIN_SCALE, _pilot_forward_accel_min_scale)
+		stat_aggregator.set_base_value(Stat.PILOT_FORWARD_SPEED_MIN_SCALE, _pilot_forward_speed_min_scale)
+		stat_aggregator.set_base_value(Stat.PILOT_FORWARD_G_FROM_ANG_RATE, _pilot_forward_g_from_ang_rate)
+		stat_aggregator.set_base_value(Stat.PILOT_FORWARD_G_FROM_ANG_ACCEL, _pilot_forward_g_from_ang_accel)
+		stat_aggregator.set_base_value(Stat.PILOT_FORWARD_G_SMOOTHING_HZ, _pilot_forward_g_smoothing_hz)
 	_smoothed_forward_g = 1.0
 
 func _apply_pilot_attributes(def: PilotDef) -> void:
@@ -239,10 +258,15 @@ func _apply_pilot_attributes(def: PilotDef) -> void:
 		_pilot_perception = 5.0
 		_pilot_charisma = 5.0
 		_pilot_ingenuity = 5.0
-		return
-	_pilot_perception = max(def.perception, 0.0)
-	_pilot_charisma = max(def.charisma, 0.0)
-	_pilot_ingenuity = max(def.ingenuity, 0.0)
+	else:
+		_pilot_perception = max(def.perception, 0.0)
+		_pilot_charisma = max(def.charisma, 0.0)
+		_pilot_ingenuity = max(def.ingenuity, 0.0)
+
+	if stat_aggregator != null:
+		stat_aggregator.set_base_value(Stat.PILOT_PERCEPTION, _pilot_perception)
+		stat_aggregator.set_base_value(Stat.PILOT_CHARISMA, _pilot_charisma)
+		stat_aggregator.set_base_value(Stat.PILOT_INGENUITY, _pilot_ingenuity)
 
 func _apply_pilot_stat_profile(def: PilotDef) -> void:
 	if stat_aggregator == null:
@@ -430,8 +454,8 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 
 	if _throttle_input > 0.0:
 		var current_forward_g: float = _compute_forward_g_load(w_local, ang_accel_local, dt)
-		g_limited_accel_scale = _compute_g_limiter_scale(current_forward_g, _pilot_forward_accel_min_scale)
-		var g_limited_speed_scale: float = _compute_g_limiter_scale(current_forward_g, _pilot_forward_speed_min_scale)
+		g_limited_accel_scale = _compute_g_limiter_scale(current_forward_g, eff_pilot_forward_accel_min_scale)
+		var g_limited_speed_scale: float = _compute_g_limiter_scale(current_forward_g, eff_pilot_forward_speed_min_scale)
 		g_limited_forward_cap = eff_max_speed_forward * g_limited_speed_scale
 		desired_forward = g_limited_forward_cap
 		forward_rate = max(eff_accel_forward * boost * g_limited_accel_scale, 0.0)
@@ -507,6 +531,42 @@ func get_pilot_g_tolerance() -> float:
 func get_pilot_g_hard_limit() -> float:
 	return _pilot_forward_g_hard_limit
 
+func get_effective_pilot_g_tolerance() -> float:
+	return eff_pilot_g_tolerance
+
+func get_effective_pilot_g_hard_limit() -> float:
+	return eff_pilot_g_hard_limit
+
+func get_pilot_forward_accel_min_scale() -> float:
+	return _pilot_forward_accel_min_scale
+
+func get_pilot_forward_speed_min_scale() -> float:
+	return _pilot_forward_speed_min_scale
+
+func get_pilot_forward_g_from_ang_rate() -> float:
+	return _pilot_forward_g_from_ang_rate
+
+func get_pilot_forward_g_from_ang_accel() -> float:
+	return _pilot_forward_g_from_ang_accel
+
+func get_pilot_forward_g_smoothing_hz() -> float:
+	return _pilot_forward_g_smoothing_hz
+
+func get_effective_pilot_forward_accel_min_scale() -> float:
+	return eff_pilot_forward_accel_min_scale
+
+func get_effective_pilot_forward_speed_min_scale() -> float:
+	return eff_pilot_forward_speed_min_scale
+
+func get_effective_pilot_forward_g_from_ang_rate() -> float:
+	return eff_pilot_forward_g_from_ang_rate
+
+func get_effective_pilot_forward_g_from_ang_accel() -> float:
+	return eff_pilot_forward_g_from_ang_accel
+
+func get_effective_pilot_forward_g_smoothing_hz() -> float:
+	return eff_pilot_forward_g_smoothing_hz
+
 func get_pilot_perception() -> float:
 	return _pilot_perception
 
@@ -515,6 +575,15 @@ func get_pilot_charisma() -> float:
 
 func get_pilot_ingenuity() -> float:
 	return _pilot_ingenuity
+
+func get_effective_pilot_perception() -> float:
+	return eff_pilot_perception
+
+func get_effective_pilot_charisma() -> float:
+	return eff_pilot_charisma
+
+func get_effective_pilot_ingenuity() -> float:
+	return eff_pilot_ingenuity
 
 func is_alive() -> bool:
 	return not _dead
@@ -619,8 +688,8 @@ func _compute_forward_g_load(w_local: Vector3, ang_accel_local: Vector3, dt: flo
 	var accel_cap: float = max(eff_angular_accel.length(), 0.0001)
 	var rate_ratio: float = clamp(w_local.length() / rate_cap, 0.0, 2.0)
 	var accel_ratio: float = clamp(ang_accel_local.length() / accel_cap, 0.0, 2.0)
-	var target_g: float = 1.0 + _pilot_forward_g_from_ang_rate * rate_ratio + _pilot_forward_g_from_ang_accel * accel_ratio
-	var smoothing_hz: float = max(_pilot_forward_g_smoothing_hz, 0.0)
+	var target_g: float = 1.0 + eff_pilot_forward_g_from_ang_rate * rate_ratio + eff_pilot_forward_g_from_ang_accel * accel_ratio
+	var smoothing_hz: float = max(eff_pilot_forward_g_smoothing_hz, 0.0)
 	if dt > 0.0 and smoothing_hz > 0.0:
 		var t: float = 1.0 - exp(-smoothing_hz * dt)
 		_smoothed_forward_g = lerp(_smoothed_forward_g, target_g, t)
@@ -629,8 +698,8 @@ func _compute_forward_g_load(w_local: Vector3, ang_accel_local: Vector3, dt: flo
 	return _smoothed_forward_g
 
 func _compute_g_limiter_scale(current_g: float, min_scale: float) -> float:
-	var tolerance: float = max(_pilot_forward_g_tolerance, 0.0)
-	var hard_limit: float = max(_pilot_forward_g_hard_limit, tolerance + 0.01)
+	var tolerance: float = max(eff_pilot_g_tolerance, 0.0)
+	var hard_limit: float = max(eff_pilot_g_hard_limit, tolerance + 0.01)
 	if current_g <= tolerance:
 		return 1.0
 	var overload_alpha: float = clamp((current_g - tolerance) / (hard_limit - tolerance), 0.0, 1.0)
@@ -686,6 +755,16 @@ func _refresh_effective_stats() -> void:
 		eff_pickup_range = pickup_range
 		eff_nanobot_gain_mult = nanobot_gain_mult
 		eff_score_gain_mult = score_gain_mult
+		eff_pilot_g_tolerance = max(_pilot_forward_g_tolerance, 0.0)
+		eff_pilot_g_hard_limit = max(_pilot_forward_g_hard_limit, eff_pilot_g_tolerance + 0.01)
+		eff_pilot_forward_accel_min_scale = clamp(_pilot_forward_accel_min_scale, 0.0, 1.0)
+		eff_pilot_forward_speed_min_scale = clamp(_pilot_forward_speed_min_scale, 0.0, 1.0)
+		eff_pilot_forward_g_from_ang_rate = max(_pilot_forward_g_from_ang_rate, 0.0)
+		eff_pilot_forward_g_from_ang_accel = max(_pilot_forward_g_from_ang_accel, 0.0)
+		eff_pilot_forward_g_smoothing_hz = max(_pilot_forward_g_smoothing_hz, 0.0)
+		eff_pilot_perception = max(_pilot_perception, 0.0)
+		eff_pilot_charisma = max(_pilot_charisma, 0.0)
+		eff_pilot_ingenuity = max(_pilot_ingenuity, 0.0)
 		_update_shield_mesh_visibility()
 		return
 	# Pull effective values once.
@@ -711,6 +790,16 @@ func _refresh_effective_stats() -> void:
 	eff_pickup_range = aggr.compute(Stat.PICKUP_RANGE, pickup_range)
 	eff_nanobot_gain_mult = aggr.compute(Stat.NANOBOT_GAIN_MULT, nanobot_gain_mult)
 	eff_score_gain_mult = aggr.compute(Stat.SCORE_GAIN_MULT, score_gain_mult)
+	eff_pilot_g_tolerance = max(aggr.compute(Stat.PILOT_G_TOLERANCE, _pilot_forward_g_tolerance), 0.0)
+	eff_pilot_g_hard_limit = max(aggr.compute(Stat.PILOT_G_HARD_LIMIT, _pilot_forward_g_hard_limit), eff_pilot_g_tolerance + 0.01)
+	eff_pilot_forward_accel_min_scale = clamp(aggr.compute(Stat.PILOT_FORWARD_ACCEL_MIN_SCALE, _pilot_forward_accel_min_scale), 0.0, 1.0)
+	eff_pilot_forward_speed_min_scale = clamp(aggr.compute(Stat.PILOT_FORWARD_SPEED_MIN_SCALE, _pilot_forward_speed_min_scale), 0.0, 1.0)
+	eff_pilot_forward_g_from_ang_rate = max(aggr.compute(Stat.PILOT_FORWARD_G_FROM_ANG_RATE, _pilot_forward_g_from_ang_rate), 0.0)
+	eff_pilot_forward_g_from_ang_accel = max(aggr.compute(Stat.PILOT_FORWARD_G_FROM_ANG_ACCEL, _pilot_forward_g_from_ang_accel), 0.0)
+	eff_pilot_forward_g_smoothing_hz = max(aggr.compute(Stat.PILOT_FORWARD_G_SMOOTHING_HZ, _pilot_forward_g_smoothing_hz), 0.0)
+	eff_pilot_perception = max(aggr.compute(Stat.PILOT_PERCEPTION, _pilot_perception), 0.0)
+	eff_pilot_charisma = max(aggr.compute(Stat.PILOT_CHARISMA, _pilot_charisma), 0.0)
+	eff_pilot_ingenuity = max(aggr.compute(Stat.PILOT_INGENUITY, _pilot_ingenuity), 0.0)
 	_update_shield_mesh_visibility()
 
 func _apply_ship_visuals(visuals: ShipVisualDef) -> void:

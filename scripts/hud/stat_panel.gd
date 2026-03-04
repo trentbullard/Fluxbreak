@@ -3,11 +3,6 @@ extends ScrollContainer
 class_name StatPanel
 
 const Stat = StatTypes.Stat
-const PILOT_STAT_G_TOLERANCE: int = -1001
-const PILOT_STAT_G_HARD_LIMIT: int = -1002
-const PILOT_STAT_PERCEPTION: int = -1003
-const PILOT_STAT_CHARISMA: int = -1004
-const PILOT_STAT_INGENUITY: int = -1005
 
 # Color constants
 const COLOR_BASE: Color = Color.WHITE
@@ -61,11 +56,16 @@ const STAT_DISPLAY_INFO: Array[Dictionary] = [
 
 	# --- Pilot ---
 	{ "category": "PILOT" },
-	{ "stat": PILOT_STAT_G_TOLERANCE, "name": "G Tolerance", "format": "%.1fG" },
-	{ "stat": PILOT_STAT_G_HARD_LIMIT, "name": "G Hard Limit", "format": "%.1fG" },
-	{ "stat": PILOT_STAT_PERCEPTION, "name": "Perception", "format": "%.1f" },
-	{ "stat": PILOT_STAT_CHARISMA, "name": "Charisma", "format": "%.1f" },
-	{ "stat": PILOT_STAT_INGENUITY, "name": "Ingenuity", "format": "%.1f" },
+	{ "stat": Stat.PILOT_G_TOLERANCE, "name": "G Tolerance", "format": "%.1fG" },
+	{ "stat": Stat.PILOT_G_HARD_LIMIT, "name": "G Hard Limit", "format": "%.1fG" },
+	{ "stat": Stat.PILOT_FORWARD_ACCEL_MIN_SCALE, "name": "Fwd Accel Floor", "format": "%.0f%%", "is_percent": true },
+	{ "stat": Stat.PILOT_FORWARD_SPEED_MIN_SCALE, "name": "Fwd Speed Floor", "format": "%.0f%%", "is_percent": true },
+	{ "stat": Stat.PILOT_FORWARD_G_FROM_ANG_RATE, "name": "G per Ang Rate", "format": "%.2f", "invert": true },
+	{ "stat": Stat.PILOT_FORWARD_G_FROM_ANG_ACCEL, "name": "G per Ang Accel", "format": "%.2f", "invert": true },
+	{ "stat": Stat.PILOT_FORWARD_G_SMOOTHING_HZ, "name": "G Smoothing", "format": "%.1fHz" },
+	{ "stat": Stat.PILOT_PERCEPTION, "name": "Perception", "format": "%.1f" },
+	{ "stat": Stat.PILOT_CHARISMA, "name": "Charisma", "format": "%.1f" },
+	{ "stat": Stat.PILOT_INGENUITY, "name": "Ingenuity", "format": "%.1f" },
 ]
 
 # Turret stat display info
@@ -237,11 +237,16 @@ func _get_base_value(stat_id: int) -> float:
 		Stat.PICKUP_RANGE: return _ship.pickup_range
 		Stat.NANOBOT_GAIN_MULT: return _ship.nanobot_gain_mult
 		Stat.SCORE_GAIN_MULT: return _ship.score_gain_mult
-		PILOT_STAT_G_TOLERANCE: return _ship.get_pilot_g_tolerance()
-		PILOT_STAT_G_HARD_LIMIT: return _ship.get_pilot_g_hard_limit()
-		PILOT_STAT_PERCEPTION: return _ship.get_pilot_perception()
-		PILOT_STAT_CHARISMA: return _ship.get_pilot_charisma()
-		PILOT_STAT_INGENUITY: return _ship.get_pilot_ingenuity()
+		Stat.PILOT_G_TOLERANCE: return _ship.get_pilot_g_tolerance()
+		Stat.PILOT_G_HARD_LIMIT: return _ship.get_pilot_g_hard_limit()
+		Stat.PILOT_FORWARD_ACCEL_MIN_SCALE: return _ship.get_pilot_forward_accel_min_scale()
+		Stat.PILOT_FORWARD_SPEED_MIN_SCALE: return _ship.get_pilot_forward_speed_min_scale()
+		Stat.PILOT_FORWARD_G_FROM_ANG_RATE: return _ship.get_pilot_forward_g_from_ang_rate()
+		Stat.PILOT_FORWARD_G_FROM_ANG_ACCEL: return _ship.get_pilot_forward_g_from_ang_accel()
+		Stat.PILOT_FORWARD_G_SMOOTHING_HZ: return _ship.get_pilot_forward_g_smoothing_hz()
+		Stat.PILOT_PERCEPTION: return _ship.get_pilot_perception()
+		Stat.PILOT_CHARISMA: return _ship.get_pilot_charisma()
+		Stat.PILOT_INGENUITY: return _ship.get_pilot_ingenuity()
 	return 0.0
 
 func _get_net_value(stat_id: int) -> float:
@@ -269,11 +274,16 @@ func _get_net_value(stat_id: int) -> float:
 		Stat.PICKUP_RANGE: return _ship.eff_pickup_range
 		Stat.NANOBOT_GAIN_MULT: return _ship.eff_nanobot_gain_mult
 		Stat.SCORE_GAIN_MULT: return _ship.eff_score_gain_mult
-		PILOT_STAT_G_TOLERANCE: return _ship.get_pilot_g_tolerance()
-		PILOT_STAT_G_HARD_LIMIT: return _ship.get_pilot_g_hard_limit()
-		PILOT_STAT_PERCEPTION: return _ship.get_pilot_perception()
-		PILOT_STAT_CHARISMA: return _ship.get_pilot_charisma()
-		PILOT_STAT_INGENUITY: return _ship.get_pilot_ingenuity()
+		Stat.PILOT_G_TOLERANCE: return _ship.get_effective_pilot_g_tolerance()
+		Stat.PILOT_G_HARD_LIMIT: return _ship.get_effective_pilot_g_hard_limit()
+		Stat.PILOT_FORWARD_ACCEL_MIN_SCALE: return _ship.get_effective_pilot_forward_accel_min_scale()
+		Stat.PILOT_FORWARD_SPEED_MIN_SCALE: return _ship.get_effective_pilot_forward_speed_min_scale()
+		Stat.PILOT_FORWARD_G_FROM_ANG_RATE: return _ship.get_effective_pilot_forward_g_from_ang_rate()
+		Stat.PILOT_FORWARD_G_FROM_ANG_ACCEL: return _ship.get_effective_pilot_forward_g_from_ang_accel()
+		Stat.PILOT_FORWARD_G_SMOOTHING_HZ: return _ship.get_effective_pilot_forward_g_smoothing_hz()
+		Stat.PILOT_PERCEPTION: return _ship.get_effective_pilot_perception()
+		Stat.PILOT_CHARISMA: return _ship.get_effective_pilot_charisma()
+		Stat.PILOT_INGENUITY: return _ship.get_effective_pilot_ingenuity()
 	return 0.0
 
 # --- Weapon Stats Collection ---

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Upgrade" load_steps=8 format=3 uid="uid://d3lo4exd83f5q"]
+[gd_resource type="Resource" script_class="Upgrade" load_steps=7 format=3 uid="uid://d3lo4exd83f5q"]
 
 [ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="1_mod"]
 [ext_resource type="Script" uid="uid://f3a4tqbwupk2" path="res://content/defs/upgrade_def.gd" id="2_upg"]
@@ -25,13 +25,6 @@ value = 8.0
 source_id = "overcharged_capacitors_2"
 metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
 
-[sub_resource type="Resource" id="Resource_projectile_speed"]
-script = ExtResource("1_mod")
-stat = 44
-value = 300.0
-source_id = "overcharged_capacitors_2"
-metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
-
 [sub_resource type="Resource" id="Resource_crit_chance"]
 script = ExtResource("1_mod")
 stat = 23
@@ -43,9 +36,9 @@ metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
 script = ExtResource("2_upg")
 id = "overcharged_capacitors_2"
 display_name = "Overcharged Capacitors II"
-descripton = "Aggressive tuning: faster volleys, heavier hits, hotter shots."
+descripton = "-.8 Shot Delay, +6 Min Damage, +8 Max Damage, +.03 Crit Chance"
 cost = 1800
 tags = Array[String](["offense", "weapons", "damage"])
 tier = 2
-modifiers = Array[ExtResource("1_mod")]([SubResource("Resource_fire_rate"), SubResource("Resource_damage_min"), SubResource("Resource_damage_max"), SubResource("Resource_projectile_speed"), SubResource("Resource_crit_chance")])
+modifiers = Array[ExtResource("1_mod")]([SubResource("Resource_fire_rate"), SubResource("Resource_damage_min"), SubResource("Resource_damage_max"), SubResource("Resource_crit_chance")])
 metadata/_custom_type_script = "uid://f3a4tqbwupk2"
