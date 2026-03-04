@@ -19,7 +19,10 @@ Include (read/use for context):
 - `res://scenes/**` (the .tscn files that contain the nodes, scripts, and resources used to load the game)
 Exclude:
 - `res://assets/**`, `res://build/**` (unless asked)
+
 If context is too large, ask for specific paths.
+
+If other files are needed, ask with justifications.
 
 ## Repo Map (authoritative)
 - **Engine**: Godot 4.5; typed GDScript; autoload singletons in `project.godot`.
