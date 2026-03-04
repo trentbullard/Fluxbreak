@@ -17,11 +17,17 @@ var spawn_index: int = 0
 ## Display name for UI/nameplates
 var display_name: String = "POI"
 
+## Optional path to the mesh that receives visual overrides
+@export var mesh_instance_path: NodePath = NodePath("MeshInstance3D")
+
 ## Reference to mesh instance for visual updates
-@onready var _mesh_instance: MeshInstance3D = $MeshInstance3D as MeshInstance3D
+@onready var _mesh_instance: MeshInstance3D = get_node_or_null(mesh_instance_path) as MeshInstance3D
 
 
 func _ready() -> void:
+	if _mesh_instance == null:
+		_mesh_instance = _find_first_mesh_instance(self)
+
 	if poi_def != null:
 		poi_type = poi_def.poi_type
 		display_name = poi_def.display_name
@@ -86,4 +92,17 @@ func get_poi_id() -> String:
 	if poi_def != null:
 		return poi_def.poi_id
 	return "unknown"
+
+
+func _find_first_mesh_instance(node: Node) -> MeshInstance3D:
+	for child: Node in node.get_children():
+		var mesh: MeshInstance3D = child as MeshInstance3D
+		if mesh != null:
+			return mesh
+
+		var nested_mesh: MeshInstance3D = _find_first_mesh_instance(child)
+		if nested_mesh != null:
+			return nested_mesh
+
+	return null
 

@@ -38,6 +38,7 @@
 [ext_resource type="Script" uid="uid://ciqwfvtmjs36w" path="res://scripts/hud/docking_hud.gd" id="docking_hud_script"]
 [ext_resource type="Script" uid="uid://nc1iigswua3o" path="res://scripts/poi/docking_manager.gd" id="docking_manager_script"]
 [ext_resource type="Resource" path="res://content/data/pois/defense_station.tres" id="poi_defense_def"]
+[ext_resource type="Script" path="res://content/defs/poi_def.gd" id="poi_def_script"]
 [ext_resource type="Script" uid="uid://bnhrcqh8kddw1" path="res://scripts/hud/poi_list_layer.gd" id="poi_list_layer_script"]
 [ext_resource type="Resource" path="res://content/data/pois/offense_station.tres" id="poi_offense_def"]
 [ext_resource type="PackedScene" path="res://scenes/pois/poi_placeholder.tscn" id="poi_scene"]
@@ -207,12 +208,10 @@ target_catalog_path = NodePath("../TargetCatalog")
 script = ExtResource("poi_spawner_script")
 ship_path = NodePath("../Ship")
 poi_scene = ExtResource("poi_scene")
-spawn_interval_min = 20.0
-spawn_interval_max = 40.0
+spawn_interval_min = 30.0
+spawn_interval_max = 50.0
 min_distance_from_player = 1000.0
-offense_def = ExtResource("poi_offense_def")
-defense_def = ExtResource("poi_defense_def")
-utility_def = ExtResource("poi_utility_def")
+poi_defs = Array[ExtResource("poi_def_script")]([ExtResource("poi_offense_def"), ExtResource("poi_defense_def"), ExtResource("poi_utility_def")])
 debug_logging = false
 
 [node name="DockingManager" type="Node" parent="."]

@@ -15,6 +15,8 @@ enum PoiType {
 @export var poi_type: PoiType = PoiType.OFFENSE
 
 @export_group("Spawning")
+## Relative chance for this definition to be selected
+@export_range(0.0, 100.0, 0.05) var spawn_weight: float = 1.0
 ## Base spawn distance from origin/player for this POI type
 @export var spawn_distance: float = 3000.0
 ## Minimum distance this POI must be from other POIs

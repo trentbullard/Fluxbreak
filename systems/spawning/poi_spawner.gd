@@ -53,12 +53,8 @@ signal poi_counts_changed(offense: int, defense: int, utility: int, total: int)
 @export var min_duplicate_weight: float = 0.3
 
 @export_group("POI Definitions")
-## Definition to use for OFFENSE type
-@export var offense_def: PoiDef
-## Definition to use for DEFENSE type
-@export var defense_def: PoiDef
-## Definition to use for UTILITY type
-@export var utility_def: PoiDef
+## Pool of POI definitions used for type selection and spawning
+@export var poi_defs: Array[PoiDef] = []
 
 @export_group("Debug")
 ## Enable debug logging
@@ -84,12 +80,14 @@ var _player_ship: Node3D
 ## List of all active POI instances
 var _active_pois: Array[PoiInstance] = []
 
-## Count of each POI type currently active
-var _type_counts: Dictionary = {
-	PoiDef.PoiType.OFFENSE: 0,
-	PoiDef.PoiType.DEFENSE: 0,
-	PoiDef.PoiType.UTILITY: 0,
-}
+## Definitions grouped by POI type
+var _defs_by_type: Dictionary = {}
+
+## Count of each configured POI type currently active
+var _type_counts: Dictionary = {}
+
+## Ordered list of configured POI types (derived from poi_defs)
+var _configured_types: Array[int] = []
 
 ## Next instance ID to assign
 var _next_instance_id: int = 0
@@ -114,6 +112,8 @@ func _ready() -> void:
 		_rng.seed = rng_seed
 	else:
 		_rng.randomize()
+
+	_rebuild_definition_cache()
 	
 	# Get player ship reference
 	_player_ship = get_node_or_null(ship_path) as Node3D
@@ -140,11 +140,16 @@ func _process(delta: float) -> void:
 
 ## Get counts of active POIs by type
 func get_poi_counts() -> Dictionary:
+	var by_type: Dictionary = {}
+	for type_val in _type_counts.keys():
+		by_type[type_val] = int(_type_counts[type_val])
+
 	return {
-		"offense": _type_counts[PoiDef.PoiType.OFFENSE],
-		"defense": _type_counts[PoiDef.PoiType.DEFENSE],
-		"utility": _type_counts[PoiDef.PoiType.UTILITY],
+		"offense": int(_type_counts.get(PoiDef.PoiType.OFFENSE, 0)),
+		"defense": int(_type_counts.get(PoiDef.PoiType.DEFENSE, 0)),
+		"utility": int(_type_counts.get(PoiDef.PoiType.UTILITY, 0)),
 		"total": _active_pois.size(),
+		"by_type": by_type,
 	}
 
 
@@ -184,25 +189,24 @@ func _on_spawn_timer_timeout() -> void:
 # ─────────────────────────────────────────────────────────────────────────────
 
 func _spawn_poi_of_type(type: PoiDef.PoiType) -> PoiInstance:
-	if poi_scene == null:
-		push_warning("PoiSpawner: No poi_scene assigned!")
-		return null
-	
 	# Get the definition for this type
-	var def: PoiDef = _get_def_for_type(type)
+	var def: PoiDef = _pick_def_for_type(type)
 	if def == null:
 		push_warning("PoiSpawner: No definition for type %d" % type)
 		return null
 	
 	# Calculate spawn position
-	position = _pick_spawn_position()
+	var spawn_position: Vector3 = _pick_spawn_position()
 	
 	# Instantiate POI
-	var inst: Node3D = poi_scene.instantiate()
+	var inst: Node = _instantiate_poi_scene(def)
+	if inst == null:
+		return null
+
 	var poi: PoiInstance = inst as PoiInstance
 	
 	if poi == null:
-		push_warning("PoiSpawner: poi_scene does not contain PoiInstance!")
+		push_warning("PoiSpawner: Scene for POI '%s' must have PoiInstance as root." % def.poi_id)
 		inst.queue_free()
 		return null
 	
@@ -216,14 +220,16 @@ func _spawn_poi_of_type(type: PoiDef.PoiType) -> PoiInstance:
 	
 	# Add to scene tree
 	get_tree().current_scene.add_child(poi)
-	poi.global_position = position
+	poi.global_position = spawn_position
 	
 	# Add to 'poi' group for offscreen indicator tracking
 	poi.add_to_group("poi")
 	
 	# Track the POI
 	_active_pois.append(poi)
-	_type_counts[type] += 1
+	if not _type_counts.has(type):
+		_type_counts[type] = 0
+	_type_counts[type] = int(_type_counts[type]) + 1
 	
 	# Connect to tree_exited for cleanup
 	var type_captured: PoiDef.PoiType = type
@@ -236,7 +242,7 @@ func _spawn_poi_of_type(type: PoiDef.PoiType) -> PoiInstance:
 	_emit_counts_changed()
 	
 	_log("Spawned POI [%s] type=%d at %s (index=%d, id=%d)" % [
-		def.display_name, type, position, index, id
+		def.display_name, type, spawn_position, index, id
 	])
 	
 	return poi
@@ -244,16 +250,17 @@ func _spawn_poi_of_type(type: PoiDef.PoiType) -> PoiInstance:
 
 func _on_poi_removed(poi: PoiInstance, type: PoiDef.PoiType) -> void:
 	_active_pois.erase(poi)
-	_type_counts[type] = maxi(_type_counts[type] - 1, 0)
+	if _type_counts.has(type):
+		_type_counts[type] = maxi(int(_type_counts[type]) - 1, 0)
 	_emit_counts_changed()
 	_log("POI removed. Active count: %d" % _active_pois.size())
 
 
 func _emit_counts_changed() -> void:
 	poi_counts_changed.emit(
-		_type_counts[PoiDef.PoiType.OFFENSE],
-		_type_counts[PoiDef.PoiType.DEFENSE],
-		_type_counts[PoiDef.PoiType.UTILITY],
+		int(_type_counts.get(PoiDef.PoiType.OFFENSE, 0)),
+		int(_type_counts.get(PoiDef.PoiType.DEFENSE, 0)),
+		int(_type_counts.get(PoiDef.PoiType.UTILITY, 0)),
 		_active_pois.size()
 	)
 
@@ -265,45 +272,122 @@ func _emit_counts_changed() -> void:
 func _pick_weighted_type() -> PoiDef.PoiType:
 	var weights: Dictionary = {}
 	
-	for type_val in [PoiDef.PoiType.OFFENSE, PoiDef.PoiType.DEFENSE, PoiDef.PoiType.UTILITY]:
+	for type_val in _configured_types:
 		var type: PoiDef.PoiType = type_val as PoiDef.PoiType
-		var count: int = _type_counts[type]
+		var count: int = int(_type_counts.get(type, 0))
+		var type_spawn_weight: float = _get_type_spawn_weight(type) * base_type_weight
+
+		if type_spawn_weight <= 0.0:
+			continue
 		
 		if count == 0:
 			# Type not present on map - give bonus weight
-			weights[type] = base_type_weight + missing_type_bonus
+			weights[type] = type_spawn_weight + missing_type_bonus
 		else:
 			# Type present - use minimum weight to allow duplicates
-			weights[type] = maxf(min_duplicate_weight, base_type_weight / float(count + 1))
+			weights[type] = maxf(min_duplicate_weight, type_spawn_weight / float(count + 1))
+
+	if weights.is_empty():
+		push_warning("PoiSpawner: Could not pick POI type because no weighted definitions are configured.")
+		if _configured_types.is_empty():
+			return PoiDef.PoiType.OFFENSE
+		return _configured_types[0] as PoiDef.PoiType
 	
 	# Weighted random selection
 	var total_weight: float = 0.0
-	for w: float in weights.values():
-		total_weight += w
+	for weight_val in weights.values():
+		total_weight += float(weight_val)
 	
 	var roll: float = _rng.randf() * total_weight
 	var cumulative: float = 0.0
 	
 	for type_val in weights.keys():
-		cumulative += weights[type_val]
+		cumulative += float(weights[type_val])
 		if roll < cumulative:
 			_log("Type selection: roll=%.2f, weights=%s, chose=%d" % [roll, weights, type_val])
 			return type_val as PoiDef.PoiType
 	
 	# Fallback
-	return PoiDef.PoiType.OFFENSE
+	if _configured_types.is_empty():
+		return PoiDef.PoiType.OFFENSE
+	return _configured_types[0] as PoiDef.PoiType
 
 
-func _get_def_for_type(type: PoiDef.PoiType) -> PoiDef:
-	match type:
-		PoiDef.PoiType.OFFENSE:
-			return offense_def
-		PoiDef.PoiType.DEFENSE:
-			return defense_def
-		PoiDef.PoiType.UTILITY:
-			return utility_def
-		_:
-			return offense_def
+func _rebuild_definition_cache() -> void:
+	_defs_by_type.clear()
+	_type_counts.clear()
+	_configured_types.clear()
+
+	for def: PoiDef in poi_defs:
+		if def == null:
+			continue
+
+		var type: PoiDef.PoiType = def.poi_type
+		var defs_for_type: Array[PoiDef] = _get_defs_for_type(type)
+		defs_for_type.append(def)
+		_defs_by_type[type] = defs_for_type
+
+		if not _type_counts.has(type):
+			_type_counts[type] = 0
+			_configured_types.append(type)
+
+	if _configured_types.is_empty():
+		push_warning("PoiSpawner: poi_defs is empty. No POIs will spawn.")
+
+
+func _get_defs_for_type(type: PoiDef.PoiType) -> Array[PoiDef]:
+	if not _defs_by_type.has(type):
+		var empty_defs: Array[PoiDef] = []
+		return empty_defs
+	return _defs_by_type[type] as Array[PoiDef]
+
+
+func _pick_def_for_type(type: PoiDef.PoiType) -> PoiDef:
+	var defs_for_type: Array[PoiDef] = _get_defs_for_type(type)
+	if defs_for_type.is_empty():
+		return null
+	if defs_for_type.size() == 1:
+		return defs_for_type[0]
+
+	var total_weight: float = 0.0
+	for def: PoiDef in defs_for_type:
+		total_weight += maxf(def.spawn_weight, 0.0)
+
+	if total_weight <= 0.0:
+		var random_index: int = _rng.randi_range(0, defs_for_type.size() - 1)
+		return defs_for_type[random_index]
+
+	var roll: float = _rng.randf() * total_weight
+	var cumulative: float = 0.0
+	for def: PoiDef in defs_for_type:
+		cumulative += maxf(def.spawn_weight, 0.0)
+		if roll < cumulative:
+			return def
+
+	return defs_for_type[0]
+
+
+func _get_type_spawn_weight(type: PoiDef.PoiType) -> float:
+	var defs_for_type: Array[PoiDef] = _get_defs_for_type(type)
+	var total: float = 0.0
+	for def: PoiDef in defs_for_type:
+		total += maxf(def.spawn_weight, 0.0)
+	return total
+
+
+func _instantiate_poi_scene(def: PoiDef) -> Node:
+	var scene_to_use: PackedScene = poi_scene
+	if def != null and def.scene_override != null:
+		scene_to_use = def.scene_override
+
+	if scene_to_use == null:
+		var poi_id: String = "unknown"
+		if def != null:
+			poi_id = def.poi_id
+		push_warning("PoiSpawner: No scene assigned for POI '%s'." % poi_id)
+		return null
+
+	return scene_to_use.instantiate()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -377,16 +461,18 @@ func _random_point_in_sphere(min_radius: float, max_radius: float) -> Vector3:
 func _is_valid_position(pos: Vector3, separation: float, min_player_dist: float) -> bool:
 	# Check distance from player
 	if _player_ship != null:
-		var player_dist: float = pos.distance_to(_player_ship.global_position)
-		if player_dist < min_player_dist:
+		var min_player_dist_sq: float = min_player_dist * min_player_dist
+		var player_dist_sq: float = pos.distance_squared_to(_player_ship.global_position)
+		if player_dist_sq < min_player_dist_sq:
 			return false
 	
 	# Check distance from other POIs
+	var separation_sq: float = separation * separation
 	for poi: PoiInstance in _active_pois:
 		if not is_instance_valid(poi):
 			continue
-		var poi_dist: float = pos.distance_to(poi.global_position)
-		if poi_dist < separation:
+		var poi_dist_sq: float = pos.distance_squared_to(poi.global_position)
+		if poi_dist_sq < separation_sq:
 			return false
 	
 	return true
