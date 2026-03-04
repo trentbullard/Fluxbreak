@@ -54,11 +54,15 @@ func _enter_tree() -> void:
 	_bind_controller()
 
 func _exit_tree() -> void:
-	if _runtime != null:
-		_runtime.on_unequip()
-		_runtime = null
 	if _controller != null:
 		_controller.unregister_turret(self, team_id)
+	if _stats != null and _stats.stats_changed.is_connected(_on_stats_changed):
+		_stats.stats_changed.disconnect(_on_stats_changed)
+	_controller = null
+	_detector = null
+	_stats = null
+	if is_queued_for_deletion():
+		_teardown_runtime()
 
 # --- public api ---
 
@@ -141,14 +145,25 @@ func _bind_controller() -> void:
 			ctrl = p as TurretController
 			p = p.get_parent()
 	
+	if _controller != null and _controller != ctrl:
+		_controller.unregister_turret(self, team_id)
 	_controller = ctrl
 	if _controller != null:
 		_controller.register_turret(self, team_id)
 		_detector = _controller.detector
-		_stats = _controller.get_stat_aggregator() if _controller.has_method("get_stat_aggregator") else null
+		var next_stats: StatAggregator = _controller.get_stat_aggregator() if _controller.has_method("get_stat_aggregator") else null
+		if _stats != null and _stats != next_stats and _stats.stats_changed.is_connected(_on_stats_changed):
+			_stats.stats_changed.disconnect(_on_stats_changed)
+		_stats = next_stats
 		if _stats != null and not _stats.stats_changed.is_connected(_on_stats_changed):
 			_stats.stats_changed.connect(_on_stats_changed)
 		_refresh_effective_weapon_stats()
+
+func _teardown_runtime() -> void:
+	if _runtime == null:
+		return
+	_runtime.on_unequip()
+	_runtime = null
 
 func _on_stats_changed(_affected: Array[Stat]) -> void:
 	_refresh_effective_weapon_stats()

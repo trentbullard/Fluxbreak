@@ -118,6 +118,8 @@ func _notify_changed() -> void:
 
 func _realign_and_apply_current() -> void:
 	var count: int = _mount_stack.size()
+	var controller_node: Node = get_parent()
+	var controller_node_path: NodePath = controller_node.get_path() if controller_node != null else NodePath("")
 	
 	# 1) ensure pool big enough
 	ensure_pool_size(count)
@@ -130,6 +132,9 @@ func _realign_and_apply_current() -> void:
 	# 3) apply weapons to first K assemblies
 	var k: int = min(count, _pool.size())
 	for i in range(k):
+		_pool[i].controller_path = controller_node_path
+		if _pool[i].turret != null:
+			_pool[i].turret.controller_path = controller_node_path
 		var mount: MountLoadoutDef = _mount_stack[i]
 		var weapon: WeaponDef = mount.weapon if mount != null else null
 		var team_id: int = mount.team_id if mount != null else DEFAULT_TEAM_ID
@@ -138,6 +143,9 @@ func _realign_and_apply_current() -> void:
 	
 	# 4) clear the rest
 	for j in range(k, _pool.size()):
+		_pool[j].controller_path = controller_node_path
+		if _pool[j].turret != null:
+			_pool[j].turret.controller_path = controller_node_path
 		_pool[j].clear_weapon(true)
 	
 	# 5) place by explicit mount_id anchors, or fallback to policy.

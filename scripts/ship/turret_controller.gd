@@ -59,7 +59,8 @@ func unregister_turret(turret: PlayerTurret, team_id: int) -> void:
 
 func get_assigned_target(turret: PlayerTurret, team_id: int) -> Node3D:
 	if assign_mode == AssignMode.FOCUS_PER_TEAM and _team_to_target.has(team_id):
-		var t := (_team_to_target[team_id] as WeakRef).get_ref() as Node3D
+		var team_wr: WeakRef = _team_to_target[team_id] as WeakRef
+		var t: Node3D = team_wr.get_ref() as Node3D if team_wr != null else null
 		if t != null:
 			return t
 		_team_to_target.erase(team_id)
@@ -384,7 +385,7 @@ func _choose_best_shared_target(live: Array[Node3D], turrets: Array[PlayerTurret
 
 # Score a target for a given set of turrets:
 # returns {base_hits:int, total_hits:int}
-func _score_target_for_turrets(target: PlayerTurret, turrets: Array[PlayerTurret]) -> Dictionary:
+func _score_target_for_turrets(target: Node3D, turrets: Array[PlayerTurret]) -> Dictionary:
 	var base_hits: int = 0
 	var total_hits: int = 0
 	for t in turrets:
