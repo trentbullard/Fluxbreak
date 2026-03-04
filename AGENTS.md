@@ -11,12 +11,14 @@
 
 ## Scope & Context Policy
 Include (read/use for context):
-- `res://scripts/**`
-- `res://systems/**`
-- `res://content/data/**` (cards, enemies, targets, loadouts)
-- `res://scenes/world/world.tscn`, `res://scenes/main_menu/main_menu.tscn`
+- `res://docs/vision.md` (general game vision/vibe/mood)
+- `res://scripts/**` (node attached and autoload scripts for node logic/controls)
+- `res://systems/**` (scripts for systems logic e.g. stats, spawning, mounts, wave director, catalogs)
+- `res://content/defs/**` (definitions for game objects/configurations)
+- `res://content/data/**` (definitions for the static game resources)
+- `res://scenes/**` (the .tscn files that contain the nodes, scripts, and resources used to load the game)
 Exclude:
-- `res://assets/**`, `res://art/**`, `res://audio/**`, `**/.import/**`, `addons/**` (unless asked)
+- `res://assets/**`, `res://build/**` (unless asked)
 If context is too large, ask for specific paths.
 
 ## Repo Map (authoritative)
