@@ -21,3 +21,14 @@ If context is too large, ask for specific paths.
 
 ## Repo Map (authoritative)
 - **Engine**: Godot 4.5; typed GDScript; autoload singletons in `project.godot`.
+
+## Local Godot CLI (required for validation/builds)
+- Configure `GODOT_EXE` in the user environment to the local Godot console executable.
+- Keep repo config machine-agnostic: `.vscode/settings.json` should use `${env:GODOT_EXE}`.
+- Do not assume `godot` is in PATH. Use `GODOT_EXE` or pass `-GodotExe`.
+- Validation/import command:
+  `& $env:GODOT_EXE --headless --path . --import --quit`
+- Windows export script (existing project script):
+  `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\release\export_windows.ps1 -GodotExe $env:GODOT_EXE -BuildType debug`
+- Example one-time setup (PowerShell):
+  `setx GODOT_EXE "C:\path\to\Godot_v4.5-stable_mono_win64_console.exe"`

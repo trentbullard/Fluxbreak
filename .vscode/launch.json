@@ -1,15 +1,20 @@
 {
-  // Use IntelliSense to learn about possible attributes.
-  // Hover to view descriptions of existing attributes.
-  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
+    {
+      "name": "Godot: Launch Project",
+      "type": "godot",
+      "request": "launch",
+      "project": "${workspaceFolder}",
+      "scene": "main",
+      "editor_path": "${config:godotTools.editorPath.godot4}",
+      "additional_options": ""
+    },
     {
       "name": "PowerShell: Launch Current File",
       "type": "PowerShell",
       "request": "launch",
-      "script": "${file}",
-      "args": []
+      "script": "${file}"
     }
   ]
 }

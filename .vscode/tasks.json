@@ -1,0 +1,65 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Godot: Import/Refresh Project",
+      "type": "shell",
+      "command": "${config:godotTools.editorPath.godot4}",
+      "args": [
+        "--headless",
+        "--path",
+        "${workspaceFolder}",
+        "--import",
+        "--quit"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Godot: Build C# Solutions",
+      "type": "shell",
+      "command": "${config:godotTools.editorPath.godot4}",
+      "args": [
+        "--headless",
+        "--path",
+        "${workspaceFolder}",
+        "--build-solutions",
+        "--quit"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Godot: Export Windows (Debug)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\scripts\\release\\export_windows.ps1",
+        "-GodotExe",
+        "${config:godotTools.editorPath.godot4}",
+        "-BuildType",
+        "debug"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Godot: Export Windows (Release)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\scripts\\release\\export_windows.ps1",
+        "-GodotExe",
+        "${config:godotTools.editorPath.godot4}",
+        "-BuildType",
+        "release"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}
