@@ -1,4 +1,4 @@
-[gd_scene load_steps=71 format=3 uid="uid://ppgr7fveqbrd"]
+[gd_scene load_steps=73 format=3 uid="uid://ppgr7fveqbrd"]
 
 [ext_resource type="Texture2D" uid="uid://d3x23q2en3ng1" path="res://assets/plain_starfield_1.png" id="1_dphjl"]
 [ext_resource type="Script" uid="uid://bksswhha71raw" path="res://scripts/world/world_bootstrap.gd" id="1_ovomx"]
@@ -38,6 +38,7 @@
 [ext_resource type="AudioStream" uid="uid://cg2afukmlkc53" path="res://assets/sounds/laser_bolt.wav" id="21_4jq4u"]
 [ext_resource type="Script" uid="uid://dxmdaw34bmt8c" path="res://scripts/hud/offscreen_indicator_layer.gd" id="21_osil"]
 [ext_resource type="Script" uid="uid://bc5o0q4rptsnq" path="res://content/defs/status_effect_def.gd" id="22_sar2w"]
+[ext_resource type="PackedScene" uid="uid://l62gx0wmdeq1" path="res://scenes/enemies/machine_coremind_mk1.tscn" id="23_q3hpu"]
 [ext_resource type="PackedScene" uid="uid://k1pngwulr8x4" path="res://scenes/pois/poi_arms_factory.tscn" id="26_kx0xk"]
 [ext_resource type="PackedScene" uid="uid://h4psmu2wl1p7" path="res://scenes/pois/poi_shield_array.tscn" id="27_kx0xk"]
 [ext_resource type="PackedScene" uid="uid://drrnshnyy4682" path="res://scenes/main_menu/main_menu.tscn" id="29_kx0xk"]
@@ -116,9 +117,9 @@ id = "machine_warden_mk1"
 display_name = "Warden Mk I"
 faction = "Machines"
 role = "Brawler"
-tier = 4
-threat_cost = 4
-bounty_scrap = 4
+tier = 8
+threat_cost = 8
+bounty_scrap = 8
 affixes = Array[String](["Prime", "Core", "Sigma"])
 score_on_kill = 40
 max_hull = 240.0
@@ -127,6 +128,25 @@ shield_regen = 10.0
 thrust = 80.0
 weapon = SubResource("Resource_goy61")
 model_scene = ExtResource("18_l4ul6")
+metadata/_custom_type_script = "uid://bx6wive40u6f"
+
+[sub_resource type="Resource" id="Resource_j0rhc"]
+script = ExtResource("13_jyr8v")
+id = "machine_coremind_mk1"
+display_name = "Coremind Mk I"
+faction = "Machines"
+role = "Brawler"
+tier = 16
+threat_cost = 16
+bounty_scrap = 16
+affixes = Array[String](["Prime", "Core", "Sigma"])
+score_on_kill = 50
+max_hull = 500.0
+max_shield = 160.0
+shield_regen = 15.0
+evasion = 0.2
+thrust = 100.0
+model_scene = ExtResource("23_q3hpu")
 metadata/_custom_type_script = "uid://bx6wive40u6f"
 
 [sub_resource type="Resource" id="Resource_5fxch"]
@@ -248,7 +268,7 @@ script = ExtResource("9_bt7bg")
 
 [node name="EnemyCatalog" type="Node" parent="."]
 script = ExtResource("10_6hctx")
-enemies = Array[ExtResource("13_jyr8v")]([ExtResource("14_5o5dd"), ExtResource("15_d0ajt"), ExtResource("16_jyr8v"), SubResource("Resource_7rtjl")])
+enemies = Array[ExtResource("13_jyr8v")]([ExtResource("14_5o5dd"), ExtResource("15_d0ajt"), ExtResource("16_jyr8v"), SubResource("Resource_7rtjl"), SubResource("Resource_j0rhc")])
 
 [node name="TargetCatalog" type="Node" parent="."]
 script = ExtResource("11_ues17")

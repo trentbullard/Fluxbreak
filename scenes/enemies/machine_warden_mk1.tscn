@@ -8,6 +8,15 @@
 
 [node name="MachineWarden" type="Node3D"]
 script = ExtResource("1_fk6bi")
+shield_speed_min_deg = 20.0
+shield_speed_max_deg = 40.0
+shield_retarget_min_sec = 10.0
+shield_retarget_max_sec = 20.0
+sensor_speed_min_deg = 20.0
+sensor_speed_max_deg = 40.0
+sensor_retarget_min_sec = 10.0
+sensor_retarget_max_sec = 20.0
+preview_in_editor = false
 
 [node name="MachineWardenBodyMesh" parent="." instance=ExtResource("2_1ufxs")]
 

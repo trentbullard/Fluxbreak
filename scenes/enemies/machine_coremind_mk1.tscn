@@ -1,0 +1,24 @@
+[gd_scene load_steps=7 format=3 uid="uid://l62gx0wmdeq1"]
+
+[ext_resource type="Script" uid="uid://dck2480rsydw2" path="res://scripts/enemy/machine_coremind_controller.gd" id="1_ww7pj"]
+[ext_resource type="PackedScene" uid="uid://djr01s1bgku45" path="res://assets/meshes/machine_coremind_core.glb" id="2_spnxd"]
+[ext_resource type="PackedScene" uid="uid://tl4vuf7rjwnt" path="res://assets/meshes/machine_coremind_inner_sphere.glb" id="3_kknys"]
+[ext_resource type="PackedScene" uid="uid://65pf00gkwrps" path="res://assets/meshes/machine_coremind_secondary_sphere.glb" id="4_j4ma0"]
+[ext_resource type="PackedScene" uid="uid://dtuvq5yey34nh" path="res://assets/meshes/machine_coremind_outer_sphere.glb" id="5_r6ta1"]
+[ext_resource type="PackedScene" uid="uid://d1vk6s4fdkw27" path="res://assets/meshes/machine_coremind_shield.glb" id="6_rtds6"]
+
+[node name="MachineCoremind" type="Node3D"]
+script = ExtResource("1_ww7pj")
+sphere_speed_min_deg = 20.0
+sphere_speed_max_deg = 40.0
+preview_in_editor = false
+
+[node name="MachineCoremindCoreMesh" parent="." instance=ExtResource("2_spnxd")]
+
+[node name="MachineCoremindInnerSphereMesh" parent="." instance=ExtResource("3_kknys")]
+
+[node name="MachineCoremindSecondarySphereMesh" parent="." instance=ExtResource("4_j4ma0")]
+
+[node name="MachineCoremindOuterSphereMesh" parent="." instance=ExtResource("5_r6ta1")]
+
+[node name="MachineCoremindShieldMesh" parent="." instance=ExtResource("6_rtds6")]
