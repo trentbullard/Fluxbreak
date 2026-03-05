@@ -3,18 +3,18 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://b7ycb2mwqsxto"
-path="res://.godot/imported/arms_factory.glb-12a4c3d98b016d7acdc8f3e9bc569c02.scn"
+uid="uid://ddyu8fs4piked"
+path="res://.godot/imported/machine_warden_sensor_ring_2.glb-bf561e6b77c49740b7be89a3a989384e.scn"
 
 [deps]
 
-source_file="res://assets/meshes/arms_factory.glb"
-dest_files=["res://.godot/imported/arms_factory.glb-12a4c3d98b016d7acdc8f3e9bc569c02.scn"]
+source_file="res://assets/meshes/machine_warden_sensor_ring_2.glb"
+dest_files=["res://.godot/imported/machine_warden_sensor_ring_2.glb-bf561e6b77c49740b7be89a3a989384e.scn"]
 
 [params]
 
 nodes/root_type="MeshInstance3D"
-nodes/root_name="ArmsFactoryMesh"
+nodes/root_name="MachineWardenSensorRing2Mesh"
 nodes/root_script=null
 nodes/apply_root_scale=true
 nodes/root_scale=1.0

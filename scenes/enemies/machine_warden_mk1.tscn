@@ -1,0 +1,18 @@
+[gd_scene load_steps=6 format=3 uid="uid://ddy8v18np0oaq"]
+
+[ext_resource type="Script" uid="uid://b4qfybi1fkosu" path="res://scripts/enemy/machine_warden_controller.gd" id="1_fk6bi"]
+[ext_resource type="PackedScene" uid="uid://cu1woglqhe4tl" path="res://assets/meshes/machine_warden_body.glb" id="2_1ufxs"]
+[ext_resource type="PackedScene" uid="uid://d3r5dgujq7jac" path="res://assets/meshes/machine_warden_sensor_ring_1.glb" id="3_hrwsw"]
+[ext_resource type="PackedScene" uid="uid://ddyu8fs4piked" path="res://assets/meshes/machine_warden_sensor_ring_2.glb" id="4_nt6wi"]
+[ext_resource type="PackedScene" uid="uid://bkl2acya2l71f" path="res://assets/meshes/machine_warden_shields.glb" id="5_aix8p"]
+
+[node name="MachineWarden" type="Node3D"]
+script = ExtResource("1_fk6bi")
+
+[node name="MachineWardenBodyMesh" parent="." instance=ExtResource("2_1ufxs")]
+
+[node name="MachineWardenSensorRing1Mesh" parent="." instance=ExtResource("3_hrwsw")]
+
+[node name="MachineWardenSensorRing2Mesh" parent="." instance=ExtResource("4_nt6wi")]
+
+[node name="MachineWardenShieldsMesh" parent="." instance=ExtResource("5_aix8p")]
