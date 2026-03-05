@@ -101,6 +101,7 @@ var _first_poi_spawned: bool = false
 ## Elapsed time since spawner started (for radius growth)
 var _elapsed_time: float = 0.0
 
+var _last_spawn_used_scene_override: bool = false
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Lifecycle
@@ -216,7 +217,7 @@ func _spawn_poi_of_type(type: PoiDef.PoiType) -> PoiInstance:
 	var index: int = _total_spawned
 	_total_spawned += 1
 	
-	poi.configure(def, id, index)
+	poi.configure(def, id, index, _last_spawn_used_scene_override)
 	
 	# Add to scene tree
 	get_tree().current_scene.add_child(poi)
@@ -376,18 +377,24 @@ func _get_type_spawn_weight(type: PoiDef.PoiType) -> float:
 
 
 func _instantiate_poi_scene(def: PoiDef) -> Node:
-	var scene_to_use: PackedScene = poi_scene
+	_last_spawn_used_scene_override = false
 	if def != null and def.scene_override != null:
-		scene_to_use = def.scene_override
+		var override_instance: Node = def.scene_override.instantiate()
+		if override_instance is PoiInstance:
+			_last_spawn_used_scene_override = true
+			return override_instance
+		else:
+			push_warning("PoiSpawner: scene_override for POI '%s' does not have PoiInstance as root." % def.poi_id)
+			override_instance.queue_free()
 
-	if scene_to_use == null:
+	if poi_scene == null:
 		var poi_id: String = "unknown"
 		if def != null:
 			poi_id = def.poi_id
 		push_warning("PoiSpawner: No scene assigned for POI '%s'." % poi_id)
 		return null
 
-	return scene_to_use.instantiate()
+	return poi_scene.instantiate()
 
 
 # ─────────────────────────────────────────────────────────────────────────────

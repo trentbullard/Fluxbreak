@@ -23,6 +23,7 @@ var display_name: String = "POI"
 ## Reference to mesh instance for visual updates
 @onready var _mesh_instance: MeshInstance3D = get_node_or_null(mesh_instance_path) as MeshInstance3D
 
+var _using_scene_override: bool = false
 
 func _ready() -> void:
 	if _mesh_instance == null:
@@ -38,10 +39,11 @@ func _ready() -> void:
 
 
 ## Configure this POI instance with a definition and metadata
-func configure(def: PoiDef, id: int, index: int) -> void:
+func configure(def: PoiDef, id: int, index: int, using_scene_override: bool = false) -> void:
 	poi_def = def
 	instance_id = id
 	spawn_index = index
+	_using_scene_override = using_scene_override
 	if def != null:
 		poi_type = def.poi_type
 		display_name = def.display_name
@@ -52,6 +54,9 @@ func configure(def: PoiDef, id: int, index: int) -> void:
 ## Apply visual properties from the definition
 func _apply_visuals() -> void:
 	if poi_def == null or _mesh_instance == null:
+		return
+	
+	if _using_scene_override:
 		return
 	
 	# Apply material override if provided
