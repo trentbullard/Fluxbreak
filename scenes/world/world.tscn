@@ -1,4 +1,4 @@
-[gd_scene load_steps=61 format=3 uid="uid://ppgr7fveqbrd"]
+[gd_scene load_steps=63 format=3 uid="uid://ppgr7fveqbrd"]
 
 [ext_resource type="Texture2D" uid="uid://d3x23q2en3ng1" path="res://assets/plain_starfield_1.png" id="1_dphjl"]
 [ext_resource type="Script" uid="uid://bksswhha71raw" path="res://scripts/world/world_bootstrap.gd" id="1_ovomx"]
@@ -33,17 +33,17 @@
 [ext_resource type="Script" uid="uid://b554csvoi1u8w" path="res://scripts/hud/debug_wave_hud.gd" id="19_wbwoo"]
 [ext_resource type="Resource" uid="uid://csohgxk4eco6e" path="res://content/data/targets/wreck_medium.tres" id="20_5o5dd"]
 [ext_resource type="Script" uid="uid://dxmdaw34bmt8c" path="res://scripts/hud/offscreen_indicator_layer.gd" id="21_osil"]
+[ext_resource type="PackedScene" uid="uid://k1pngwulr8x4" path="res://scenes/pois/poi_arms_factory.tscn" id="26_kx0xk"]
 [ext_resource type="PackedScene" uid="uid://drrnshnyy4682" path="res://scenes/main_menu/main_menu.tscn" id="29_kx0xk"]
 [ext_resource type="PackedScene" uid="uid://dywsechusg01y" path="res://scenes/hud/pause_menu.tscn" id="32_5o5dd"]
 [ext_resource type="Script" uid="uid://ciqwfvtmjs36w" path="res://scripts/hud/docking_hud.gd" id="docking_hud_script"]
 [ext_resource type="Script" uid="uid://nc1iigswua3o" path="res://scripts/poi/docking_manager.gd" id="docking_manager_script"]
-[ext_resource type="Resource" path="res://content/data/pois/defense_station.tres" id="poi_defense_def"]
-[ext_resource type="Script" path="res://content/defs/poi_def.gd" id="poi_def_script"]
+[ext_resource type="Resource" uid="uid://sa2sbk3wdc8b" path="res://content/data/pois/defense_station.tres" id="poi_defense_def"]
+[ext_resource type="Script" uid="uid://c7bw4eh6k252" path="res://content/defs/poi_def.gd" id="poi_def_script"]
 [ext_resource type="Script" uid="uid://bnhrcqh8kddw1" path="res://scripts/hud/poi_list_layer.gd" id="poi_list_layer_script"]
-[ext_resource type="Resource" path="res://content/data/pois/offense_station.tres" id="poi_offense_def"]
 [ext_resource type="PackedScene" path="res://scenes/pois/poi_placeholder.tscn" id="poi_scene"]
 [ext_resource type="Script" uid="uid://d1ddx3ctljet4" path="res://systems/spawning/poi_spawner.gd" id="poi_spawner_script"]
-[ext_resource type="Resource" path="res://content/data/pois/utility_station.tres" id="poi_utility_def"]
+[ext_resource type="Resource" uid="uid://bw82rl3bfvbmr" path="res://content/data/pois/utility_station.tres" id="poi_utility_def"]
 [ext_resource type="PackedScene" uid="uid://vui0na1ujbtt" path="res://scenes/hud/upgrade_menu.tscn" id="upgrade_menu_scene"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_1fp7r"]
@@ -90,6 +90,13 @@ billboard_mode = 1
 [sub_resource type="QuadMesh" id="QuadMesh_t5ptc"]
 material = SubResource("StandardMaterial3D_v5dby")
 size = Vector2(0.5, 0.5)
+
+[sub_resource type="Resource" id="Resource_5fxch"]
+script = ExtResource("poi_def_script")
+poi_id = "arms_factory"
+display_name = "Arms Factory"
+scene_override = ExtResource("26_kx0xk")
+metadata/_custom_type_script = "uid://c7bw4eh6k252"
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1cxds"]
 bg_color = Color(0.94905585, 0.19966345, 0.19966345, 0.95000005)
@@ -211,7 +218,7 @@ poi_scene = ExtResource("poi_scene")
 spawn_interval_min = 30.0
 spawn_interval_max = 50.0
 min_distance_from_player = 1000.0
-poi_defs = Array[ExtResource("poi_def_script")]([ExtResource("poi_offense_def"), ExtResource("poi_defense_def"), ExtResource("poi_utility_def")])
+poi_defs = Array[ExtResource("poi_def_script")]([SubResource("Resource_5fxch"), ExtResource("poi_defense_def"), ExtResource("poi_utility_def")])
 debug_logging = false
 
 [node name="DockingManager" type="Node" parent="."]

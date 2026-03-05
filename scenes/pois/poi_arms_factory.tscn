@@ -1,0 +1,24 @@
+[gd_scene load_steps=5 format=3 uid="uid://k1pngwulr8x4"]
+
+[ext_resource type="PackedScene" uid="uid://b7ycb2mwqsxto" path="res://assets/meshes/arms_factory.glb" id="1_css6t"]
+[ext_resource type="Script" uid="uid://brh4jqcc46yxq" path="res://scripts/poi/poi_instance.gd" id="1_pmn74"]
+[ext_resource type="Script" uid="uid://c7bw4eh6k252" path="res://content/defs/poi_def.gd" id="2_ijru3"]
+
+[sub_resource type="Resource" id="Resource_fkgf8"]
+script = ExtResource("2_ijru3")
+poi_id = "arms_factory"
+display_name = "Arms Factory"
+upgrade_tags = Array[String](["weapons", "damage", "accuracy", "offense"])
+metadata/_custom_type_script = "uid://c7bw4eh6k252"
+
+[node name="PoiArmsFactory" type="Node3D"]
+script = ExtResource("1_pmn74")
+poi_def = SubResource("Resource_fkgf8")
+mesh_instance_path = NodePath("ArmsFactoryMesh")
+
+[node name="ArmsFactoryMesh" parent="." instance=ExtResource("1_css6t")]
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 27, -14)
+omni_range = 100.0
+omni_attenuation = 0.1

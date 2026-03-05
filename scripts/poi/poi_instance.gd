@@ -105,4 +105,3 @@ func _find_first_mesh_instance(node: Node) -> MeshInstance3D:
 			return nested_mesh
 
 	return null
-
