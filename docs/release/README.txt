@@ -1,6 +1,6 @@
 VOIDBREAKER - PLAYER README
 
-Version: 0.1.2
+Version: 0.1.3
 Support: p4ndepravity@gmail.com
 
 INSTALLATION

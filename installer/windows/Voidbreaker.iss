@@ -1,5 +1,5 @@
 #define AppName "Voidbreaker"
-#define AppVersion "0.1.2"
+#define AppVersion "0.1.3"
 #define AppPublisher "p4ndepravitygaming"
 #define AppURL "https://www.youtube.com/@p4ndepravitygaming"
 #define AppExeName "Voidbreaker.exe"
@@ -40,7 +40,6 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 Source: "{#RootDir}\build\windows\Voidbreaker.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#RootDir}\build\windows\Voidbreaker.pck"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#RootDir}\docs\release\README.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#RootDir}\docs\release\THIRD_PARTY_NOTICES.txt"; DestDir: "{app}"; Flags: ignoreversion
 
