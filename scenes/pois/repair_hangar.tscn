@@ -1,0 +1,73 @@
+[gd_scene load_steps=5 format=3 uid="uid://clx0tg1vyk3lh"]
+
+[ext_resource type="Script" uid="uid://brh4jqcc46yxq" path="res://scripts/poi/poi_instance.gd" id="1_ghe0r"]
+[ext_resource type="Script" uid="uid://c7bw4eh6k252" path="res://content/defs/poi_def.gd" id="2_fy04b"]
+[ext_resource type="PackedScene" uid="uid://ckagpxu7nlx4f" path="res://assets/meshes/repair_hangar.glb" id="3_l3wyt"]
+
+[sub_resource type="Resource" id="Resource_5v6w1"]
+script = ExtResource("2_fy04b")
+poi_id = "repair_hangar"
+display_name = "Repair Hangar"
+poi_type = 2
+upgrade_tags = Array[String](["utility", "repair", "misc"])
+metadata/_custom_type_script = "uid://c7bw4eh6k252"
+
+[node name="RepairHangar" type="Node3D"]
+script = ExtResource("1_ghe0r")
+poi_def = SubResource("Resource_5v6w1")
+mesh_instance_path = NodePath("RepairHangarMesh")
+
+[node name="RepairHangarMesh" parent="." instance=ExtResource("3_l3wyt")]
+
+[node name="SpotLight3D" type="SpotLight3D" parent="."]
+transform = Transform3D(0.70710677, -0.6084542, -0.36025468, 0, -0.50947714, 0.8604842, -0.70710677, -0.6084542, -0.3602547, 1.8618407, 46.845978, 1.7950325)
+spot_range = 75.0
+spot_attenuation = -0.5
+spot_angle = 30.82
+
+[node name="SpotLight3D2" type="SpotLight3D" parent="."]
+transform = Transform3D(0.40730536, -0.85872, -0.31097004, 0.45753992, -0.10282476, 0.8832238, -0.7904173, -0.5020229, 0.3510176, 1.9228024, 46.742504, -2.0151553)
+spot_range = 75.0
+spot_attenuation = -0.5
+spot_angle = 30.82
+
+[node name="SpotLight3D3" type="SpotLight3D" parent="."]
+transform = Transform3D(0.5555161, -0.7336999, 0.39126262, -0.57637, -0.0006098859, 0.8171885, -0.5993327, -0.6794734, -0.42322144, -2.2034972, 46.428253, 1.924993)
+spot_range = 75.0
+spot_attenuation = -0.5
+spot_angle = 30.82
+
+[node name="SpotLight3D4" type="SpotLight3D" parent="."]
+transform = Transform3D(0.7032152, -0.60466474, 0.37399042, -0.06073006, 0.47301525, 0.8789586, -0.7083787, -0.6408097, 0.29590994, -2.213725, 46.430443, -2.1829042)
+spot_range = 75.0
+spot_attenuation = -0.5
+spot_angle = 30.82
+
+[node name="SpotLight3D5" type="SpotLight3D" parent="."]
+transform = Transform3D(0.70710677, -0.6084542, -0.36025468, 0, -0.50947714, 0.8604842, -0.70710677, -0.6084542, -0.3602547, 2.1946945, -2.6851, 2.3519711)
+spot_range = 75.0
+spot_attenuation = -0.5
+spot_angle = 30.82
+
+[node name="SpotLight3D6" type="SpotLight3D" parent="."]
+transform = Transform3D(0.40730536, -0.85872, -0.31097004, 0.45753992, -0.10282476, 0.8832238, -0.7904173, -0.5020229, 0.3510176, 2.2496493, -2.7753742, -2.464655)
+spot_range = 75.0
+spot_attenuation = -0.5
+spot_angle = 30.82
+
+[node name="SpotLight3D7" type="SpotLight3D" parent="."]
+transform = Transform3D(0.55551606, -0.7336999, 0.3912625, -0.57636994, -0.0006098859, 0.8171887, -0.59933263, -0.6794734, -0.42322135, -2.055286, -2.5227919, 2.0105991)
+spot_range = 75.0
+spot_attenuation = -0.5
+spot_angle = 30.82
+
+[node name="SpotLight3D8" type="SpotLight3D" parent="."]
+transform = Transform3D(0.7032152, -0.60466474, 0.37399042, -0.06073006, 0.47301525, 0.8789586, -0.7083787, -0.6408097, 0.29590994, -2.1144156, -2.64039, -2.1517668)
+spot_range = 75.0
+spot_attenuation = -0.5
+spot_angle = 30.82
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -46.28795, 74.19906, -105.55939)
+omni_range = 250.0
+omni_attenuation = -0.02
