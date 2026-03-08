@@ -597,6 +597,7 @@ theme_override_constants/h_separation = 6
 theme_override_constants/v_separation = 4
 
 [node name="DebugWaveHUD" type="MarginContainer" parent="HUD/ScreenRoot/BottomDock"]
+visible = false
 layout_mode = 2
 script = ExtResource("19_wbwoo")
 wave_director_path = NodePath("../../../../WaveDirector")
