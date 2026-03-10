@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c8r3d4xeppq31"
-path="res://.godot/imported/voidbreaker.png-3af34228af4b2a2e048ecfcc797cc5c9.ctex"
+uid="uid://y6hdqpgvajnr"
+path="res://.godot/imported/fluxbreak.svg-bc90d471a20076532fce965f18b202a7.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/logo/voidbreaker.png"
-dest_files=["res://.godot/imported/voidbreaker.png-3af34228af4b2a2e048ecfcc797cc5c9.ctex"]
+source_file="res://assets/logo/fluxbreak.svg"
+dest_files=["res://.godot/imported/fluxbreak.svg-bc90d471a20076532fce965f18b202a7.ctex"]
 
 [params]
 
@@ -38,3 +38,6 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
+svg/scale=1.0
+editor/scale_with_editor_scale=false
+editor/convert_colors_with_editor_theme=false

@@ -1,11 +1,11 @@
-VOIDBREAKER END USER LICENSE AGREEMENT
+FLUXBREAK END USER LICENSE AGREEMENT
 
 1. License Grant
 You are granted a non-exclusive, non-transferable, revocable license to
-install and use Voidbreaker for personal entertainment purposes only.
+install and use Fluxbreak for personal entertainment purposes only.
 
 2. Ownership
-Voidbreaker and all related intellectual property are owned by:
+Fluxbreak and all related intellectual property are owned by:
 p4ndepravity (also publishing as p4ndepravitygaming).
 All rights are reserved except where third-party licenses explicitly apply.
 
@@ -18,7 +18,7 @@ You may not:
 - Remove copyright or trademark notices.
 
 4. Third-Party Components
-Voidbreaker includes third-party software and assets. License terms and
+Fluxbreak includes third-party software and assets. License terms and
 notices are provided in THIRD_PARTY_NOTICES.txt.
 
 5. Warranty Disclaimer

@@ -17,8 +17,8 @@ $outputDir = Join-Path $projectRoot "build\linux"
 
 New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
 
-$binaryPath = Join-Path $outputDir "Voidbreaker.x86_64"
-$pckPath = Join-Path $outputDir "Voidbreaker.pck"
+$binaryPath = Join-Path $outputDir "Fluxbreak.x86_64"
+$pckPath = Join-Path $outputDir "Fluxbreak.pck"
 $presetName = "Linux/BSD"
 $exportFlag = if ($BuildType -eq "debug") { "--export-debug" } else { "--export-release" }
 

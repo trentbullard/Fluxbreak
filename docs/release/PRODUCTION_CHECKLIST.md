@@ -1,4 +1,4 @@
-# Voidbreaker Production Checklist
+# Fluxbreak Production Checklist
 
 Use this checklist before shipping any public build.
 
@@ -37,17 +37,17 @@ Use this checklist before shipping any public build.
 - [ ] Optional Linux export:
   - [ ] `scripts/release/export_linux.ps1 -GodotExe "C:\path\to\Godot_v4.5-stable_win64_console.exe"`
 - [ ] Confirm these files exist after export:
-  - [ ] `build/windows/Voidbreaker.exe`
-  - [ ] `build/windows/Voidbreaker.pck`
+  - [ ] `build/windows/Fluxbreak.exe`
+  - [ ] `build/windows/Fluxbreak.pck`
 
 ## Installer Packaging
 
 - [ ] Install Inno Setup (ISCC in PATH).
-- [ ] Set metadata constants in `installer/windows/Voidbreaker.iss`.
+- [ ] Set metadata constants in `installer/windows/Fluxbreak.iss`.
 - [ ] Build installer:
   - [ ] `scripts/release/export_windows.ps1 -GodotExe "C:\path\to\Godot_v4.5-stable_win64_console.exe" -BuildInstaller`
 - [ ] Confirm installer output exists:
-  - [ ] `build/installer/Voidbreaker-Setup-<version>.exe`
+  - [ ] `build/installer/Fluxbreak-Setup-<version>.exe`
 
 ## Final QA
 

@@ -1,11 +1,11 @@
-VOIDBREAKER - PLAYER README
+FLUXBREAK - PLAYER README
 
 Version: 0.1.3
 Support: p4ndepravity@gmail.com
 
 INSTALLATION
 1) Run the installer and follow prompts.
-2) Launch Voidbreaker from the Start Menu shortcut.
+2) Launch Fluxbreak from the Start Menu shortcut.
 
 SYSTEM NOTES
 - This build targets 64-bit Windows.
@@ -24,5 +24,5 @@ KNOWN LIMITATIONS
 - TODO: Add known issues for this release.
 
 LEGAL
-- Voidbreaker is proprietary software.
-- All rights reserved by p4ndepravity.
+- Fluxbreak is proprietary software.
+- All rights reserved by p4ndepravitygaming.

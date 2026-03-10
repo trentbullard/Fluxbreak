@@ -23,7 +23,7 @@ $projectRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
 
 $projectFile = Join-Path $projectRoot "project.godot"
 $exportFile = Join-Path $projectRoot "export_presets.cfg"
-$installerFile = Join-Path $projectRoot "installer\windows\Voidbreaker.iss"
+$installerFile = Join-Path $projectRoot "installer\windows\Fluxbreak.iss"
 $readmeFile = Join-Path $projectRoot "docs\release\README.txt"
 
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
@@ -121,7 +121,7 @@ $exportUpdated = Replace-OrThrow -Content $exportUpdated -Pattern '(?m)^applicat
 Write-Text -Path $exportFile -Content $exportUpdated
 
 $installerText = Read-Text -Path $installerFile
-$installerUpdated = Replace-OrThrow -Content $installerText -Pattern '(?m)^#define AppVersion "[^"]+"' -Replacement "#define AppVersion ""$displayVersion""" -Label "installer/windows/Voidbreaker.iss AppVersion"
+$installerUpdated = Replace-OrThrow -Content $installerText -Pattern '(?m)^#define AppVersion "[^"]+"' -Replacement "#define AppVersion ""$displayVersion""" -Label "installer/windows/Fluxbreak.iss AppVersion"
 Write-Text -Path $installerFile -Content $installerUpdated
 
 $readmeText = Read-Text -Path $readmeFile

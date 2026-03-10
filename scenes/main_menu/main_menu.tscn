@@ -2,11 +2,11 @@
 
 [ext_resource type="Script" uid="uid://ctypdxlxrxqme" path="res://scripts/main_menu/main_menu.gd" id="1_0ebjn"]
 [ext_resource type="Script" uid="uid://bp86upa6vqbpe" path="res://scripts/main_menu/high_score_container.gd" id="3_ob46e"]
-[ext_resource type="Texture2D" uid="uid://c8r3d4xeppq31" path="res://assets/logo/voidbreaker.png" id="3_uqeha"]
+[ext_resource type="Texture2D" uid="uid://c8r3d4xeppq31" path="res://assets/logo/fluxbreak.png" id="3_uqeha"]
 [ext_resource type="Resource" uid="uid://cgc248sqmyo6r" path="res://content/data/pilots/pilot_roster.tres" id="4_pilot_roster"]
 [ext_resource type="FontFile" uid="uid://bajq4o7ypmdmu" path="res://assets/fonts/Chakra_Petch/ChakraPetch-Light.ttf" id="4_wem23"]
 [ext_resource type="FontFile" uid="uid://dtkmmkanjxyxd" path="res://assets/fonts/Orbitron/Orbitron-Regular.ttf" id="5_3ovsr"]
-[ext_resource type="AudioStream" uid="uid://letca81rhxc1" path="res://assets/sounds/voidbreaker_menu.mp3" id="7_5seab"]
+[ext_resource type="AudioStream" uid="uid://letca81rhxc1" path="res://assets/sounds/fluxbreak_menu.mp3" id="7_5seab"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_ob46e"]
 line_spacing = 0.0
@@ -85,13 +85,13 @@ layout_mode = 2
 layout_mode = 2
 
 [node name="Logo" type="Sprite2D" parent="CenterContainer/MainMenuContainer/TitleContainer"]
-position = Vector2(25.99999, 75.00001)
+position = Vector2(36, 86.000015)
 scale = Vector2(0.28857422, 0.28857422)
 texture = ExtResource("3_uqeha")
 
 [node name="Title" type="Label" parent="CenterContainer/MainMenuContainer/TitleContainer"]
 layout_mode = 2
-text = "VoidBreaker"
+text = "Fluxbreak"
 label_settings = SubResource("LabelSettings_ob46e")
 horizontal_alignment = 1
 vertical_alignment = 1

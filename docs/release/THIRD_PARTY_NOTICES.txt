@@ -1,4 +1,4 @@
-VOIDBREAKER - THIRD-PARTY NOTICES
+FLUXBREAK - THIRD-PARTY NOTICES
 
 This product includes third-party software and content.
 
@@ -96,5 +96,5 @@ Reference license URL: https://openfontlicense.org/open-font-license-official-te
 Project Ownership Notice
 ------------------------------------------------------------
 Unless otherwise stated in this file, all code, art, audio, music, text,
-design, and other content in Voidbreaker are proprietary and all rights are
+design, and other content in Fluxbreak are proprietary and all rights are
 reserved by p4ndepravity.

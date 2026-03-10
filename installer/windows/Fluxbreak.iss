@@ -1,8 +1,8 @@
-#define AppName "Voidbreaker"
+#define AppName "Fluxbreak"
 #define AppVersion "0.1.3"
 #define AppPublisher "p4ndepravitygaming"
 #define AppURL "https://www.youtube.com/@p4ndepravitygaming"
-#define AppExeName "Voidbreaker.exe"
+#define AppExeName "Fluxbreak.exe"
 #define RootDir "..\\.."
 
 [Setup]
@@ -27,7 +27,7 @@ RestartApplications=no
 LicenseFile={#RootDir}\docs\release\EULA.txt
 InfoBeforeFile={#RootDir}\docs\release\THIRD_PARTY_NOTICES.txt
 OutputDir={#RootDir}\build\installer
-OutputBaseFilename=Voidbreaker-Setup-{#AppVersion}
+OutputBaseFilename=Fluxbreak-Setup-{#AppVersion}
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -39,7 +39,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "{#RootDir}\build\windows\Voidbreaker.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#RootDir}\build\windows\Fluxbreak.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#RootDir}\docs\release\README.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#RootDir}\docs\release\THIRD_PARTY_NOTICES.txt"; DestDir: "{app}"; Flags: ignoreversion
 

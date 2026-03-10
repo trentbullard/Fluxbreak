@@ -36,11 +36,11 @@ function Get-TemplateVersionFromGodot {
 
 $projectRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
 $outputDir = Join-Path $projectRoot "build\windows"
-$installerScript = Join-Path $projectRoot "installer\windows\Voidbreaker.iss"
+$installerScript = Join-Path $projectRoot "installer\windows\Fluxbreak.iss"
 
 New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
 
-$exePath = Join-Path $outputDir "Voidbreaker.exe"
+$exePath = Join-Path $outputDir "Fluxbreak.exe"
 $presetName = "Windows Desktop"
 $exportFlag = if ($BuildType -eq "debug") { "--export-debug" } else { "--export-release" }
 

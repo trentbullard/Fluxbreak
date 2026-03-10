@@ -4,7 +4,7 @@ Use this as the source for itch.io/Steam/storefront text.
 
 ## One-Line Pitch
 
-Voidbreaker is a fast roguelike space auto-battler where positioning, loadout synergy, and wave control decide survival.
+Fluxbreak is a fast roguelike space auto-battler where positioning, loadout synergy, and wave control decide survival.
 
 ## Short Description (<= 200 chars)
 
@@ -12,7 +12,7 @@ Pilot through escalating waves in a dark future battlefield. Build turret synerg
 
 ## Long Description
 
-Voidbreaker is a wave-based roguelike auto-battler set in deep space. Your ship fights continuously while you steer the run through positioning, upgrades, and tactical docking choices.
+Fluxbreak is a wave-based roguelike auto-battler set in deep space. Your ship fights continuously while you steer the run through positioning, upgrades, and tactical docking choices.
 
 Key features:
 - Auto-combat focused on weapon and upgrade synergy
