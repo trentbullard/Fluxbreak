@@ -91,7 +91,7 @@ texture = ExtResource("3_uqeha")
 
 [node name="Title" type="Label" parent="CenterContainer/MainMenuContainer/TitleContainer"]
 layout_mode = 2
-text = "Fluxbreak"
+text = "FluxBreak"
 label_settings = SubResource("LabelSettings_ob46e")
 horizontal_alignment = 1
 vertical_alignment = 1
