@@ -2,3 +2,9 @@
 .godot/
 /android/
 /build/
+
+# Local MCP adapter runtime artifacts
+/scripts/tools/blender/*.pid
+/scripts/tools/blender/*.log
+/scripts/tools/reaper/*.pid
+/scripts/tools/reaper/*.log
