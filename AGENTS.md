@@ -37,3 +37,15 @@ If other files are needed, ask with justifications.
   `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\release\export_windows.ps1 -GodotExe $env:GODOT_EXE -BuildType debug`
 - Example one-time setup (PowerShell):
   `setx GODOT_EXE "C:\path\to\Godot_v4.5-stable_mono_win64_console.exe"`
+
+## Blender Policy
+- When working on Blender assets, scenes, or mesh/material tasks, always use the `blender` MCP server (via adapter) first before guessing or writing abstract instructions.
+- For adapter setup, startup checks, and the required Blender MCP workflow, read `scripts/tools/blender/blender.md` before proceeding.
+- Prefer making concrete Blender changes through MCP tools when possible.
+- When generating Blender Python, keep scripts modular, readable, and safe to rerun.
+
+## REAPER Policy
+- When working on REAPER sessions, tracks, FX, MIDI, automation, or arrangement tasks, always use the `reaper` MCP server (via adapter) first before guessing or writing abstract instructions.
+- For adapter setup, startup checks, and the required REAPER MCP workflow, read `scripts/tools/reaper/reaper.md` before proceeding.
+- Prefer making concrete REAPER changes through MCP tools when possible.
+- When generating REAPER automation code, keep scripts modular, readable, and safe to rerun.
