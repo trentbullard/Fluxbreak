@@ -489,7 +489,9 @@ func _layout_future_overlay() -> void:
 			118.0 * _hud_scale,
 			118.0 * _hud_scale
 		)
-		_abilities_container.position = _ability_frame_rect.position + Vector2(19.0, 19.0) * _hud_scale
+		var ability_content_size: Vector2 = _abilities_container.get_combined_minimum_size()
+		_abilities_container.position = _ability_frame_rect.get_center() - ability_content_size * 0.5
+		_abilities_container.size = ability_content_size
 
 	if _weapons_container != null:
 		_weapons_container.set_anchors_preset(Control.PRESET_TOP_LEFT)
@@ -777,7 +779,7 @@ func _update_repair_widget_text() -> void:
 	var cost: int = 500
 	if _ship != null and _ship.has_method("get_hull_repair_cost"):
 		cost = int(_ship.call("get_hull_repair_cost"))
-	_repair_label.text = "Hull Repair\n(%d)" % cost
+	_repair_label.text = "(%d)" % cost
 
 func _update_repair_hotkey_prompt() -> void:
 	if _repair_hotkey_label == null:

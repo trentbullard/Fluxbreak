@@ -1,4 +1,4 @@
-[gd_scene load_steps=74 format=3 uid="uid://ppgr7fveqbrd"]
+[gd_scene load_steps=75 format=3 uid="uid://ppgr7fveqbrd"]
 
 [ext_resource type="Texture2D" uid="uid://d3x23q2en3ng1" path="res://assets/plain_starfield_1.png" id="1_dphjl"]
 [ext_resource type="Script" uid="uid://bksswhha71raw" path="res://scripts/world/world_bootstrap.gd" id="1_ovomx"]
@@ -44,6 +44,7 @@
 [ext_resource type="PackedScene" uid="uid://drrnshnyy4682" path="res://scenes/main_menu/main_menu.tscn" id="29_kx0xk"]
 [ext_resource type="PackedScene" uid="uid://dywsechusg01y" path="res://scenes/hud/pause_menu.tscn" id="32_5o5dd"]
 [ext_resource type="PackedScene" uid="uid://clx0tg1vyk3lh" path="res://scenes/pois/repair_hangar.tscn" id="34_q3hpu"]
+[ext_resource type="Texture2D" uid="uid://b1rx8aem1fau8" path="res://content/ui/hud/repair_icon.svg" id="49_j0rhc"]
 [ext_resource type="Script" uid="uid://ciqwfvtmjs36w" path="res://scripts/hud/docking_hud.gd" id="docking_hud_script"]
 [ext_resource type="Script" uid="uid://nc1iigswua3o" path="res://scripts/poi/docking_manager.gd" id="docking_manager_script"]
 [ext_resource type="Script" uid="uid://c7bw4eh6k252" path="res://content/defs/poi_def.gd" id="poi_def_script"]
@@ -175,21 +176,14 @@ scene_override = ExtResource("34_q3hpu")
 upgrade_tags = Array[String](["utility", "repair", "misc"])
 metadata/_custom_type_script = "uid://c7bw4eh6k252"
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1cxds"]
-bg_color = Color(0.94905585, 0.19966345, 0.19966345, 0.95000005)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.5, 0.08, 0.08, 1)
-corner_radius_top_left = 64
-corner_radius_top_right = 64
-corner_radius_bottom_right = 64
-corner_radius_bottom_left = 64
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_4jq4u"]
+texture = ExtResource("49_j0rhc")
 
 [sub_resource type="LabelSettings" id="LabelSettings_1cxds"]
 line_spacing = 1.0
 font_size = 11
+outline_size = 2
+outline_color = Color(0, 0, 0, 1)
 
 [sub_resource type="LabelSettings" id="LabelSettings_2m0ga"]
 line_spacing = 0.0
@@ -503,15 +497,15 @@ custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_1cxds")
+theme_override_styles/panel = SubResource("StyleBoxTexture_4jq4u")
 
 [node name="RepairLabel" type="Label" parent="HUD/ScreenRoot/BottomDock/ShipHud/AbilitiesContainer/RepairPanel"]
 layout_mode = 2
-text = "Hull Repair
-(500)"
+size_flags_vertical = 1
+text = "(500)"
 label_settings = SubResource("LabelSettings_1cxds")
 horizontal_alignment = 1
-vertical_alignment = 1
+vertical_alignment = 2
 
 [node name="HotkeyLabel" type="Label" parent="HUD/ScreenRoot/BottomDock/ShipHud/AbilitiesContainer/RepairPanel"]
 layout_mode = 2
