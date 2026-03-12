@@ -1,0 +1,24 @@
+## Core Gameplay Loop / Vision
+
+- Pilot First: Each run begins with pilot selection. Pilots unlock progressively as the player completes objectives and narrative milestones with previously available characters. Pilot choice determines the initial narrative perspective, starting dialogue pool, intended build direction, and default ship.
+- Ship Identity with Flexibility: Each pilot has a default ship that reflects their intended combat style, but unlocked ships may later be paired with different pilots to create alternate synergies, unusual builds, and high-risk combinations outside the intended archetype.
+- Run Entry Framing: After selecting a pilot, the player launches into the run through a stylized intro sequence: brief glimpses of station life, crew interaction, humor, maintenance work, and ordinary routines transition into the attack, breach, capture, and emergency departure. The selected pilot becomes the emotional center of that transition.
+- Narrative During Combat: During live gameplay, the selected pilot and the surviving station crewmate exchange intermittent radio dialogue. These lines are emotional, reactive, and relationship-driven, reflecting shared history, urgency, frustration, grief, humor, or determination depending on who is flying and who remains behind.
+- Faction-Driven Runs: Runs are anchored by a primary hostile faction or hostile force identity. That identity should materially shape pressure patterns, target priority, counterplay, and how the run escalates.
+- Faction Identity Matters: A strong build against one hostile identity may underperform against another. Weapon choices, defensive investments, movement decisions, and upgrade priorities should interact meaningfully with enemy traits rather than scaling universally.
+- System / Battlefield Identity: Runs should also be shaped by the battlefield context. This may come from star systems, map conditions, environmental rules, hazards, visibility changes, economy modifiers, or other run-level modifiers that influence decision-making without obscuring readability.
+- Escalation Structure: Runs should build through recognizable escalation beats rather than feeling like an endless flat ramp. This may include phase shifts, sector transitions, boss gates, new battlefield rules, or other major state changes that recontextualize the run as it progresses.
+- Wave Survival Structure: The player survives escalating combat pressure where threat grows through overlapping changes in count, durability, speed, composition, tactical friction, and timing. The exact pacing format can evolve, but the run should remain legible and tension should clearly trend upward.
+- Nanobot Economy: Destroyed enemies, objectives, and salvage opportunities feed a shared run economy. Nanobots are the primary run currency and should support both immediate survival decisions and longer-term build shaping during the run.
+- Synergy Over Raw Power: Survival depends less on isolated upgrades and more on discovering combinations that multiply effectiveness:
+  - weapon interaction,
+  - status layering,
+  - defensive timing,
+  - economy acceleration,
+  - faction exploitation.
+- Major Encounters: Runs should feature one or more major encounter peaks that test the build more explicitly than ordinary waves. These may be bosses, faction champions, siege events, or other climax encounters depending on the final run structure.
+- Scaling Philosophy: Enemy scaling must outpace careless or unfocused builds. Strong runs should feel earned through compounding synergy rather than simple stat accumulation.
+- Build Experimentation: Every pilot has an intended build path, but the upgrade system should remain open enough that players can intentionally or accidentally discover powerful off-path builds, strange hybrid strategies, and occasionally broken combinations.
+- Replay Through Variance: Pilot choice, faction choice, starting system modifiers, upgrade rolls, ship combinations, and dialogue pairings should create strong replay variety even before additional story systems exist.
+- Endless Mode: Endless should exist as a mode where narrative completion falls away and the run is judged by survival quality and duration. Enemy scaling must eventually exceed realistic player scaling no matter how strong the build becomes.
+- Endless Design Principle: The best endless builds should feel like temporary victories against inevitability — players squeezing out extra seconds through superior synergy, movement, and decision-making rather than reaching true immortality.

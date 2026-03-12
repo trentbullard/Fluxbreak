@@ -2,6 +2,7 @@
 extends Node
 
 ## Central enum of all upgradable stats.
+## IMPORTANT: append new entries to the end to preserve serialized enum values in resources.
 enum Stat {
 	# Mobility
 	MAX_SPEED_FORWARD,
@@ -90,6 +91,11 @@ enum Stat {
 	PILOT_FORWARD_G_FROM_ANG_RATE,
 	PILOT_FORWARD_G_FROM_ANG_ACCEL,
 	PILOT_FORWARD_G_SMOOTHING_HZ,
+
+	# Minion / drone controls
+	MINION_RECHARGE_RATE,
+	MINION_DISCHARGE_RATE,
+	MINION_RADIO_RANGE,
 }
 
 ## Types of damage
