@@ -703,6 +703,8 @@ func _draw_speed_bar(rect: Rect2) -> void:
 
 func _draw_speed_segment(rect: Rect2, fill_amount: float, active_color: Color, direction: int) -> void:
 	var polygon: PackedVector2Array = _make_speed_segment_polygon(rect, direction)
+	if polygon.size() < 3:
+		return
 	draw_colored_polygon(polygon, Color(0.07, 0.09, 0.13, 0.92))
 	var closed: PackedVector2Array = polygon.duplicate()
 	closed.append(polygon[0])
@@ -712,15 +714,28 @@ func _draw_speed_segment(rect: Rect2, fill_amount: float, active_color: Color, d
 		return
 
 	var fill_rect: Rect2 = rect.grow(-1.0 * _hud_scale)
+	if fill_rect.size.x <= 1.0 or fill_rect.size.y <= 1.0:
+		return
 	if fill_amount < 1.0:
 		if direction < 0:
 			fill_rect.position.x = fill_rect.end.x - fill_rect.size.x * fill_amount
 		fill_rect.size.x *= fill_amount
+	if fill_rect.size.x <= 1.0 or fill_rect.size.y <= 1.0:
+		return
 	var fill_polygon: PackedVector2Array = _make_speed_segment_polygon(fill_rect, direction)
+	if fill_polygon.size() < 3:
+		return
 	draw_colored_polygon(fill_polygon, active_color)
 
 func _make_speed_segment_polygon(rect: Rect2, direction: int) -> PackedVector2Array:
-	var slant: float = min(rect.size.x * 0.45, 5.0 * _hud_scale)
+	if rect.size.x <= 1.0 or rect.size.y <= 1.0:
+		return PackedVector2Array()
+
+	var max_slant: float = rect.size.x * 0.5 - 0.01
+	if max_slant <= 0.0:
+		return PackedVector2Array()
+
+	var slant: float = min(rect.size.x * 0.45, 5.0 * _hud_scale, max_slant)
 	if direction < 0:
 		return PackedVector2Array([
 			Vector2(rect.position.x + slant, rect.position.y),

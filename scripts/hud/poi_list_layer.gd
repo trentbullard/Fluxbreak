@@ -55,6 +55,16 @@ func _ready() -> void:
 	_update_list()
 
 
+func _exit_tree() -> void:
+	if _poi_spawner == null or not is_instance_valid(_poi_spawner):
+		return
+
+	if _poi_spawner.poi_spawned.is_connected(_on_poi_spawned):
+		_poi_spawner.poi_spawned.disconnect(_on_poi_spawned)
+	if _poi_spawner.poi_counts_changed.is_connected(_on_poi_counts_changed):
+		_poi_spawner.poi_counts_changed.disconnect(_on_poi_counts_changed)
+
+
 func _build_ui() -> void:
 	# Create container for the list
 	_container = VBoxContainer.new()
@@ -86,20 +96,25 @@ func _process(delta: float) -> void:
 
 
 func _update_list() -> void:
-	if _poi_spawner == null:
+	if _poi_spawner == null or not is_instance_valid(_poi_spawner):
 		return
-	
-	var pois: Array[PoiInstance] = _poi_spawner.get_active_pois()
-	
+
+	var pois: Array[PoiInstance] = []
+	for poi: PoiInstance in _poi_spawner.get_active_pois():
+		if _can_use_poi(poi):
+			pois.append(poi)
+
 	# Sort by distance from player (closest first)
-	if _ship != null:
-		var ship_pos: Vector3 = _ship.global_position
+	var has_ship: bool = _can_use_node_3d(_ship)
+	var ship_pos: Vector3 = Vector3.ZERO
+	if has_ship:
+		ship_pos = _ship.global_position
 		pois.sort_custom(func(a: PoiInstance, b: PoiInstance) -> bool:
-			if not is_instance_valid(a):
+			if not _can_use_poi(a):
 				return false
-			if not is_instance_valid(b):
+			if not _can_use_poi(b):
 				return true
-			return a.global_position.distance_to(ship_pos) < b.global_position.distance_to(ship_pos)
+			return a.global_position.distance_squared_to(ship_pos) < b.global_position.distance_squared_to(ship_pos)
 		)
 	
 	# Update header
@@ -115,7 +130,7 @@ func _update_list() -> void:
 		
 		if i < pois.size():
 			var poi: PoiInstance = pois[i]
-			if not is_instance_valid(poi):
+			if not _can_use_poi(poi):
 				lbl.visible = false
 				continue
 			
@@ -123,8 +138,8 @@ func _update_list() -> void:
 			
 			# Calculate distance
 			var distance: float = 0.0
-			if _ship != null:
-				distance = poi.global_position.distance_to(_ship.global_position)
+			if has_ship:
+				distance = sqrt(poi.global_position.distance_squared_to(ship_pos))
 			
 			# Format: [TYPE] Name - 1234m
 			var type_name: String = TYPE_NAMES.get(poi.poi_type, "???")
@@ -169,3 +184,15 @@ func init(ship: Node3D, poi_spawner: PoiSpawner) -> void:
 			_poi_spawner.poi_counts_changed.connect(_on_poi_counts_changed)
 	
 	_update_list()
+
+
+func _can_use_node_3d(node: Node3D) -> bool:
+	if node == null or not is_instance_valid(node):
+		return false
+	return node.is_inside_tree()
+
+
+func _can_use_poi(poi: PoiInstance) -> bool:
+	if poi == null or not is_instance_valid(poi):
+		return false
+	return poi.is_inside_tree()

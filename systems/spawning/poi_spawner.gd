@@ -149,14 +149,18 @@ func get_poi_counts() -> Dictionary:
 		"offense": int(_type_counts.get(PoiDef.PoiType.OFFENSE, 0)),
 		"defense": int(_type_counts.get(PoiDef.PoiType.DEFENSE, 0)),
 		"utility": int(_type_counts.get(PoiDef.PoiType.UTILITY, 0)),
-		"total": _active_pois.size(),
+		"total": get_active_pois().size(),
 		"by_type": by_type,
 	}
 
 
 ## Get all active POI instances
 func get_active_pois() -> Array[PoiInstance]:
-	return _active_pois.duplicate()
+	var active_pois: Array[PoiInstance] = []
+	for poi: PoiInstance in _active_pois:
+		if _is_poi_active(poi):
+			active_pois.append(poi)
+	return active_pois
 
 
 ## Force spawn a POI of a specific type (for testing/debugging)
@@ -262,7 +266,7 @@ func _emit_counts_changed() -> void:
 		int(_type_counts.get(PoiDef.PoiType.OFFENSE, 0)),
 		int(_type_counts.get(PoiDef.PoiType.DEFENSE, 0)),
 		int(_type_counts.get(PoiDef.PoiType.UTILITY, 0)),
-		_active_pois.size()
+		get_active_pois().size()
 	)
 
 
@@ -467,7 +471,7 @@ func _random_point_in_sphere(min_radius: float, max_radius: float) -> Vector3:
 
 func _is_valid_position(pos: Vector3, separation: float, min_player_dist: float) -> bool:
 	# Check distance from player
-	if _player_ship != null:
+	if _is_node_3d_active(_player_ship):
 		var min_player_dist_sq: float = min_player_dist * min_player_dist
 		var player_dist_sq: float = pos.distance_squared_to(_player_ship.global_position)
 		if player_dist_sq < min_player_dist_sq:
@@ -476,13 +480,25 @@ func _is_valid_position(pos: Vector3, separation: float, min_player_dist: float)
 	# Check distance from other POIs
 	var separation_sq: float = separation * separation
 	for poi: PoiInstance in _active_pois:
-		if not is_instance_valid(poi):
+		if not _is_poi_active(poi):
 			continue
 		var poi_dist_sq: float = pos.distance_squared_to(poi.global_position)
 		if poi_dist_sq < separation_sq:
 			return false
-	
+
 	return true
+
+
+func _is_poi_active(poi: PoiInstance) -> bool:
+	if not is_instance_valid(poi):
+		return false
+	return poi.is_inside_tree()
+
+
+func _is_node_3d_active(node: Node3D) -> bool:
+	if node == null or not is_instance_valid(node):
+		return false
+	return node.is_inside_tree()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
