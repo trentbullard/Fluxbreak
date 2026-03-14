@@ -2,6 +2,8 @@
 extends WeaponRuntime
 class_name DroneBayWeaponRuntime
 
+const Stat = StatTypes.Stat
+
 const DRONE_STATE_DOCKED: int = 0
 const DRONE_STATE_ACTIVE: int = 1
 const DRONE_STATE_ATTACKING: int = 2
@@ -29,20 +31,33 @@ class DroneSlot extends RefCounted:
 
 var _drone_bay_weapon: DroneBayWeaponDef = null
 var _drone_slots: Array[DroneSlot] = []
+var _stats: StatAggregator = null
+var _minion_stats: StatAggregator = null
+var _effective_drone_weapon: WeaponDef = null
+
+var eff_minion_count: float = 0.0
+var eff_minion_charge_capacity: float = 0.01
+var eff_minion_recharge_rate: float = 1.0
+var eff_minion_discharge_rate: float = 1.0
+var eff_minion_radio_range: float = 0.0
 
 func _init(turret_owner: PlayerTurret = null, weapon_def: WeaponDef = null) -> void:
 	super._init(turret_owner, weapon_def)
 	_drone_bay_weapon = weapon_def as DroneBayWeaponDef
 
 func on_equip() -> void:
+	_ensure_minion_stats()
+	_bind_stats()
 	_sync_slot_count()
 	_prime_slots_full_charge()
 	if turret != null and turret.visual_controller != null:
 		turret.visual_controller.set_charge(0.0)
 
 func on_unequip() -> void:
+	_disconnect_stats()
 	_despawn_all_drones()
 	_drone_slots.clear()
+	_free_minion_stats()
 
 func physics_process(delta: float) -> void:
 	if turret == null or _drone_bay_weapon == null:
@@ -51,12 +66,14 @@ func physics_process(delta: float) -> void:
 	var controller: TurretController = turret.get_controller()
 	if controller == null:
 		return
+	if _stats == null or _minion_stats == null:
+		_bind_stats()
 
 	_sync_slot_count()
 	_cooldown = max(0.0, _cooldown - delta)
 
 	var base_range: float = max(0.0, turret.get_base_range())
-	var max_assign: float = max(base_range, turret.get_max_assign_range())
+	var max_assign: float = max(base_range, eff_minion_radio_range)
 	var range_bonus: float = max(0.0, max_assign - base_range)
 	var candidates: Array[Node3D] = controller.get_prioritized_live_targets(
 		turret,
@@ -218,6 +235,190 @@ func _tick_grounded_slot(slot: DroneSlot, delta: float) -> void:
 		slot.charge_remaining = slot.max_charge
 		slot.must_recharge_full = false
 
+func _bind_stats() -> void:
+	_ensure_minion_stats()
+	var next_stats: StatAggregator = null
+	if turret != null:
+		var controller: TurretController = turret.get_controller()
+		if controller != null:
+			next_stats = controller.get_stat_aggregator()
+
+	if _stats != null and _stats != next_stats and _stats.stats_changed.is_connected(_on_stats_changed):
+		_stats.stats_changed.disconnect(_on_stats_changed)
+
+	_stats = next_stats
+	if _stats != null and not _stats.stats_changed.is_connected(_on_stats_changed):
+		_stats.stats_changed.connect(_on_stats_changed)
+
+	_rebuild_minion_stat_aggregator()
+	_refresh_effective_minion_stats()
+
+func _disconnect_stats() -> void:
+	if _stats != null and _stats.stats_changed.is_connected(_on_stats_changed):
+		_stats.stats_changed.disconnect(_on_stats_changed)
+	_stats = null
+	_rebuild_minion_stat_aggregator()
+	_refresh_effective_minion_stats()
+
+func _on_stats_changed(_affected: Array[Stat]) -> void:
+	_rebuild_minion_stat_aggregator()
+	_refresh_effective_minion_stats()
+
+func _refresh_effective_minion_stats() -> void:
+	_sync_minion_base_values()
+	eff_minion_count = max(0.0, _compute_minion_stat(Stat.MINION_COUNT, _get_base_drone_count()))
+	eff_minion_charge_capacity = max(0.01, _compute_minion_stat(Stat.MINION_CHARGE_CAPACITY, _get_base_charge_capacity()))
+	eff_minion_recharge_rate = max(0.0, _compute_minion_stat(Stat.MINION_RECHARGE_RATE, 1.0))
+	eff_minion_discharge_rate = max(0.0, _compute_minion_stat(Stat.MINION_DISCHARGE_RATE, 1.0))
+	eff_minion_radio_range = max(0.0, _compute_minion_stat(Stat.MINION_RADIO_RANGE, _get_base_radio_range()))
+	_sync_slot_count()
+	override_all_slot_max_charge(eff_minion_charge_capacity, true)
+	_effective_drone_weapon = _build_effective_drone_weapon_profile()
+	_sync_active_drone_weapon_profiles()
+
+func _compute_minion_stat(stat_id: int, base_value: float) -> float:
+	if _minion_stats == null:
+		return base_value
+	return _minion_stats.compute(stat_id, base_value)
+
+func _ensure_minion_stats() -> void:
+	if _minion_stats != null:
+		return
+	_minion_stats = StatAggregator.new()
+
+func _free_minion_stats() -> void:
+	if _minion_stats == null:
+		return
+	_minion_stats.free()
+	_minion_stats = null
+
+func _rebuild_minion_stat_aggregator() -> void:
+	_ensure_minion_stats()
+	_sync_minion_base_values()
+	if _stats == null:
+		_minion_stats.clear()
+		return
+	_stats.copy_modifiers_to(_minion_stats, StatAggregator.Context.MINION)
+
+func _sync_minion_base_values() -> void:
+	if _minion_stats == null:
+		return
+	_minion_stats.set_base_value(Stat.MINION_COUNT, _get_base_drone_count())
+	_minion_stats.set_base_value(Stat.MINION_CHARGE_CAPACITY, _get_base_charge_capacity())
+	_minion_stats.set_base_value(Stat.MINION_RECHARGE_RATE, 1.0)
+	_minion_stats.set_base_value(Stat.MINION_DISCHARGE_RATE, 1.0)
+	_minion_stats.set_base_value(Stat.MINION_RADIO_RANGE, _get_base_radio_range())
+
+func _get_base_drone_count() -> float:
+	if _drone_bay_weapon == null:
+		return 0.0
+	return float(max(0, _drone_bay_weapon.base_drone_count))
+
+func _get_base_charge_capacity() -> float:
+	if _drone_bay_weapon == null:
+		return 0.01
+	return max(0.01, _drone_bay_weapon.drone_charge_time)
+
+func _get_base_radio_range() -> float:
+	if turret == null:
+		return 0.0
+	return max(0.0, turret.get_max_assign_range())
+
+func _build_effective_drone_weapon_profile() -> WeaponDef:
+	if _drone_bay_weapon == null or _drone_bay_weapon.drone_weapon == null:
+		return null
+
+	var raw_weapon: WeaponDef = _drone_bay_weapon.drone_weapon
+	var profile: WeaponDef = raw_weapon.duplicate(true) as WeaponDef
+	if profile == null:
+		return raw_weapon
+
+	profile.fire_rate = max(0.01, _compute_minion_stat(Stat.WEAPON_FIRE_RATE, raw_weapon.fire_rate))
+	profile.base_accuracy = clamp(_compute_minion_stat(Stat.WEAPON_BASE_ACCURACY, raw_weapon.base_accuracy), 0.0, 1.0)
+	profile.base_range = max(0.0, _compute_minion_stat(Stat.WEAPON_BASE_RANGE, raw_weapon.base_range))
+	profile.accuracy_range_falloff = clamp(_compute_minion_stat(Stat.WEAPON_RANGE_FALLOFF, raw_weapon.accuracy_range_falloff), 0.0, 1.0)
+	profile.crit_chance = clamp(_compute_minion_stat(Stat.WEAPON_CRIT_CHANCE, raw_weapon.crit_chance), 0.0, 1.0)
+	profile.graze_on_hit = clamp(_compute_minion_stat(Stat.WEAPON_GRAZE_ON_HIT, raw_weapon.graze_on_hit), 0.0, 1.0)
+	profile.graze_on_miss = clamp(_compute_minion_stat(Stat.WEAPON_GRAZE_ON_MISS, raw_weapon.graze_on_miss), 0.0, 1.0)
+	profile.graze_mult = max(0.0, _compute_minion_stat(Stat.WEAPON_GRAZE_MULT, raw_weapon.graze_mult))
+	profile.crit_mult = max(0.0, _compute_minion_stat(Stat.WEAPON_CRIT_MULT, raw_weapon.crit_mult))
+	profile.damage_min = _compute_minion_stat(Stat.WEAPON_DAMAGE_MIN, raw_weapon.damage_min)
+	profile.damage_max = _compute_minion_stat(Stat.WEAPON_DAMAGE_MAX, raw_weapon.damage_max)
+	return profile
+
+func _sync_active_drone_weapon_profiles() -> void:
+	var profile: WeaponDef = _get_bound_drone_weapon_profile()
+	for slot in _drone_slots:
+		if slot == null or not _is_drone_valid(slot.drone):
+			continue
+		slot.drone.set_weapon_profile(profile)
+
+func _get_bound_drone_weapon_profile() -> WeaponDef:
+	if _effective_drone_weapon != null:
+		return _effective_drone_weapon
+	if _drone_bay_weapon != null:
+		return _drone_bay_weapon.drone_weapon
+	return null
+
+func get_drone_bay_base_stats() -> Dictionary:
+	var extended_discharge: float = 1.0
+	var charge_capacity: float = _get_base_charge_capacity()
+	if _drone_bay_weapon != null:
+		extended_discharge = max(1.0, _drone_bay_weapon.extended_range_discharge_mult)
+	return {
+		"count": _get_base_drone_count(),
+		"charge_capacity": charge_capacity,
+		"recharge_rate": 1.0,
+		"discharge_rate": 1.0,
+		"extended_discharge_rate": extended_discharge,
+		"radio_range": _get_base_radio_range(),
+	}
+
+func get_drone_bay_effective_stats() -> Dictionary:
+	var base_stats: Dictionary = get_drone_bay_base_stats()
+	var effective_extended_discharge: float = eff_minion_discharge_rate * float(base_stats.get("extended_discharge_rate", 1.0))
+	return {
+		"count": float(_get_desired_drone_count()),
+		"charge_capacity": eff_minion_charge_capacity,
+		"recharge_rate": eff_minion_recharge_rate,
+		"discharge_rate": eff_minion_discharge_rate,
+		"extended_discharge_rate": effective_extended_discharge,
+		"radio_range": eff_minion_radio_range,
+	}
+
+func get_drone_weapon_base_stats() -> Dictionary:
+	if _drone_bay_weapon == null:
+		return _extract_weapon_stats(null)
+	return _extract_weapon_stats(_drone_bay_weapon.drone_weapon)
+
+func get_drone_weapon_effective_stats() -> Dictionary:
+	return _extract_weapon_stats(_get_bound_drone_weapon_profile())
+
+func _extract_weapon_stats(weapon_def: WeaponDef) -> Dictionary:
+	if weapon_def == null:
+		return {
+			"damage_min": 0.0,
+			"damage_max": 0.0,
+			"fire_rate": 0.0,
+			"accuracy": 0.0,
+			"range": 0.0,
+			"falloff": 0.0,
+			"crit_chance": 0.0,
+			"crit_mult": 1.0,
+			"graze_mult": 0.0,
+		}
+	return {
+		"damage_min": weapon_def.damage_min,
+		"damage_max": weapon_def.damage_max,
+		"fire_rate": weapon_def.fire_rate,
+		"accuracy": weapon_def.base_accuracy,
+		"range": weapon_def.base_range,
+		"falloff": weapon_def.accuracy_range_falloff,
+		"crit_chance": weapon_def.crit_chance,
+		"crit_mult": weapon_def.crit_mult,
+		"graze_mult": weapon_def.graze_mult,
+	}
+
 func _ensure_slot_drone(slot: DroneSlot, replay_state: bool = true) -> void:
 	if slot == null:
 		return
@@ -276,7 +477,7 @@ func _bind_drone_to_slot(drone_controller: DroneController, slot_index: int) -> 
 		get_instance_id(),
 		slot_index,
 		_resolve_swarm_anchor(),
-		_drone_bay_weapon.drone_weapon if _drone_bay_weapon != null else null
+		_get_bound_drone_weapon_profile()
 	)
 	if not drone_controller.state_reported.is_connected(_on_drone_state_reported):
 		drone_controller.state_reported.connect(_on_drone_state_reported)
@@ -431,14 +632,17 @@ func _should_redock_active_slot(slot: DroneSlot) -> bool:
 	return slot.charge_remaining < slot.max_charge
 
 func _get_desired_drone_count() -> int:
-	return max(0, _drone_bay_weapon.base_drone_count) if _drone_bay_weapon != null else 0
+	if _drone_bay_weapon == null:
+		return 0
+	# Drone count is discrete. Floor keeps fractional future modifiers from granting an extra drone early.
+	return max(0, int(floor(eff_minion_count)))
 
 func _get_charge_time() -> float:
-	return max(0.01, _drone_bay_weapon.drone_charge_time) if _drone_bay_weapon != null else 0.01
+	return eff_minion_charge_capacity
 
 func _get_charge_recovery_rate() -> float:
 	# charge_remaining is measured in "active seconds", so +1.0 per real second is a straightforward baseline.
-	return 1.0
+	return eff_minion_recharge_rate
 
 func _get_redock_time() -> float:
 	return max(0.0, _drone_bay_weapon.drone_redock_time) if _drone_bay_weapon != null else 0.0
@@ -458,12 +662,9 @@ func _get_controller_priority_mode() -> int:
 			return TurretController.TargetPriorityMode.CLOSEST
 
 func _get_discharge_rate_for_target(target: Node3D) -> float:
-	if turret == null:
-		return 1.0
-	if target == null:
-		return 1.0
-	if _drone_bay_weapon == null:
-		return 1.0
+	var discharge_rate: float = eff_minion_discharge_rate
+	if turret == null or target == null or _drone_bay_weapon == null:
+		return max(0.0, discharge_rate)
 
 	var base_range: float = max(1.0, turret.get_base_range())
 	var max_range: float = max(base_range, turret.get_max_assign_range())
@@ -471,12 +672,12 @@ func _get_discharge_rate_for_target(target: Node3D) -> float:
 	var max_sq: float = max_range * max_range
 	var dist_sq: float = turret.global_position.distance_squared_to(target.global_position)
 	if dist_sq <= base_sq:
-		return 1.0
+		return max(0.0, discharge_rate)
 	if max_range <= base_range:
-		return 1.0
+		return max(0.0, discharge_rate)
 	if dist_sq <= max_sq:
-		return max(1.0, _drone_bay_weapon.extended_range_discharge_mult)
-	return 1.0
+		discharge_rate *= max(1.0, _drone_bay_weapon.extended_range_discharge_mult)
+	return max(0.0, discharge_rate)
 
 func _sync_slot_to_drone(slot: DroneSlot) -> void:
 	if slot == null or not _is_drone_valid(slot.drone):

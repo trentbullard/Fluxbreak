@@ -80,6 +80,21 @@ const TURRET_STAT_INFO: Array[Dictionary] = [
 	{ "key": "graze_mult", "name": "Graze Mult", "format": "%.0f%%", "is_percent": true },
 ]
 
+const DRONE_BAY_STAT_INFO: Array[Dictionary] = [
+	{ "key": "count", "name": "Drone Count", "format": "%.0f" },
+	{ "key": "charge_capacity", "name": "Charge Capacity", "format": "%.1fs" },
+	{ "key": "recharge_rate", "name": "Recharge/s", "format": "%.2f" },
+	{ "key": "discharge_rate", "name": "Discharge/s", "format": "%.2f", "invert": true },
+	{ "key": "extended_discharge_rate", "name": "Ext Discharge/s", "format": "%.2f", "invert": true },
+	{ "key": "radio_range", "name": "Radio Range", "format": "%.0f" },
+]
+
+const DRONE_WEAPON_STAT_INFO: Array[Dictionary] = [
+	{ "key": "damage", "name": "Damage", "format": "%.0f - %.0f", "is_range": true },
+	{ "key": "fire_rate", "name": "Fire Rate", "format": "%.2fs", "invert": true },
+	{ "key": "range", "name": "Attack Range", "format": "%.0f" },
+]
+
 func _ready() -> void:
 	_apply_menu_font_theme()
 	_build_stat_rows()
@@ -369,8 +384,6 @@ func _add_weapons_header() -> void:
 func _add_weapon_section(weapon_data: Dictionary) -> void:
 	"""Adds UI elements for a single weapon's stats."""
 	var display_name: String = weapon_data["display_name"]
-	var base: Dictionary = weapon_data["base"]
-	var effective: Dictionary = weapon_data["effective"]
 	
 	# Weapon name sub-header
 	var spacer := Control.new()
@@ -386,8 +399,24 @@ func _add_weapon_section(weapon_data: Dictionary) -> void:
 	stat_container.add_child(name_label)
 	_weapon_ui_nodes.append(name_label)
 	
-	# Add stat rows for each turret stat
-	for info in TURRET_STAT_INFO:
+	if String(weapon_data.get("type", "standard")) == "drone_bay":
+		_add_weapon_stat_block("Bay", DRONE_BAY_STAT_INFO, weapon_data.get("bay_base", {}), weapon_data.get("bay_effective", {}))
+		_add_weapon_stat_block("Drone Weapon", DRONE_WEAPON_STAT_INFO, weapon_data.get("drone_weapon_base", {}), weapon_data.get("drone_weapon_effective", {}))
+		return
+
+	_add_weapon_stat_block("", TURRET_STAT_INFO, weapon_data.get("base", {}), weapon_data.get("effective", {}))
+
+func _add_weapon_stat_block(title: String, stat_info: Array[Dictionary], base: Dictionary, effective: Dictionary) -> void:
+	if title != "":
+		var block_label: Label = Label.new()
+		block_label.text = "  " + title
+		block_label.add_theme_font_size_override("font_size", 12)
+		block_label.add_theme_color_override("font_color", COLOR_HEADER)
+		block_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		stat_container.add_child(block_label)
+		_weapon_ui_nodes.append(block_label)
+
+	for info in stat_info:
 		var row: HBoxContainer = _create_weapon_stat_row(info, base, effective)
 		stat_container.add_child(row)
 		_weapon_ui_nodes.append(row)
@@ -483,11 +512,25 @@ func _create_weapon_stat_row(info: Dictionary, base: Dictionary, effective: Dict
 
 func _collect_weapon_stats(weapon: WeaponDef, turret: PlayerTurret, mount_index: int) -> Dictionary:
 	"""Collects base and effective stats for a single weapon/turret pair."""
+	var drone_runtime: DroneBayWeaponRuntime = turret.get_runtime() as DroneBayWeaponRuntime
+	if weapon is DroneBayWeaponDef and drone_runtime != null:
+		return {
+			"weapon": weapon,
+			"type": "drone_bay",
+			"display_name": weapon.display_name if weapon.display_name != "" else weapon.weapon_id,
+			"mount_index": mount_index,
+			"bay_base": drone_runtime.get_drone_bay_base_stats(),
+			"bay_effective": drone_runtime.get_drone_bay_effective_stats(),
+			"drone_weapon_base": drone_runtime.get_drone_weapon_base_stats(),
+			"drone_weapon_effective": drone_runtime.get_drone_weapon_effective_stats(),
+		}
+
 	var base_stats: Dictionary = _get_weapon_base_stats(weapon)
 	var effective_stats: Dictionary = _get_turret_effective_stats(turret)
 	
 	return {
 		"weapon": weapon,
+		"type": "standard",
 		"display_name": weapon.display_name if weapon.display_name != "" else weapon.weapon_id,
 		"mount_index": mount_index,
 		"base": base_stats,

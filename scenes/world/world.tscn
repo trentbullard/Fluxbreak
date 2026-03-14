@@ -43,7 +43,7 @@
 [ext_resource type="PackedScene" uid="uid://h4psmu2wl1p7" path="res://scenes/pois/poi_shield_array.tscn" id="27_kx0xk"]
 [ext_resource type="PackedScene" uid="uid://drrnshnyy4682" path="res://scenes/main_menu/main_menu.tscn" id="29_kx0xk"]
 [ext_resource type="PackedScene" uid="uid://dywsechusg01y" path="res://scenes/hud/pause_menu.tscn" id="32_5o5dd"]
-[ext_resource type="PackedScene" uid="uid://clx0tg1vyk3lh" path="res://scenes/pois/repair_hangar.tscn" id="34_q3hpu"]
+[ext_resource type="PackedScene" uid="uid://clx0tg1vyk3lh" path="res://scenes/pois/poi_repair_hangar.tscn" id="34_q3hpu"]
 [ext_resource type="Texture2D" uid="uid://b1rx8aem1fau8" path="res://content/ui/hud/repair_icon.svg" id="49_j0rhc"]
 [ext_resource type="Script" uid="uid://ciqwfvtmjs36w" path="res://scripts/hud/docking_hud.gd" id="docking_hud_script"]
 [ext_resource type="Script" uid="uid://nc1iigswua3o" path="res://scripts/poi/docking_manager.gd" id="docking_manager_script"]

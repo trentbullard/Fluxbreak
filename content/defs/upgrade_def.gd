@@ -5,7 +5,7 @@ class_name Upgrade
 
 @export var id: String
 @export var display_name: String
-@export var descripton: String
+@export_multiline var descripton: String = ""
 @export var icon: Texture2D
 @export var cost: int = 1000
 @export var tags: Array[String] = []

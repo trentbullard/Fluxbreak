@@ -8,6 +8,12 @@ const Stat = StatTypes.Stat
 
 signal stats_changed(affected: Array[Stat])
 
+enum Context {
+	ANY,
+	PLAYER,
+	MINION,
+}
+
 const PHASE_ORDER: Dictionary = {
 	Phase.PRE_OVERRIDE: 0,
 	Phase.ADD_MULT: 1,
@@ -91,6 +97,9 @@ func notify_changed(affected: Array[Stat] = []) -> void:
 	_broadcast_stats(affected)
 
 func compute(stat_id: int, base_value: float) -> float:
+	return compute_for_context(stat_id, base_value, Context.ANY)
+
+func compute_for_context(stat_id: int, base_value: float, context: int) -> float:
 	if not _mods.has(stat_id):
 		return base_value
 	
@@ -107,7 +116,7 @@ func compute(stat_id: int, base_value: float) -> float:
 	
 	for m in arr:
 		var mm: StatModifier = m
-		if not mm.enabled:
+		if not mm.enabled or not _modifier_applies_to_context(mm, context):
 			continue
 		
 		if mm.op == Op.HARD_SET:
@@ -145,6 +154,48 @@ func compute(stat_id: int, base_value: float) -> float:
 	
 	return val
 
+func get_modifier_copies_for_context(context: int) -> Array[StatModifier]:
+	var copies: Array[StatModifier] = []
+	for stat_id in _mods.keys():
+		var mods_for_stat: Array = _mods[stat_id]
+		for modifier_variant in mods_for_stat:
+			var modifier: StatModifier = modifier_variant as StatModifier
+			if modifier == null or not modifier.enabled:
+				continue
+			if not _modifier_applies_to_context(modifier, context):
+				continue
+			var modifier_copy: StatModifier = modifier.duplicate(true) as StatModifier
+			if modifier_copy != null:
+				copies.append(modifier_copy)
+	return copies
+
+func copy_modifiers_to(target: StatAggregator, context: int) -> void:
+	if target == null:
+		return
+
+	target._mods.clear()
+	var affected: Array[Stat] = []
+	for modifier in get_modifier_copies_for_context(context):
+		var arr: Array = target._mods.get(modifier.stat, [])
+		arr.append(modifier)
+		target._mods[modifier.stat] = arr
+		if not affected.has(modifier.stat):
+			affected.append(modifier.stat)
+
+	target.notify_changed(affected)
+
+func _modifier_applies_to_context(modifier: StatModifier, context: int) -> bool:
+	if modifier == null:
+		return false
+
+	match context:
+		Context.PLAYER:
+			return modifier.applies_to_player
+		Context.MINION:
+			return modifier.applies_to_minions
+		_:
+			return true
+
 func _sort_by_priority(arr: Array) -> void:
 	if arr.is_empty():
 		return
@@ -178,3 +229,10 @@ func _broadcast_stats(affected: Array[Stat]) -> void:
 		for stat_id in _mods.keys():
 			var base_val: float = _base_values.get(stat_id, 0.0)
 			payload[stat_id] = compute(stat_id, base_val)
+	else:
+		for stat_id in affected:
+			var base_val: float = _base_values.get(stat_id, 0.0)
+			payload[stat_id] = compute(stat_id, base_val)
+
+	if payload.is_empty():
+		return

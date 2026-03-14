@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=7 format=3 uid="uid://c6iammur78upp"]
+
+[ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="1_vv65x"]
+[ext_resource type="Script" uid="uid://f3a4tqbwupk2" path="res://content/defs/upgrade_def.gd" id="2_5c8dy"]
+
+[sub_resource type="Resource" id="Resource_i6b12"]
+script = ExtResource("1_vv65x")
+stat = 19
+op = 1
+value = 0.95
+source_id = "drone_exciter_stabilization_2"
+applies_to_minions = true
+applies_to_player = false
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_y2twg"]
+script = ExtResource("1_vv65x")
+stat = 21
+value = 10.0
+source_id = "drone_exciter_stabilization_2"
+applies_to_minions = true
+applies_to_player = false
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_pn84x"]
+script = ExtResource("1_vv65x")
+stat = 29
+value = 2.0
+source_id = "drone_exciter_stabilization_2"
+applies_to_minions = true
+applies_to_player = false
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_vv65x"]
+script = ExtResource("1_vv65x")
+stat = 28
+value = 1.0
+source_id = "drone_exciter_stabilization_2"
+applies_to_minions = true
+applies_to_player = false
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[resource]
+script = ExtResource("2_5c8dy")
+id = "drone_exciter_stabilization_2"
+display_name = "Drone Exciter Stabilization II"
+descripton = "95% Drone Shot Cooldown, +10m Drone Weapon Range, +1 Drone Damage Min, +2 Drone Damage Max"
+cost = 1580
+tags = Array[String](["offense", "weapons", "drone"])
+family_id = "drone_exciter_stabilization"
+modifiers = Array[ExtResource("1_vv65x")]([SubResource("Resource_i6b12"), SubResource("Resource_y2twg"), SubResource("Resource_pn84x"), SubResource("Resource_vv65x")])
+metadata/_custom_type_script = "uid://f3a4tqbwupk2"

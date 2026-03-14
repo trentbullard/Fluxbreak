@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=7 format=3 uid="uid://cwd48cjpynnnr"]
+
+[ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="1_mod"]
+[ext_resource type="Script" uid="uid://f3a4tqbwupk2" path="res://content/defs/upgrade_def.gd" id="2_upg"]
+
+[sub_resource type="Resource" id="Resource_radio_range"]
+script = ExtResource("1_mod")
+stat = 70
+value = 35.0
+source_id = "drone_command_mesh_1"
+applies_to_minions = true
+applies_to_player = false
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_recharge"]
+script = ExtResource("1_mod")
+stat = 68
+op = 1
+value = 1.08
+source_id = "drone_command_mesh_1"
+applies_to_minions = true
+applies_to_player = false
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_discharge"]
+script = ExtResource("1_mod")
+stat = 69
+op = 1
+value = 0.97
+source_id = "drone_command_mesh_1"
+applies_to_minions = true
+applies_to_player = false
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_ssw10"]
+script = ExtResource("1_mod")
+stat = 71
+value = 2.0
+source_id = "drone_command_mesh_1"
+applies_to_minions = true
+applies_to_player = false
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[resource]
+script = ExtResource("2_upg")
+id = "drone_command_mesh_1"
+display_name = "Drone Command Mesh I"
+descripton = "+35m Radio Range, +2 Charge Capacity, 108% Recharge Rate, 97% Discharge Rate"
+cost = 900
+tags = Array[String](["utility", "misc", "drone"])
+family_id = "drone_command_mesh"
+modifiers = Array[ExtResource("1_mod")]([SubResource("Resource_radio_range"), SubResource("Resource_recharge"), SubResource("Resource_discharge"), SubResource("Resource_ssw10")])
+metadata/_custom_type_script = "uid://f3a4tqbwupk2"

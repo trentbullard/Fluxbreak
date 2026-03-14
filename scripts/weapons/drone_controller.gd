@@ -64,6 +64,9 @@ func configure_drone(origin_bay_id_value: int, slot_index_value: int, anchor: No
 	_anchor_velocity = Vector3.ZERO
 	_seed_swarm_jitter()
 
+func set_weapon_profile(drone_weapon: WeaponDef) -> void:
+	_drone_weapon = drone_weapon
+
 func _seed_swarm_jitter() -> void:
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	var bay_bits: int = int(origin_bay_id) & 0x7fffffff

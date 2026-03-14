@@ -11,7 +11,7 @@ display_name = "Arms Factory"
 upgrade_tags = Array[String](["weapons", "damage", "accuracy", "offense"])
 metadata/_custom_type_script = "uid://c7bw4eh6k252"
 
-[node name="PoiArmsFactory" type="Node3D"]
+[node name="ArmsFactory" type="Node3D"]
 script = ExtResource("1_pmn74")
 poi_def = SubResource("Resource_fkgf8")
 mesh_instance_path = NodePath("ArmsFactoryMesh")

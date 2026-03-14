@@ -440,7 +440,7 @@ func _refresh_detection_radius() -> void:
 	if _stats == null:
 		eff_detection_radius = detection_radius
 	else:
-		eff_detection_radius = _stats.compute(Stat.SCANNER_RANGE, detection_radius)
+		eff_detection_radius = _stats.compute_for_context(Stat.SCANNER_RANGE, detection_radius, StatAggregator.Context.PLAYER)
 	var sphere: SphereShape3D = detector_shape.shape as SphereShape3D
 	if sphere != null:
 		sphere.radius = eff_detection_radius

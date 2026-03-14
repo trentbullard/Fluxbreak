@@ -768,38 +768,38 @@ func _refresh_effective_stats() -> void:
 		_update_shield_mesh_visibility()
 		return
 	# Pull effective values once.
-	eff_max_hull = aggr.compute(Stat.MAX_HULL, max_hull)
-	eff_max_shield = aggr.compute(Stat.MAX_SHIELD, max_shield)
-	eff_shield_regen = aggr.compute(Stat.SHIELD_REGEN, shield_regen)
-	eff_evasion = clamp(aggr.compute(Stat.EVASION_BASE, base_evasion), 0.0, 1.0)
-	eff_damage_taken_mult = aggr.compute(Stat.DAMAGE_TAKEN_MULT, 1.0)
-	eff_max_speed_forward = max(aggr.compute(Stat.MAX_SPEED_FORWARD, max_speed_forward), 0.0)
-	eff_max_speed_reverse = max(aggr.compute(Stat.MAX_SPEED_REVERSE, max_speed_reverse), 0.0)
-	eff_accel_forward = max(aggr.compute(Stat.ACCEL_FORWARD, accel_forward), 0.0)
-	eff_accel_reverse = max(aggr.compute(Stat.ACCEL_REVERSE, accel_reverse), 0.0)
-	eff_boost_mult = max(aggr.compute(Stat.BOOST_MULT, boost_mult), 0.0)
-	eff_drag = max(aggr.compute(Stat.DRAG, drag), 0.0)
+	eff_max_hull = aggr.compute_for_context(Stat.MAX_HULL, max_hull, StatAggregator.Context.PLAYER)
+	eff_max_shield = aggr.compute_for_context(Stat.MAX_SHIELD, max_shield, StatAggregator.Context.PLAYER)
+	eff_shield_regen = aggr.compute_for_context(Stat.SHIELD_REGEN, shield_regen, StatAggregator.Context.PLAYER)
+	eff_evasion = clamp(aggr.compute_for_context(Stat.EVASION_BASE, base_evasion, StatAggregator.Context.PLAYER), 0.0, 1.0)
+	eff_damage_taken_mult = aggr.compute_for_context(Stat.DAMAGE_TAKEN_MULT, 1.0, StatAggregator.Context.PLAYER)
+	eff_max_speed_forward = max(aggr.compute_for_context(Stat.MAX_SPEED_FORWARD, max_speed_forward, StatAggregator.Context.PLAYER), 0.0)
+	eff_max_speed_reverse = max(aggr.compute_for_context(Stat.MAX_SPEED_REVERSE, max_speed_reverse, StatAggregator.Context.PLAYER), 0.0)
+	eff_accel_forward = max(aggr.compute_for_context(Stat.ACCEL_FORWARD, accel_forward, StatAggregator.Context.PLAYER), 0.0)
+	eff_accel_reverse = max(aggr.compute_for_context(Stat.ACCEL_REVERSE, accel_reverse, StatAggregator.Context.PLAYER), 0.0)
+	eff_boost_mult = max(aggr.compute_for_context(Stat.BOOST_MULT, boost_mult, StatAggregator.Context.PLAYER), 0.0)
+	eff_drag = max(aggr.compute_for_context(Stat.DRAG, drag, StatAggregator.Context.PLAYER), 0.0)
 	eff_max_ang_rate = Vector3(
-		max(aggr.compute(Stat.ANGULAR_RATE_PITCH, max_ang_rate.x), 0.0),
-		max(aggr.compute(Stat.ANGULAR_RATE_YAW, max_ang_rate.y), 0.0),
-		max(aggr.compute(Stat.ANGULAR_RATE_ROLL, max_ang_rate.z), 0.0))
+		max(aggr.compute_for_context(Stat.ANGULAR_RATE_PITCH, max_ang_rate.x, StatAggregator.Context.PLAYER), 0.0),
+		max(aggr.compute_for_context(Stat.ANGULAR_RATE_YAW, max_ang_rate.y, StatAggregator.Context.PLAYER), 0.0),
+		max(aggr.compute_for_context(Stat.ANGULAR_RATE_ROLL, max_ang_rate.z, StatAggregator.Context.PLAYER), 0.0))
 	eff_angular_accel = Vector3(
-		max(aggr.compute(Stat.ANGULAR_ACCEL_PITCH, angular_accel.x), 0.0),
-		max(aggr.compute(Stat.ANGULAR_ACCEL_YAW, angular_accel.y), 0.0),
-		max(aggr.compute(Stat.ANGULAR_ACCEL_ROLL, angular_accel.z), 0.0))
-	eff_pickup_range = aggr.compute(Stat.PICKUP_RANGE, pickup_range)
-	eff_nanobot_gain_mult = aggr.compute(Stat.NANOBOT_GAIN_MULT, nanobot_gain_mult)
-	eff_score_gain_mult = aggr.compute(Stat.SCORE_GAIN_MULT, score_gain_mult)
-	eff_pilot_g_tolerance = max(aggr.compute(Stat.PILOT_G_TOLERANCE, _pilot_forward_g_tolerance), 0.0)
-	eff_pilot_g_hard_limit = max(aggr.compute(Stat.PILOT_G_HARD_LIMIT, _pilot_forward_g_hard_limit), eff_pilot_g_tolerance + 0.01)
-	eff_pilot_forward_accel_min_scale = clamp(aggr.compute(Stat.PILOT_FORWARD_ACCEL_MIN_SCALE, _pilot_forward_accel_min_scale), 0.0, 1.0)
-	eff_pilot_forward_speed_min_scale = clamp(aggr.compute(Stat.PILOT_FORWARD_SPEED_MIN_SCALE, _pilot_forward_speed_min_scale), 0.0, 1.0)
-	eff_pilot_forward_g_from_ang_rate = max(aggr.compute(Stat.PILOT_FORWARD_G_FROM_ANG_RATE, _pilot_forward_g_from_ang_rate), 0.0)
-	eff_pilot_forward_g_from_ang_accel = max(aggr.compute(Stat.PILOT_FORWARD_G_FROM_ANG_ACCEL, _pilot_forward_g_from_ang_accel), 0.0)
-	eff_pilot_forward_g_smoothing_hz = max(aggr.compute(Stat.PILOT_FORWARD_G_SMOOTHING_HZ, _pilot_forward_g_smoothing_hz), 0.0)
-	eff_pilot_perception = max(aggr.compute(Stat.PILOT_PERCEPTION, _pilot_perception), 0.0)
-	eff_pilot_charisma = max(aggr.compute(Stat.PILOT_CHARISMA, _pilot_charisma), 0.0)
-	eff_pilot_ingenuity = max(aggr.compute(Stat.PILOT_INGENUITY, _pilot_ingenuity), 0.0)
+		max(aggr.compute_for_context(Stat.ANGULAR_ACCEL_PITCH, angular_accel.x, StatAggregator.Context.PLAYER), 0.0),
+		max(aggr.compute_for_context(Stat.ANGULAR_ACCEL_YAW, angular_accel.y, StatAggregator.Context.PLAYER), 0.0),
+		max(aggr.compute_for_context(Stat.ANGULAR_ACCEL_ROLL, angular_accel.z, StatAggregator.Context.PLAYER), 0.0))
+	eff_pickup_range = aggr.compute_for_context(Stat.PICKUP_RANGE, pickup_range, StatAggregator.Context.PLAYER)
+	eff_nanobot_gain_mult = aggr.compute_for_context(Stat.NANOBOT_GAIN_MULT, nanobot_gain_mult, StatAggregator.Context.PLAYER)
+	eff_score_gain_mult = aggr.compute_for_context(Stat.SCORE_GAIN_MULT, score_gain_mult, StatAggregator.Context.PLAYER)
+	eff_pilot_g_tolerance = max(aggr.compute_for_context(Stat.PILOT_G_TOLERANCE, _pilot_forward_g_tolerance, StatAggregator.Context.PLAYER), 0.0)
+	eff_pilot_g_hard_limit = max(aggr.compute_for_context(Stat.PILOT_G_HARD_LIMIT, _pilot_forward_g_hard_limit, StatAggregator.Context.PLAYER), eff_pilot_g_tolerance + 0.01)
+	eff_pilot_forward_accel_min_scale = clamp(aggr.compute_for_context(Stat.PILOT_FORWARD_ACCEL_MIN_SCALE, _pilot_forward_accel_min_scale, StatAggregator.Context.PLAYER), 0.0, 1.0)
+	eff_pilot_forward_speed_min_scale = clamp(aggr.compute_for_context(Stat.PILOT_FORWARD_SPEED_MIN_SCALE, _pilot_forward_speed_min_scale, StatAggregator.Context.PLAYER), 0.0, 1.0)
+	eff_pilot_forward_g_from_ang_rate = max(aggr.compute_for_context(Stat.PILOT_FORWARD_G_FROM_ANG_RATE, _pilot_forward_g_from_ang_rate, StatAggregator.Context.PLAYER), 0.0)
+	eff_pilot_forward_g_from_ang_accel = max(aggr.compute_for_context(Stat.PILOT_FORWARD_G_FROM_ANG_ACCEL, _pilot_forward_g_from_ang_accel, StatAggregator.Context.PLAYER), 0.0)
+	eff_pilot_forward_g_smoothing_hz = max(aggr.compute_for_context(Stat.PILOT_FORWARD_G_SMOOTHING_HZ, _pilot_forward_g_smoothing_hz, StatAggregator.Context.PLAYER), 0.0)
+	eff_pilot_perception = max(aggr.compute_for_context(Stat.PILOT_PERCEPTION, _pilot_perception, StatAggregator.Context.PLAYER), 0.0)
+	eff_pilot_charisma = max(aggr.compute_for_context(Stat.PILOT_CHARISMA, _pilot_charisma, StatAggregator.Context.PLAYER), 0.0)
+	eff_pilot_ingenuity = max(aggr.compute_for_context(Stat.PILOT_INGENUITY, _pilot_ingenuity, StatAggregator.Context.PLAYER), 0.0)
 	_update_shield_mesh_visibility()
 
 func _apply_ship_visuals(visuals: ShipVisualDef) -> void:

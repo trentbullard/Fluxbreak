@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=5 format=3 uid="uid://c3lsgbrbx1scm"]
+
+[ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="1_mod"]
+[ext_resource type="Script" uid="uid://f3a4tqbwupk2" path="res://content/defs/upgrade_def.gd" id="2_upg"]
+
+[sub_resource type="Resource" id="Resource_count"]
+script = ExtResource("1_mod")
+stat = 72
+value = 1.0
+source_id = "drone_redundancy_matrix_1"
+applies_to_minions = true
+applies_to_player = false
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_charge"]
+script = ExtResource("1_mod")
+stat = 71
+value = 1.0
+source_id = "drone_redundancy_matrix_1"
+applies_to_minions = true
+applies_to_player = false
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[resource]
+script = ExtResource("2_upg")
+id = "drone_redundancy_matrix_1"
+display_name = "Drone Redundancy Matrix I"
+descripton = "+1 Drone Count, +1.0 Charge Capacity"
+cost = 980
+tags = Array[String](["defense", "drone"])
+family_id = "drone_redundancy_matrix"
+modifiers = Array[ExtResource("1_mod")]([SubResource("Resource_count"), SubResource("Resource_charge")])
+metadata/_custom_type_script = "uid://f3a4tqbwupk2"

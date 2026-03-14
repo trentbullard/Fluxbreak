@@ -9,7 +9,7 @@ script = ExtResource("2_fy04b")
 poi_id = "repair_hangar"
 display_name = "Repair Hangar"
 poi_type = 2
-upgrade_tags = Array[String](["utility", "repair", "misc"])
+upgrade_tags = Array[String](["utility", "repair", "misc", "mobility", "salvage"])
 metadata/_custom_type_script = "uid://c7bw4eh6k252"
 
 [node name="RepairHangar" type="Node3D"]
