@@ -47,9 +47,6 @@ const SWARM_HEIGHT: float = 0.85
 const SWARM_ANGULAR_SPEED: float = 2.6
 const ATTACK_ORBIT_RADIUS: float = 2.1
 const ATTACK_ANGULAR_SPEED: float = 7.0
-const ATTACK_ORBIT_RANGE_RATIO: float = 0.34
-const ATTACK_ORBIT_MAX_RANGE_RATIO: float = 0.82
-const ATTACK_ENGAGE_RANGE_BUFFER: float = 0.95
 const TRAIL_LENGTH: float = 2.0
 const TRAIL_WIDTH: float = 0.05
 const TRAIL_MIN_LIFETIME: float = 0.03
@@ -180,48 +177,14 @@ func _compute_anchor_swarm_point(anchor: Node3D) -> Vector3:
 	return anchor.global_position + anchor.global_transform.basis * local_offset
 
 func _compute_target_attack_point(target: Node3D) -> Vector3:
-	var orbit_radius: float = _get_attack_orbit_radius()
+	var orbit_radius: float = ATTACK_ORBIT_RADIUS * _attack_radius_scale
 	var angle: float = _swarm_clock * ATTACK_ANGULAR_SPEED * _attack_speed_scale + _slot_phase + _jitter_phase_b
 	var local_offset: Vector3 = Vector3(
 		cos(angle) * orbit_radius,
 		sin(angle * 2.0 + _slot_phase + _jitter_phase_c) * (SWARM_HEIGHT * 0.45 * _swarm_height_scale),
 		sin(angle) * orbit_radius
 	)
-	var orbit_point: Vector3 = target.global_position + local_offset
-
-	var to_target: Vector3 = global_position - target.global_position
-	var dist_sq: float = to_target.length_squared()
-	var engage_range: float = max(orbit_radius + 0.5, _get_effective_weapon_range() * ATTACK_ENGAGE_RANGE_BUFFER)
-	if dist_sq <= engage_range * engage_range:
-		return orbit_point
-
-	var approach_dir: Vector3 = Vector3(cos(angle), 0.0, sin(angle))
-	if dist_sq > 0.000001:
-		approach_dir = to_target.normalized()
-	var approach_height: float = local_offset.y
-	return target.global_position + approach_dir * orbit_radius + Vector3.UP * approach_height
-
-func _get_effective_weapon_range() -> float:
-	if _drone_weapon == null:
-		return 0.0
-	return max(0.0, _drone_weapon.base_range)
-
-func _get_attack_orbit_radius() -> float:
-	var weapon_range: float = _get_effective_weapon_range()
-	var orbit_radius: float = ATTACK_ORBIT_RADIUS * _attack_radius_scale
-	if weapon_range <= 0.0:
-		return orbit_radius
-	var desired_radius: float = weapon_range * ATTACK_ORBIT_RANGE_RATIO * _attack_radius_scale
-	var max_radius: float = max(ATTACK_ORBIT_RADIUS, weapon_range * ATTACK_ORBIT_MAX_RANGE_RATIO)
-	return clamp(desired_radius, ATTACK_ORBIT_RADIUS, max_radius)
-
-func _is_target_in_weapon_range(target: Node3D) -> bool:
-	if target == null or not is_instance_valid(target):
-		return false
-	var weapon_range: float = _get_effective_weapon_range()
-	if weapon_range <= 0.0:
-		return false
-	return global_position.distance_squared_to(target.global_position) <= weapon_range * weapon_range
+	return target.global_position + local_offset
 
 func _update_anchor_velocity(anchor: Node3D, delta: float) -> void:
 	if anchor == null or delta <= 0.000001:
@@ -253,8 +216,6 @@ func _tick_attack_fire(target: Node3D) -> void:
 	if target == null or not is_instance_valid(target):
 		return
 	if _drone_weapon == null:
-		return
-	if not _is_target_in_weapon_range(target):
 		return
 	if _shot_cooldown > 0.0:
 		return
