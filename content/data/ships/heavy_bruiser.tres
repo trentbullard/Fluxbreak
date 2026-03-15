@@ -60,6 +60,7 @@ metadata/_custom_type_script = "uid://bo1jfl7iboct4"
 [sub_resource type="Resource" id="Resource_di4rg"]
 script = ExtResource("9_2symp")
 marker_path = NodePath("ShieldSocket")
+radius = 10.0
 mesh = ExtResource("10_xxy5q")
 material = ExtResource("9_di4rg")
 metadata/_custom_type_script = "uid://d0g8qkgplpfwq"
