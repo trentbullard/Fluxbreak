@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="MountLoadoutDef" load_steps=8 format=3 uid="uid://cw1vu3pvxa6el"]
+
+[ext_resource type="Script" uid="uid://dhvgo1sv28rx3" path="res://content/defs/mount_loadout_def.gd" id="1_u4qe2"]
+[ext_resource type="PackedScene" uid="uid://bso2dpcl7d5tx" path="res://scenes/weapons/laser_bolt.tscn" id="2_ph2p8"]
+[ext_resource type="Script" uid="uid://dby70n1hr4uk3" path="res://content/defs/weapon_def.gd" id="3_3nu7m"]
+[ext_resource type="AudioStream" uid="uid://cg2afukmlkc53" path="res://assets/sounds/laser_bolt.wav" id="4_xjgms"]
+[ext_resource type="Script" uid="uid://bc5o0q4rptsnq" path="res://content/defs/status_effect_def.gd" id="5_tanxr"]
+[ext_resource type="PackedScene" uid="uid://bqq631rq27m52" path="res://scenes/weapons/laser_mk1_turret_visual.tscn" id="6_0vi4i"]
+
+[sub_resource type="Resource" id="Resource_xtwps"]
+script = ExtResource("3_3nu7m")
+weapon_id = "laser_mk1"
+display_name = "Laser Bolt Mk I"
+fire_rate = 1.0
+base_range = 400.0
+accuracy_range_falloff = 0.15
+damage_min = 12.0
+damage_max = 24.0
+visual_scene = ExtResource("6_0vi4i")
+projectile_scene = ExtResource("2_ph2p8")
+shot_sound = ExtResource("4_xjgms")
+metadata/_custom_type_script = "uid://dby70n1hr4uk3"
+
+[resource]
+script = ExtResource("1_u4qe2")
+mount_id = "laser_default"
+weapon = SubResource("Resource_xtwps")
+metadata/_custom_type_script = "uid://dhvgo1sv28rx3"

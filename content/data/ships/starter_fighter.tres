@@ -1,43 +1,21 @@
-[gd_resource type="Resource" script_class="ShipDef" load_steps=26 format=3 uid="uid://da52xasn5mssy"]
+[gd_resource type="Resource" script_class="ShipDef" load_steps=19 format=3 uid="uid://da52xasn5mssy"]
 
 [ext_resource type="Script" uid="uid://bvxxmlbxopb4b" path="res://content/defs/ship_def.gd" id="1"]
 [ext_resource type="Script" uid="uid://dhvgo1sv28rx3" path="res://content/defs/mount_loadout_def.gd" id="2_hcovg"]
 [ext_resource type="PackedScene" uid="uid://yo2mi8h7ihfj" path="res://scenes/explosion.tscn" id="3"]
-[ext_resource type="PackedScene" uid="uid://ml5cr05cbn68" path="res://scenes/weapons/projectile.tscn" id="3_1mofl"]
-[ext_resource type="Script" uid="uid://dby70n1hr4uk3" path="res://content/defs/weapon_def.gd" id="3_hcovg"]
 [ext_resource type="Script" uid="uid://c35jeiv6o1idc" path="res://content/defs/ship_loadout_def.gd" id="4_noawc"]
 [ext_resource type="PackedScene" uid="uid://bt8noxg4b1lvq" path="res://scenes/ship/starter_fighter_mk1_layout.tscn" id="4_tup14"]
-[ext_resource type="AudioStream" uid="uid://bc0bnr0mdvk6e" path="res://assets/sounds/plasma_shot.wav" id="5_jg2fe"]
 [ext_resource type="PackedScene" uid="uid://bmt72uludsmi4" path="res://assets/meshes/fighter_mk1.glb" id="5_tup14"]
 [ext_resource type="Script" uid="uid://c62ptiux8ivvl" path="res://content/defs/ship_visual_def.gd" id="6_n73qf"]
 [ext_resource type="Material" uid="uid://dye8ie53a0ych" path="res://content/materials/shield.tres" id="7_dlk1n"]
 [ext_resource type="Script" uid="uid://d0g8qkgplpfwq" path="res://content/defs/ship_shield_def.gd" id="7_n73qf"]
-[ext_resource type="Script" uid="uid://bc5o0q4rptsnq" path="res://content/defs/status_effect_def.gd" id="7_uvtrp"]
 [ext_resource type="Script" uid="uid://kmmrm5to02a2" path="res://content/defs/ship_thruster_def.gd" id="7_vb2be"]
-[ext_resource type="PackedScene" uid="uid://0f6acoounpis" path="res://scenes/weapons/pulse_mk1_turret_visual.tscn" id="7_xrsle"]
 [ext_resource type="SphereMesh" uid="uid://dnsbqag21mm1l" path="res://assets/meshes/shield.tres" id="8_h3va4"]
 [ext_resource type="PackedScene" uid="uid://bj012u42vcetv" path="res://scenes/ship/thruster_particles.tscn" id="9_85j73"]
 [ext_resource type="Resource" uid="uid://dcssl41w3hvhr" path="res://content/data/weapons/mount_layouts/player_policy.tres" id="10_j4q2d"]
 
-[sub_resource type="Resource" id="Resource_phag5"]
-script = ExtResource("3_hcovg")
-weapon_id = "pulse_mk1"
-display_name = "Pulse Mk I"
-fire_rate = 0.25
-visual_scene = ExtResource("7_xrsle")
-projectile_scene = ExtResource("3_1mofl")
-shot_sound = ExtResource("5_jg2fe")
-metadata/_custom_type_script = "uid://dby70n1hr4uk3"
-
-[sub_resource type="Resource" id="Resource_noawc"]
-script = ExtResource("2_hcovg")
-mount_id = "pulse_mk1"
-weapon = SubResource("Resource_phag5")
-metadata/_custom_type_script = "uid://dhvgo1sv28rx3"
-
 [sub_resource type="Resource" id="Resource_j0tgs"]
 script = ExtResource("4_noawc")
-mounts = Array[ExtResource("2_hcovg")]([SubResource("Resource_noawc")])
 metadata/_custom_type_script = "uid://c35jeiv6o1idc"
 
 [sub_resource type="Resource" id="Resource_vb2be"]

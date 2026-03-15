@@ -18,6 +18,6 @@ metadata/_custom_type_script = "uid://cn8dy8w3bqoi0"
 
 [resource]
 script = ExtResource("1_vdhsm")
-mount_id = "drone_bay_mk1_mount_1"
+mount_id = "drone_bay_default"
 weapon = SubResource("Resource_04jwj")
 metadata/_custom_type_script = "uid://dhvgo1sv28rx3"
