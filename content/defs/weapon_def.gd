@@ -69,3 +69,20 @@ class_name WeaponDef
 @export var status_effects: Array[StatusEffectDef] = []
 ## Audio played on fire; PlayerTurret randomizes pitch slightly.
 @export var shot_sound: AudioStream
+
+func get_weapon_id() -> StringName:
+	var trimmed: String = weapon_id.strip_edges()
+	if trimmed != "":
+		return StringName(trimmed)
+	if resource_path != "":
+		return StringName(resource_path.get_file().get_basename())
+	return &"weapon"
+
+func get_display_name_or_default() -> String:
+	var trimmed: String = display_name.strip_edges()
+	if trimmed != "":
+		return trimmed
+	var from_id: String = String(get_weapon_id()).replace("_", " ").strip_edges()
+	if from_id != "":
+		return from_id.capitalize()
+	return "Weapon"

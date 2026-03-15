@@ -203,6 +203,8 @@ func _apply_selected_defs() -> void:
 		_apply_pilot_attributes(null)
 		_apply_pilot_stat_profile(null)
 
+	_apply_selected_starting_weapon()
+
 func _resolve_selected_pilot() -> PilotDef:
 	if pilot_override != null:
 		return pilot_override
@@ -293,6 +295,11 @@ func _apply_pilot_stat_profile(def: PilotDef) -> void:
 		if upgrade_copy == null:
 			continue
 		stat_aggregator.add_upgrade(upgrade_copy)
+
+func _apply_selected_starting_weapon() -> void:
+	if loadout == null:
+		return
+	loadout = GameFlow.build_selected_starting_loadout(loadout)
 
 func _apply_ship_def(def: ShipDef) -> void:
 	if def == null:

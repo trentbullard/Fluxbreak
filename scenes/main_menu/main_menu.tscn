@@ -125,8 +125,48 @@ label_settings = SubResource("LabelSettings_5seab")
 
 [node name="PilotPicker" type="OptionButton" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PilotContainer/Row"]
 layout_mode = 2
+focus_neighbor_bottom = NodePath("../../../ShipContainer/Row/ShipPicker")
+focus_next = NodePath("../../../ShipContainer/Row/ShipPicker")
+theme = SubResource("Theme_4xg86")
+
+[node name="ShipContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer"]
+layout_mode = 2
+
+[node name="Row" type="HBoxContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/ShipContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ShipLabel" type="Label" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/ShipContainer/Row"]
+layout_mode = 2
+text = "Ship:"
+label_settings = SubResource("LabelSettings_5seab")
+
+[node name="ShipPicker" type="OptionButton" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/ShipContainer/Row"]
+layout_mode = 2
+focus_neighbor_top = NodePath("../../../PilotContainer/Row/PilotPicker")
+focus_neighbor_bottom = NodePath("../../../WeaponContainer/Row/WeaponPicker")
+focus_next = NodePath("../../../WeaponContainer/Row/WeaponPicker")
+focus_previous = NodePath("../../../PilotContainer/Row/PilotPicker")
+theme = SubResource("Theme_4xg86")
+
+[node name="WeaponContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer"]
+layout_mode = 2
+
+[node name="Row" type="HBoxContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/WeaponContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="WeaponLabel" type="Label" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/WeaponContainer/Row"]
+layout_mode = 2
+text = "Weapon:"
+label_settings = SubResource("LabelSettings_5seab")
+
+[node name="WeaponPicker" type="OptionButton" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/WeaponContainer/Row"]
+layout_mode = 2
+focus_neighbor_top = NodePath("../../../ShipContainer/Row/ShipPicker")
 focus_neighbor_bottom = NodePath("../../../PracticeContainer/Practice")
 focus_next = NodePath("../../../PracticeContainer/Practice")
+focus_previous = NodePath("../../../ShipContainer/Row/ShipPicker")
 theme = SubResource("Theme_4xg86")
 
 [node name="PracticeContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer"]
@@ -134,10 +174,10 @@ layout_mode = 2
 
 [node name="Practice" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PracticeContainer"]
 layout_mode = 2
-focus_neighbor_top = NodePath("../../PilotContainer/Row/PilotPicker")
+focus_neighbor_top = NodePath("../../WeaponContainer/Row/WeaponPicker")
 focus_neighbor_bottom = NodePath("../../SettingsContainer/Settings")
 focus_next = NodePath("../../SettingsContainer/Settings")
-focus_previous = NodePath("../../PilotContainer/Row/PilotPicker")
+focus_previous = NodePath("../../WeaponContainer/Row/WeaponPicker")
 theme = SubResource("Theme_wem23")
 text = "Practice"
 

@@ -1,23 +1,10 @@
-[gd_resource type="Resource" script_class="MountLoadoutDef" load_steps=8 format=3 uid="uid://bkc8y7y3qn7k2"]
+[gd_resource type="Resource" script_class="MountLoadoutDef" load_steps=3 format=3 uid="uid://bkc8y7y3qn7k2"]
 
 [ext_resource type="Script" uid="uid://dhvgo1sv28rx3" path="res://content/defs/mount_loadout_def.gd" id="1_vdhsm"]
-[ext_resource type="PackedScene" uid="uid://bqn3c7xjednmf" path="res://scenes/weapons/drone.tscn" id="2_416py"]
-[ext_resource type="Resource" uid="uid://b6g58t7p1i3gt" path="res://content/data/weapons/drone_laser.tres" id="3_lpyh4"]
-[ext_resource type="Script" uid="uid://cn8dy8w3bqoi0" path="res://content/defs/drone_bay_weapon_def.gd" id="4_ee1tx"]
-[ext_resource type="Script" uid="uid://bc5o0q4rptsnq" path="res://content/defs/status_effect_def.gd" id="5_y5f0v"]
-[ext_resource type="PackedScene" uid="uid://c76pe7mu3m65m" path="res://scenes/weapons/drone_bay.tscn" id="6_kby5e"]
-
-[sub_resource type="Resource" id="Resource_04jwj"]
-script = ExtResource("4_ee1tx")
-drone_scene = ExtResource("2_416py")
-drone_weapon = ExtResource("3_lpyh4")
-weapon_id = "drone_bay_mk1"
-display_name = "Drone Bay Mk I"
-visual_scene = ExtResource("6_kby5e")
-metadata/_custom_type_script = "uid://cn8dy8w3bqoi0"
+[ext_resource type="Resource" uid="uid://b7qjg75iq2hov" path="res://content/data/weapons/drone_bay_mk1.tres" id="2_8sywm"]
 
 [resource]
 script = ExtResource("1_vdhsm")
 mount_id = "drone_bay_default"
-weapon = SubResource("Resource_04jwj")
+weapon = ExtResource("2_8sywm")
 metadata/_custom_type_script = "uid://dhvgo1sv28rx3"

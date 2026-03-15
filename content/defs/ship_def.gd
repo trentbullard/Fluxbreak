@@ -6,6 +6,7 @@ class_name ShipDef
 @export var display_name: String = "Ship"
 
 @export var loadout: ShipLoadoutDef
+@export var starter_weapon_options: Array[ShipStarterWeaponOptionDef] = []
 @export var visuals: ShipVisualDef
 
 @export var explosion_scene: PackedScene
@@ -47,3 +48,19 @@ class_name ShipDef
 # Stored in degrees for easy authoring; `Ship` converts to radians on apply.
 @export var max_ang_rate_deg: Vector3 = Vector3(120.0, 120.0, 120.0)
 @export var angular_accel_deg: Vector3 = Vector3(500.0, 500.0, 500.0)
+
+func get_ship_id() -> StringName:
+	if id != &"":
+		return id
+	if resource_path != "":
+		return StringName(resource_path.get_file().get_basename())
+	return &"ship"
+
+func get_display_name_or_default() -> String:
+	var trimmed: String = display_name.strip_edges()
+	if trimmed != "":
+		return trimmed
+	var from_id: String = String(get_ship_id()).replace("_", " ").strip_edges()
+	if from_id != "":
+		return from_id.capitalize()
+	return "Ship"

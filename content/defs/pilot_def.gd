@@ -18,6 +18,7 @@ enum UnlockRequirementMode {
 @export var unlock_requirements: Array[PilotUnlockRequirement] = []
 
 @export var ship: ShipDef
+@export var starter_ship_options: Array[PilotStarterShipOptionDef] = []
 @export var loadout_override: ShipLoadoutDef
 @export var mount_layout_policy_override: MountLayoutPolicy
 
