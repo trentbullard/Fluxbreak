@@ -72,12 +72,12 @@ func physics_process(delta: float) -> void:
 	_sync_slot_count()
 	_cooldown = max(0.0, _cooldown - delta)
 
-	var base_range: float = max(0.0, turret.get_base_range())
-	var max_assign: float = max(base_range, eff_minion_radio_range)
-	var range_bonus: float = max(0.0, max_assign - base_range)
+	var player_effective_range: float = _get_player_effective_range()
+	var effective_drone_range: float = _get_effective_drone_range()
+	var range_bonus: float = max(0.0, effective_drone_range - player_effective_range)
 	var candidates: Array[Node3D] = controller.get_prioritized_live_targets(
 		turret,
-		base_range,
+		player_effective_range,
 		range_bonus,
 		_get_controller_priority_mode(),
 		false
@@ -320,9 +320,7 @@ func _get_base_charge_capacity() -> float:
 	return max(0.01, _drone_bay_weapon.drone_charge_time)
 
 func _get_base_radio_range() -> float:
-	if turret == null:
-		return 0.0
-	return max(0.0, turret.get_max_assign_range())
+	return _get_player_effective_range()
 
 func _build_effective_drone_weapon_profile() -> WeaponDef:
 	if _drone_bay_weapon == null or _drone_bay_weapon.drone_weapon == null:
@@ -335,7 +333,7 @@ func _build_effective_drone_weapon_profile() -> WeaponDef:
 
 	profile.fire_rate = max(0.01, _compute_minion_stat(Stat.WEAPON_FIRE_RATE, raw_weapon.fire_rate))
 	profile.base_accuracy = clamp(_compute_minion_stat(Stat.WEAPON_BASE_ACCURACY, raw_weapon.base_accuracy), 0.0, 1.0)
-	profile.base_range = max(0.0, _compute_minion_stat(Stat.WEAPON_BASE_RANGE, raw_weapon.base_range))
+	profile.base_range = max(0.0, raw_weapon.base_range)
 	profile.accuracy_range_falloff = clamp(_compute_minion_stat(Stat.WEAPON_RANGE_FALLOFF, raw_weapon.accuracy_range_falloff), 0.0, 1.0)
 	profile.crit_chance = clamp(_compute_minion_stat(Stat.WEAPON_CRIT_CHANCE, raw_weapon.crit_chance), 0.0, 1.0)
 	profile.graze_on_hit = clamp(_compute_minion_stat(Stat.WEAPON_GRAZE_ON_HIT, raw_weapon.graze_on_hit), 0.0, 1.0)
@@ -371,7 +369,7 @@ func get_drone_bay_base_stats() -> Dictionary:
 		"recharge_rate": 1.0,
 		"discharge_rate": 1.0,
 		"extended_discharge_rate": extended_discharge,
-		"radio_range": _get_base_radio_range(),
+		"radio_range": _get_player_effective_range(),
 	}
 
 func get_drone_bay_effective_stats() -> Dictionary:
@@ -383,7 +381,7 @@ func get_drone_bay_effective_stats() -> Dictionary:
 		"recharge_rate": eff_minion_recharge_rate,
 		"discharge_rate": eff_minion_discharge_rate,
 		"extended_discharge_rate": effective_extended_discharge,
-		"radio_range": eff_minion_radio_range,
+		"radio_range": _get_effective_drone_range(),
 	}
 
 func get_drone_weapon_base_stats() -> Dictionary:
@@ -666,18 +664,26 @@ func _get_discharge_rate_for_target(target: Node3D) -> float:
 	if turret == null or target == null or _drone_bay_weapon == null:
 		return max(0.0, discharge_rate)
 
-	var base_range: float = max(1.0, turret.get_base_range())
-	var max_range: float = max(base_range, turret.get_max_assign_range())
-	var base_sq: float = base_range * base_range
-	var max_sq: float = max_range * max_range
+	var player_effective_range: float = max(1.0, _get_player_effective_range())
+	var effective_drone_range: float = max(player_effective_range, _get_effective_drone_range())
+	var base_sq: float = player_effective_range * player_effective_range
+	var max_sq: float = effective_drone_range * effective_drone_range
 	var dist_sq: float = turret.global_position.distance_squared_to(target.global_position)
 	if dist_sq <= base_sq:
 		return max(0.0, discharge_rate)
-	if max_range <= base_range:
+	if effective_drone_range <= player_effective_range:
 		return max(0.0, discharge_rate)
 	if dist_sq <= max_sq:
 		discharge_rate *= max(1.0, _drone_bay_weapon.extended_range_discharge_mult)
 	return max(0.0, discharge_rate)
+
+func _get_player_effective_range() -> float:
+	if turret == null:
+		return 0.0
+	return max(0.0, turret.get_max_assign_range())
+
+func _get_effective_drone_range() -> float:
+	return max(_get_player_effective_range(), eff_minion_radio_range)
 
 func _sync_slot_to_drone(slot: DroneSlot) -> void:
 	if slot == null or not _is_drone_valid(slot.drone):
