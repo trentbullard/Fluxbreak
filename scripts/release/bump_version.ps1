@@ -1,3 +1,5 @@
+# powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\release\bump_version.ps1 -Revision
+
 param(
     [switch]$Major,
     [switch]$Minor,
