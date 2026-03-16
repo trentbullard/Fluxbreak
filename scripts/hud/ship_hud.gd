@@ -359,8 +359,8 @@ func _update_weapon_chip_values(entries: Array[Dictionary]) -> void:
 
 		if chip != null:
 			chip.set_weapon_name(_weapon_display_name(weapon))
-			var charges_text: String = _format_drone_slot_charges(weapon, runtime)
-			chip.set_charge_text(charges_text)
+			var status_text: String = _format_weapon_status_text(weapon, runtime)
+			chip.set_charge_text(status_text)
 
 func _weapon_display_name(weapon: WeaponDef) -> String:
 	if weapon == null:
@@ -371,16 +371,37 @@ func _weapon_display_name(weapon: WeaponDef) -> String:
 		return weapon.weapon_id
 	return "Weapon"
 
-func _format_drone_slot_charges(weapon: WeaponDef, runtime: WeaponRuntime) -> String:
+func _format_weapon_status_text(weapon: WeaponDef, runtime: WeaponRuntime) -> String:
 	if weapon == null or runtime == null:
 		return ""
-	if not (weapon is DroneBayWeaponDef):
-		return ""
-	var drone_runtime: DroneBayWeaponRuntime = runtime as DroneBayWeaponRuntime
-	if drone_runtime == null:
+	if weapon is BeamWeaponDef and runtime is BeamWeaponRuntime:
+		return _format_beam_status(weapon as BeamWeaponDef, runtime as BeamWeaponRuntime)
+	if weapon is DroneBayWeaponDef and runtime is DroneBayWeaponRuntime:
+		return _format_drone_slot_charges(runtime as DroneBayWeaponRuntime)
+	return ""
+
+func _format_beam_status(weapon: BeamWeaponDef, runtime: BeamWeaponRuntime) -> String:
+	if weapon == null or runtime == null:
 		return ""
 
-	var charges: Array[float] = drone_runtime.get_slot_charge_values()
+	match runtime.get_lock_state():
+		BeamWeaponRuntime.LockState.ACQUIRING:
+			var acquire_time: float = max(0.0, weapon.lock_acquire_time)
+			var lock_progress: float = clamp(runtime.get_lock_progress(), 0.0, 1.0)
+			var remaining: float = clamp(acquire_time * (1.0 - lock_progress), 0.0, acquire_time)
+			return "LOCK %.2fs" % remaining
+		BeamWeaponRuntime.LockState.LOCKED:
+			var current_stacks: int = max(0, runtime.get_ramp_stacks())
+			var max_stacks: int = max(0, weapon.max_ramp_stacks)
+			return "STACK %d/%d" % [current_stacks, max_stacks]
+		_:
+			return ""
+
+func _format_drone_slot_charges(runtime: DroneBayWeaponRuntime) -> String:
+	if runtime == null:
+		return ""
+
+	var charges: Array[float] = runtime.get_slot_charge_values()
 	if charges.is_empty():
 		return ""
 	var parts: PackedStringArray = PackedStringArray()

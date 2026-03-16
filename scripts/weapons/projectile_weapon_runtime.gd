@@ -2,8 +2,6 @@
 extends WeaponRuntime
 class_name ProjectileWeaponRuntime
 
-enum ShotResult { MISS, GRAZE, HIT, CRIT }
-
 func physics_process(delta: float) -> void:
 	if turret == null or weapon == null:
 		return
@@ -28,19 +26,7 @@ func physics_process(delta: float) -> void:
 	_cooldown = max(0.01, turret.eff_fire_rate)
 
 func _effective_accuracy_vs(target: Node3D) -> float:
-	if weapon == null or turret == null:
-		return 0.0
-
-	var evasion: float = 0.0
-	if target.has_method("get_evasion"):
-		evasion = float(target.call("get_evasion"))
-
-	var dist: float = turret.global_position.distance_to(target.global_position)
-	var base_range: float = max(1.0, turret.eff_base_range)
-	var range_factor: float = clamp(dist / base_range, 0.0, 1.0)
-	var acc_base: float = max(turret.eff_base_accuracy + turret.systems_bonus + turret.eff_systems_bonus_add, 0.0)
-	var acc_range_scaled: float = acc_base * lerp(1.0, 1.0 - turret.eff_range_falloff, range_factor)
-	return clamp(acc_range_scaled - evasion, 0.0, 1.0)
+	return WeaponCombatResolver.compute_effective_accuracy_vs_target(turret, target)
 
 func _fire_at_with_roll(target: Node3D) -> void:
 	if weapon == null or weapon.projectile_scene == null or turret == null:
@@ -83,27 +69,7 @@ func _fire_at_with_roll(target: Node3D) -> void:
 		turret.visual_controller.reset_after_shot()
 
 func _resolve_shot(hit_chance: float) -> int:
-	if turret == null:
-		return ShotResult.MISS
-
-	var hc: float = clamp(hit_chance, 0.0, 1.0)
-	var cc: float = clamp(turret.eff_crit_chance, 0.0, 1.0)
-	var gh: float = clamp(turret.eff_graze_on_hit, 0.0, 1.0)
-	var gm: float = clamp(turret.eff_graze_on_miss, 0.0, 1.0)
-
-	var r1: float = randf()
-	if r1 <= hc:
-		var r2: float = randf()
-		if r2 <= cc:
-			return ShotResult.CRIT
-		if r2 <= cc + max(0.0, 1.0 - cc) * gh:
-			return ShotResult.GRAZE
-		return ShotResult.HIT
-
-	var r3: float = randf()
-	if r3 <= gm:
-		return ShotResult.GRAZE
-	return ShotResult.MISS
+	return WeaponCombatResolver.resolve_shot_for_turret(turret, hit_chance)
 
 func _apply_spread(dir: Vector3, spread_deg: float) -> Vector3:
 	var angle_rad: float = deg_to_rad(spread_deg)

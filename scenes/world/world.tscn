@@ -1,4 +1,4 @@
-[gd_scene load_steps=75 format=3 uid="uid://ppgr7fveqbrd"]
+[gd_scene load_steps=79 format=3 uid="uid://ppgr7fveqbrd"]
 
 [ext_resource type="Texture2D" uid="uid://d3x23q2en3ng1" path="res://assets/plain_starfield_1.png" id="1_dphjl"]
 [ext_resource type="Script" uid="uid://bksswhha71raw" path="res://scripts/world/world_bootstrap.gd" id="1_ovomx"]
@@ -45,6 +45,10 @@
 [ext_resource type="PackedScene" uid="uid://dywsechusg01y" path="res://scenes/hud/pause_menu.tscn" id="32_5o5dd"]
 [ext_resource type="PackedScene" uid="uid://clx0tg1vyk3lh" path="res://scenes/pois/poi_repair_hangar.tscn" id="34_q3hpu"]
 [ext_resource type="Texture2D" uid="uid://b1rx8aem1fau8" path="res://content/ui/hud/repair_icon.svg" id="49_j0rhc"]
+[ext_resource type="Resource" uid="uid://dvy0gac2vg1b6" path="res://content/data/weapons/pulse_mk1.tres" id="53_7rtjl"]
+[ext_resource type="Resource" uid="uid://bskk7qmspf063" path="res://content/data/weapons/laser_bolt_mk1.tres" id="54_phx5y"]
+[ext_resource type="Resource" uid="uid://b7qjg75iq2hov" path="res://content/data/weapons/drone_bay_mk1.tres" id="55_554ci"]
+[ext_resource type="Resource" uid="uid://kw3uc16q3yo0" path="res://content/data/weapons/particle_beam_mk1.tres" id="56_hph6x"]
 [ext_resource type="Script" uid="uid://ciqwfvtmjs36w" path="res://scripts/hud/docking_hud.gd" id="docking_hud_script"]
 [ext_resource type="Script" uid="uid://nc1iigswua3o" path="res://scripts/poi/docking_manager.gd" id="docking_manager_script"]
 [ext_resource type="Script" uid="uid://c7bw4eh6k252" path="res://content/defs/poi_def.gd" id="poi_def_script"]
@@ -612,6 +616,7 @@ offset_bottom = 40.0
 [node name="PauseMenu" parent="." instance=ExtResource("32_5o5dd")]
 
 [node name="UpgradeMenu" parent="." instance=ExtResource("upgrade_menu_scene")]
+available_weapons = Array[ExtResource("20_j0rhc")]([ExtResource("53_7rtjl"), ExtResource("54_phx5y"), ExtResource("55_554ci"), ExtResource("56_hph6x")])
 
 [node name="DamageOverlay" type="CanvasLayer" parent="."]
 

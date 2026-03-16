@@ -202,8 +202,6 @@ func _physics_process(delta: float) -> void:
 
 func _compute_assignments() -> void:
 	_team_to_target.clear()
-	for t in _turret_to_target.keys():
-		_turret_to_target[t] = null
 
 	var live: Array[Node3D] = []
 	for wr in _targets:
@@ -213,6 +211,8 @@ func _compute_assignments() -> void:
 	_targets = _targets.filter(func(w): return (w.get_ref() != null))
 	
 	if live.is_empty():
+		for turret_key in _turret_to_target.keys():
+			_turret_to_target[turret_key] = null
 		return
 
 	# We prefer per-turret selection that respects each turret's base and max assignment ranges.
@@ -253,13 +253,22 @@ func _compute_assignments() -> void:
 
 		AssignMode.FOCUS_PER_TURRET:
 			# Give each turret a (preferably unique) target it can actually hit, using global RR
-			var flat: Array = []
+			var flat: Array[PlayerTurret] = []
 			for team_id in _by_team.keys():
 				flat.append_array(_by_team[team_id])
-			
+
+			var live_lookup: Dictionary = {}
+			for target: Node3D in live:
+				if target == null:
+					continue
+				live_lookup[target] = true
+
 			var used: Dictionary = {}
+			_preserve_sticky_beam_assignments(flat, live_lookup, used)
 			var cursor: int = _rr_global
 			for turret in flat:
+				if _get_current_assigned_target_for_turret(turret) != null:
+					continue
 				var pick2: Dictionary = _choose_target_for_turret_rr(turret, live, cursor, used)
 				cursor = pick2["cursor"]
 				var tgt2: Node3D = pick2["target"]
@@ -323,6 +332,44 @@ func _choose_target_for_turret_rr(turret: PlayerTurret, live: Array[Node3D], sta
 	
 	var next_cursor: int = (start_idx + 1) % n
 	return {"target": chosen, "cursor": next_cursor}
+
+func _get_current_assigned_target_for_turret(turret: PlayerTurret) -> Node3D:
+	if turret == null or not _turret_to_target.has(turret):
+		return null
+	var target_wr: WeakRef = _turret_to_target[turret] as WeakRef
+	var target: Node3D = target_wr.get_ref() as Node3D if target_wr != null else null
+	if target == null:
+		_turret_to_target[turret] = null
+	return target
+
+func _is_target_assignable_to_turret(turret: PlayerTurret, target: Node3D, live_lookup: Dictionary) -> bool:
+	if turret == null or target == null:
+		return false
+	if not live_lookup.has(target):
+		return false
+	var ranges: Dictionary = _get_squared_ranges_for_turret(turret)
+	var max_range_sq: float = float(ranges.get("max", 0.0))
+	if max_range_sq <= 0.0:
+		return false
+	var distance_sq: float = turret.global_position.distance_squared_to(target.global_position)
+	return distance_sq <= max_range_sq
+
+func _preserve_sticky_beam_assignments(flat_turrets: Array[PlayerTurret], live_lookup: Dictionary, used: Dictionary) -> void:
+	for turret in flat_turrets:
+		if not _turret_wants_sticky_assignment(turret):
+			_turret_to_target[turret] = null
+			continue
+		var current_target: Node3D = _get_current_assigned_target_for_turret(turret)
+		if not _is_target_assignable_to_turret(turret, current_target, live_lookup):
+			_turret_to_target[turret] = null
+			continue
+		used[current_target] = true
+
+func _turret_wants_sticky_assignment(turret: PlayerTurret) -> bool:
+	if turret == null:
+		return false
+	var weapon: WeaponDef = turret.get_weapon()
+	return weapon is BeamWeaponDef
 
 func _choose_best_shared_target_rr(live: Array[Node3D], turrets: Array[PlayerTurret], start_idx: int) -> Dictionary:
 	if live.is_empty():

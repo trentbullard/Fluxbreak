@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ShipDef" load_steps=30 format=3 uid="uid://da52xasn5mssy"]
+[gd_resource type="Resource" script_class="ShipDef" load_steps=33 format=3 uid="uid://da52xasn5mssy"]
 
 [ext_resource type="Script" uid="uid://bvxxmlbxopb4b" path="res://content/defs/ship_def.gd" id="1"]
 [ext_resource type="Script" uid="uid://dhvgo1sv28rx3" path="res://content/defs/mount_loadout_def.gd" id="2_hcovg"]
@@ -18,6 +18,7 @@
 [ext_resource type="Resource" uid="uid://dcssl41w3hvhr" path="res://content/data/weapons/mount_layouts/player_policy.tres" id="10_j4q2d"]
 [ext_resource type="Resource" uid="uid://b7qjg75iq2hov" path="res://content/data/weapons/drone_bay_mk1.tres" id="10_jg2fe"]
 [ext_resource type="Script" path="res://content/defs/ship_starter_weapon_option_def.gd" id="11_weapon_option"]
+[ext_resource type="Resource" uid="uid://kw3uc16q3yo0" path="res://content/data/weapons/particle_beam_mk1.tres" id="11_xrsle"]
 [ext_resource type="Resource" uid="uid://dvy0gac2vg1b6" path="res://content/data/weapons/pulse_mk1.tres" id="12_pulse_weapon"]
 
 [sub_resource type="Resource" id="Resource_j0tgs"]
@@ -55,6 +56,20 @@ weapon = ExtResource("10_jg2fe")
 sort_order = 2
 starts_unlocked = false
 unlock_requirements = Array[ExtResource("7_1mofl")]([SubResource("Resource_uvtrp")])
+metadata/_custom_type_script = "uid://bo1jfl7iboct4"
+
+[sub_resource type="Resource" id="Resource_tvlt0"]
+script = ExtResource("7_1mofl")
+stat = 1
+minimum_value = 1800
+metadata/_custom_type_script = "uid://bmnwycqihygiu"
+
+[sub_resource type="Resource" id="Resource_0lt2l"]
+script = ExtResource("11_weapon_option")
+weapon = ExtResource("11_xrsle")
+sort_order = 3
+starts_unlocked = false
+unlock_requirements = Array[ExtResource("7_1mofl")]([SubResource("Resource_tvlt0")])
 metadata/_custom_type_script = "uid://bo1jfl7iboct4"
 
 [sub_resource type="Resource" id="Resource_vb2be"]
@@ -99,6 +114,6 @@ script = ExtResource("1")
 id = &"starter_fighter"
 display_name = "Fighter Mk1"
 loadout = SubResource("Resource_j0tgs")
-starter_weapon_options = Array[ExtResource("11_weapon_option")]([SubResource("Resource_starter_weapon_option"), SubResource("Resource_xrsle"), SubResource("Resource_xtwps")])
+starter_weapon_options = Array[ExtResource("11_weapon_option")]([SubResource("Resource_starter_weapon_option"), SubResource("Resource_xrsle"), SubResource("Resource_xtwps"), SubResource("Resource_0lt2l")])
 visuals = SubResource("Resource_h3va4")
 explosion_scene = ExtResource("3")

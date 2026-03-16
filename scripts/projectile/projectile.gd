@@ -7,10 +7,8 @@ class_name Projectile
 @export var collision_mask: int = 1 << 2   # e.g., layer 3 = targets
 @export var exclude_owner: Node = null     # set by turret to avoid hitting self
 
-enum ShotResult { MISS, GRAZE, HIT, CRIT }
-
 # --- outcome & config ---
-var _outcome: int = ShotResult.MISS
+var _outcome: int = WeaponCombatResolver.ShotResult.MISS
 var _crit_mult: float = 0.0
 var _graze_mult: float = 0.3
 var _from_player: bool = false
@@ -54,7 +52,7 @@ func _physics_process(delta: float) -> void:
 		if t != null and not _target_died:
 			_apply_to_target(t)
 		else:
-			_outcome = ShotResult.MISS
+			_outcome = WeaponCombatResolver.ShotResult.MISS
 			_dmg_applied = true
 
 	var next_pos: Vector3 = global_position + _dir * speed * delta
@@ -72,41 +70,19 @@ func _physics_process(delta: float) -> void:
 		queue_free()
 
 func _apply_to_target(target: Object) -> void:
-	var dmg: float = 0.0
-	var fx_pos: Vector3 = (target as Node3D).global_position if target is Node3D else global_position
-
-	match _outcome:
-		ShotResult.CRIT:
-			EffectsBus.show_float(fx_pos, "CRIT", Color.GREEN)
-			dmg = _base_damage * _crit_mult
-		ShotResult.HIT:
-			dmg = _base_damage
-		ShotResult.GRAZE:
-			EffectsBus.show_float(fx_pos, "GRAZE", Color(0.8, 0.8, 0.8))
-			dmg = _base_damage * _graze_mult
-		ShotResult.MISS:
-			EffectsBus.show_float(fx_pos, "MISS", Color(1.0, 0.569, 0.271, 1.0))
-			dmg = 0.0
-
-	if dmg > 0.0 and target.has_method("apply_damage"):
-		target.call("apply_damage", dmg)
-		if _from_player:
-			CombatStats.report_damage(dmg)
-	
-	if not _effects.is_empty() and target.has_method("apply_status_effect"):
-		for eff in _effects:
-			if eff == null:
-				continue
-			var roll: float = randf()
-			var chance: float = 0.0
-			match _outcome:
-				ShotResult.CRIT:  chance = eff.chance_on_crit
-				ShotResult.HIT:   chance = eff.chance_on_hit
-				ShotResult.GRAZE: chance = eff.chance_on_graze
-				_: chance = 0.0
-			if roll <= chance:
-				target.call("apply_status_effect", eff, exclude_owner)
-	
+	var valid_source: Object = null
+	if exclude_owner != null and is_instance_valid(exclude_owner):
+		valid_source = exclude_owner
+	WeaponCombatResolver.apply_shot_to_target(
+		valid_source,
+		target,
+		_outcome,
+		_base_damage,
+		_graze_mult,
+		_crit_mult,
+		_effects,
+		_from_player
+	)
 	_dmg_applied = true
 
 func _get_target() -> Node3D:

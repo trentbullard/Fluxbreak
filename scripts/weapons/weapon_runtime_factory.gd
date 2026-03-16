@@ -5,6 +5,8 @@ class_name WeaponRuntimeFactory
 static func create_for(turret: PlayerTurret, weapon: WeaponDef) -> WeaponRuntime:
 	if weapon == null:
 		return WeaponRuntime.new(turret, weapon)
+	if weapon is BeamWeaponDef:
+		return BeamWeaponRuntime.new(turret, weapon)
 	if weapon is DroneBayWeaponDef:
 		return DroneBayWeaponRuntime.new(turret, weapon)
 	return ProjectileWeaponRuntime.new(turret, weapon)

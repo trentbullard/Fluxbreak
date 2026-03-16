@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ShipDef" load_steps=30 format=3 uid="uid://c7qhxtfi262nw"]
+[gd_resource type="Resource" script_class="ShipDef" load_steps=33 format=3 uid="uid://c7qhxtfi262nw"]
 
 [ext_resource type="Script" uid="uid://bvxxmlbxopb4b" path="res://content/defs/ship_def.gd" id="1"]
 [ext_resource type="Script" uid="uid://dhvgo1sv28rx3" path="res://content/defs/mount_loadout_def.gd" id="2_4xy8s"]
@@ -15,6 +15,7 @@
 [ext_resource type="Resource" uid="uid://bskk7qmspf063" path="res://content/data/weapons/laser_bolt_mk1.tres" id="9_qo7wl"]
 [ext_resource type="Resource" uid="uid://b7qjg75iq2hov" path="res://content/data/weapons/drone_bay_mk1.tres" id="10_aykaj"]
 [ext_resource type="SphereMesh" uid="uid://dnsbqag21mm1l" path="res://assets/meshes/shield.tres" id="10_xxy5q"]
+[ext_resource type="Resource" uid="uid://kw3uc16q3yo0" path="res://content/data/weapons/particle_beam_mk1.tres" id="11_aykaj"]
 [ext_resource type="PackedScene" uid="uid://bj012u42vcetv" path="res://scenes/ship/thruster_particles.tscn" id="11_n7a5e"]
 [ext_resource type="Resource" uid="uid://dcssl41w3hvhr" path="res://content/data/weapons/mount_layouts/player_policy.tres" id="12_h7u8o"]
 [ext_resource type="Script" path="res://content/defs/ship_starter_weapon_option_def.gd" id="13_weapon_option"]
@@ -57,6 +58,20 @@ starts_unlocked = false
 unlock_requirements = Array[ExtResource("7_jsuhw")]([SubResource("Resource_aykaj")])
 metadata/_custom_type_script = "uid://bo1jfl7iboct4"
 
+[sub_resource type="Resource" id="Resource_j6kqy"]
+script = ExtResource("7_jsuhw")
+stat = 1
+minimum_value = 1800
+metadata/_custom_type_script = "uid://bmnwycqihygiu"
+
+[sub_resource type="Resource" id="Resource_dpfif"]
+script = ExtResource("13_weapon_option")
+weapon = ExtResource("11_aykaj")
+sort_order = 3
+starts_unlocked = false
+unlock_requirements = Array[ExtResource("7_jsuhw")]([SubResource("Resource_j6kqy")])
+metadata/_custom_type_script = "uid://bo1jfl7iboct4"
+
 [sub_resource type="Resource" id="Resource_di4rg"]
 script = ExtResource("9_2symp")
 marker_path = NodePath("ShieldSocket")
@@ -97,7 +112,7 @@ script = ExtResource("1")
 id = &"heavy_bruiser"
 display_name = "Heavy Bruiser"
 loadout = SubResource("Resource_hwqxc")
-starter_weapon_options = Array[ExtResource("13_weapon_option")]([SubResource("Resource_heavy_weapon_option"), SubResource("Resource_x7bxt"), SubResource("Resource_ghh8g")])
+starter_weapon_options = Array[ExtResource("13_weapon_option")]([SubResource("Resource_heavy_weapon_option"), SubResource("Resource_x7bxt"), SubResource("Resource_ghh8g"), SubResource("Resource_dpfif")])
 visuals = SubResource("Resource_4tb3i")
 explosion_scene = ExtResource("3")
 max_hull = 140.0

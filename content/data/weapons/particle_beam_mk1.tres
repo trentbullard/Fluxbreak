@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="BeamWeaponDef" load_steps=3 format=3 uid="uid://kw3uc16q3yo0"]
+
+[ext_resource type="Script" path="res://content/defs/beam_weapon_def.gd" id="1_particle_beam"]
+[ext_resource type="Script" uid="uid://bc5o0q4rptsnq" path="res://content/defs/status_effect_def.gd" id="2_s2a3s"]
+
+[resource]
+script = ExtResource("1_particle_beam")
+lock_acquire_time = 0.5
+damage_tick_interval = 0.5
+max_ramp_stacks = 10
+damage_ramp_per_stack = 0.5
+weapon_id = "particle_beam_mk1"
+display_name = "Particle Beam Mk I"
+fire_rate = 0.2
+base_accuracy = 0.8
+base_range = 450.0
+accuracy_range_falloff = 0.1
+crit_chance = 0.1
+graze_on_hit = 0.05
+graze_on_miss = 0.1
+damage_min = 1.0
+damage_max = 4.0
