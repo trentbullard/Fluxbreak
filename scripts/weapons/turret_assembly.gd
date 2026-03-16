@@ -9,6 +9,8 @@ class_name TurretAssembly
 
 @onready var turret: PlayerTurret = $Turret
 @onready var visual_root: Node3D = $VisualRoot
+@onready var beam_effect_root: Node3D = $BeamEffectRoot
+@onready var muzzle_socket: Marker3D = $MuzzleSocket
 
 signal weapon_changed(new_weapon: WeaponDef)
 
@@ -45,13 +47,14 @@ func has_weapon() -> bool:
 	return turret != null and turret.get_weapon() != null
 
 func _update_visual_for_weapon(w: WeaponDef) -> void:
-	if visual_root == null:
+	if visual_root == null or beam_effect_root == null:
 		return
 
-	# Remove previous visuals
-	for c in visual_root.get_children():
-		visual_root.remove_child(c)
-		c.queue_free()
+	_clear_children(visual_root)
+	_clear_children(beam_effect_root)
+	if turret != null:
+		turret.muzzle = muzzle_socket
+		turret.set_visual_controller(null)
 
 	# Pick scene: weapon's visual, else default (if provided)
 	var scene: PackedScene = null
@@ -62,7 +65,7 @@ func _update_visual_for_weapon(w: WeaponDef) -> void:
 
 	# Instance and attach
 	if scene != null:
-		var inst := scene.instantiate()
+		var inst: Node = scene.instantiate()
 		if inst is Node3D:
 			visual_root.add_child(inst)
 			# Ensure editable ownership in editor and reset local transform
@@ -80,8 +83,30 @@ func _update_visual_for_weapon(w: WeaponDef) -> void:
 
 		if turret != null:
 			var vc: LaserTurretVisualController = _find_visual_controller(inst)
-			if vc != null:
-				turret.set_visual_controller(vc)
+			turret.set_visual_controller(vc)
+
+	var beam_scene: PackedScene = _get_beam_visual_scene(w)
+	if beam_scene != null:
+		var beam_inst: Node = beam_scene.instantiate()
+		if beam_inst is Node3D:
+			beam_effect_root.add_child(beam_inst)
+			beam_inst.owner = beam_effect_root.owner
+			(beam_inst as Node3D).transform = Transform3D.IDENTITY
+			if beam_inst.has_method("bind_turret") and turret != null:
+				beam_inst.call("bind_turret", turret)
+
+func _clear_children(root: Node) -> void:
+	for child: Node in root.get_children():
+		root.remove_child(child)
+		child.queue_free()
+
+func _get_beam_visual_scene(w: WeaponDef) -> PackedScene:
+	if not (w is BeamWeaponDef):
+		return null
+	var beam_weapon: BeamWeaponDef = w as BeamWeaponDef
+	if beam_weapon == null:
+		return null
+	return beam_weapon.beam_visual_scene
 
 func _find_muzzle_in(root: Node) -> Marker3D:
 	var direct: Marker3D = root.get_node_or_null("Muzzle") as Marker3D

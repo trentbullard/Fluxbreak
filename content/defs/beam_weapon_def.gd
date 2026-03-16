@@ -1,6 +1,9 @@
 extends WeaponDef
 class_name BeamWeaponDef
 
+@export_category("Beam Visuals")
+@export var beam_visual_scene: PackedScene
+
 @export_category("Beam Lock")
 @export var lock_acquire_time: float = 0.35
 @export var damage_tick_interval: float = 0.20

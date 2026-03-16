@@ -1,10 +1,12 @@
-[gd_resource type="Resource" script_class="BeamWeaponDef" load_steps=3 format=3 uid="uid://kw3uc16q3yo0"]
+[gd_resource type="Resource" script_class="BeamWeaponDef" load_steps=4 format=3 uid="uid://kw3uc16q3yo0"]
 
 [ext_resource type="Script" path="res://content/defs/beam_weapon_def.gd" id="1_particle_beam"]
 [ext_resource type="Script" uid="uid://bc5o0q4rptsnq" path="res://content/defs/status_effect_def.gd" id="2_s2a3s"]
+[ext_resource type="PackedScene" path="res://scenes/weapons/particle_beam_visual.tscn" id="3_beam_visual"]
 
 [resource]
 script = ExtResource("1_particle_beam")
+beam_visual_scene = ExtResource("3_beam_visual")
 lock_acquire_time = 0.5
 damage_tick_interval = 0.5
 max_ramp_stacks = 10

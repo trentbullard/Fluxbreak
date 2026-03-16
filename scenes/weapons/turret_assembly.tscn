@@ -21,12 +21,14 @@ script = ExtResource("1_wrt6a")
 
 [node name="Turret" type="Node3D" parent="." node_paths=PackedStringArray("muzzle", "shot_sound")]
 script = ExtResource("2_vr3xr")
-muzzle = NodePath("../VisualRoot/Muzzle")
+muzzle = NodePath("../MuzzleSocket")
 shot_sound = NodePath("../ShotSound")
 
 [node name="VisualRoot" type="Node3D" parent="."]
 
-[node name="Muzzle" type="Marker3D" parent="VisualRoot"]
+[node name="BeamEffectRoot" type="Node3D" parent="."]
+
+[node name="MuzzleSocket" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.03, -0.85)
 
 [node name="Mount" type="MeshInstance3D" parent="VisualRoot"]
