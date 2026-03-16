@@ -1,14 +1,15 @@
-[gd_resource type="Resource" script_class="PilotDef" load_steps=12 format=3 uid="uid://duj3tgm8uy8n"]
+[gd_resource type="Resource" script_class="PilotDef" load_steps=15 format=3 uid="uid://duj3tgm8uy8n"]
 
 [ext_resource type="Script" uid="uid://bcwfpgffm7rus" path="res://content/defs/pilot_def.gd" id="1"]
 [ext_resource type="Resource" uid="uid://c7qhxtfi262nw" path="res://content/data/ships/heavy_bruiser.tres" id="2"]
 [ext_resource type="Script" uid="uid://f3a4tqbwupk2" path="res://content/defs/upgrade_def.gd" id="3_4cfw0"]
 [ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="4_aah2x"]
-[ext_resource type="Script" path="res://content/defs/unlock_requirement.gd" id="4_e66eo"]
+[ext_resource type="Script" uid="uid://bmnwycqihygiu" path="res://content/defs/unlock_requirement.gd" id="4_e66eo"]
 [ext_resource type="Script" uid="uid://01gohq2rb404" path="res://content/defs/pilot_unlock_requirement.gd" id="5_e66eo"]
 [ext_resource type="Resource" uid="uid://da52xasn5mssy" path="res://content/data/ships/starter_fighter.tres" id="5_svfxh"]
 [ext_resource type="Resource" path="res://content/data/unlocks/unlock_ace_wave10_rookie.tres" id="6_4cfw0"]
-[ext_resource type="Script" path="res://content/defs/pilot_starter_ship_option_def.gd" id="7_ship_option"]
+[ext_resource type="Resource" uid="uid://crfe5wom1uro4" path="res://content/data/ships/drone_carrier.tres" id="6_5nlev"]
+[ext_resource type="Script" uid="uid://dfbwqieormdat" path="res://content/defs/pilot_starter_ship_option_def.gd" id="7_ship_option"]
 
 [sub_resource type="Resource" id="Resource_ace_ship_option"]
 script = ExtResource("7_ship_option")
@@ -20,13 +21,29 @@ script = ExtResource("7_ship_option")
 ship = ExtResource("5_svfxh")
 metadata/_custom_type_script = "uid://dfbwqieormdat"
 
+[sub_resource type="Resource" id="Resource_6f7p7"]
+script = ExtResource("4_e66eo")
+stat = 2
+source_pilot_id = &"technician"
+metadata/_custom_type_script = "uid://bmnwycqihygiu"
+
+[sub_resource type="Resource" id="Resource_gxh7p"]
+script = ExtResource("7_ship_option")
+ship = ExtResource("6_5nlev")
+sort_order = 2
+starts_unlocked = false
+unlock_requirements = Array[ExtResource("4_e66eo")]([SubResource("Resource_6f7p7")])
+metadata/_custom_type_script = "uid://dfbwqieormdat"
+
 [resource]
 script = ExtResource("1")
 id = &"ace"
 display_name = "Ace"
 description = "Starts with more weapons, trades speed for durability."
-sort_order = 10
+sort_order = 1
 starts_unlocked = false
 unlock_requirements = Array[ExtResource("5_e66eo")]([ExtResource("6_4cfw0")])
 ship = ExtResource("2")
-starter_ship_options = Array[ExtResource("7_ship_option")]([SubResource("Resource_ace_ship_option"), SubResource("Resource_5nlev")])
+starter_ship_options = Array[ExtResource("7_ship_option")]([SubResource("Resource_ace_ship_option"), SubResource("Resource_5nlev"), SubResource("Resource_gxh7p")])
+forward_g_tolerance = 7.0
+forward_g_hard_limit = 12.0

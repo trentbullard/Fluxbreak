@@ -275,8 +275,8 @@ func _draw_distance_label(pos: Vector2, distance: float, angle: float, icon_size
 	draw_string(font, text_pos, distance_text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size, Color(0.9, 0.9, 0.9, 0.9))
 
 # Public API for manual registration (e.g., for POIs or quest markers)
-func register_icon_type(kind: String, shape: OffscreenIconRegistry.IconShape, color: Color, size: float = 14.0) -> void:
-	var entry := OffscreenIconRegistry.IconEntry.new(shape, color, size)
+func register_icon_type(kind: String, shape: OffscreenIconRegistry.IconShape, color: Color, font_size: float = 14.0) -> void:
+	var entry := OffscreenIconRegistry.IconEntry.new(shape, color, font_size)
 	_registry.register(kind, entry)
 
 func track_object(obj: Node3D, kind: String) -> void:

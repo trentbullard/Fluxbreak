@@ -92,7 +92,7 @@ far = 10000.0
 [node name="CameraLight" type="OmniLight3D" parent="CameraPivot/CameraRig/Camera3D"]
 transform = Transform3D(1, 0, 0, 0, 0.99044216, 0.13792859, 0, -0.13792859, 0.99044216, 5.343026, 2.8349524, -4.6635275)
 light_color = Color(0.7977378, 0.7977378, 0.7977378, 1)
-light_energy = 3.0
+light_energy = 1.5
 light_cull_mask = 4293918721
 shadow_caster_mask = 4293918721
 omni_range = 40.0

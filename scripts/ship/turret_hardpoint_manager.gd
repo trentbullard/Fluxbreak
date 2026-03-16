@@ -32,6 +32,7 @@ func get_weapon_count() -> int:
 	return _mount_stack.size()
 
 func get_turret_assemblies() -> Array[TurretAssembly]:
+	_prune_invalid_pool()
 	return _pool.duplicate()
 
 func apply_loadout(loadout: ShipLoadoutDef) -> void:
@@ -117,15 +118,21 @@ func _notify_changed() -> void:
 	EventBus.weapons_changed.emit(get_weapons())
 
 func _realign_and_apply_current() -> void:
+	_prune_invalid_pool()
 	var count: int = _mount_stack.size()
 	var controller_node: Node = get_parent()
 	var controller_node_path: NodePath = controller_node.get_path() if controller_node != null else NodePath("")
 	
 	# 1) ensure pool big enough
 	ensure_pool_size(count)
+	_prune_invalid_pool()
 	
 	# 2) deterministic order
 	_pool.sort_custom(func(a: TurretAssembly, b: TurretAssembly) -> bool:
+		if a == null or not is_instance_valid(a):
+			return false
+		if b == null or not is_instance_valid(b):
+			return true
 		return a.mount_index < b.mount_index
 	)
 	
@@ -187,22 +194,45 @@ func _build_anchor_cache() -> void:
 			_anchor_cache[String(c.name)] = c
 
 func rebuild_anchor_cache() -> void:
+	_prune_invalid_pool()
 	_build_anchor_cache()
 	_realign_and_apply_current()
 
 func ensure_pool_size(n: int) -> void:
+	_prune_invalid_pool()
 	var target: int = clamp(n, 0, max_assemblies)
 	while _pool.size() < target and assembly_scene != null:
 		var a: TurretAssembly = assembly_scene.instantiate() as TurretAssembly
 		if a != null:
 			a.mount_index = _pool.size()
-			a.controller_path = get_parent().get_path()
+			var controller_node: Node = get_parent()
+			a.controller_path = controller_node.get_path() if controller_node != null else NodePath("")
 			add_child(a)
 			_pool.append(a)
 	while _pool.size() > target:
 		var last: TurretAssembly = _pool.pop_back()
-		if last != null:
+		if last != null and is_instance_valid(last):
 			last.queue_free()
+
+func detach_assemblies() -> void:
+	_prune_invalid_pool()
+	for assembly in _pool:
+		if assembly == null or not is_instance_valid(assembly):
+			continue
+		if assembly.get_parent() != self:
+			assembly.reparent(self, true)
+
+func _prune_invalid_pool() -> void:
+	var valid_pool: Array[TurretAssembly] = []
+	for assembly in _pool:
+		if assembly == null or not is_instance_valid(assembly):
+			continue
+		valid_pool.append(assembly)
+	_pool = valid_pool
+	for i in range(_pool.size()):
+		var assembly: TurretAssembly = _pool[i]
+		if assembly != null:
+			assembly.mount_index = i
 
 func _resolve_anchor_nodes_for_active_stack(count: int) -> Array[Node3D]:
 	var explicit: Array[Node3D] = _resolve_explicit_anchor_nodes(count)

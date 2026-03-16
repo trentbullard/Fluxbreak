@@ -1,0 +1,50 @@
+[gd_scene format=3 uid="uid://bcrrressg44ad"]
+
+[node name="ShipLayoutRoot" type="Node3D"]
+
+[node name="ModelSocket" type="Marker3D" parent="."]
+
+[node name="Anchors" type="Node3D" parent="."]
+
+[node name="TopMiddle" type="Marker3D" parent="Anchors"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1468132, -3.7758043)
+
+[node name="TopL" type="Marker3D" parent="Anchors"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.7, 1.716, 0.724)
+
+[node name="TopR" type="Marker3D" parent="Anchors"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.2351742e-08, 2.0650969, -0.3)
+
+[node name="WingLT" type="Marker3D" parent="Anchors"]
+transform = Transform3D(-4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0, 1, -6.1082573, 1.2138828, 0.7999999)
+
+[node name="WingRT" type="Marker3D" parent="Anchors"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.1999998, 1.7402108, 3.1)
+
+[node name="WingLB" type="Marker3D" parent="Anchors"]
+transform = Transform3D(-4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0, 1, -7.5, -1.52, 2.3)
+
+[node name="WingRB" type="Marker3D" parent="Anchors"]
+transform = Transform3D(-4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0, 0, 1, 1.6999999, -1.6200001, 3.3)
+
+[node name="BottomMiddle" type="Marker3D" parent="Anchors"]
+transform = Transform3D(-1, -8.742278e-08, 0, 8.742278e-08, -1, 0, 0, 0, 1, 0, -2.1503975, 1.8)
+
+[node name="BottomL" type="Marker3D" parent="Anchors"]
+transform = Transform3D(-1, -8.742278e-08, 0, 8.742278e-08, -1, 0, 0, 0, 1, -5.866, -2.6395695, 5.1)
+
+[node name="BottomR" type="Marker3D" parent="Anchors"]
+transform = Transform3D(-1, -8.742278e-08, 0, 8.742278e-08, -1, 0, 0, 0, 1, 0.065999985, -2.0202343, 6.5)
+
+[node name="StowParking" type="Marker3D" parent="Anchors"]
+
+[node name="Thrusters" type="Node3D" parent="."]
+
+[node name="ThrusterL" type="Marker3D" parent="Thrusters"]
+transform = Transform3D(1, 0, 0, 0, 1.3113416e-07, -1, 0, 1, 1.3113416e-07, -5, -0.1, 10.400001)
+
+[node name="ThrusterR" type="Marker3D" parent="Thrusters"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, -0.09696072, 0.05434963, 10.729999)
+
+[node name="ShieldSocket" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, -2, 0, 1)

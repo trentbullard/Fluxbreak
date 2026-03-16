@@ -116,9 +116,9 @@ func _ready() -> void:
 func _apply_menu_font_theme() -> void:
 	if menu_font == null:
 		return
-	var theme: Theme = Theme.new()
-	theme.default_font = menu_font
-	self.theme = theme
+	var font_theme: Theme = Theme.new()
+	font_theme.default_font = menu_font
+	self.theme = font_theme
 
 func refresh() -> void:
 	_ship = get_tree().get_first_node_in_group("player") as Ship

@@ -461,12 +461,12 @@ func _ensure_future_overlay_labels() -> void:
 	_nanobot_tag_overlay = _create_overlay_label("NanobotTag", 16, HUD_TEXT_DIM, HORIZONTAL_ALIGNMENT_LEFT)
 	_nanobot_value_overlay = _create_overlay_label("NanobotValue", 26, HUD_NANOBOT_COLOR, HORIZONTAL_ALIGNMENT_LEFT)
 
-func _create_overlay_label(name: String, font_size: int, font_color: Color, alignment: int) -> Label:
-	var existing: Node = get_node_or_null(name)
+func _create_overlay_label(label_name: String, font_size: int, font_color: Color, alignment: int) -> Label:
+	var existing: Node = get_node_or_null(label_name)
 	var label: Label = existing as Label
 	if label == null:
 		label = Label.new()
-		label.name = name
+		label.name = label_name
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		add_child(label)
@@ -475,7 +475,7 @@ func _create_overlay_label(name: String, font_size: int, font_color: Color, alig
 		label.add_theme_font_override("font", HUD_FONT_MEDIUM)
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", font_color)
-	label.horizontal_alignment = alignment
+	label.horizontal_alignment = alignment as HorizontalAlignment
 	label.visible = true
 	return label
 

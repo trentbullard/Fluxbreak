@@ -7,7 +7,7 @@
 [ext_resource type="Script" uid="uid://c35jeiv6o1idc" path="res://content/defs/ship_loadout_def.gd" id="4_jb3yy"]
 [ext_resource type="PackedScene" uid="uid://b13i0tpg75vq2" path="res://scenes/ship/heavy_bruiser_mk1_layout.tscn" id="6_4tb3i"]
 [ext_resource type="Script" uid="uid://c62ptiux8ivvl" path="res://content/defs/ship_visual_def.gd" id="6_hwqxc"]
-[ext_resource type="Script" path="res://content/defs/unlock_requirement.gd" id="7_jsuhw"]
+[ext_resource type="Script" uid="uid://bmnwycqihygiu" path="res://content/defs/unlock_requirement.gd" id="7_jsuhw"]
 [ext_resource type="Script" uid="uid://kmmrm5to02a2" path="res://content/defs/ship_thruster_def.gd" id="7_n1kv6"]
 [ext_resource type="PackedScene" uid="uid://clkp4ep4h1grp" path="res://assets/meshes/heavy_bruiser_mk1.glb" id="7_oetnl"]
 [ext_resource type="Script" uid="uid://d0g8qkgplpfwq" path="res://content/defs/ship_shield_def.gd" id="9_2symp"]
@@ -18,7 +18,7 @@
 [ext_resource type="Resource" uid="uid://kw3uc16q3yo0" path="res://content/data/weapons/particle_beam_mk1.tres" id="11_aykaj"]
 [ext_resource type="PackedScene" uid="uid://bj012u42vcetv" path="res://scenes/ship/thruster_particles.tscn" id="11_n7a5e"]
 [ext_resource type="Resource" uid="uid://dcssl41w3hvhr" path="res://content/data/weapons/mount_layouts/player_policy.tres" id="12_h7u8o"]
-[ext_resource type="Script" path="res://content/defs/ship_starter_weapon_option_def.gd" id="13_weapon_option"]
+[ext_resource type="Script" uid="uid://bo1jfl7iboct4" path="res://content/defs/ship_starter_weapon_option_def.gd" id="13_weapon_option"]
 [ext_resource type="Resource" uid="uid://dvy0gac2vg1b6" path="res://content/data/weapons/pulse_mk1.tres" id="14_pulse_weapon"]
 
 [sub_resource type="Resource" id="Resource_hwqxc"]

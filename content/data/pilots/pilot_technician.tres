@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="PilotDef" load_steps=14 format=3 uid="uid://bgneuar8lljjs"]
+
+[ext_resource type="Script" uid="uid://bcwfpgffm7rus" path="res://content/defs/pilot_def.gd" id="1_jc072"]
+[ext_resource type="Resource" uid="uid://crfe5wom1uro4" path="res://content/data/ships/drone_carrier.tres" id="2_jlq5g"]
+[ext_resource type="Script" uid="uid://dfbwqieormdat" path="res://content/defs/pilot_starter_ship_option_def.gd" id="4_ikhx2"]
+[ext_resource type="Script" uid="uid://bmnwycqihygiu" path="res://content/defs/unlock_requirement.gd" id="4_jc072"]
+[ext_resource type="Resource" uid="uid://da52xasn5mssy" path="res://content/data/ships/starter_fighter.tres" id="5_0gw2n"]
+[ext_resource type="Script" uid="uid://f3a4tqbwupk2" path="res://content/defs/upgrade_def.gd" id="5_0lvq2"]
+[ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="6_a61bl"]
+[ext_resource type="Resource" uid="uid://c7qhxtfi262nw" path="res://content/data/ships/heavy_bruiser.tres" id="6_ikhx2"]
+[ext_resource type="Script" uid="uid://01gohq2rb404" path="res://content/defs/pilot_unlock_requirement.gd" id="7_wgn2k"]
+
+[sub_resource type="Resource" id="Resource_technician_ship_option"]
+script = ExtResource("4_ikhx2")
+ship = ExtResource("2_jlq5g")
+metadata/_custom_type_script = "uid://dfbwqieormdat"
+
+[sub_resource type="Resource" id="Resource_0lvq2"]
+script = ExtResource("4_ikhx2")
+ship = ExtResource("5_0gw2n")
+sort_order = 1
+metadata/_custom_type_script = "uid://dfbwqieormdat"
+
+[sub_resource type="Resource" id="Resource_a61bl"]
+script = ExtResource("4_ikhx2")
+ship = ExtResource("6_ikhx2")
+sort_order = 2
+metadata/_custom_type_script = "uid://dfbwqieormdat"
+
+[sub_resource type="Resource" id="Resource_jc072"]
+script = ExtResource("7_wgn2k")
+minimum_value = 15
+source_pilot_id = &"ace"
+metadata/_custom_type_script = "uid://01gohq2rb404"
+
+[resource]
+script = ExtResource("1_jc072")
+id = &"technician"
+display_name = "Technician"
+description = "Built for improvisation, precision, and letting drones solve problems before people create them."
+sort_order = 2
+starts_unlocked = false
+unlock_requirements = Array[ExtResource("7_wgn2k")]([SubResource("Resource_jc072")])
+ship = ExtResource("2_jlq5g")
+starter_ship_options = Array[ExtResource("4_ikhx2")]([SubResource("Resource_technician_ship_option"), SubResource("Resource_0lvq2"), SubResource("Resource_a61bl")])
+forward_g_tolerance = 4.0
+forward_g_hard_limit = 8.0
+perception = 6.0
+charisma = 2.0
+ingenuity = 8.0
+metadata/_custom_type_script = "uid://bcwfpgffm7rus"

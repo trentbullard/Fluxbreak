@@ -1,13 +1,14 @@
-[gd_resource type="Resource" script_class="PilotDef" load_steps=12 format=3 uid="uid://cjem4ot6d0tkb"]
+[gd_resource type="Resource" script_class="PilotDef" load_steps=15 format=3 uid="uid://cjem4ot6d0tkb"]
 
 [ext_resource type="Script" uid="uid://bcwfpgffm7rus" path="res://content/defs/pilot_def.gd" id="1"]
 [ext_resource type="Resource" uid="uid://da52xasn5mssy" path="res://content/data/ships/starter_fighter.tres" id="2"]
 [ext_resource type="Script" uid="uid://f3a4tqbwupk2" path="res://content/defs/upgrade_def.gd" id="3_qaevb"]
-[ext_resource type="Script" path="res://content/defs/unlock_requirement.gd" id="4_fi0ck"]
+[ext_resource type="Script" uid="uid://bmnwycqihygiu" path="res://content/defs/unlock_requirement.gd" id="4_fi0ck"]
 [ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="4_kd616"]
 [ext_resource type="Resource" uid="uid://c7qhxtfi262nw" path="res://content/data/ships/heavy_bruiser.tres" id="5_dclva"]
 [ext_resource type="Script" uid="uid://01gohq2rb404" path="res://content/defs/pilot_unlock_requirement.gd" id="5_fi0ck"]
-[ext_resource type="Script" path="res://content/defs/pilot_starter_ship_option_def.gd" id="6_ship_option"]
+[ext_resource type="Resource" uid="uid://crfe5wom1uro4" path="res://content/data/ships/drone_carrier.tres" id="6_p30ii"]
+[ext_resource type="Script" uid="uid://dfbwqieormdat" path="res://content/defs/pilot_starter_ship_option_def.gd" id="6_ship_option"]
 
 [sub_resource type="Resource" id="Resource_rookie_ship_option"]
 script = ExtResource("6_ship_option")
@@ -27,10 +28,24 @@ starts_unlocked = false
 unlock_requirements = Array[ExtResource("4_fi0ck")]([SubResource("Resource_p30ii")])
 metadata/_custom_type_script = "uid://dfbwqieormdat"
 
+[sub_resource type="Resource" id="Resource_vemmu"]
+script = ExtResource("4_fi0ck")
+stat = 2
+source_pilot_id = &"technician"
+metadata/_custom_type_script = "uid://bmnwycqihygiu"
+
+[sub_resource type="Resource" id="Resource_iytgm"]
+script = ExtResource("6_ship_option")
+ship = ExtResource("6_p30ii")
+sort_order = 2
+starts_unlocked = false
+unlock_requirements = Array[ExtResource("4_fi0ck")]([SubResource("Resource_vemmu")])
+metadata/_custom_type_script = "uid://dfbwqieormdat"
+
 [resource]
 script = ExtResource("1")
 id = &"rookie"
 display_name = "Rookie"
 description = "Baseline pilot for practice runs."
 ship = ExtResource("2")
-starter_ship_options = Array[ExtResource("6_ship_option")]([SubResource("Resource_rookie_ship_option"), SubResource("Resource_pow0s")])
+starter_ship_options = Array[ExtResource("6_ship_option")]([SubResource("Resource_rookie_ship_option"), SubResource("Resource_pow0s"), SubResource("Resource_iytgm")])

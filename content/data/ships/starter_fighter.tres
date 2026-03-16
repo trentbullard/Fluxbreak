@@ -8,7 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://bt8noxg4b1lvq" path="res://scenes/ship/starter_fighter_mk1_layout.tscn" id="4_tup14"]
 [ext_resource type="PackedScene" uid="uid://bmt72uludsmi4" path="res://assets/meshes/fighter_mk1.glb" id="5_tup14"]
 [ext_resource type="Script" uid="uid://c62ptiux8ivvl" path="res://content/defs/ship_visual_def.gd" id="6_n73qf"]
-[ext_resource type="Script" path="res://content/defs/unlock_requirement.gd" id="7_1mofl"]
+[ext_resource type="Script" uid="uid://bmnwycqihygiu" path="res://content/defs/unlock_requirement.gd" id="7_1mofl"]
 [ext_resource type="Material" uid="uid://dye8ie53a0ych" path="res://content/materials/shield.tres" id="7_dlk1n"]
 [ext_resource type="Script" uid="uid://d0g8qkgplpfwq" path="res://content/defs/ship_shield_def.gd" id="7_n73qf"]
 [ext_resource type="Script" uid="uid://kmmrm5to02a2" path="res://content/defs/ship_thruster_def.gd" id="7_vb2be"]
@@ -17,7 +17,7 @@
 [ext_resource type="Resource" uid="uid://bskk7qmspf063" path="res://content/data/weapons/laser_bolt_mk1.tres" id="9_jg2fe"]
 [ext_resource type="Resource" uid="uid://dcssl41w3hvhr" path="res://content/data/weapons/mount_layouts/player_policy.tres" id="10_j4q2d"]
 [ext_resource type="Resource" uid="uid://b7qjg75iq2hov" path="res://content/data/weapons/drone_bay_mk1.tres" id="10_jg2fe"]
-[ext_resource type="Script" path="res://content/defs/ship_starter_weapon_option_def.gd" id="11_weapon_option"]
+[ext_resource type="Script" uid="uid://bo1jfl7iboct4" path="res://content/defs/ship_starter_weapon_option_def.gd" id="11_weapon_option"]
 [ext_resource type="Resource" uid="uid://kw3uc16q3yo0" path="res://content/data/weapons/particle_beam_mk1.tres" id="11_xrsle"]
 [ext_resource type="Resource" uid="uid://dvy0gac2vg1b6" path="res://content/data/weapons/pulse_mk1.tres" id="12_pulse_weapon"]
 

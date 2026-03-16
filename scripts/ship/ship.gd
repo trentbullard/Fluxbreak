@@ -826,6 +826,9 @@ func _clear_runtime_visual_nodes() -> void:
 	shield_mesh = null
 	_shield_mat = null
 
+	if hardpoint_manager != null:
+		hardpoint_manager.detach_assemblies()
+
 	for particles in _runtime_thruster_particles:
 		if particles != null:
 			particles.queue_free()
