@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3 uid="uid://b5ntu3cdcvp3e"]
+
+[ext_resource type="Script" path="res://scripts/weapons/particle_beam_mk1_turret_visual_controller.gd" id="1_31v8q"]
+[ext_resource type="PackedScene" uid="uid://c14g4npccdf7j" path="res://assets/meshes/beam_weapon_assembly.glb" id="2_un0ua"]
+
+[node name="ParticleBeamMk1TurretVisual" type="Node3D"]
+script = ExtResource("1_31v8q")
+
+[node name="BeamWeaponAssemblyMesh" parent="." instance=ExtResource("2_un0ua")]
+
+[node name="Muzzle" type="Marker3D" parent="BeamWeaponAssemblyMesh/BWA_root/BWA_yaw_pivot/BWA_pitch_pivot" index="17"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.005845517, -0.2838124)
+
+[editable path="BeamWeaponAssemblyMesh"]

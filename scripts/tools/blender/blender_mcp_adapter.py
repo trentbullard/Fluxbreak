@@ -77,21 +77,6 @@ class BlenderSocketClient:
         raise RuntimeError("Blender closed the socket before returning a complete JSON response.")
 
 
-def parse_params_json(params_json: str | None) -> dict[str, Any]:
-    if not params_json:
-        return {}
-
-    try:
-        parsed = json.loads(params_json)
-    except json.JSONDecodeError as exc:
-        raise ValueError(f"params_json must be valid JSON: {exc}") from exc
-
-    if not isinstance(parsed, dict):
-        raise ValueError("params_json must decode to a JSON object.")
-
-    return parsed
-
-
 def build_server(
     adapter_host: str,
     adapter_port: int,
@@ -116,6 +101,8 @@ def build_server(
         port=adapter_port,
         mount_path=mount_path,
         streamable_http_path=streamable_http_path,
+        json_response=True,
+        stateless_http=True,
         log_level="INFO",
     )
 
@@ -209,10 +196,10 @@ def build_server(
 
     @server.tool(
         name="call_blender_command",
-        description="Send a raw BlenderMCP command type with optional JSON object params.",
+        description="Send a raw BlenderMCP command type with optional object params.",
     )
-    def call_blender_command(command_type: str, params_json: str | None = None) -> dict[str, Any]:
-        return call_blender(command_type, parse_params_json(params_json))
+    def call_blender_command(command_type: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
+        return call_blender(command_type, params or {})
 
     return server
 

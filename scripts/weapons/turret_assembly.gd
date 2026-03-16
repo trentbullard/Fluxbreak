@@ -109,8 +109,13 @@ func _get_beam_visual_scene(w: WeaponDef) -> PackedScene:
 	return beam_weapon.beam_visual_scene
 
 func _find_muzzle_in(root: Node) -> Marker3D:
-	var direct: Marker3D = root.get_node_or_null("Muzzle") as Marker3D
-	return direct
+	if root is Marker3D and root.name == "Muzzle":
+		return root as Marker3D
+	for child: Node in root.get_children():
+		var nested: Marker3D = _find_muzzle_in(child)
+		if nested != null:
+			return nested
+	return null
 
 func _find_visual_controller(root: Node) -> LaserTurretVisualController:
 	if root is LaserTurretVisualController:

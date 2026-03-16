@@ -2,7 +2,7 @@
 
 [ext_resource type="PackedScene" uid="uid://ddbe4cjcfj4sv" path="res://assets/meshes/drone_bay.glb" id="1_yacj2"]
 
-[node name="Drone Bay" type="Node3D"]
+[node name="DroneBayMk1TurretVisual" type="Node3D"]
 
 [node name="Drone Bay Mk I" parent="." instance=ExtResource("1_yacj2")]
 

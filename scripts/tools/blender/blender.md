@@ -4,6 +4,7 @@
 - Blender access in this workspace uses a two-step bridge:
   1. The Blender addon runs inside Blender as a raw socket server on `127.0.0.1:9876`.
   2. Codex connects to the local MCP adapter at `http://127.0.0.1:9877/mcp`, which proxies MCP calls to the Blender addon.
+- The adapter is configured for stateless JSON HTTP responses rather than SSE session streaming to reduce MCP client handshake issues across fresh agent sessions.
 
 ## Preflight
 - Before doing Blender work, confirm the Blender addon server is running inside Blender and listening on port `9876`.
@@ -24,6 +25,8 @@
 3. `get_scene_info` and `get_object_info` for read-only inspection.
 4. `execute_bpy_code` for targeted `bpy` operations.
 5. `call_blender_command` only when a needed addon command is not covered by the higher-level MCP tools.
+   Use `params` as an optional object payload.
+   Example: `call_blender_command(command_type=\"get_object_info\", params={\"name\": \"cockpit\"})`
 
 ## Working Rules
 - Prefer making concrete Blender changes through MCP tools when possible.

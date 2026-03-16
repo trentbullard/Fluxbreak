@@ -1,8 +1,9 @@
-[gd_resource type="Resource" script_class="BeamWeaponDef" load_steps=4 format=3 uid="uid://kw3uc16q3yo0"]
+[gd_resource type="Resource" script_class="BeamWeaponDef" load_steps=5 format=3 uid="uid://kw3uc16q3yo0"]
 
-[ext_resource type="Script" path="res://content/defs/beam_weapon_def.gd" id="1_particle_beam"]
+[ext_resource type="Script" uid="uid://d0umfftixxqtl" path="res://content/defs/beam_weapon_def.gd" id="1_particle_beam"]
 [ext_resource type="Script" uid="uid://bc5o0q4rptsnq" path="res://content/defs/status_effect_def.gd" id="2_s2a3s"]
 [ext_resource type="PackedScene" path="res://scenes/weapons/particle_beam_visual.tscn" id="3_beam_visual"]
+[ext_resource type="PackedScene" uid="uid://b5ntu3cdcvp3e" path="res://scenes/weapons/particle_beam_mk1_turret_visual.tscn" id="4_y2ual"]
 
 [resource]
 script = ExtResource("1_particle_beam")
@@ -22,3 +23,4 @@ graze_on_hit = 0.05
 graze_on_miss = 0.1
 damage_min = 1.0
 damage_max = 4.0
+visual_scene = ExtResource("4_y2ual")
