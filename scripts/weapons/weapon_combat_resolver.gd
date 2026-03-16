@@ -3,6 +3,11 @@ class_name WeaponCombatResolver
 
 enum ShotResult { MISS, GRAZE, HIT, CRIT }
 
+static func get_shot_origin(turret: PlayerTurret) -> Vector3:
+	if turret == null:
+		return Vector3.ZERO
+	return turret.get_shot_origin()
+
 static func compute_effective_accuracy_vs_target(turret: PlayerTurret, target: Node3D) -> float:
 	if turret == null or target == null:
 		return 0.0
@@ -11,7 +16,8 @@ static func compute_effective_accuracy_vs_target(turret: PlayerTurret, target: N
 	if target.has_method("get_evasion"):
 		evasion = float(target.call("get_evasion"))
 
-	var dist_sq: float = turret.global_position.distance_squared_to(target.global_position)
+	var shot_origin: Vector3 = get_shot_origin(turret)
+	var dist_sq: float = shot_origin.distance_squared_to(target.global_position)
 	var base_range: float = max(1.0, turret.eff_base_range)
 	var range_factor: float = clamp(sqrt(dist_sq) / base_range, 0.0, 1.0)
 	var acc_base: float = max(turret.eff_base_accuracy + turret.systems_bonus + turret.eff_systems_bonus_add, 0.0)

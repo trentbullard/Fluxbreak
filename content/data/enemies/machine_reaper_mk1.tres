@@ -9,7 +9,7 @@
 
 [sub_resource type="Resource" id="Resource_klx7b"]
 script = ExtResource("4_k23yp")
-weapon_id = "Machine Reaper Mk1 Laser Turret Mk1"
+weapon_id = "machine_reaper_mk1_laser_turret_mk1"
 display_name = "Machine Reaper Mk1 Laser Turret Mk1"
 fire_rate = 1.0
 base_accuracy = 0.6
@@ -27,7 +27,7 @@ id = "machine_reaper_mk1"
 display_name = "Reaper Mk I"
 faction = "Machines"
 role = "Brawler"
-tier = 4
+tier = 3
 threat_cost = 4
 bounty_scrap = 4
 affixes = Array[String](["Prime", "Core", "Sigma"])

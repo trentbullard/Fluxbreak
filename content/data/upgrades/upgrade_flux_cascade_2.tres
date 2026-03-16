@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=6 format=3 uid="uid://jde5cmmxud2t"]
+
+[ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="1_mod"]
+[ext_resource type="Script" uid="uid://f3a4tqbwupk2" path="res://content/defs/upgrade_def.gd" id="2_upg"]
+
+[sub_resource type="Resource" id="Resource_max_stacks"]
+script = ExtResource("1_mod")
+stat = 75
+value = 3.0
+source_id = "flux_cascade_2"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_ramp_damage"]
+script = ExtResource("1_mod")
+stat = 76
+value = 0.12
+source_id = "flux_cascade_2"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_stacks_on_hit"]
+script = ExtResource("1_mod")
+stat = 77
+value = 1.0
+source_id = "flux_cascade_2"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[resource]
+script = ExtResource("2_upg")
+id = "flux_cascade_2"
+display_name = "Flux Cascade II"
+descripton = "+3 Max Stacks, +12% Damage / Stack, +1 Stack On Hit"
+cost = 1850
+tags = Array[String](["offense", "weapons", "damage", "beam", "channel", "ramp"])
+tier = 2
+family_id = "flux_cascade"
+modifiers = Array[ExtResource("1_mod")]([SubResource("Resource_max_stacks"), SubResource("Resource_ramp_damage"), SubResource("Resource_stacks_on_hit")])
+metadata/_custom_type_script = "uid://f3a4tqbwupk2"

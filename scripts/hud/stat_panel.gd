@@ -80,6 +80,20 @@ const TURRET_STAT_INFO: Array[Dictionary] = [
 	{ "key": "graze_mult", "name": "Graze Mult", "format": "%.0f%%", "is_percent": true },
 ]
 
+const CHANNEL_STAT_INFO: Array[Dictionary] = [
+	{ "key": "acquire_time", "name": "Acquire Time", "format": "%.2fs", "invert": true },
+	{ "key": "tick_interval", "name": "Tick Interval", "format": "%.2fs", "invert": true },
+]
+
+const RAMP_STAT_INFO: Array[Dictionary] = [
+	{ "key": "max_stacks", "name": "Max Stacks", "format": "%.0f" },
+	{ "key": "damage_per_stack", "name": "Damage / Stack", "format": "%.0f%%", "is_percent": true },
+	{ "key": "stacks_on_hit", "name": "Stacks On Hit", "format": "%.0f" },
+	{ "key": "stacks_on_crit", "name": "Stacks On Crit", "format": "%.0f" },
+	{ "key": "stacks_lost_on_graze", "name": "Loss On Graze", "format": "%.0f", "invert": true },
+	{ "key": "stacks_lost_on_miss", "name": "Loss On Miss", "format": "%.0f", "invert": true },
+]
+
 const DRONE_BAY_STAT_INFO: Array[Dictionary] = [
 	{ "key": "count", "name": "Drone Count", "format": "%.0f" },
 	{ "key": "charge_capacity", "name": "Charge Capacity", "format": "%.1fs" },
@@ -405,6 +419,10 @@ func _add_weapon_section(weapon_data: Dictionary) -> void:
 		return
 
 	_add_weapon_stat_block("", TURRET_STAT_INFO, weapon_data.get("base", {}), weapon_data.get("effective", {}))
+	if bool(weapon_data.get("has_channel", false)):
+		_add_weapon_stat_block("Channel", CHANNEL_STAT_INFO, weapon_data.get("channel_base", {}), weapon_data.get("channel_effective", {}))
+	if bool(weapon_data.get("has_ramp", false)):
+		_add_weapon_stat_block("Ramp", RAMP_STAT_INFO, weapon_data.get("ramp_base", {}), weapon_data.get("ramp_effective", {}))
 
 func _add_weapon_stat_block(title: String, stat_info: Array[Dictionary], base: Dictionary, effective: Dictionary) -> void:
 	if title != "":
@@ -527,6 +545,8 @@ func _collect_weapon_stats(weapon: WeaponDef, turret: PlayerTurret, mount_index:
 
 	var base_stats: Dictionary = _get_weapon_base_stats(weapon)
 	var effective_stats: Dictionary = _get_turret_effective_stats(turret)
+	var has_channel: bool = weapon.uses_channel_stats()
+	var has_ramp: bool = weapon.uses_ramp_stats()
 	
 	return {
 		"weapon": weapon,
@@ -535,6 +555,12 @@ func _collect_weapon_stats(weapon: WeaponDef, turret: PlayerTurret, mount_index:
 		"mount_index": mount_index,
 		"base": base_stats,
 		"effective": effective_stats,
+		"has_channel": has_channel,
+		"channel_base": _get_weapon_channel_base_stats(weapon) if has_channel else {},
+		"channel_effective": _get_turret_effective_channel_stats(turret) if has_channel else {},
+		"has_ramp": has_ramp,
+		"ramp_base": _get_weapon_ramp_base_stats(weapon) if has_ramp else {},
+		"ramp_effective": _get_turret_effective_ramp_stats(turret) if has_ramp else {},
 	}
 
 func _get_weapon_base_stats(weapon: WeaponDef) -> Dictionary:
@@ -572,4 +598,36 @@ func _get_turret_effective_stats(turret: PlayerTurret) -> Dictionary:
 		"projectile_speed": turret.eff_projectile_speed,
 		"projectile_life": turret.eff_projectile_life,
 		"projectile_spread": turret.eff_projectile_spread_deg,
+	}
+
+func _get_weapon_channel_base_stats(weapon: WeaponDef) -> Dictionary:
+	return {
+		"acquire_time": weapon.get_channel_acquire_time(),
+		"tick_interval": weapon.get_channel_tick_interval(),
+	}
+
+func _get_weapon_ramp_base_stats(weapon: WeaponDef) -> Dictionary:
+	return {
+		"max_stacks": float(weapon.get_ramp_max_stacks()),
+		"damage_per_stack": weapon.get_ramp_damage_per_stack(),
+		"stacks_on_hit": float(weapon.get_ramp_stacks_on_hit()),
+		"stacks_on_crit": float(weapon.get_ramp_stacks_on_crit()),
+		"stacks_lost_on_graze": float(weapon.get_ramp_stacks_lost_on_graze()),
+		"stacks_lost_on_miss": float(weapon.get_ramp_stacks_lost_on_miss()),
+	}
+
+func _get_turret_effective_channel_stats(turret: PlayerTurret) -> Dictionary:
+	return {
+		"acquire_time": turret.eff_channel_acquire_time,
+		"tick_interval": turret.eff_channel_tick_interval,
+	}
+
+func _get_turret_effective_ramp_stats(turret: PlayerTurret) -> Dictionary:
+	return {
+		"max_stacks": float(turret.get_effective_ramp_max_stacks()),
+		"damage_per_stack": turret.eff_ramp_damage_per_stack,
+		"stacks_on_hit": float(turret.get_effective_ramp_stacks_on_hit()),
+		"stacks_on_crit": float(turret.get_effective_ramp_stacks_on_crit()),
+		"stacks_lost_on_graze": float(turret.get_effective_ramp_stacks_lost_on_graze()),
+		"stacks_lost_on_miss": float(turret.get_effective_ramp_stacks_lost_on_miss()),
 	}

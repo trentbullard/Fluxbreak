@@ -44,6 +44,14 @@ var eff_systems_bonus_add: float = 0.0
 var eff_projectile_speed: float = 0.0
 var eff_projectile_life: float = 0.0
 var eff_projectile_spread_deg: float = 0.0
+var eff_channel_acquire_time: float = 0.0
+var eff_channel_tick_interval: float = 0.0
+var eff_ramp_max_stacks: float = 0.0
+var eff_ramp_damage_per_stack: float = 0.0
+var eff_ramp_stacks_on_hit: float = 0.0
+var eff_ramp_stacks_on_crit: float = 0.0
+var eff_ramp_stacks_lost_on_graze: float = 0.0
+var eff_ramp_stacks_lost_on_miss: float = 0.0
 
 signal weapon_changed(new_weapon: WeaponDef)
 
@@ -124,6 +132,26 @@ func get_max_assign_range() -> float:
 func get_controller() -> TurretController:
 	return _controller
 
+func get_shot_origin() -> Vector3:
+	if muzzle != null:
+		return muzzle.global_position
+	return global_position
+
+func get_effective_ramp_max_stacks() -> int:
+	return maxi(int(round(eff_ramp_max_stacks)), 0)
+
+func get_effective_ramp_stacks_on_hit() -> int:
+	return maxi(int(round(eff_ramp_stacks_on_hit)), 0)
+
+func get_effective_ramp_stacks_on_crit() -> int:
+	return maxi(int(round(eff_ramp_stacks_on_crit)), 0)
+
+func get_effective_ramp_stacks_lost_on_graze() -> int:
+	return maxi(int(round(eff_ramp_stacks_lost_on_graze)), 0)
+
+func get_effective_ramp_stacks_lost_on_miss() -> int:
+	return maxi(int(round(eff_ramp_stacks_lost_on_miss)), 0)
+
 # --- firing loop ---
 
 func _physics_process(delta: float) -> void:
@@ -187,6 +215,14 @@ func _refresh_effective_weapon_stats() -> void:
 		eff_projectile_speed = 0.0
 		eff_projectile_life = 0.0
 		eff_projectile_spread_deg = 0.0
+		eff_channel_acquire_time = 0.0
+		eff_channel_tick_interval = 0.0
+		eff_ramp_max_stacks = 0.0
+		eff_ramp_damage_per_stack = 0.0
+		eff_ramp_stacks_on_hit = 0.0
+		eff_ramp_stacks_on_crit = 0.0
+		eff_ramp_stacks_lost_on_graze = 0.0
+		eff_ramp_stacks_lost_on_miss = 0.0
 		return
 
 	var aggr: StatAggregator = _stats
@@ -202,6 +238,16 @@ func _refresh_effective_weapon_stats() -> void:
 	var base_gm: float = _weapon.graze_mult
 	var base_dmin: float = _weapon.damage_min
 	var base_dmax: float = _weapon.damage_max
+	var uses_channel: bool = _weapon.uses_channel_stats()
+	var uses_ramp: bool = _weapon.uses_ramp_stats()
+	var base_channel_acquire: float = _weapon.get_channel_acquire_time() if uses_channel else 0.0
+	var base_channel_tick: float = _weapon.get_channel_tick_interval() if uses_channel else 0.0
+	var base_ramp_max_stacks: float = float(_weapon.get_ramp_max_stacks()) if uses_ramp else 0.0
+	var base_ramp_damage_per_stack: float = _weapon.get_ramp_damage_per_stack() if uses_ramp else 0.0
+	var base_ramp_stacks_on_hit: float = float(_weapon.get_ramp_stacks_on_hit()) if uses_ramp else 0.0
+	var base_ramp_stacks_on_crit: float = float(_weapon.get_ramp_stacks_on_crit()) if uses_ramp else 0.0
+	var base_ramp_stacks_lost_on_graze: float = float(_weapon.get_ramp_stacks_lost_on_graze()) if uses_ramp else 0.0
+	var base_ramp_stacks_lost_on_miss: float = float(_weapon.get_ramp_stacks_lost_on_miss()) if uses_ramp else 0.0
 
 	# If no aggregator, copy base
 	if aggr == null:
@@ -221,6 +267,14 @@ func _refresh_effective_weapon_stats() -> void:
 		eff_projectile_speed = 0.0
 		eff_projectile_life = 0.0
 		eff_projectile_spread_deg = 0.0
+		eff_channel_acquire_time = max(base_channel_acquire, 0.0) if uses_channel else 0.0
+		eff_channel_tick_interval = max(base_channel_tick, 0.01) if uses_channel else 0.0
+		eff_ramp_max_stacks = max(base_ramp_max_stacks, 0.0) if uses_ramp else 0.0
+		eff_ramp_damage_per_stack = max(base_ramp_damage_per_stack, 0.0) if uses_ramp else 0.0
+		eff_ramp_stacks_on_hit = max(base_ramp_stacks_on_hit, 0.0) if uses_ramp else 0.0
+		eff_ramp_stacks_on_crit = max(base_ramp_stacks_on_crit, 0.0) if uses_ramp else 0.0
+		eff_ramp_stacks_lost_on_graze = max(base_ramp_stacks_lost_on_graze, 0.0) if uses_ramp else 0.0
+		eff_ramp_stacks_lost_on_miss = max(base_ramp_stacks_lost_on_miss, 0.0) if uses_ramp else 0.0
 		return
 
 	# With aggregator
@@ -240,3 +294,24 @@ func _refresh_effective_weapon_stats() -> void:
 	eff_projectile_speed = aggr.compute_for_context(Stat.PROJECTILE_SPEED, 0.0, StatAggregator.Context.PLAYER)
 	eff_projectile_life = aggr.compute_for_context(Stat.PROJECTILE_LIFE, 0.0, StatAggregator.Context.PLAYER)
 	eff_projectile_spread_deg = aggr.compute_for_context(Stat.PROJECTILE_SPREAD, 0.0, StatAggregator.Context.PLAYER)
+	if uses_channel:
+		var tick_after_fire_rate: float = max(0.01, aggr.compute_for_context(Stat.WEAPON_FIRE_RATE, max(base_channel_tick, 0.01), StatAggregator.Context.PLAYER))
+		eff_channel_acquire_time = max(0.0, aggr.compute_for_context(Stat.WEAPON_CHANNEL_ACQUIRE_TIME, base_channel_acquire, StatAggregator.Context.PLAYER))
+		eff_channel_tick_interval = max(0.01, aggr.compute_for_context(Stat.WEAPON_CHANNEL_TICK_INTERVAL, tick_after_fire_rate, StatAggregator.Context.PLAYER))
+	else:
+		eff_channel_acquire_time = 0.0
+		eff_channel_tick_interval = 0.0
+	if uses_ramp:
+		eff_ramp_max_stacks = max(0.0, aggr.compute_for_context(Stat.WEAPON_RAMP_MAX_STACKS, base_ramp_max_stacks, StatAggregator.Context.PLAYER))
+		eff_ramp_damage_per_stack = max(0.0, aggr.compute_for_context(Stat.WEAPON_RAMP_DAMAGE_PER_STACK, base_ramp_damage_per_stack, StatAggregator.Context.PLAYER))
+		eff_ramp_stacks_on_hit = max(0.0, aggr.compute_for_context(Stat.WEAPON_RAMP_STACKS_ON_HIT, base_ramp_stacks_on_hit, StatAggregator.Context.PLAYER))
+		eff_ramp_stacks_on_crit = max(0.0, aggr.compute_for_context(Stat.WEAPON_RAMP_STACKS_ON_CRIT, base_ramp_stacks_on_crit, StatAggregator.Context.PLAYER))
+		eff_ramp_stacks_lost_on_graze = max(0.0, aggr.compute_for_context(Stat.WEAPON_RAMP_STACKS_LOST_ON_GRAZE, base_ramp_stacks_lost_on_graze, StatAggregator.Context.PLAYER))
+		eff_ramp_stacks_lost_on_miss = max(0.0, aggr.compute_for_context(Stat.WEAPON_RAMP_STACKS_LOST_ON_MISS, base_ramp_stacks_lost_on_miss, StatAggregator.Context.PLAYER))
+	else:
+		eff_ramp_max_stacks = 0.0
+		eff_ramp_damage_per_stack = 0.0
+		eff_ramp_stacks_on_hit = 0.0
+		eff_ramp_stacks_on_crit = 0.0
+		eff_ramp_stacks_lost_on_graze = 0.0
+		eff_ramp_stacks_lost_on_miss = 0.0

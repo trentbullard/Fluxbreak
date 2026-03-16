@@ -386,13 +386,13 @@ func _format_beam_status(weapon: BeamWeaponDef, runtime: BeamWeaponRuntime) -> S
 
 	match runtime.get_lock_state():
 		BeamWeaponRuntime.LockState.ACQUIRING:
-			var acquire_time: float = max(0.0, weapon.lock_acquire_time)
+			var acquire_time: float = runtime.get_effective_lock_acquire_time()
 			var lock_progress: float = clamp(runtime.get_lock_progress(), 0.0, 1.0)
 			var remaining: float = clamp(acquire_time * (1.0 - lock_progress), 0.0, acquire_time)
 			return "LOCK %.2fs" % remaining
 		BeamWeaponRuntime.LockState.LOCKED:
 			var current_stacks: int = max(0, runtime.get_ramp_stacks())
-			var max_stacks: int = max(0, weapon.max_ramp_stacks)
+			var max_stacks: int = max(0, runtime.get_effective_max_ramp_stacks())
 			return "STACK %d/%d" % [current_stacks, max_stacks]
 		_:
 			return ""

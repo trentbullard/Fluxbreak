@@ -8,6 +8,7 @@
 - Never suppress errors by removing types. Prefer clear fixes with types and guards.
 - Don’t touch large assets or binary files. Changes are code/scenes/resources only.
 - Try to use distance_squared_to over distance_to whenever possible to prevent square root calls
+- Consider updating vision docs when broad changes are made
 
 ## Scope & Context Policy
 Include (read/use for context):

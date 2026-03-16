@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=6 format=3 uid="uid://dqabvv7slgyni"]
+
+[ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="1_mod"]
+[ext_resource type="Script" uid="uid://f3a4tqbwupk2" path="res://content/defs/upgrade_def.gd" id="2_upg"]
+
+[sub_resource type="Resource" id="Resource_tick_interval"]
+script = ExtResource("1_mod")
+stat = 74
+op = 1
+value = 0.9
+source_id = "coherence_relay_1"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_base_range"]
+script = ExtResource("1_mod")
+stat = 21
+value = 60.0
+source_id = "coherence_relay_1"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_range_bonus"]
+script = ExtResource("1_mod")
+stat = 30
+value = 90.0
+source_id = "coherence_relay_1"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[resource]
+script = ExtResource("2_upg")
+id = "coherence_relay_1"
+display_name = "Coherence Relay I"
+descripton = "90% Tick Interval, +60 Base Range, +90 Range Bonus"
+cost = 920
+tags = Array[String](["utility", "misc", "beam", "channel", "range"])
+family_id = "coherence_relay"
+modifiers = Array[ExtResource("1_mod")]([SubResource("Resource_tick_interval"), SubResource("Resource_base_range"), SubResource("Resource_range_bonus")])
+metadata/_custom_type_script = "uid://f3a4tqbwupk2"

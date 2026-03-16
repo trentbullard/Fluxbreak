@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="Upgrade" load_steps=6 format=3 uid="uid://ct0ai1gtg0o1s"]
+
+[ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="1_mod"]
+[ext_resource type="Script" uid="uid://f3a4tqbwupk2" path="res://content/defs/upgrade_def.gd" id="2_upg"]
+
+[sub_resource type="Resource" id="Resource_acquire_time"]
+script = ExtResource("1_mod")
+stat = 73
+op = 1
+value = 0.65
+source_id = "phase_lock_stabilizer_2"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_loss_on_graze"]
+script = ExtResource("1_mod")
+stat = 79
+value = -1.0
+source_id = "phase_lock_stabilizer_2"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[sub_resource type="Resource" id="Resource_loss_on_miss"]
+script = ExtResource("1_mod")
+stat = 80
+value = -2.0
+source_id = "phase_lock_stabilizer_2"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[resource]
+script = ExtResource("2_upg")
+id = "phase_lock_stabilizer_2"
+display_name = "Phase Lock Stabilizer II"
+descripton = "65% Acquire Time, -1 Loss On Graze, -2 Loss On Miss"
+cost = 1750
+tags = Array[String](["defense", "beam", "channel", "lock"])
+tier = 2
+family_id = "phase_lock_stabilizer"
+modifiers = Array[ExtResource("1_mod")]([SubResource("Resource_acquire_time"), SubResource("Resource_loss_on_graze"), SubResource("Resource_loss_on_miss")])
+metadata/_custom_type_script = "uid://f3a4tqbwupk2"

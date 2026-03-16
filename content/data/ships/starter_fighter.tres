@@ -68,7 +68,6 @@ metadata/_custom_type_script = "uid://bmnwycqihygiu"
 script = ExtResource("11_weapon_option")
 weapon = ExtResource("11_xrsle")
 sort_order = 3
-starts_unlocked = false
 unlock_requirements = Array[ExtResource("7_1mofl")]([SubResource("Resource_tvlt0")])
 metadata/_custom_type_script = "uid://bo1jfl7iboct4"
 

@@ -41,7 +41,7 @@ Machines should feel relentless rather than emotional.
 - Sentinel  
 - Reaper  
 - Warden  
-- Overmind  
+- Coremind  
 
 ### Elite Affixes
 - Prime  

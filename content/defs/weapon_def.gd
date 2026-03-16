@@ -86,3 +86,33 @@ func get_display_name_or_default() -> String:
 	if from_id != "":
 		return from_id.capitalize()
 	return "Weapon"
+
+func uses_channel_stats() -> bool:
+	return false
+
+func uses_ramp_stats() -> bool:
+	return false
+
+func get_channel_acquire_time() -> float:
+	return 0.0
+
+func get_channel_tick_interval() -> float:
+	return 0.0
+
+func get_ramp_max_stacks() -> int:
+	return 0
+
+func get_ramp_damage_per_stack() -> float:
+	return 0.0
+
+func get_ramp_stacks_on_hit() -> int:
+	return 0
+
+func get_ramp_stacks_on_crit() -> int:
+	return 0
+
+func get_ramp_stacks_lost_on_graze() -> int:
+	return 0
+
+func get_ramp_stacks_lost_on_miss() -> int:
+	return 0

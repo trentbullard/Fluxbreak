@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=8 format=3 uid="uid://b16mb2kqfd8ru"]
+
+[ext_resource type="PackedScene" uid="uid://l62gx0wmdeq1" path="res://scenes/enemies/machine_coremind_mk1.tscn" id="1_okvwc"]
+[ext_resource type="Script" uid="uid://bx6wive40u6f" path="res://content/defs/enemy_def.gd" id="2_kh6w4"]
+[ext_resource type="PackedScene" uid="uid://bso2dpcl7d5tx" path="res://scenes/weapons/laser_bolt.tscn" id="3_il8xm"]
+[ext_resource type="Script" uid="uid://dby70n1hr4uk3" path="res://content/defs/weapon_def.gd" id="4_pxmm4"]
+[ext_resource type="AudioStream" uid="uid://cg2afukmlkc53" path="res://assets/sounds/laser_bolt.wav" id="5_douvt"]
+[ext_resource type="Script" uid="uid://bc5o0q4rptsnq" path="res://content/defs/status_effect_def.gd" id="6_sgua5"]
+
+[sub_resource type="Resource" id="Resource_jlacu"]
+script = ExtResource("4_pxmm4")
+weapon_id = "machine_warden_mk1_laser_turret_mk1"
+display_name = "Machine Coremind Mk1 Laser Turret Mk1"
+fire_rate = 1.0
+base_accuracy = 0.7
+base_range = 650.0
+crit_chance = 0.0
+damage_min = 20.0
+damage_max = 25.0
+projectile_scene = ExtResource("3_il8xm")
+shot_sound = ExtResource("5_douvt")
+metadata/_custom_type_script = "uid://dby70n1hr4uk3"
+
+[resource]
+script = ExtResource("2_kh6w4")
+id = "machine_coremind_mk1"
+display_name = "Coremind Mk I"
+faction = "Machines"
+role = "Brawler"
+tier = 5
+threat_cost = 16
+bounty_scrap = 16
+affixes = Array[String](["Prime", "Core", "Sigma"])
+score_on_kill = 50
+max_hull = 500.0
+max_shield = 160.0
+shield_regen = 15.0
+evasion = 0.2
+thrust = 100.0
+weapon = SubResource("Resource_jlacu")
+model_scene = ExtResource("1_okvwc")
+metadata/_custom_type_script = "uid://bx6wive40u6f"
