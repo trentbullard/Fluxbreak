@@ -19,9 +19,9 @@ extends CanvasLayer
 @onready var offscreen_indicators: OffscreenIndicatorLayer = $ScreenRoot/OffscreenIndicatorLayer
 
 var camera: Camera3D
-var _director: Node = null
+var _director: WaveDirector = null
 var _spawner: Node = null
-var _wave_label: Node = null
+var _wave_label: Label = null
 var _countdown_label: Label = null
 var _alive_label: Label = null
 var _run_details_label: Label = null
@@ -43,7 +43,7 @@ func _ready() -> void:
 		offscreen_indicators.init(camera, ship)
 	
 	if wave_director_path != NodePath(""):
-		_director = get_node_or_null(wave_director_path)
+		_director = get_node_or_null(wave_director_path) as WaveDirector
 	if spawner_path != NodePath(""):
 		_spawner = get_node_or_null(spawner_path)
 	
@@ -59,20 +59,6 @@ func _ready() -> void:
 		_stage_details_label = get_node_or_null(stage_details_label_path) as Label
 	if stage_modifiers_label_path != NodePath(""):
 		_stage_modifiers_label = get_node_or_null(stage_modifiers_label_path) as Label
-	
-	if _director != null:
-		if _director.has_signal("wave_started"):
-			_director.connect("wave_started", Callable(self, "_on_wave_started"))
-		if _director.has_signal("wave_cleared"):
-			_director.connect("wave_cleared", Callable(self, "_on_wave_cleared"))
-		if _director.has_signal("downtime_started"):
-			_director.connect("downtime_started", Callable(self, "_on_downtime_started"))
-		if _director.has_signal("downtime_tick"):
-			_director.connect("downtime_tick", Callable(self, "_on_downtime_tick"))
-		if _director.has_signal("downtime_ended"):
-			_director.connect("downtime_ended", Callable(self, "_on_downtime_ended"))
-		if _director.has_signal("next_wave_eta"):
-			_director.connect("next_wave_eta", Callable(self, "_on_next_wave_eta"))
 	
 	if _spawner != null and _spawner.has_signal("alive_counts_changed"):
 		_spawner.connect("alive_counts_changed", Callable(self, "_on_alive_counts_changed"))
@@ -97,6 +83,7 @@ func _process(_dt: float) -> void:
 	# If the camera changes (e.g., switch to cockpit or different scene), refresh
 	if camera == null or not is_instance_valid(camera) or not camera.current:
 		_refresh_camera()
+	_refresh_timer_readouts()
 
 func _refresh_camera() -> void:
 	if camera_path != NodePath(""):
@@ -104,29 +91,9 @@ func _refresh_camera() -> void:
 	else:
 		camera = get_viewport().get_camera_3d()
 
-func _on_wave_started(index: int, _enemy_budget: int, _target_budget: int) -> void:
-	if _wave_label != null:
-		_wave_label.text = "Wave %d" % index
-	if _countdown_label != null:
-		_countdown_label.text = ""
-
-func _on_downtime_started(_duration: float, _next_wave_index: int) -> void:
-	pass
-
-func _on_downtime_tick(_remaining: float, _next_wave_index: int) -> void:
-	pass
-
-func _on_downtime_ended(_next_wave_index: int) -> void:
-	pass
-
 func _on_alive_counts_changed(enemies: int, targets: int, total: int) -> void:
 	if _alive_label != null:
 		_alive_label.text = "Enemies: %d Targets: %d Total: %d" % [enemies, targets, total]
-
-func _on_next_wave_eta(seconds: float) -> void:
-	if _countdown_label == null:
-		return
-	_countdown_label.text = "Next wave starts in %s" % _fmt_mm_ss(seconds)
 
 func _on_game_flow_stage_changed(_stage: StageDef, _stage_index: int) -> void:
 	_refresh_run_details()
@@ -174,7 +141,30 @@ func _refresh_stage_details() -> void:
 				continue
 			lines.append("%s" % modifier.get_display_name_or_default())
 
-	_stage_modifiers_label.text = "\n".join(lines)
+	if _stage_modifiers_label != null:
+		_stage_modifiers_label.text = "\n".join(lines)
+
+func _refresh_timer_readouts() -> void:
+	if _countdown_label != null:
+		_countdown_label.text = "Run %s" % _fmt_elapsed_time(GameFlow.get_run_elapsed_seconds())
+
+	if _wave_label == null:
+		return
+	if _director == null:
+		_wave_label.text = "Intermission"
+		return
+
+	if _director.get_state() == RunState.State.IN_WAVE:
+		_wave_label.text = "Wave %d • %s left" % [
+			_director.get_wave_index(),
+			_fmt_mm_ss(_director.get_wave_time_remaining()),
+		]
+		return
+
+	_wave_label.text = "Intermission • %s until Wave %d" % [
+		_fmt_mm_ss(_director.get_downtime_remaining()),
+		_director.get_next_wave_index(),
+	]
 
 func _get_run_mode_text(run_definition: RunDefinition) -> String:
 	if run_definition == null:
@@ -193,8 +183,13 @@ func _fmt_mm_ss(s: float) -> String:
 	var total: int = int(ceil(max(s, 0.0)))
 	var m: int = total / 60
 	var sec: int = total % 60
-	if m <= 0:
-		return ":%02d" % [sec]
-	else:
-		return "%d:%02d" % [m, sec]
-		
+	return "%02d:%02d" % [m, sec]
+
+func _fmt_elapsed_time(s: float) -> String:
+	var total: int = int(floor(max(s, 0.0)))
+	var hours: int = total / 3600
+	var minutes: int = (total % 3600) / 60
+	var seconds: int = total % 60
+	if hours > 0:
+		return "%d:%02d:%02d" % [hours, minutes, seconds]
+	return "%02d:%02d" % [minutes, seconds]

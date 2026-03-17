@@ -51,6 +51,23 @@ var _downtime_remaining: float = 0.0
 var _wave_token: int = 0
 var _pressure_token: int = 0
 
+func get_state() -> RunState.State:
+	return _state
+
+func get_wave_index() -> int:
+	return _wave_index
+
+func get_next_wave_index() -> int:
+	if _state == RunState.State.DOWNTIME:
+		return _wave_index + 1
+	return max(_wave_index, 1)
+
+func get_wave_time_remaining() -> float:
+	return max(wave_timeout_sec - _wave_timer, 0.0)
+
+func get_downtime_remaining() -> float:
+	return max(_downtime_remaining, 0.0)
+
 func _ready() -> void:
 	_threat_dir = get_node_or_null(threat_director_path) as ThreatDirector
 	_wave_budgeter = get_node_or_null(wave_budgeter_path) as WaveBudgeter

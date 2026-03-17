@@ -58,6 +58,7 @@ var _selected_weapon_id_by_ship_id: Dictionary = {}
 
 var _run_active: bool = false
 var _run_started_msec: int = 0
+var _run_elapsed_sec: float = 0.0
 var _run_pilot_id: StringName = &""
 var _run_total_nanobots_collected: int = 0
 var _run_peak_nanobots: int = 0
@@ -75,10 +76,16 @@ func _ready() -> void:
 		RunState.nanobots_updated.connect(_on_run_nanobots_updated)
 	await get_tree().process_frame
 
+func _process(delta: float) -> void:
+	if not _run_active:
+		return
+	_run_elapsed_sec += max(delta, 0.0)
+
 func start_new_run(run_definition: RunDefinition = null) -> void:
 	RunState.start_run()
 	_run_active = true
 	_run_started_msec = Time.get_ticks_msec()
+	_run_elapsed_sec = 0.0
 	_run_total_nanobots_collected = 0
 	_run_peak_nanobots = 0
 	_run_last_nanobots_value = 0
@@ -272,6 +279,9 @@ func get_active_run_definition() -> RunDefinition:
 
 func get_active_stage_index() -> int:
 	return _active_stage_index
+
+func get_run_elapsed_seconds() -> float:
+	return max(_run_elapsed_sec, 0.0)
 
 func get_current_stage() -> StageDef:
 	if _active_run_definition == null or _active_stage_index < 0:
@@ -776,6 +786,7 @@ func _copy_stage_modifier_array(source: Array) -> Array[StageModifierDef]:
 func _clear_run_progression() -> void:
 	_active_run_definition = null
 	_active_stage_index = -1
+	_run_elapsed_sec = 0.0
 	_rolled_stage_modifiers_by_stage_key.clear()
 
 func _on_run_nanobots_updated(amount: int) -> void:
@@ -805,10 +816,7 @@ func _finalize_run_stats(count_as_death: bool) -> void:
 	var before_unlocks: Dictionary = _build_unlock_state()
 	var stats: Dictionary = _get_or_create_stats_for_pilot(pilot_id)
 
-	var run_seconds: int = 0
-	if _run_started_msec > 0:
-		var elapsed_msec: int = max(Time.get_ticks_msec() - _run_started_msec, 0)
-		run_seconds = int(round(float(elapsed_msec) / 1000.0))
+	var run_seconds: int = int(round(get_run_elapsed_seconds()))
 
 	var final_score: int = max(RunState.run_score, 0)
 	var final_wave: int = max(RunState.get_wave_index(), 0)
