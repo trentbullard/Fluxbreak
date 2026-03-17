@@ -601,6 +601,7 @@ func apply_damage(amount: float) -> void:
 	var incoming: float = max(0.0, amount * eff_damage_taken_mult)
 	if incoming <= 0.0:
 		return
+	CombatStats.report_damage_taken(incoming)
 	var remaining: float = incoming
 	var shield_damage: float = 0.0
 	if shield > 0.0:

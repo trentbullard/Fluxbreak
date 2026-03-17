@@ -12,6 +12,13 @@ func get_pool(size_band_max: int) -> Array[TargetDef]:
 		out.append(t)
 	return out
 
+func get_affordable_pool(pool: Array[TargetDef], max_cost: int) -> Array[TargetDef]:
+	var out: Array[TargetDef] = []
+	for t in pool:
+		if t != null and t.threat_cost <= max_cost:
+			out.append(t)
+	return out
+
 func pick_by_cost(pool: Array[TargetDef], max_cost: int) -> TargetDef:
 	var best: TargetDef = null
 	for t in pool:

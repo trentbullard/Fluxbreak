@@ -8,6 +8,9 @@ A run should usually have a dominant hostile identity, and wave generation shoul
 
 The wave system should create the feeling that the player is fighting an evolving hostile force rather than isolated enemy packs.
 
+In practical terms, this should increasingly come from a small encounter deck rather than a single scalar buyer.
+Wave cards should define role bias, budget splits, pacing cadence, and objective pressure so procedural waves can still feel authored.
+
 ### Core Intent
 
 - Early waves should feel readable and relatively stable across pilot, ship, faction, and system combinations.
@@ -30,6 +33,9 @@ Core inputs are likely to include:
 Secondary adaptive hooks may later include things like survivability state, enemy survival rate, economy velocity, or kill-speed signals, but the system should not depend on opaque overreaction to player behavior.
 
 The goal is to make escalation feel responsive and authored without feeling arbitrary or obviously rubber-banded.
+
+Performance adaptation should stay bounded.
+Time, wave index, and stage identity should remain the primary macro difficulty drivers, while performance only nudges density, reinforcements, and composition inside controlled limits.
 
 ### Scaling Dimensions
 
@@ -71,6 +77,8 @@ Wave assembly should therefore favor systems that can express:
 - pressure packages
 - support relationships
 - curated exceptions
+- downtime salvage windows or bait objectives between spikes
+- anti-repetition guards that preserve faction identity without exact looped waves
 
 It should not be overly locked to simplistic "buy the biggest affordable unit repeatedly" logic in the final form.
 

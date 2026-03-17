@@ -152,6 +152,8 @@ func _die() -> void:
 	_dead = true
 	
 	about_to_die.emit(self)
+	if def != null:
+		CombatStats.report_enemy_kill(def.threat_cost)
 
 	# spawn a visual nanobot swarm at the enemy location to represent dropped resources
 	if NanobotSwarmScene != null:

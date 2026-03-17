@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="StageDef" load_steps=12 format=3 uid="uid://bk2rjcsc0jiqs"]
+[gd_resource type="Resource" script_class="StageDef" load_steps=15 format=3 uid="uid://bk2rjcsc0jiqs"]
 
 [ext_resource type="Script" path="res://content/defs/stage_modifier_def.gd" id="1_a508n"]
 [ext_resource type="Script" path="res://content/defs/stage_def.gd" id="1_stage_def"]
@@ -11,6 +11,68 @@
 [ext_resource type="Resource" path="res://content/data/stages/modifiers/solar_flare_front.tres" id="8_solar_flare_front"]
 [ext_resource type="Script" uid="uid://c7bw4eh6k252" path="res://content/defs/poi_def.gd" id="9_8wxf2"]
 [ext_resource type="Script" uid="uid://dwo3qna7vo5nk" path="res://content/defs/wave_card.gd" id="11_7qahc"]
+
+[sub_resource type="Resource" id="Resource_reactor_vanguard"]
+script = ExtResource("11_7qahc")
+card_id = "reactor_vanguard"
+display_name = "Reactor Vanguard"
+faction_bias = "Machines"
+role_bias = "Bruiser"
+secondary_role_bias = "Suppressor"
+support_role_bias = "Support"
+primary_budget_share = 0.55
+secondary_budget_share = 0.25
+support_budget_share = 0.2
+in_wave_target_budget_scale = 0.12
+downtime_target_point_budget = 2
+pressure_enemy_point_budget = 4
+target_size_band_max = 1
+package_count_min = 3
+package_count_max = 4
+max_primary_budget_share = 0.5
+metadata/_custom_type_script = "uid://dwo3qna7vo5nk"
+
+[sub_resource type="Resource" id="Resource_precision_net"]
+script = ExtResource("11_7qahc")
+card_id = "reactor_precision_net"
+display_name = "Precision Net"
+faction_bias = "Machines"
+role_bias = "Suppressor"
+secondary_role_bias = "Scout"
+support_role_bias = "Bruiser"
+primary_budget_share = 0.45
+secondary_budget_share = 0.35
+support_budget_share = 0.2
+in_wave_target_budget_scale = 0.08
+downtime_target_point_budget = 2
+pressure_enemy_point_budget = 3
+target_size_band_max = 1
+package_count_min = 3
+package_count_max = 4
+max_primary_budget_share = 0.45
+metadata/_custom_type_script = "uid://dwo3qna7vo5nk"
+
+[sub_resource type="Resource" id="Resource_core_escorts"]
+script = ExtResource("11_7qahc")
+card_id = "reactor_core_escorts"
+display_name = "Core Escorts"
+faction_bias = "Machines"
+role_bias = "Support"
+secondary_role_bias = "Bruiser"
+support_role_bias = "Suppressor"
+primary_budget_share = 0.4
+secondary_budget_share = 0.35
+support_budget_share = 0.25
+in_wave_target_budget_scale = 0.16
+downtime_target_point_budget = 3
+pressure_enemy_point_budget = 4
+target_size_band_max = 2
+package_count_min = 3
+package_count_max = 4
+max_primary_budget_share = 0.5
+anchor_support_cost_threshold = 6
+tags = Array[String](["elite"])
+metadata/_custom_type_script = "uid://dwo3qna7vo5nk"
 
 [resource]
 script = ExtResource("1_stage_def")
@@ -36,3 +98,4 @@ bonus_pool = Array[ExtResource("1_a508n")]([ExtResource("6_salvage_tide")])
 debuff_pool = Array[ExtResource("1_a508n")]([ExtResource("7_sensor_static")])
 random_bonus_count = 1
 random_debuff_count = 1
+wave_cards = Array[ExtResource("11_7qahc")]([SubResource("Resource_reactor_vanguard"), SubResource("Resource_precision_net"), SubResource("Resource_core_escorts")])

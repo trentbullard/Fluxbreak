@@ -12,20 +12,35 @@ func _process(_delta: float) -> void:
 	var state: RunState.State = RunState.run_state
 	var pps: float = CombatStats.get_pps()
 	var elapsed: float = 0.0
+	var incoming_damage: float = CombatStats.get_damage_taken_per_sec()
+	var kill_rate: float = CombatStats.get_enemy_kill_rate()
+	var td: ThreatDirector = null
+	var bud: WaveBudgeter = null
 	if _wd != null:
 		elapsed = _wd._elapsed_sec
-	var td: ThreatDirector = _wd._threat_dir
-	var bud: WaveBudgeter = _wd._wave_budgeter
+		td = _wd._threat_dir
+		bud = _wd._wave_budgeter
 	var threat: float = 0.0
 	var budgets: Dictionary = {}
 	if td != null and bud != null:
-		threat = td.compute_threat(elapsed, pps)
-		budgets = bud.to_budgets(threat, elapsed)
-	var txt: String = "State: %d\nPPS: %.1f\nThreat: %.1f\nEnemyPts: %d  TargetPts: %d" % [
+		threat = td.compute_threat(
+			elapsed,
+			max(_wd.get_wave_index(), 1),
+			max(GameFlow.get_active_stage_index(), 0),
+			pps,
+			incoming_damage
+		)
+		budgets = bud.to_budgets(threat, elapsed, max(_wd.get_wave_index(), 1), _wd._active_card)
+	var snapshot: Dictionary = _wd.get_debug_snapshot() if _wd != null else {}
+	var txt: String = "State: %d\nPPS: %.1f\nIncDPS: %.1f\nKillRate: %.2f\nThreat: %.1f\nEnemyPts: %d  TargetPts: %d\nCard: %s\nPressure: %s" % [
 		state,
 		pps,
+		incoming_damage,
+		kill_rate,
 		threat,
 		int(budgets.get("enemy_points", 0)),
-		int(budgets.get("target_points", 0))
+		int(budgets.get("target_points", 0)),
+		String(snapshot.get("card_name", "Wave")),
+		String(snapshot.get("pressure_state", "n/a"))
 	]
 	$Label.text = txt

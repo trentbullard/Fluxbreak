@@ -98,6 +98,28 @@ func get_bonus_pool() -> Array[StageModifierDef]:
 func get_debuff_pool() -> Array[StageModifierDef]:
 	return _dedupe_modifiers(debuff_pool)
 
+func get_wave_cards() -> Array[WaveCard]:
+	var resolved: Array[WaveCard] = []
+	var seen_paths: Dictionary = {}
+	var seen_ids: Dictionary = {}
+	for entry in wave_cards:
+		if entry == null:
+			continue
+		var path_key: String = entry.resource_path
+		if path_key != "" and seen_paths.has(path_key):
+			continue
+		var id_key: StringName = entry.get_card_id()
+		if id_key != &"" and seen_ids.has(id_key):
+			if path_key != "":
+				seen_paths[path_key] = true
+			continue
+		resolved.append(entry)
+		if path_key != "":
+			seen_paths[path_key] = true
+		if id_key != &"":
+			seen_ids[id_key] = true
+	return resolved
+
 func _dedupe_modifiers(source: Array[StageModifierDef]) -> Array[StageModifierDef]:
 	var resolved: Array[StageModifierDef] = []
 	var seen_paths: Dictionary = {}

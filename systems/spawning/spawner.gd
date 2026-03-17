@@ -18,6 +18,7 @@ var spawn_mode: int = 0
 @export var spawn_radius: float = 400
 @export var spawn_interval: float = 1.5
 @export var min_distance_from_ship: float = 150.0
+@export_group("Legacy Caps")
 @export var max_alive_total: int = 30
 @export var max_enemies_alive: int = 10
 @export var max_targets_alive: int = 3
@@ -55,8 +56,6 @@ func spawn_one_with_def(kind: int, def: Resource) -> Node3D:
 	if enemy_scene == null or target_scene == null:
 		return null
 	if not _can_spawn_now():
-		return null
-	if not _has_room_for(kind):
 		return null
 	
 	var inst: Node3D = (enemy_scene if kind == SpawnKind.ENEMY else target_scene).instantiate() as Node3D
@@ -100,9 +99,6 @@ func spawn_one(kind: int) -> Node3D:
 	if enemy_scene == null or target_scene == null:
 		return null
 	if not _can_spawn_now():
-		return null
-	
-	if not _has_room_for(kind):
 		return null
 	
 	var inst: Node3D = null
@@ -184,8 +180,7 @@ func set_max_alive_total(n: int) -> void:
 func _maintain_targets() -> void:
 	if not maintain_target_floor:
 		return
-	# top up to floor, but never exceed max_targets_alive
-	var want: int = clampi(target_floor_alive - _alive_targets, 0, max_targets_alive - _alive_targets)
+	var want: int = max(target_floor_alive - _alive_targets, 0)
 	if want > 0:
 		spawn_burst(SpawnKind.TARGET, want)
 
@@ -223,14 +218,6 @@ func _pick_spawn_kind() -> int:
 		return SpawnKind.ENEMY
 	var roll: float = _rng.randf() * total
 	return SpawnKind.ENEMY if roll < e_weight else SpawnKind.TARGET
-
-func _has_room_for(kind: int) -> bool:
-	if _alive >= max_alive_total:
-		return false
-	if kind == SpawnKind.ENEMY:
-		return _alive_enemies < max_enemies_alive
-	else:
-		return _alive_targets < max_targets_alive
 
 func _can_spawn_now() -> bool:
 	if not is_instance_valid(_player_ship):

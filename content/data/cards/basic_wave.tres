@@ -4,4 +4,19 @@
 
 [resource]
 script = ExtResource("1_7kpsk")
+card_id = "basic_wave"
+display_name = "Basic Contact"
+role_bias = "Brawler"
+secondary_role_bias = "Scout"
+support_role_bias = "Suppressor"
+primary_budget_share = 0.55
+secondary_budget_share = 0.25
+support_budget_share = 0.2
+in_wave_target_budget_scale = 0.15
+downtime_target_point_budget = 2
+pressure_enemy_point_budget = 2
+target_size_band_max = 1
+package_count_min = 2
+package_count_max = 3
+max_primary_budget_share = 0.5
 metadata/_custom_type_script = "uid://dwo3qna7vo5nk"

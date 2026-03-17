@@ -52,6 +52,8 @@ func start_run() -> void:
 	reset_score()
 	reset_weapons_purchased()
 	reset_upgrades_purchased()
+	if CombatStats != null:
+		CombatStats.reset_run_metrics()
 
 
 func reset_weapons_purchased() -> void:
