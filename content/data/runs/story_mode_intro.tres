@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RunDefinition" load_steps=5 format=3 uid="uid://ekisi3hlmamj"]
+
+[ext_resource type="Script" path="res://content/defs/run_definition.gd" id="1_run_definition"]
+[ext_resource type="Resource" path="res://content/data/stages/perimeter_breach.tres" id="2_stage_one"]
+[ext_resource type="Script" path="res://content/defs/stage_def.gd" id="2_wpxb4"]
+[ext_resource type="Resource" path="res://content/data/stages/reactor_graveyard.tres" id="3_stage_two"]
+
+[resource]
+script = ExtResource("1_run_definition")
+run_id = &"story_mode_intro"
+display_name = "Story Run"
+description = "Two-stage story run scaffold. Stage one ends at a boss gateway, stage two completes the run."
+stages = Array[ExtResource("2_wpxb4")]([ExtResource("2_stage_one"), ExtResource("3_stage_two")])

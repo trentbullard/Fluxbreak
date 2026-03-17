@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="StageModifierDef" load_steps=3 format=3 uid="uid://xwx3fdeai4g8"]
+
+[ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="1_kdkmt"]
+[ext_resource type="Script" path="res://content/defs/stage_modifier_def.gd" id="1_stage_modifier_def"]
+
+[resource]
+script = ExtResource("1_stage_modifier_def")
+modifier_id = &"sensor_static"
+display_name = "Sensor Static"
+description = "Charged particulate and interference reduce battlefield clarity. Intended hook for visibility pressure, target acquisition penalties, or noisier telegraphs."
+kind = 1
+tags = PackedStringArray("visibility", "scanner", "negative")

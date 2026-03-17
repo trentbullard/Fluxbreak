@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="StageModifierDef" load_steps=3 format=3 uid="uid://bf5ocmvxqio0j"]
+
+[ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="1_7sa8x"]
+[ext_resource type="Script" path="res://content/defs/stage_modifier_def.gd" id="1_stage_modifier_def"]
+
+[resource]
+script = ExtResource("1_stage_modifier_def")
+modifier_id = &"salvage_tide"
+display_name = "Salvage Tide"
+description = "Drift lanes are rich with broken station mass and salvage. Good candidate for extra nanobot economy and objective density."
+tags = PackedStringArray("economy", "salvage", "positive")

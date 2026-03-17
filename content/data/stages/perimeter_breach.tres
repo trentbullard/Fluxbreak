@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="StageDef" load_steps=11 format=3 uid="uid://nwgfpc1w8myu"]
+
+[ext_resource type="Script" path="res://content/defs/stage_def.gd" id="1_stage_def"]
+[ext_resource type="Script" path="res://content/defs/stage_modifier_def.gd" id="1_v303b"]
+[ext_resource type="Texture2D" uid="uid://d3x23q2en3ng1" path="res://assets/spheremaps/plain_starfield_1.png" id="2_plain_starfield"]
+[ext_resource type="Texture2D" uid="uid://c47msyh8whoa7" path="res://assets/spheremaps/refined_galactic_plane_and_nebulae_2.png" id="3_refined_plane"]
+[ext_resource type="Texture2D" uid="uid://smu5ije51mq7" path="res://assets/spheremaps/rich_blue_nebulae_1.png" id="4_blue_nebula"]
+[ext_resource type="Resource" path="res://content/data/stages/modifiers/salvage_tide.tres" id="5_salvage_tide"]
+[ext_resource type="Resource" path="res://content/data/stages/modifiers/thruster_corridors.tres" id="6_thruster_corridors"]
+[ext_resource type="Resource" uid="uid://xwx3fdeai4g8" path="res://content/data/stages/modifiers/sensor_static.tres" id="7_sensor_static"]
+[ext_resource type="Script" uid="uid://c7bw4eh6k252" path="res://content/defs/poi_def.gd" id="8_m83hq"]
+[ext_resource type="Script" uid="uid://dwo3qna7vo5nk" path="res://content/defs/wave_card.gd" id="10_2ph3h"]
+
+[resource]
+script = ExtResource("1_stage_def")
+stage_id = &"perimeter_breach"
+display_name = "Perimeter Breach"
+description = "Story stage one. The player fights through the station perimeter, clears the local pressure spike, and opens a boss gate into the inner system."
+next_stage_id = &"reactor_graveyard"
+panorama_options = Array[Texture2D]([ExtResource("2_plain_starfield"), ExtResource("3_refined_plane"), ExtResource("4_blue_nebula")])
+background_energy_multiplier = 1.35
+ambient_light_color = Color(0.0863, 0.2667, 0.4706, 1)
+ambient_light_energy = 5.4
+ambient_light_sky_contribution = 0.2
+star_light_color = Color(0.7882, 0.8824, 1, 1)
+star_light_energy = 1.8
+glow_intensity = 0.45
+glow_strength = 0.35
+volumetric_fog_density = 0.008
+volumetric_fog_albedo = Color(0.6902, 0.7569, 0.902, 1)
+volumetric_fog_emission = Color(0.1294, 0.2706, 0.4667, 1)
+volumetric_fog_emission_energy = 0.08
+guaranteed_modifiers = Array[ExtResource("1_v303b")]([ExtResource("5_salvage_tide")])
+bonus_pool = Array[ExtResource("1_v303b")]([ExtResource("6_thruster_corridors")])
+debuff_pool = Array[ExtResource("1_v303b")]([ExtResource("7_sensor_static")])
+random_bonus_count = 1
+random_debuff_count = 1

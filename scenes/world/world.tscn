@@ -1,6 +1,6 @@
 [gd_scene load_steps=73 format=3 uid="uid://ppgr7fveqbrd"]
 
-[ext_resource type="Texture2D" uid="uid://d3x23q2en3ng1" path="res://assets/plain_starfield_1.png" id="1_dphjl"]
+[ext_resource type="Texture2D" uid="uid://d3x23q2en3ng1" path="res://assets/spheremaps/plain_starfield_1.png" id="1_dphjl"]
 [ext_resource type="Script" uid="uid://bksswhha71raw" path="res://scripts/world/world_bootstrap.gd" id="1_ovomx"]
 [ext_resource type="PackedScene" uid="uid://bsm2da0co8h01" path="res://scenes/ship/ship.tscn" id="2_6m72w"]
 [ext_resource type="Script" uid="uid://o2d5kgipj00g" path="res://scripts/vfx/starfield_follower.gd" id="2_v5dby"]
@@ -177,15 +177,17 @@ outline_color = Color(0, 0, 0, 1)
 script = ExtResource("1_ovomx")
 ship_scene = ExtResource("2_6m72w")
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="StageRoot" type="Node3D" parent="."]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="StageRoot"]
 environment = SubResource("Environment_v5dby")
 
-[node name="Star" type="DirectionalLight3D" parent="."]
+[node name="Star" type="DirectionalLight3D" parent="StageRoot"]
 light_energy = 2.0
 shadow_enabled = true
 directional_shadow_mode = 0
 
-[node name="Starfield" type="GPUParticles3D" parent="."]
+[node name="Starfield" type="GPUParticles3D" parent="StageRoot"]
 amount = 2000
 lifetime = 12.0
 preprocess = 12.0
@@ -196,14 +198,14 @@ process_material = SubResource("ParticleProcessMaterial_dphjl")
 draw_pass_1 = SubResource("QuadMesh_t5ptc")
 script = ExtResource("2_v5dby")
 
-[node name="Spawner" type="Node3D" parent="."]
+[node name="Spawner" type="Node3D" parent="StageRoot"]
 script = ExtResource("6_bq33v")
 target_scene = ExtResource("7_j2gmx")
 enemy_scene = ExtResource("6_5qq27")
-ship_path = NodePath("../Ship")
+ship_path = NodePath("../../Ship")
 spawn_radius = 600.0
 
-[node name="WaveDirector" type="Node" parent="."]
+[node name="WaveDirector" type="Node" parent="StageRoot"]
 script = ExtResource("7_m114p")
 spawner_path = NodePath("../Spawner")
 wave_timeout_sec = 60.0
@@ -212,28 +214,28 @@ wave_budgeter_path = NodePath("../WaveBudgeter")
 budget_buyer_path = NodePath("../BudgetBuyer")
 wave_cards = Array[ExtResource("8_wnndm")]([ExtResource("9_26xou")])
 
-[node name="ThreatDirector" type="Node" parent="."]
+[node name="ThreatDirector" type="Node" parent="StageRoot"]
 script = ExtResource("8_71ii3")
 
-[node name="WaveBudgeter" type="Node" parent="."]
+[node name="WaveBudgeter" type="Node" parent="StageRoot"]
 script = ExtResource("9_bt7bg")
 
-[node name="EnemyCatalog" type="Node" parent="."]
+[node name="EnemyCatalog" type="Node" parent="StageRoot"]
 script = ExtResource("10_6hctx")
 enemies = Array[ExtResource("13_jyr8v")]([ExtResource("14_5o5dd"), ExtResource("15_d0ajt"), ExtResource("16_jyr8v"), ExtResource("18_4jq4u"), ExtResource("19_sar2w")])
 
-[node name="TargetCatalog" type="Node" parent="."]
+[node name="TargetCatalog" type="Node" parent="StageRoot"]
 script = ExtResource("11_ues17")
 targets = Array[ExtResource("17_fymcc")]([ExtResource("18_lbnhc"), ExtResource("20_5o5dd")])
 
-[node name="BudgetBuyer" type="Node" parent="."]
+[node name="BudgetBuyer" type="Node" parent="StageRoot"]
 script = ExtResource("12_xq18t")
 enemy_catalog_path = NodePath("../EnemyCatalog")
 target_catalog_path = NodePath("../TargetCatalog")
 
-[node name="PoiSpawner" type="Node3D" parent="."]
+[node name="PoiSpawner" type="Node3D" parent="StageRoot"]
 script = ExtResource("poi_spawner_script")
-ship_path = NodePath("../Ship")
+ship_path = NodePath("../../Ship")
 poi_scene = ExtResource("poi_scene")
 spawn_interval_min = 30.0
 spawn_interval_max = 50.0
@@ -241,22 +243,24 @@ min_distance_from_player = 1000.0
 poi_defs = Array[ExtResource("poi_def_script")]([SubResource("Resource_5fxch"), SubResource("Resource_kx0xk"), SubResource("Resource_4jq4u")])
 debug_logging = false
 
-[node name="DockingManager" type="Node" parent="."]
+[node name="DockingManager" type="Node" parent="StageRoot"]
 script = ExtResource("docking_manager_script")
-ship_path = NodePath("../Ship")
+ship_path = NodePath("../../Ship")
 poi_spawner_path = NodePath("../PoiSpawner")
-upgrade_menu_path = NodePath("../UpgradeMenu")
+upgrade_menu_path = NodePath("../../UpgradeMenu")
 
 [node name="MainMenuOverlay" parent="." instance=ExtResource("29_kx0xk")]
 
 [node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("8_1yooq")
 ship_path = NodePath("../Ship")
-wave_director_path = NodePath("../WaveDirector")
-spawner_path = NodePath("../Spawner")
-wave_label_path = NodePath("ScreenRoot/TopDock/CenterContainer/VBoxContainer/WaveLayer/Label")
-countdown_label_path = NodePath("ScreenRoot/TopDock/CenterContainer/VBoxContainer/TimerLayer/Label")
+wave_director_path = NodePath("../StageRoot/WaveDirector")
+spawner_path = NodePath("../StageRoot/Spawner")
+wave_label_path = NodePath("ScreenRoot/TopDock/TimerWaveLayer/VBoxContainer/WaveLabel")
+countdown_label_path = NodePath("ScreenRoot/TopDock/TimerWaveLayer/VBoxContainer/TimerLabel")
 alive_label_path = NodePath("ScreenRoot/TopDock/ScoreLayer/VBoxContainer/Alive")
+run_details_label_path = NodePath("ScreenRoot/TopDock/TopRightDock/RunStageDetailsContainer/RunDetails")
+stage_details_label_path = NodePath("ScreenRoot/TopDock/TopRightDock/RunStageDetailsContainer/StageDetails")
 
 [node name="ScreenRoot" type="Control" parent="HUD"]
 layout_mode = 3
@@ -271,15 +275,15 @@ mouse_filter = 2
 layout_mode = 1
 anchors_preset = -1
 anchor_right = 1.0
-offset_left = 15.0
-offset_top = 15.0
-offset_right = -15.0
-offset_bottom = 4.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
 grow_horizontal = 2
-grow_vertical = 2
 
 [node name="ScoreLayer" type="Control" parent="HUD/ScreenRoot/TopDock"]
 layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
 script = ExtResource("13_umvgx")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="HUD/ScreenRoot/TopDock/ScoreLayer"]
@@ -292,11 +296,6 @@ layout_mode = 2
 text = "Score: 200"
 label_settings = ExtResource("10_m114p")
 
-[node name="Nanobots" type="Label" parent="HUD/ScreenRoot/TopDock/ScoreLayer/VBoxContainer"]
-layout_mode = 2
-text = "Nanobots: 1000"
-label_settings = ExtResource("10_m114p")
-
 [node name="Alive" type="Label" parent="HUD/ScreenRoot/TopDock/ScoreLayer/VBoxContainer"]
 layout_mode = 2
 text = "Enemies: 2 Targets: 1 Total: 3"
@@ -306,54 +305,85 @@ label_settings = ExtResource("10_m114p")
 layout_mode = 2
 script = ExtResource("poi_list_layer_script")
 ship_path = NodePath("../../../../../../Ship")
-poi_spawner_path = NodePath("../../../../../../PoiSpawner")
+poi_spawner_path = NodePath("../../../../../../StageRoot/PoiSpawner")
 label_settings = ExtResource("10_m114p")
 
-[node name="MinimapDock" type="Control" parent="HUD/ScreenRoot/TopDock"]
+[node name="TimerWaveLayer" type="Control" parent="HUD/ScreenRoot/TopDock"]
 layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 0
 
-[node name="CenterContainer" type="CenterContainer" parent="HUD/ScreenRoot/TopDock"]
-layout_mode = 2
-
-[node name="VBoxContainer" type="VBoxContainer" parent="HUD/ScreenRoot/TopDock/CenterContainer"]
-layout_mode = 2
+[node name="VBoxContainer" type="VBoxContainer" parent="HUD/ScreenRoot/TopDock/TimerWaveLayer"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -27.0
+offset_right = 27.0
+offset_bottom = 38.0
+grow_horizontal = 2
 alignment = 1
 
-[node name="TimerLayer" type="Control" parent="HUD/ScreenRoot/TopDock/CenterContainer/VBoxContainer"]
+[node name="TimerLabel" type="Label" parent="HUD/ScreenRoot/TopDock/TimerWaveLayer/VBoxContainer"]
 layout_mode = 2
-
-[node name="Label" type="Label" parent="HUD/ScreenRoot/TopDock/CenterContainer/VBoxContainer/TimerLayer"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -16.0
-offset_right = 16.0
-offset_bottom = 23.0
-grow_horizontal = 2
-grow_vertical = 2
+size_flags_horizontal = 4
 text = "5:00"
 label_settings = ExtResource("10_m114p")
 horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="WaveLayer" type="Control" parent="HUD/ScreenRoot/TopDock/CenterContainer/VBoxContainer"]
+[node name="WaveLabel" type="Label" parent="HUD/ScreenRoot/TopDock/TimerWaveLayer/VBoxContainer"]
 layout_mode = 2
-
-[node name="Label" type="Label" parent="HUD/ScreenRoot/TopDock/CenterContainer/VBoxContainer/WaveLayer"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -28.0
-offset_top = 18.0
-offset_right = 28.0
-offset_bottom = 41.0
-grow_horizontal = 2
-grow_vertical = 2
+size_flags_horizontal = 4
 text = "Wave 1"
 label_settings = ExtResource("10_m114p")
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="TopRightDock" type="Control" parent="HUD/ScreenRoot/TopDock"]
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 0
+
+[node name="RunStageDetailsContainer" type="VBoxContainer" parent="HUD/ScreenRoot/TopDock/TopRightDock"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -131.0
+offset_bottom = 107.0
+grow_horizontal = 0
+alignment = 1
+
+[node name="RunDetails" type="Label" parent="HUD/ScreenRoot/TopDock/TopRightDock/RunStageDetailsContainer"]
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 0
+text = "Story Mode
+Stage 1/2"
+label_settings = ExtResource("10_m114p")
+horizontal_alignment = 2
+
+[node name="StageDetails" type="Label" parent="HUD/ScreenRoot/TopDock/TopRightDock/RunStageDetailsContainer"]
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 0
+text = "Perimeter Breach"
+label_settings = ExtResource("10_m114p")
+horizontal_alignment = 2
+
+[node name="HSeparator" type="HSeparator" parent="HUD/ScreenRoot/TopDock/TopRightDock/RunStageDetailsContainer"]
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="StageModifiers" type="Label" parent="HUD/ScreenRoot/TopDock/TopRightDock/RunStageDetailsContainer"]
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 0
+text = "Salvage Tide
+Sensor Static"
+label_settings = ExtResource("10_m114p")
+horizontal_alignment = 2
 
 [node name="ReticleLayer" type="Control" parent="HUD/ScreenRoot"]
 layout_mode = 1
@@ -402,7 +432,7 @@ offset_bottom = -40.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("docking_hud_script")
-docking_manager_path = NodePath("../../../DockingManager")
+docking_manager_path = NodePath("../../../StageRoot/DockingManager")
 label_settings = ExtResource("10_m114p")
 
 [node name="EffectsLayer" type="Control" parent="HUD/ScreenRoot"]
@@ -540,10 +570,9 @@ theme_override_constants/h_separation = 6
 theme_override_constants/v_separation = 4
 
 [node name="DebugWaveHUD" type="MarginContainer" parent="HUD/ScreenRoot/BottomDock"]
-visible = false
 layout_mode = 2
 script = ExtResource("19_wbwoo")
-wave_director_path = NodePath("../../../../WaveDirector")
+wave_director_path = NodePath("../../../../StageRoot/WaveDirector")
 
 [node name="Label" type="Label" parent="HUD/ScreenRoot/BottomDock/DebugWaveHUD"]
 layout_mode = 2

@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="StageDef" load_steps=12 format=3 uid="uid://bk2rjcsc0jiqs"]
+
+[ext_resource type="Script" path="res://content/defs/stage_modifier_def.gd" id="1_a508n"]
+[ext_resource type="Script" path="res://content/defs/stage_def.gd" id="1_stage_def"]
+[ext_resource type="Texture2D" uid="uid://cc1rve0vi0l4" path="res://assets/spheremaps/asteroid_field_2.png" id="2_asteroid_field"]
+[ext_resource type="Texture2D" uid="uid://dmugmejmpiqo" path="res://assets/spheremaps/marslike_planet_close.png" id="3_marslike_planet"]
+[ext_resource type="Texture2D" uid="uid://u1hwwfd6upmv" path="res://assets/spheremaps/ringed_brown_dwarf.png" id="4_ringed_dwarf"]
+[ext_resource type="Texture2D" uid="uid://coctkbo0joyfm" path="res://assets/spheremaps/volcanic_planet_close.png" id="5_volcanic_planet"]
+[ext_resource type="Resource" path="res://content/data/stages/modifiers/salvage_tide.tres" id="6_salvage_tide"]
+[ext_resource type="Resource" uid="uid://xwx3fdeai4g8" path="res://content/data/stages/modifiers/sensor_static.tres" id="7_sensor_static"]
+[ext_resource type="Resource" path="res://content/data/stages/modifiers/solar_flare_front.tres" id="8_solar_flare_front"]
+[ext_resource type="Script" uid="uid://c7bw4eh6k252" path="res://content/defs/poi_def.gd" id="9_8wxf2"]
+[ext_resource type="Script" uid="uid://dwo3qna7vo5nk" path="res://content/defs/wave_card.gd" id="11_7qahc"]
+
+[resource]
+script = ExtResource("1_stage_def")
+stage_id = &"reactor_graveyard"
+display_name = "Reactor Graveyard"
+description = "Story stage two. A hotter, denser battlefield built to finish the run once its final boss encounter is cleared."
+completion_flow = 1
+panorama_options = Array[Texture2D]([ExtResource("2_asteroid_field"), ExtResource("3_marslike_planet"), ExtResource("4_ringed_dwarf"), ExtResource("5_volcanic_planet")])
+background_energy_multiplier = 1.7
+ambient_light_color = Color(0.3294, 0.1804, 0.1176, 1)
+ambient_light_energy = 6.6
+ambient_light_sky_contribution = 0.12
+star_light_color = Color(1, 0.8706, 0.7098, 1)
+star_light_energy = 2.3
+glow_intensity = 0.58
+glow_strength = 0.42
+volumetric_fog_density = 0.013
+volumetric_fog_albedo = Color(0.9569, 0.7686, 0.651, 1)
+volumetric_fog_emission = Color(0.4471, 0.1843, 0.0863, 1)
+volumetric_fog_emission_energy = 0.16
+guaranteed_modifiers = Array[ExtResource("1_a508n")]([ExtResource("8_solar_flare_front")])
+bonus_pool = Array[ExtResource("1_a508n")]([ExtResource("6_salvage_tide")])
+debuff_pool = Array[ExtResource("1_a508n")]([ExtResource("7_sensor_static")])
+random_bonus_count = 1
+random_debuff_count = 1

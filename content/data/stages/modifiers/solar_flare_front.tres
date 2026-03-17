@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="StageModifierDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://content/defs/stage_modifier_def.gd" id="1_stage_modifier_def"]
+
+[resource]
+script = ExtResource("1_stage_modifier_def")
+modifier_id = &"solar_flare_front"
+display_name = "Solar Flare Front"
+description = "Radiation spikes and heat bloom push the run toward shield strain and harsher ambient danger."
+kind = 1
+tags = PackedStringArray("heat", "radiation", "negative")

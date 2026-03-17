@@ -5,9 +5,12 @@ signal high_score_updated(new_score: int, old_score: int)
 signal pilot_stats_updated(pilot_id: StringName, stats: Dictionary)
 signal pilot_unlocked(pilot_id: StringName)
 signal selection_changed(pilot: PilotDef, ship: ShipDef)
+signal stage_changed(stage: StageDef, stage_index: int)
+signal run_completed
 
 const MENU: String = "res://scenes/world/world.tscn"
 const DEFAULT_PILOT_ROSTER: String = "res://content/data/pilots/pilot_roster.tres"
+const DEFAULT_RUN_DEFINITION: String = "res://content/data/runs/story_mode_intro.tres"
 const SAVE_PATH: String = "user://highscore.cfg"
 
 const SCORE_SECTION: String = "scores"
@@ -59,25 +62,34 @@ var _run_pilot_id: StringName = &""
 var _run_total_nanobots_collected: int = 0
 var _run_peak_nanobots: int = 0
 var _run_last_nanobots_value: int = 0
+var _active_run_definition: RunDefinition = null
+var _active_stage_index: int = -1
+var _stage_modifier_rng: RandomNumberGenerator = RandomNumberGenerator.new()
+var _rolled_stage_modifiers_by_stage_key: Dictionary = {}
 
 func _ready() -> void:
 	_load_user_data()
 	_ensure_default_pilot()
+	_stage_modifier_rng.randomize()
 	if not RunState.nanobots_updated.is_connected(_on_run_nanobots_updated):
 		RunState.nanobots_updated.connect(_on_run_nanobots_updated)
 	await get_tree().process_frame
 
-func start_new_run() -> void:
+func start_new_run(run_definition: RunDefinition = null) -> void:
 	RunState.start_run()
 	_run_active = true
 	_run_started_msec = Time.get_ticks_msec()
 	_run_total_nanobots_collected = 0
 	_run_peak_nanobots = 0
 	_run_last_nanobots_value = 0
+	_rolled_stage_modifiers_by_stage_key.clear()
+	_active_run_definition = _resolve_run_definition(run_definition)
+	_active_stage_index = -1
 	var active_pilot: PilotDef = _resolve_selected_or_default_pilot()
 	_run_pilot_id = active_pilot.get_pilot_id() if active_pilot != null else &""
 	_resolve_selected_or_default_ship()
 	_resolve_selected_or_default_weapon()
+	_emit_stage_changed(0)
 
 func set_selected_pilot(pilot: PilotDef) -> void:
 	if pilot == null:
@@ -215,6 +227,7 @@ func _on_time_over() -> void:
 
 func _end_run_and_return_to_menu(count_as_death: bool) -> void:
 	_finalize_run_stats(count_as_death)
+	_clear_run_progression()
 	check_and_update_high_score(RunState.run_score)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	get_tree().change_scene_to_file(MENU)
@@ -253,6 +266,65 @@ func get_all_pilots() -> Array[PilotDef]:
 
 func build_selected_starting_loadout(base_loadout: ShipLoadoutDef) -> ShipLoadoutDef:
 	return _build_loadout_with_weapon(base_loadout, get_selected_weapon())
+
+func get_active_run_definition() -> RunDefinition:
+	return _active_run_definition
+
+func get_active_stage_index() -> int:
+	return _active_stage_index
+
+func get_current_stage() -> StageDef:
+	if _active_run_definition == null or _active_stage_index < 0:
+		return null
+	return _active_run_definition.get_stage(_active_stage_index)
+
+func get_active_stage_modifiers() -> Array[StageModifierDef]:
+	var stage: StageDef = get_current_stage()
+	if stage == null:
+		return []
+	var key: String = _get_stage_roll_key(stage)
+	if key == "":
+		return stage.get_guaranteed_modifiers()
+	if not _rolled_stage_modifiers_by_stage_key.has(key):
+		_roll_stage_modifiers(stage)
+	var stored: Array = _rolled_stage_modifiers_by_stage_key.get(key, [])
+	return _copy_stage_modifier_array(stored)
+
+func has_next_stage() -> bool:
+	if _active_run_definition == null:
+		return false
+	var current_stage: StageDef = get_current_stage()
+	if current_stage != null and current_stage.next_stage_id != &"":
+		return _active_run_definition.find_stage_index_by_id(current_stage.next_stage_id) >= 0
+	return _active_run_definition.get_stage(_active_stage_index + 1) != null
+
+func advance_to_next_stage(target_stage_id: StringName = &"") -> bool:
+	if _active_run_definition == null:
+		return false
+
+	var next_stage_index: int = -1
+	if target_stage_id != &"":
+		next_stage_index = _active_run_definition.find_stage_index_by_id(target_stage_id)
+	else:
+		var current_stage: StageDef = get_current_stage()
+		if current_stage != null and current_stage.next_stage_id != &"":
+			next_stage_index = _active_run_definition.find_stage_index_by_id(current_stage.next_stage_id)
+		if next_stage_index < 0:
+			next_stage_index = _active_stage_index + 1
+
+	var next_stage: StageDef = _active_run_definition.get_stage(next_stage_index)
+	if next_stage == null:
+		if _active_run_definition.loop_last_stage:
+			next_stage_index = max(_active_run_definition.get_stage_count() - 1, 0)
+			next_stage = _active_run_definition.get_stage(next_stage_index)
+		else:
+			run_completed.emit()
+			return false
+	if next_stage == null:
+		return false
+
+	_emit_stage_changed(next_stage_index)
+	return true
 
 func _get_roster() -> PilotRoster:
 	if _cached_roster != null:
@@ -590,6 +662,121 @@ func _sort_weapon_options(a: ShipStarterWeaponOptionDef, b: ShipStarterWeaponOpt
 func _emit_selection_changed() -> void:
 	_save_user_data()
 	selection_changed.emit(selected_pilot, selected_ship)
+
+func _resolve_run_definition(run_definition: RunDefinition) -> RunDefinition:
+	if run_definition != null:
+		return run_definition
+	return load(DEFAULT_RUN_DEFINITION) as RunDefinition
+
+func _emit_stage_changed(stage_index: int) -> void:
+	if _active_run_definition == null:
+		_active_stage_index = -1
+		return
+
+	var stage: StageDef = _active_run_definition.get_stage(stage_index)
+	if stage == null:
+		_active_stage_index = -1
+		return
+
+	_active_stage_index = stage_index
+	_roll_stage_modifiers(stage)
+	stage_changed.emit(stage, _active_stage_index)
+
+func _roll_stage_modifiers(stage: StageDef) -> void:
+	if stage == null:
+		return
+	var key: String = _get_stage_roll_key(stage)
+	if key == "":
+		return
+	if _rolled_stage_modifiers_by_stage_key.has(key):
+		return
+
+	var rolled: Array[StageModifierDef] = []
+	for modifier in stage.get_guaranteed_modifiers():
+		_append_unique_stage_modifier(rolled, modifier)
+	for modifier in _pick_weighted_unique_modifiers(stage.get_bonus_pool(), stage.random_bonus_count):
+		_append_unique_stage_modifier(rolled, modifier)
+	for modifier in _pick_weighted_unique_modifiers(stage.get_debuff_pool(), stage.random_debuff_count):
+		_append_unique_stage_modifier(rolled, modifier)
+	_rolled_stage_modifiers_by_stage_key[key] = rolled
+
+func _pick_weighted_unique_modifiers(pool: Array[StageModifierDef], count: int) -> Array[StageModifierDef]:
+	var remaining: Array[StageModifierDef] = []
+	for modifier in pool:
+		if modifier != null:
+			remaining.append(modifier)
+
+	var picked: Array[StageModifierDef] = []
+	var picks_remaining: int = min(max(count, 0), remaining.size())
+	while picks_remaining > 0 and not remaining.is_empty():
+		var choice_index: int = _pick_weighted_modifier_index(remaining)
+		var chosen: StageModifierDef = remaining[choice_index]
+		if chosen != null:
+			picked.append(chosen)
+		remaining.remove_at(choice_index)
+		picks_remaining -= 1
+	return picked
+
+func _pick_weighted_modifier_index(pool: Array[StageModifierDef]) -> int:
+	if pool.is_empty():
+		return 0
+
+	var total_weight: float = 0.0
+	for modifier in pool:
+		if modifier != null:
+			total_weight += max(modifier.weight, 0.0)
+
+	if total_weight <= 0.0:
+		return _stage_modifier_rng.randi_range(0, pool.size() - 1)
+
+	var roll: float = _stage_modifier_rng.randf_range(0.0, total_weight)
+	var cursor: float = 0.0
+	for i in pool.size():
+		var modifier: StageModifierDef = pool[i]
+		cursor += max(modifier.weight, 0.0) if modifier != null else 0.0
+		if roll <= cursor:
+			return i
+	return pool.size() - 1
+
+func _append_unique_stage_modifier(target: Array[StageModifierDef], modifier: StageModifierDef) -> void:
+	if modifier == null:
+		return
+	var incoming_key: String = _get_modifier_roll_key(modifier)
+	for existing in target:
+		if existing == null:
+			continue
+		if _get_modifier_roll_key(existing) == incoming_key:
+			return
+	target.append(modifier)
+
+func _get_stage_roll_key(stage: StageDef) -> String:
+	if stage == null:
+		return ""
+	var stage_id: StringName = stage.get_stage_id()
+	if stage_id != &"":
+		return String(stage_id)
+	return stage.resource_path
+
+func _get_modifier_roll_key(modifier: StageModifierDef) -> String:
+	if modifier == null:
+		return ""
+	var modifier_id: StringName = modifier.get_modifier_id()
+	if modifier_id != &"":
+		return String(modifier_id)
+	return modifier.resource_path
+
+func _copy_stage_modifier_array(source: Array) -> Array[StageModifierDef]:
+	var copied: Array[StageModifierDef] = []
+	for entry in source:
+		var modifier: StageModifierDef = entry as StageModifierDef
+		if modifier != null:
+			copied.append(modifier)
+	return copied
+
+func _clear_run_progression() -> void:
+	_active_run_definition = null
+	_active_stage_index = -1
+	_rolled_stage_modifiers_by_stage_key.clear()
 
 func _on_run_nanobots_updated(amount: int) -> void:
 	if not _run_active:
