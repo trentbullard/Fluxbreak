@@ -2,6 +2,7 @@
 .godot/
 /android/
 /build/
+__pycache__/
 
 # Local MCP adapter runtime artifacts
 /scripts/tools/blender/*.pid
