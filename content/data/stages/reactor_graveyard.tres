@@ -1,34 +1,37 @@
-[gd_resource type="Resource" script_class="StageDef" load_steps=15 format=3 uid="uid://bk2rjcsc0jiqs"]
+[gd_resource type="Resource" script_class="StageDef" load_steps=21 format=3 uid="uid://bk2rjcsc0jiqs"]
 
 [ext_resource type="Script" path="res://content/defs/stage_modifier_def.gd" id="1_a508n"]
-[ext_resource type="Script" path="res://content/defs/stage_def.gd" id="1_stage_def"]
+[ext_resource type="Script" uid="uid://ccxfqxark46f6" path="res://content/defs/stage_def.gd" id="1_stage_def"]
 [ext_resource type="Texture2D" uid="uid://cc1rve0vi0l4" path="res://assets/spheremaps/asteroid_field_2.png" id="2_asteroid_field"]
 [ext_resource type="Texture2D" uid="uid://dmugmejmpiqo" path="res://assets/spheremaps/marslike_planet_close.png" id="3_marslike_planet"]
 [ext_resource type="Texture2D" uid="uid://u1hwwfd6upmv" path="res://assets/spheremaps/ringed_brown_dwarf.png" id="4_ringed_dwarf"]
 [ext_resource type="Texture2D" uid="uid://coctkbo0joyfm" path="res://assets/spheremaps/volcanic_planet_close.png" id="5_volcanic_planet"]
-[ext_resource type="Resource" path="res://content/data/stages/modifiers/salvage_tide.tres" id="6_salvage_tide"]
+[ext_resource type="Resource" uid="uid://bf5ocmvxqio0j" path="res://content/data/stages/modifiers/salvage_tide.tres" id="6_salvage_tide"]
 [ext_resource type="Resource" uid="uid://xwx3fdeai4g8" path="res://content/data/stages/modifiers/sensor_static.tres" id="7_sensor_static"]
 [ext_resource type="Resource" path="res://content/data/stages/modifiers/solar_flare_front.tres" id="8_solar_flare_front"]
 [ext_resource type="Script" uid="uid://c7bw4eh6k252" path="res://content/defs/poi_def.gd" id="9_8wxf2"]
 [ext_resource type="Script" uid="uid://dwo3qna7vo5nk" path="res://content/defs/wave_card.gd" id="11_7qahc"]
+[ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="12_afds5"]
+[ext_resource type="Resource" path="res://content/data/factions/machines.tres" id="12_faction"]
+[ext_resource type="Resource" path="res://content/data/enemy_roles/bruiser.tres" id="13_bruiser_role"]
+[ext_resource type="Resource" path="res://content/data/enemy_roles/suppressor.tres" id="14_suppressor_role"]
+[ext_resource type="Resource" path="res://content/data/enemy_roles/support.tres" id="15_support_role"]
+[ext_resource type="Resource" path="res://content/data/enemy_roles/scout.tres" id="16_scout_role"]
 
 [sub_resource type="Resource" id="Resource_reactor_vanguard"]
 script = ExtResource("11_7qahc")
 card_id = "reactor_vanguard"
 display_name = "Reactor Vanguard"
-faction_bias = "Machines"
-role_bias = "Bruiser"
-secondary_role_bias = "Suppressor"
-support_role_bias = "Support"
+faction_bias = ExtResource("12_faction")
+primary_role_bias = ExtResource("13_bruiser_role")
+secondary_role_bias = ExtResource("14_suppressor_role")
+support_role_bias = ExtResource("15_support_role")
 primary_budget_share = 0.55
-secondary_budget_share = 0.25
 support_budget_share = 0.2
 in_wave_target_budget_scale = 0.12
-downtime_target_point_budget = 2
 pressure_enemy_point_budget = 4
 target_size_band_max = 1
 package_count_min = 3
-package_count_max = 4
 max_primary_budget_share = 0.5
 metadata/_custom_type_script = "uid://dwo3qna7vo5nk"
 
@@ -36,19 +39,17 @@ metadata/_custom_type_script = "uid://dwo3qna7vo5nk"
 script = ExtResource("11_7qahc")
 card_id = "reactor_precision_net"
 display_name = "Precision Net"
-faction_bias = "Machines"
-role_bias = "Suppressor"
-secondary_role_bias = "Scout"
-support_role_bias = "Bruiser"
+faction_bias = ExtResource("12_faction")
+primary_role_bias = ExtResource("14_suppressor_role")
+secondary_role_bias = ExtResource("16_scout_role")
+support_role_bias = ExtResource("13_bruiser_role")
 primary_budget_share = 0.45
 secondary_budget_share = 0.35
 support_budget_share = 0.2
 in_wave_target_budget_scale = 0.08
-downtime_target_point_budget = 2
 pressure_enemy_point_budget = 3
 target_size_band_max = 1
 package_count_min = 3
-package_count_max = 4
 max_primary_budget_share = 0.45
 metadata/_custom_type_script = "uid://dwo3qna7vo5nk"
 
@@ -56,19 +57,17 @@ metadata/_custom_type_script = "uid://dwo3qna7vo5nk"
 script = ExtResource("11_7qahc")
 card_id = "reactor_core_escorts"
 display_name = "Core Escorts"
-faction_bias = "Machines"
-role_bias = "Support"
-secondary_role_bias = "Bruiser"
-support_role_bias = "Suppressor"
+faction_bias = ExtResource("12_faction")
+primary_role_bias = ExtResource("15_support_role")
+secondary_role_bias = ExtResource("13_bruiser_role")
+support_role_bias = ExtResource("14_suppressor_role")
 primary_budget_share = 0.4
 secondary_budget_share = 0.35
 support_budget_share = 0.25
 in_wave_target_budget_scale = 0.16
 downtime_target_point_budget = 3
 pressure_enemy_point_budget = 4
-target_size_band_max = 2
 package_count_min = 3
-package_count_max = 4
 max_primary_budget_share = 0.5
 anchor_support_cost_threshold = 6
 tags = Array[String](["elite"])

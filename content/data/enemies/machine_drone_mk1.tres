@@ -1,25 +1,25 @@
-[gd_resource type="Resource" script_class="EnemyDef" load_steps=4 format=3 uid="uid://dyd5gse2o0v5y"]
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=6 format=3 uid="uid://dyd5gse2o0v5y"]
 
 [ext_resource type="Script" uid="uid://bx6wive40u6f" path="res://content/defs/enemy_def.gd" id="1_mtdvg"]
 [ext_resource type="PackedScene" uid="uid://crhla8xljcdxp" path="res://scenes/enemies/machine_drone_mk1.tscn" id="1_yfniw"]
-[ext_resource type="Resource" uid="uid://dtcage8b6gq5e" path="res://content/data/weapons/machine_drone_mk1_laser_turret_mk1.tres" id="3_jj33j"]
+[ext_resource type="Resource" uid="uid://u118lh0nmv2k" path="res://content/data/factions/machines.tres" id="2_faction"]
+[ext_resource type="Resource" uid="uid://gxc0snl6efky" path="res://content/data/enemy_roles/scout.tres" id="3_role"]
+[ext_resource type="Resource" uid="uid://dtcage8b6gq5e" path="res://content/data/weapons/machine_drone_mk1_laser_turret_mk1.tres" id="4_weapon"]
 
 [resource]
 script = ExtResource("1_mtdvg")
 id = "machine_drone_mk1"
 display_name = "Drone Mk I"
-faction = "Machines"
-role = "Scout"
-tier = 1
-threat_cost = 1
+faction = ExtResource("2_faction")
+role = ExtResource("3_role")
 bounty_scrap = 2
 affixes = Array[String](["Prime", "Core", "Sigma"])
 score_on_kill = 20
-max_hull = 60.0
-max_shield = 20.0
-shield_regen = 2.0
-evasion = 0.1
-thrust = 50.0
-weapon = ExtResource("3_jj33j")
+max_hull = 40.0
+max_shield = 10.0
+shield_regen = 1.0
+evasion = 0.16
+thrust = 70.0
+weapon = ExtResource("4_weapon")
 model_scene = ExtResource("1_yfniw")
 metadata/_custom_type_script = "uid://bx6wive40u6f"

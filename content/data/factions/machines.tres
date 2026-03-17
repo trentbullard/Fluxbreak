@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="FactionDef" load_steps=2 format=3 uid="uid://u118lh0nmv2k"]
+
+[ext_resource type="Script" uid="uid://mpuk06fuyvhf" path="res://content/defs/faction_def.gd" id="1_faction_def"]
+
+[resource]
+script = ExtResource("1_faction_def")
+faction_id = &"machines"
+display_name = "Machines"
+tags = PackedStringArray()

@@ -1,42 +1,42 @@
-[gd_resource type="Resource" script_class="EnemyDef" load_steps=8 format=3 uid="uid://b16mb2kqfd8ru"]
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=10 format=3 uid="uid://b16mb2kqfd8ru"]
 
 [ext_resource type="PackedScene" uid="uid://l62gx0wmdeq1" path="res://scenes/enemies/machine_coremind_mk1.tscn" id="1_okvwc"]
 [ext_resource type="Script" uid="uid://bx6wive40u6f" path="res://content/defs/enemy_def.gd" id="2_kh6w4"]
-[ext_resource type="PackedScene" uid="uid://bso2dpcl7d5tx" path="res://scenes/weapons/laser_bolt.tscn" id="3_il8xm"]
-[ext_resource type="Script" uid="uid://dby70n1hr4uk3" path="res://content/defs/weapon_def.gd" id="4_pxmm4"]
-[ext_resource type="AudioStream" uid="uid://cg2afukmlkc53" path="res://assets/sounds/laser_bolt.wav" id="5_douvt"]
-[ext_resource type="Script" uid="uid://bc5o0q4rptsnq" path="res://content/defs/status_effect_def.gd" id="6_sgua5"]
+[ext_resource type="Resource" uid="uid://u118lh0nmv2k" path="res://content/data/factions/machines.tres" id="3_faction"]
+[ext_resource type="Resource" path="res://content/data/enemy_roles/support.tres" id="4_role"]
+[ext_resource type="PackedScene" uid="uid://bso2dpcl7d5tx" path="res://scenes/weapons/laser_bolt.tscn" id="5_projectile"]
+[ext_resource type="Script" uid="uid://dby70n1hr4uk3" path="res://content/defs/weapon_def.gd" id="6_weapon_def"]
+[ext_resource type="AudioStream" uid="uid://cg2afukmlkc53" path="res://assets/sounds/laser_bolt.wav" id="7_shot_sound"]
+[ext_resource type="Script" uid="uid://bc5o0q4rptsnq" path="res://content/defs/status_effect_def.gd" id="8_status_effect_def"]
 
 [sub_resource type="Resource" id="Resource_jlacu"]
-script = ExtResource("4_pxmm4")
+script = ExtResource("6_weapon_def")
 weapon_id = "machine_coremind_mk1_laser_turret_mk1"
 display_name = "Machine Coremind Mk1 Laser Turret Mk1"
 fire_rate = 1.0
-base_accuracy = 0.5
-base_range = 400.0
+base_accuracy = 0.52
+base_range = 520.0
 crit_chance = 0.0
 crit_mult = 0.0
-damage_min = 10.0
-damage_max = 15.0
-projectile_scene = ExtResource("3_il8xm")
-shot_sound = ExtResource("5_douvt")
+damage_min = 7.0
+damage_max = 11.0
+projectile_scene = ExtResource("5_projectile")
+shot_sound = ExtResource("7_shot_sound")
 metadata/_custom_type_script = "uid://dby70n1hr4uk3"
 
 [resource]
 script = ExtResource("2_kh6w4")
 id = "machine_coremind_mk1"
 display_name = "Coremind Mk I"
-faction = "Machines"
-role = "Support"
-tier = 1
-threat_cost = 1
+faction = ExtResource("3_faction")
+role = ExtResource("4_role")
 bounty_scrap = 2
 affixes = Array[String](["Prime", "Core", "Sigma"])
 score_on_kill = 20
-max_hull = 60.0
-max_shield = 20.0
-shield_regen = 2.0
-evasion = 0.1
+max_hull = 110.0
+max_shield = 50.0
+shield_regen = 4.0
+evasion = 0.08
 thrust = 50.0
 weapon = SubResource("Resource_jlacu")
 model_scene = ExtResource("1_okvwc")

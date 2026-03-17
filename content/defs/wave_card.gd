@@ -5,10 +5,10 @@ class_name WaveCard
 @export var card_id: String = ""
 @export var display_name: String = "Wave"
 @export_range(0.0, 10.0, 0.05) var weight: float = 1.0
-@export var faction_bias: String = ""           # "" = any
-@export var role_bias: String = ""              # primary role bias, "" = any
-@export var secondary_role_bias: String = ""
-@export var support_role_bias: String = ""
+@export var faction_bias: FactionDef
+@export var primary_role_bias: EnemyRoleDef
+@export var secondary_role_bias: EnemyRoleDef
+@export var support_role_bias: EnemyRoleDef
 @export_range(0.0, 1.0, 0.01) var primary_budget_share: float = 0.60
 @export_range(0.0, 1.0, 0.01) var secondary_budget_share: float = 0.25
 @export_range(0.0, 1.0, 0.01) var support_budget_share: float = 0.15
@@ -52,15 +52,30 @@ func get_display_name_or_default() -> String:
 		return from_id.capitalize()
 	return "Wave"
 
-func get_role_biases() -> Array[String]:
-	var roles: Array[String] = []
-	if role_bias.strip_edges() != "":
-		roles.append(role_bias.strip_edges())
-	if secondary_role_bias.strip_edges() != "":
-		roles.append(secondary_role_bias.strip_edges())
-	if support_role_bias.strip_edges() != "":
-		roles.append(support_role_bias.strip_edges())
+func get_faction_bias_id() -> StringName:
+	if faction_bias == null:
+		return &""
+	return faction_bias.get_faction_id()
+
+func get_role_biases() -> Array[EnemyRoleDef]:
+	var roles: Array[EnemyRoleDef] = []
+	if primary_role_bias != null:
+		roles.append(primary_role_bias)
+	if secondary_role_bias != null and not _contains_role_ref(roles, secondary_role_bias):
+		roles.append(secondary_role_bias)
+	if support_role_bias != null and not _contains_role_ref(roles, support_role_bias):
+		roles.append(support_role_bias)
 	return roles
+
+func get_role_bias_ids() -> PackedStringArray:
+	var ids: PackedStringArray = PackedStringArray()
+	for role_def in get_role_biases():
+		if role_def == null:
+			continue
+		var role_id: StringName = role_def.get_role_id()
+		if role_id != &"":
+			ids.append(String(role_id))
+	return ids
 
 func get_budget_shares() -> Array[float]:
 	var shares: Array[float] = [
@@ -85,5 +100,16 @@ func has_tag(tag: String) -> bool:
 		return false
 	for entry in tags:
 		if entry.strip_edges().to_lower() == wanted:
+			return true
+	return false
+
+func _contains_role_ref(source: Array[EnemyRoleDef], wanted: EnemyRoleDef) -> bool:
+	if wanted == null:
+		return false
+	var wanted_id: StringName = wanted.get_role_id()
+	for entry in source:
+		if entry == wanted:
+			return true
+		if entry != null and wanted_id != &"" and entry.get_role_id() == wanted_id:
 			return true
 	return false

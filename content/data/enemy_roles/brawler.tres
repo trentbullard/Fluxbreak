@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="EnemyRoleDef" load_steps=2 format=3 uid="uid://bajmdg1wdxwtk"]
+
+[ext_resource type="Script" uid="uid://uaomrgrvt2d2" path="res://content/defs/enemy_role_def.gd" id="1_enemy_role_def"]
+
+[resource]
+script = ExtResource("1_enemy_role_def")
+role_id = &"brawler"
+display_name = "Brawler"
+tags = PackedStringArray()

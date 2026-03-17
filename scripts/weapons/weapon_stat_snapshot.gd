@@ -25,3 +25,31 @@ var ramp_stacks_on_hit: float = 0.0
 var ramp_stacks_on_crit: float = 0.0
 var ramp_stacks_lost_on_graze: float = 0.0
 var ramp_stacks_lost_on_miss: float = 0.0
+
+func get_debug_summary() -> Dictionary:
+	return {
+		"fire_rate": fire_rate,
+		"base_accuracy": base_accuracy,
+		"range_falloff": range_falloff,
+		"crit_chance": crit_chance,
+		"graze_on_hit": graze_on_hit,
+		"graze_on_miss": graze_on_miss,
+		"crit_mult": crit_mult,
+		"graze_mult": graze_mult,
+		"damage_min": damage_min,
+		"damage_max": damage_max,
+		"base_range": base_range,
+		"range_bonus_add": range_bonus_add,
+		"systems_bonus_add": systems_bonus_add,
+		"projectile_speed": projectile_speed,
+		"projectile_life": projectile_life,
+		"projectile_spread_deg": projectile_spread_deg,
+		"channel_acquire_time": channel_acquire_time,
+		"channel_tick_interval": channel_tick_interval,
+		"ramp_max_stacks": ramp_max_stacks,
+		"ramp_damage_per_stack": ramp_damage_per_stack,
+		"ramp_stacks_on_hit": ramp_stacks_on_hit,
+		"ramp_stacks_on_crit": ramp_stacks_on_crit,
+		"ramp_stacks_lost_on_graze": ramp_stacks_lost_on_graze,
+		"ramp_stacks_lost_on_miss": ramp_stacks_lost_on_miss,
+	}

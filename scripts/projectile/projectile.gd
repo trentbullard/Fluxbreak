@@ -36,7 +36,7 @@ func configure_shot(source: Node, target: Node3D, outcome: int, rolled_dmg: floa
 	_effects = effects if effects != null else []
 	
 	if target != null:
-		_cleanup_distance_sq = global_position.distance_squared_to(target.global_position)
+		_cleanup_distance_sq = 0.0
 		if target.has_signal("about_to_die"):
 			target.about_to_die.connect(_on_target_died, CONNECT_ONE_SHOT)
 		target.tree_exiting.connect(_on_target_died, CONNECT_ONE_SHOT)

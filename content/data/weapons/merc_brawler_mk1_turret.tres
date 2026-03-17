@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="WeaponDef" load_steps=5 format=3]
+
+[ext_resource type="PackedScene" uid="uid://bso2dpcl7d5tx" path="res://scenes/weapons/laser_bolt.tscn" id="1_projectile"]
+[ext_resource type="Script" uid="uid://dby70n1hr4uk3" path="res://content/defs/weapon_def.gd" id="1_weapon_def"]
+[ext_resource type="Script" uid="uid://bc5o0q4rptsnq" path="res://content/defs/status_effect_def.gd" id="2_status_effect_def"]
+[ext_resource type="AudioStream" uid="uid://cg2afukmlkc53" path="res://assets/sounds/laser_bolt.wav" id="3_shot_sound"]
+
+[resource]
+script = ExtResource("1_weapon_def")
+weapon_id = "merc_brawler_mk1_turret"
+display_name = "Merc Brawler Mk1 Turret"
+fire_rate = 1.0
+base_accuracy = 0.48
+base_range = 260.0
+crit_chance = 0.0
+crit_mult = 0.0
+damage_min = 13.0
+damage_max = 18.0
+projectile_scene = ExtResource("1_projectile")
+shot_sound = ExtResource("3_shot_sound")
+metadata/_custom_type_script = "uid://dby70n1hr4uk3"

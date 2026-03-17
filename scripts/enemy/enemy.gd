@@ -35,8 +35,10 @@ const NanobotSwarmScene: PackedScene = preload("res://scenes/drops/nanobot_swarm
 var def: EnemyDef = null
 var enemy_id: String = ""
 var display_name: String = ""
-var faction: String = ""
-var role: String = ""
+var faction: FactionDef = null
+var role: EnemyRoleDef = null
+var faction_id: StringName = &""
+var role_id: StringName = &""
 var tier: int = 1
 var eff_max_hull: float = 20.0
 var eff_max_shield: float = 0.0
@@ -65,14 +67,18 @@ func configure_enemy(d: EnemyDef, spawn_context: EnemySpawnContext = null) -> vo
 	display_name = d.display_name
 	faction = d.faction
 	role = d.role
+	faction_id = d.get_faction_id()
+	role_id = d.get_role_id()
 	tier = d.tier
 	
 	# Make this discoverable by AI/UX without tight coupling
-	set_meta("faction", faction)
-	set_meta("role", role)
+	set_meta("faction_id", faction_id)
+	set_meta("role_id", role_id)
 	set_meta("kind", "enemy")
-	if faction != "": add_to_group("faction_" + faction)
-	if role != "": add_to_group("role_" + role)
+	if faction_id != &"":
+		add_to_group("faction_" + String(faction_id))
+	if role_id != &"":
+		add_to_group("role_" + String(role_id))
 	
 	# Stats (these override prefab defaults)
 	max_hull = d.max_hull
@@ -118,6 +124,22 @@ func set_ship(ship: Ship):
 
 func get_evasion() -> float:
 	return clamp(eff_evasion, 0.0, 1.0)
+
+func get_faction_id() -> StringName:
+	return faction_id
+
+func get_role_id() -> StringName:
+	return role_id
+
+func get_faction_display_name() -> String:
+	if faction == null:
+		return ""
+	return faction.get_display_name_or_default()
+
+func get_role_display_name() -> String:
+	if role == null:
+		return ""
+	return role.get_display_name_or_default()
 
 func get_effective_stat_snapshot() -> EnemyStatSnapshot:
 	return _stat_snapshot

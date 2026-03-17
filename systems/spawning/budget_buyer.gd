@@ -39,6 +39,7 @@ func buy_wave(
 	_last_wave_plan = {
 		"card_id": String(safe_card.get_card_id()),
 		"card_name": safe_card.get_display_name_or_default(),
+		"faction_bias_id": _faction_debug_id(safe_card.faction_bias),
 		"enemy_points": max(enemy_points, 0),
 		"target_points": max(target_points, 0),
 		"primary_enemy_id": "",
@@ -62,19 +63,17 @@ func _build_enemy_requests(
 	stage_index: int,
 	elapsed_sec: float
 ) -> void:
-	var e_pool: Array[EnemyDef] = _ec.get_pool(card.faction_bias, "", max_enemy_tier)
+	var e_pool: Array[EnemyDef] = _ec.get_pool(card.faction_bias, null, max_enemy_tier)
 	if e_pool.is_empty():
 		return
 
-	var role_biases: Array[String] = card.get_role_biases()
+	var role_biases: Array[EnemyRoleDef] = card.get_role_biases()
 	if role_biases.is_empty():
 		role_biases = _ec.get_unique_roles(card.faction_bias, max_enemy_tier)
-	if role_biases.is_empty():
-		role_biases.append("")
 
-	var primary_role: String = role_biases[0]
-	var secondary_role: String = role_biases[1] if role_biases.size() > 1 else ""
-	var support_role: String = role_biases[2] if role_biases.size() > 2 else ""
+	var primary_role: EnemyRoleDef = role_biases[0] if role_biases.size() > 0 else null
+	var secondary_role: EnemyRoleDef = role_biases[1] if role_biases.size() > 1 else null
+	var support_role: EnemyRoleDef = role_biases[2] if role_biases.size() > 2 else null
 
 	var primary_pool: Array[EnemyDef] = _resolve_role_pool(e_pool, primary_role)
 	var primary_pick: EnemyDef = _pick_enemy_for_package(
@@ -99,9 +98,9 @@ func _build_enemy_requests(
 	var secondary_budget: int = int(round(float(enemy_points) * shares[1]))
 	var support_budget: int = int(round(float(enemy_points) * shares[2]))
 
-	if secondary_role == "":
+	if secondary_role == null:
 		secondary_budget = int(round(float(enemy_points) * secondary_share_fallback))
-	if support_role == "":
+	if support_role == null:
 		support_budget = int(round(float(enemy_points) * support_share_fallback))
 
 	if primary_pick.threat_cost >= max(card.anchor_support_cost_threshold, 1):
@@ -125,7 +124,7 @@ func _build_enemy_requests(
 
 	while packages.size() < desired_packages and flex_budget > 0:
 		var role_index: int = packages.size() % max(role_biases.size(), 1)
-		var flex_role: String = role_biases[role_index] if role_biases.size() > 0 else ""
+		var flex_role: EnemyRoleDef = role_biases[role_index] if role_biases.size() > 0 else null
 		var remaining_slots: int = desired_packages - packages.size()
 		var split_budget: int = max(int(round(float(flex_budget) / float(max(remaining_slots, 1)))), 1)
 		packages.append({"label": "flex_%d" % packages.size(), "role": flex_role, "budget": split_budget})
@@ -137,7 +136,7 @@ func _build_enemy_requests(
 	var spent_by_id: Dictionary = {}
 	for package in packages:
 		var package_label: String = String(package.get("label", "package"))
-		var package_role: String = String(package.get("role", ""))
+		var package_role: EnemyRoleDef = package.get("role", null) as EnemyRoleDef
 		var package_budget: int = max(int(package.get("budget", 0)), 0)
 		var leader: EnemyDef = package.get("leader", null) as EnemyDef
 		if package_budget <= 0:
@@ -145,7 +144,7 @@ func _build_enemy_requests(
 
 		var package_debug: Dictionary = {
 			"label": package_label,
-			"role": package_role,
+			"role_id": _role_debug_id(package_role),
 			"budget": package_budget,
 			"units": [],
 		}
@@ -245,13 +244,12 @@ func _build_target_requests(reqs: Array[SpawnRequest], target_points: int, card:
 		_last_wave_plan["targets"] = target_debug
 		picks += 1
 
-func _resolve_role_pool(pool: Array[EnemyDef], role: String) -> Array[EnemyDef]:
-	var trimmed_role: String = role.strip_edges()
-	if trimmed_role == "":
+func _resolve_role_pool(pool: Array[EnemyDef], role: EnemyRoleDef) -> Array[EnemyDef]:
+	if role == null:
 		return pool.duplicate()
 	var out: Array[EnemyDef] = []
 	for entry in pool:
-		if entry != null and entry.role == trimmed_role:
+		if _matches_role_ref(entry, role):
 			out.append(entry)
 	if out.is_empty():
 		return pool.duplicate()
@@ -428,3 +426,22 @@ func _target_display_name(entry: TargetDef) -> String:
 	if trimmed != "":
 		return trimmed
 	return entry.id
+
+func _matches_role_ref(entry: EnemyDef, wanted: EnemyRoleDef) -> bool:
+	if entry == null or wanted == null or entry.role == null:
+		return false
+	if entry.role == wanted:
+		return true
+	var entry_role_id: StringName = entry.get_role_id()
+	var wanted_role_id: StringName = wanted.get_role_id()
+	return entry_role_id != &"" and entry_role_id == wanted_role_id
+
+func _role_debug_id(role: EnemyRoleDef) -> String:
+	if role == null:
+		return ""
+	return String(role.get_role_id())
+
+func _faction_debug_id(faction: FactionDef) -> String:
+	if faction == null:
+		return ""
+	return String(faction.get_faction_id())

@@ -18,6 +18,8 @@ static func resolve(enemy_def: EnemyDef, context: EnemySpawnContext) -> EnemySta
 	var elite_modifiers: Array[StatModifier] = _build_elite_modifiers(enemy_def, safe_context)
 	var affix_modifiers: Array[StatModifier] = _build_affix_modifiers(enemy_def, safe_context)
 
+	snapshot.faction_id = _resolve_faction_id(enemy_def, safe_context)
+	snapshot.role_id = _resolve_role_id(enemy_def, safe_context)
 	snapshot.max_hull = _resolve_stat_through_layers(Stat.MAX_HULL, enemy_def.max_hull, wave_modifiers, stage_modifiers, card_modifiers, faction_modifiers, elite_modifiers, affix_modifiers)
 	snapshot.max_shield = _resolve_stat_through_layers(Stat.MAX_SHIELD, enemy_def.max_shield, wave_modifiers, stage_modifiers, card_modifiers, faction_modifiers, elite_modifiers, affix_modifiers)
 	snapshot.shield_regen = _resolve_stat_through_layers(Stat.SHIELD_REGEN, enemy_def.shield_regen, wave_modifiers, stage_modifiers, card_modifiers, faction_modifiers, elite_modifiers, affix_modifiers)
@@ -52,8 +54,24 @@ static func build_wave_debug_summary(card: WaveCard, wave_index: int, stage_inde
 		"stage_modifier_ids": active_stage_modifier_ids,
 		"stage_enemy_modifier_count": stage_enemy_modifier_count,
 		"card_enemy_modifier_count": card_enemy_modifier_count,
+		"card_faction_bias_id": String(card.get_faction_bias_id()) if card != null else "",
+		"card_role_bias_ids": card.get_role_bias_ids() if card != null else PackedStringArray(),
 		"has_non_base_layers": stage_enemy_modifier_count > 0 or card_enemy_modifier_count > 0,
 	}
+
+static func _resolve_faction_id(enemy_def: EnemyDef, context: EnemySpawnContext) -> StringName:
+	if context != null and context.faction != null:
+		return context.faction.get_faction_id()
+	if enemy_def != null:
+		return enemy_def.get_faction_id()
+	return &""
+
+static func _resolve_role_id(enemy_def: EnemyDef, context: EnemySpawnContext) -> StringName:
+	if context != null and context.role != null:
+		return context.role.get_role_id()
+	if enemy_def != null:
+		return enemy_def.get_role_id()
+	return &""
 
 static func _resolve_stat_through_layers(stat_id: int, base_value: float, wave_modifiers: Array[StatModifier], stage_modifiers: Array[StatModifier], card_modifiers: Array[StatModifier], faction_modifiers: Array[StatModifier], elite_modifiers: Array[StatModifier], affix_modifiers: Array[StatModifier]) -> float:
 	var value: float = base_value
