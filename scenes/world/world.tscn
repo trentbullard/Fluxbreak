@@ -54,11 +54,11 @@
 [ext_resource type="Script" uid="uid://d1ddx3ctljet4" path="res://systems/spawning/poi_spawner.gd" id="poi_spawner_script"]
 [ext_resource type="PackedScene" uid="uid://vui0na1ujbtt" path="res://scenes/hud/upgrade_menu.tscn" id="upgrade_menu_scene"]
 
-[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_1fp7r"]
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_sar2w"]
 panorama = ExtResource("1_dphjl")
 
 [sub_resource type="Sky" id="Sky_6m72w"]
-sky_material = SubResource("PanoramaSkyMaterial_1fp7r")
+sky_material = SubResource("PanoramaSkyMaterial_sar2w")
 
 [sub_resource type="Environment" id="Environment_v5dby"]
 background_mode = 2
