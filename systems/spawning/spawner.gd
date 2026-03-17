@@ -52,7 +52,7 @@ func _ready() -> void:
 	_target_topup.timeout.connect(_maintain_targets)
 	add_child(_target_topup)
 
-func spawn_one_with_def(kind: int, def: Resource) -> Node3D:
+func spawn_one_with_def(kind: int, def: Resource, request: SpawnRequest = null) -> Node3D:
 	if enemy_scene == null or target_scene == null:
 		return null
 	if not _can_spawn_now():
@@ -67,7 +67,10 @@ func spawn_one_with_def(kind: int, def: Resource) -> Node3D:
 		inst.call("set_ship", _player_ship)
 	
 	if kind == SpawnKind.ENEMY and def is EnemyDef and inst.has_method("configure_enemy"):
-		inst.call("configure_enemy", def as EnemyDef)
+		var enemy_context: EnemySpawnContext = null
+		if request != null:
+			enemy_context = request.build_enemy_spawn_context(def as EnemyDef)
+		inst.call("configure_enemy", def as EnemyDef, enemy_context)
 	elif kind == SpawnKind.TARGET and def is TargetDef and inst.has_method("configure_target"):
 		inst.call("configure_target", def as TargetDef)
 	
@@ -147,10 +150,10 @@ func get_alive_counts() -> Dictionary:
 		"total": _alive
 	}
 
-func spawn_enemy_burst(def: EnemyDef, count: int) -> int:
+func spawn_enemy_burst(def: EnemyDef, count: int, request: SpawnRequest = null) -> int:
 	var spawned: int = 0
 	for i in count:
-		if spawn_one_with_def(SpawnKind.ENEMY, def) == null:
+		if spawn_one_with_def(SpawnKind.ENEMY, def, request) == null:
 			break
 		spawned += 1
 	return spawned

@@ -53,6 +53,9 @@ Difficulty should increase through multiple overlapping layers:
 
 This prevents scaling from becoming only an HP inflation problem.
 
+Enemy combat stats should resolve through a spawn-time effective-stat snapshot rather than raw resource values alone.
+That snapshot should be able to consume wave, stage, card, faction, elite, and affix inputs in a fixed order, even if some layers are neutral in early versions.
+
 ### Composition Philosophy
 
 Threat should increasingly come from composition rather than raw enemy volume.

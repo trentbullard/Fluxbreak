@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="EnemyDef" load_steps=2 format=3 uid="uid://bfqfno3bqn0wg"]
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=3 format=3 uid="uid://bfqfno3bqn0wg"]
 
 [ext_resource type="Script" uid="uid://bx6wive40u6f" path="res://content/defs/enemy_def.gd" id="1_21rtp"]
+[ext_resource type="Resource" uid="uid://dtcage8b6gq5e" path="res://content/data/weapons/machine_drone_mk1_laser_turret_mk1.tres" id="2_1x7m1"]
 
 [resource]
 script = ExtResource("1_21rtp")
@@ -8,5 +9,15 @@ id = "merc_corvette_mk1"
 display_name = "Corvette Mk I"
 faction = "Mercs"
 role = "Brawler"
+tier = 1
+threat_cost = 1
+bounty_scrap = 2
 affixes = Array[String](["Veteran", "Apex", "Vanguard"])
+score_on_kill = 20
+max_hull = 60.0
+max_shield = 20.0
+shield_regen = 2.0
+evasion = 0.1
+thrust = 50.0
+weapon = ExtResource("2_1x7m1")
 metadata/_custom_type_script = "uid://bx6wive40u6f"

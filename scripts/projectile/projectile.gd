@@ -20,7 +20,7 @@ var _tref: WeakRef = null
 var _target_died: bool = false
 var _dir: Vector3
 var _init_pos: Vector3
-var _prev_pos: Vector3
+var _cleanup_distance_sq: float = 0.0
 var _life: float = 0.0
 var _dmg_applied: bool = false
 
@@ -36,15 +36,19 @@ func configure_shot(source: Node, target: Node3D, outcome: int, rolled_dmg: floa
 	_effects = effects if effects != null else []
 	
 	if target != null:
+		_cleanup_distance_sq = global_position.distance_squared_to(target.global_position)
 		if target.has_signal("about_to_die"):
 			target.about_to_die.connect(_on_target_died, CONNECT_ONE_SHOT)
 		target.tree_exiting.connect(_on_target_died, CONNECT_ONE_SHOT)
+	else:
+		_cleanup_distance_sq = 0.0
 
 func _ready() -> void:
 	_init_pos = global_position
-	_prev_pos = global_position
 	var t: Node3D = _get_target()
 	_dir = (t.global_position - global_position).normalized() if t != null else -global_transform.basis.z
+	if _cleanup_distance_sq <= 0.0 and t != null:
+		_cleanup_distance_sq = _init_pos.distance_squared_to(t.global_position)
 
 func _physics_process(delta: float) -> void:
 	var t: Node3D = _get_target()
@@ -57,12 +61,10 @@ func _physics_process(delta: float) -> void:
 
 	var next_pos: Vector3 = global_position + _dir * speed * delta
 	global_position = next_pos
-	_prev_pos = next_pos
 	
-	if t != null and not _target_died and _dmg_applied:
+	if _outcome != WeaponCombatResolver.ShotResult.MISS and _cleanup_distance_sq > 0.0 and _dmg_applied:
 		var d_travelled: float = _init_pos.distance_squared_to(global_position)
-		var d_to_t: float = _init_pos.distance_squared_to(t.global_position)
-		if d_travelled >= d_to_t:
+		if d_travelled >= _cleanup_distance_sq:
 			queue_free()
 	
 	_life += delta

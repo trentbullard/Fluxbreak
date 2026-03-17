@@ -38,6 +38,11 @@ var display_name: String = ""
 var faction: String = ""
 var role: String = ""
 var tier: int = 1
+var eff_max_hull: float = 20.0
+var eff_max_shield: float = 0.0
+var eff_shield_regen: float = 0.0
+var eff_evasion: float = 0.10
+var eff_thrust: float = 40.0
 
 # ---------- Internals ----------
 var _dead: bool = false
@@ -47,10 +52,13 @@ var shield: float
 var _regen_timer: Timer
 var _tangent_axis: Vector3 = Vector3.UP
 var _axis_timer: float = 0.0
+var _spawn_context: EnemySpawnContext = null
+var _stat_snapshot: EnemyStatSnapshot = null
 
-func configure_enemy(d: EnemyDef) -> void:
+func configure_enemy(d: EnemyDef, spawn_context: EnemySpawnContext = null) -> void:
 	if d == null: return
 	def = d
+	_spawn_context = spawn_context if spawn_context != null else EnemySpawnContext.from_enemy_def(d)
 	
 	# Identity (runtime only)
 	enemy_id = d.id
@@ -73,6 +81,7 @@ func configure_enemy(d: EnemyDef) -> void:
 	evasion = d.evasion
 	thrust = d.thrust
 	score_on_kill = d.score_on_kill
+	_refresh_effective_stats()
 	
 	# Visuals
 	var model_root: Node3D = get_node_or_null(model_root_path) as Node3D
@@ -85,7 +94,10 @@ func configure_enemy(d: EnemyDef) -> void:
 		model_root = new_root
 		call_deferred("_snap_to_socket", ^"Turret/Muzzle", ^"ModelRoot/MuzzleSocket", false, false)
 	
-	_apply_weapon_to_turrets(d.weapon, d.team_id)
+	var weapon_snapshot: WeaponStatSnapshot = null
+	if _stat_snapshot != null:
+		weapon_snapshot = _stat_snapshot.weapon_stats
+	_apply_weapon_to_turrets(d.weapon, d.team_id, weapon_snapshot)
 
 func apply_damage(amount: float) -> void:
 	if _dead:
@@ -105,7 +117,16 @@ func set_ship(ship: Ship):
 	player_ship = ship
 
 func get_evasion() -> float:
-	return clamp(evasion, 0.0, 1.0)
+	return clamp(eff_evasion, 0.0, 1.0)
+
+func get_effective_stat_snapshot() -> EnemyStatSnapshot:
+	return _stat_snapshot
+
+func refresh_effective_stats(reinitialize_current_values: bool = false) -> void:
+	_refresh_effective_stats()
+	if reinitialize_current_values:
+		hull = eff_max_hull
+		shield = eff_max_shield
 
 func _enter_tree() -> void:
 	# In-editor preview convenience: if a def is set on the prefab
@@ -117,8 +138,8 @@ func _ready() -> void:
 	add_to_group("targets")
 	_last_xform = global_transform
 
-	hull = max_hull
-	shield = max_shield
+	hull = eff_max_hull
+	shield = eff_max_shield
 	
 	# --- shield regen timer ---
 	_regen_timer = Timer.new()
@@ -143,8 +164,8 @@ func _process(_delta: float) -> void:
 func _on_regen_tick() -> void:
 	if _dead:
 		return
-	if shield < max_shield and shield_regen > 0.0:
-		shield = min(shield + shield_regen, max_shield)
+	if shield < eff_max_shield and eff_shield_regen > 0.0:
+		shield = min(shield + eff_shield_regen, eff_max_shield)
 
 func _die() -> void:
 	if _dead:
@@ -206,12 +227,36 @@ func _orbit_target(target: Vector3) -> void:
 	
 	var radial_dir_out: Vector3 = -to_target.normalized()
 	if dist2 < min2:
-		apply_central_force(radial_dir_out * thrust)
+		apply_central_force(radial_dir_out * eff_thrust)
 	if dist2 > max2:
-		apply_central_force(-radial_dir_out * thrust)
+		apply_central_force(-radial_dir_out * eff_thrust)
 	
 	var tangent: Vector3 = radial_dir_out.cross(_tangent_axis).normalized()
-	apply_central_force(tangent * thrust * 0.3)
+	apply_central_force(tangent * eff_thrust * 0.3)
+
+func _refresh_effective_stats() -> void:
+	if def == null:
+		eff_max_hull = max_hull
+		eff_max_shield = max_shield
+		eff_shield_regen = shield_regen
+		eff_evasion = clamp(evasion, 0.0, 1.0)
+		eff_thrust = max(thrust, 0.0)
+		return
+	var snapshot: EnemyStatSnapshot = EnemyStatResolver.resolve(def, _spawn_context)
+	_stat_snapshot = snapshot
+	if snapshot == null:
+		eff_max_hull = max_hull
+		eff_max_shield = max_shield
+		eff_shield_regen = shield_regen
+		eff_evasion = clamp(evasion, 0.0, 1.0)
+		eff_thrust = max(thrust, 0.0)
+		return
+
+	eff_max_hull = snapshot.max_hull
+	eff_max_shield = snapshot.max_shield
+	eff_shield_regen = snapshot.shield_regen
+	eff_evasion = clamp(snapshot.evasion, 0.0, 1.0)
+	eff_thrust = max(snapshot.thrust, 0.0)
 
 func _is_offscreen(cam: Camera3D, world_pos: Vector3) -> bool:
 	# Behind camera?
@@ -257,7 +302,7 @@ func _snap_to_socket(local_node_path: NodePath, socket_rel_path: NodePath, copy_
 		# position only; keep your current rotation/scale
 		node.global_position = xf.origin
 
-func _apply_weapon_to_turrets(weapon: WeaponDef, team_id_val: int) -> void:
+func _apply_weapon_to_turrets(weapon: WeaponDef, team_id_val: int, snapshot: WeaponStatSnapshot = null) -> void:
 	if weapon == null: return
 	
 	var turrets: Array[Node] = []
@@ -274,4 +319,4 @@ func _apply_weapon_to_turrets(weapon: WeaponDef, team_id_val: int) -> void:
 	for t in turrets:
 		if t is EnemyTurret:
 			var detector: Area3D = $Detector
-			(t as EnemyTurret).apply_weapon(weapon, team_id_val, detector)
+			(t as EnemyTurret).apply_weapon(weapon, team_id_val, detector, snapshot)

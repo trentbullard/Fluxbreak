@@ -30,6 +30,7 @@ class_name WaveCard
 @export var primary_repeat_cooldown: int = 2
 @export var card_repeat_cooldown: int = 1
 @export var tags: Array[String] = []
+@export var enemy_modifiers: Array[StatModifier] = []
 
 func get_card_id() -> StringName:
 	var trimmed: String = card_id.strip_edges()

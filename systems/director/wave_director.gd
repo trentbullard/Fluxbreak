@@ -245,7 +245,10 @@ func _next_wave() -> void:
 			int(budgets["enemy_points"]),
 			int(budgets["target_points"]),
 			_active_card,
-			max_tier
+			max_tier,
+			_wave_index,
+			stage_index,
+			_elapsed_sec
 		)
 	reqs = _prioritize_requests(reqs, _active_card)
 
@@ -280,6 +283,12 @@ func _build_wave_debug_snapshot(
 		"opening_enemy_scale": float(opening_adjustment.get("scale", 1.0)),
 		"pressure_state": _intensity_dir.get_last_pressure_state() if _intensity_dir != null else "n/a",
 	}
+	snapshot["enemy_effective_context"] = EnemyStatResolver.build_wave_debug_summary(
+		card,
+		_wave_index,
+		stage_index,
+		_elapsed_sec
+	)
 	if _buyer != null:
 		snapshot["wave_plan"] = _buyer.get_last_wave_plan()
 	return snapshot
@@ -315,7 +324,15 @@ func _run_pressure_coroutine(token: int) -> void:
 			if downtime_target_budget <= 0:
 				downtime_target_budget = pressure_target_point_budget
 			if downtime_target_budget > 0 and _pending_card != null:
-				var target_reqs: Array[SpawnRequest] = _buyer.buy_wave(0, downtime_target_budget, _pending_card, 1)
+				var target_reqs: Array[SpawnRequest] = _buyer.buy_wave(
+					0,
+					downtime_target_budget,
+					_pending_card,
+					1,
+					_wave_index + 1,
+					max(GameFlow.get_active_stage_index(), 0),
+					_elapsed_sec
+				)
 				for req in target_reqs:
 					if req.kind == "Target" and req.target_def != null and req.count > 0:
 						_spawner.spawn_target_burst(req.target_def, req.count)
@@ -350,12 +367,15 @@ func _run_pressure_coroutine(token: int) -> void:
 			pressure_enemy_budget,
 			pressure_target_budget,
 			active_card,
-			max_tier
+			max_tier,
+			_wave_index,
+			max(GameFlow.get_active_stage_index(), 0),
+			_elapsed_sec
 		)
 		pressure_reqs = _prioritize_requests(pressure_reqs, active_card)
 		for req in pressure_reqs:
 			if req.kind == "Enemy" and req.enemy_def != null and req.count > 0:
-				_spawner.spawn_enemy_burst(req.enemy_def, req.count)
+				_spawner.spawn_enemy_burst(req.enemy_def, req.count, req)
 			elif req.kind == "Target" and req.target_def != null and req.count > 0:
 				_spawner.spawn_target_burst(req.target_def, req.count)
 
@@ -422,7 +442,7 @@ func _run_requests_coroutine(reqs: Array[SpawnRequest], card: WaveCard, token: i
 		if n0 > 0:
 			var spawned0: int = 0
 			if first.kind == "Enemy":
-				spawned0 = _spawner.spawn_enemy_burst(first.enemy_def, n0)
+				spawned0 = _spawner.spawn_enemy_burst(first.enemy_def, n0, first)
 			else:
 				spawned0 = _spawner.spawn_target_burst(first.target_def, n0)
 			remaining[0] = max(remaining[0] - spawned0, 0)
@@ -448,7 +468,7 @@ func _run_requests_coroutine(reqs: Array[SpawnRequest], card: WaveCard, token: i
 
 		var spawned: int = 0
 		if req.kind == "Enemy":
-			spawned = _spawner.spawn_enemy_burst(req.enemy_def, batch_size)
+			spawned = _spawner.spawn_enemy_burst(req.enemy_def, batch_size, req)
 		else:
 			spawned = _spawner.spawn_target_burst(req.target_def, batch_size)
 

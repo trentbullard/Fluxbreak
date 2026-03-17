@@ -3,12 +3,16 @@ class_name WeaponCombatResolver
 
 enum ShotResult { MISS, GRAZE, HIT, CRIT }
 
-static func get_shot_origin(turret: PlayerTurret) -> Vector3:
+static func get_shot_origin(turret: Object) -> Vector3:
 	if turret == null:
 		return Vector3.ZERO
-	return turret.get_shot_origin()
+	if turret.has_method("get_shot_origin"):
+		return turret.call("get_shot_origin")
+	if turret is Node3D:
+		return (turret as Node3D).global_position
+	return Vector3.ZERO
 
-static func compute_effective_accuracy_vs_target(turret: PlayerTurret, target: Node3D) -> float:
+static func compute_effective_accuracy_vs_target(turret: Object, target: Node3D) -> float:
 	if turret == null or target == null:
 		return 0.0
 
@@ -18,20 +22,26 @@ static func compute_effective_accuracy_vs_target(turret: PlayerTurret, target: N
 
 	var shot_origin: Vector3 = get_shot_origin(turret)
 	var dist_sq: float = shot_origin.distance_squared_to(target.global_position)
-	var base_range: float = max(1.0, turret.eff_base_range)
+	var base_range: float = max(1.0, _get_turret_float(turret, "eff_base_range", 0.0))
 	var range_factor: float = clamp(sqrt(dist_sq) / base_range, 0.0, 1.0)
-	var acc_base: float = max(turret.eff_base_accuracy + turret.systems_bonus + turret.eff_systems_bonus_add, 0.0)
-	var acc_range_scaled: float = acc_base * lerp(1.0, 1.0 - turret.eff_range_falloff, range_factor)
+	var systems_bonus: float = _get_turret_float(turret, "systems_bonus", 0.0)
+	var acc_base: float = max(
+		_get_turret_float(turret, "eff_base_accuracy", 0.0)
+		+ systems_bonus
+		+ _get_turret_float(turret, "eff_systems_bonus_add", 0.0),
+		0.0
+	)
+	var acc_range_scaled: float = acc_base * lerp(1.0, 1.0 - _get_turret_float(turret, "eff_range_falloff", 0.0), range_factor)
 	return clamp(acc_range_scaled - evasion, 0.0, 1.0)
 
-static func resolve_shot_for_turret(turret: PlayerTurret, hit_chance: float) -> int:
+static func resolve_shot_for_turret(turret: Object, hit_chance: float) -> int:
 	if turret == null:
 		return ShotResult.MISS
 
 	var hc: float = clamp(hit_chance, 0.0, 1.0)
-	var cc: float = clamp(turret.eff_crit_chance, 0.0, 1.0)
-	var gh: float = clamp(turret.eff_graze_on_hit, 0.0, 1.0)
-	var gm: float = clamp(turret.eff_graze_on_miss, 0.0, 1.0)
+	var cc: float = clamp(_get_turret_float(turret, "eff_crit_chance", 0.0), 0.0, 1.0)
+	var gh: float = clamp(_get_turret_float(turret, "eff_graze_on_hit", 0.0), 0.0, 1.0)
+	var gm: float = clamp(_get_turret_float(turret, "eff_graze_on_miss", 0.0), 0.0, 1.0)
 
 	var r1: float = randf()
 	if r1 <= hc:
@@ -98,3 +108,11 @@ static func apply_shot_to_target(source: Object, target: Object, outcome: int, r
 				target.call("apply_status_effect", effect_def, valid_source)
 
 	return damage
+
+static func _get_turret_float(turret: Object, property_name: String, default_value: float) -> float:
+	if turret == null:
+		return default_value
+	var value: Variant = turret.get(property_name)
+	if value == null:
+		return default_value
+	return float(value)

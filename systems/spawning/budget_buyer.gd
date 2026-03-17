@@ -25,7 +25,15 @@ func clear_history() -> void:
 func get_last_wave_plan() -> Dictionary:
 	return _last_wave_plan.duplicate(true)
 
-func buy_wave(enemy_points: int, target_points: int, card: WaveCard, max_enemy_tier: int) -> Array[SpawnRequest]:
+func buy_wave(
+	enemy_points: int,
+	target_points: int,
+	card: WaveCard,
+	max_enemy_tier: int,
+	wave_index: int = 0,
+	stage_index: int = 0,
+	elapsed_sec: float = 0.0
+) -> Array[SpawnRequest]:
 	var reqs: Array[SpawnRequest] = []
 	var safe_card: WaveCard = card if card != null else WaveCard.new()
 	_last_wave_plan = {
@@ -39,13 +47,21 @@ func buy_wave(enemy_points: int, target_points: int, card: WaveCard, max_enemy_t
 	}
 
 	if _ec != null and enemy_points > 0:
-		_build_enemy_requests(reqs, max(enemy_points, 0), safe_card, max_enemy_tier)
+		_build_enemy_requests(reqs, max(enemy_points, 0), safe_card, max_enemy_tier, wave_index, stage_index, elapsed_sec)
 	if _tc != null and target_points > 0:
 		_build_target_requests(reqs, max(target_points, 0), safe_card)
 
 	return reqs
 
-func _build_enemy_requests(reqs: Array[SpawnRequest], enemy_points: int, card: WaveCard, max_enemy_tier: int) -> void:
+func _build_enemy_requests(
+	reqs: Array[SpawnRequest],
+	enemy_points: int,
+	card: WaveCard,
+	max_enemy_tier: int,
+	wave_index: int,
+	stage_index: int,
+	elapsed_sec: float
+) -> void:
 	var e_pool: Array[EnemyDef] = _ec.get_pool(card.faction_bias, "", max_enemy_tier)
 	if e_pool.is_empty():
 		return
@@ -147,7 +163,7 @@ func _build_enemy_requests(reqs: Array[SpawnRequest], enemy_points: int, card: W
 				package_label == "primary"
 			)
 			if leader_copies > 0:
-				_append_enemy_request(reqs, leader, leader_copies, card)
+				_append_enemy_request(reqs, leader, leader_copies, card, wave_index, stage_index, elapsed_sec)
 				var leader_points: int = leader_copies * leader.threat_cost
 				points_left = max(points_left - leader_points, 0)
 				spent_by_id[leader.id] = int(spent_by_id.get(leader.id, 0)) + leader_points
@@ -184,7 +200,7 @@ func _build_enemy_requests(reqs: Array[SpawnRequest], enemy_points: int, card: W
 				blocked_ids[pick.id] = true
 				max_picks -= 1
 				continue
-			_append_enemy_request(reqs, pick, copies, card)
+			_append_enemy_request(reqs, pick, copies, card, wave_index, stage_index, elapsed_sec)
 			var spent_points: int = copies * pick.threat_cost
 			points_left = max(points_left - spent_points, 0)
 			spent_by_id[pick.id] = int(spent_by_id.get(pick.id, 0)) + spent_points
@@ -359,7 +375,15 @@ func _can_spend_more_on_enemy(entry: EnemyDef, total_enemy_points: int, spent_by
 	var used_points: int = int(spent_by_id.get(entry.id, 0))
 	return used_points + entry.threat_cost <= limit_points or used_points == 0
 
-func _append_enemy_request(reqs: Array[SpawnRequest], pick: EnemyDef, copies: int, card: WaveCard) -> void:
+func _append_enemy_request(
+	reqs: Array[SpawnRequest],
+	pick: EnemyDef,
+	copies: int,
+	card: WaveCard,
+	wave_index: int,
+	stage_index: int,
+	elapsed_sec: float
+) -> void:
 	if pick == null or copies <= 0:
 		return
 	var req: SpawnRequest = SpawnRequest.new()
@@ -369,6 +393,10 @@ func _append_enemy_request(reqs: Array[SpawnRequest], pick: EnemyDef, copies: in
 	req.batch_size_min = card.batch_size_min
 	req.batch_size_max = card.batch_size_max
 	req.inter_batch_sec = card.inter_batch_sec
+	req.wave_card = card
+	req.wave_index = wave_index
+	req.stage_index = stage_index
+	req.elapsed_sec = elapsed_sec
 	reqs.append(req)
 
 func _remember_primary_enemy(enemy_id: String) -> void:

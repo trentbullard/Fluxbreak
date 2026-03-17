@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="EnemyDef" load_steps=2 format=3 uid="uid://rv0v6at870ld"]
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=3 format=3 uid="uid://rv0v6at870ld"]
 
 [ext_resource type="Script" uid="uid://bx6wive40u6f" path="res://content/defs/enemy_def.gd" id="1_jjjdy"]
+[ext_resource type="Resource" uid="uid://dtcage8b6gq5e" path="res://content/data/weapons/machine_drone_mk1_laser_turret_mk1.tres" id="2_qm6pe"]
 
 [resource]
 script = ExtResource("1_jjjdy")
@@ -8,7 +9,14 @@ id = "merc_frigate_mk1"
 display_name = "Frigate Mk I"
 faction = "Mercs"
 role = "Brawler"
-tier = 2
-threat_cost = 2
+tier = 1
+threat_cost = 1
 bounty_scrap = 2
+score_on_kill = 20
+max_hull = 60.0
+max_shield = 20.0
+shield_regen = 2.0
+evasion = 0.1
+thrust = 50.0
+weapon = ExtResource("2_qm6pe")
 metadata/_custom_type_script = "uid://bx6wive40u6f"

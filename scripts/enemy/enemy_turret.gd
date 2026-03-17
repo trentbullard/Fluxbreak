@@ -11,20 +11,51 @@ class_name EnemyTurret
 
 var _detector: Area3D = null
 var _weapon: WeaponDef = null
+var _weapon_stats: WeaponStatSnapshot = null
 var _cooldown: float = 0.0
 var _targets: Array[Node3D] = []
 
-enum ShotResult { MISS, GRAZE, HIT, CRIT }
+var eff_fire_rate: float = 0.0
+var eff_base_accuracy: float = 0.0
+var eff_range_falloff: float = 0.0
+var eff_crit_chance: float = 0.0
+var eff_graze_on_hit: float = 0.0
+var eff_graze_on_miss: float = 0.0
+var eff_crit_mult: float = 1.0
+var eff_graze_mult: float = 0.3
+var eff_damage_min: float = 0.0
+var eff_damage_max: float = 0.0
+var eff_base_range: float = 0.0
+var eff_range_bonus_add: float = 0.0
+var eff_systems_bonus_add: float = 0.0
+var eff_projectile_speed: float = 0.0
+var eff_projectile_life: float = 0.0
+var eff_projectile_spread_deg: float = 0.0
+var eff_channel_acquire_time: float = 0.0
+var eff_channel_tick_interval: float = 0.0
+var eff_ramp_max_stacks: float = 0.0
+var eff_ramp_damage_per_stack: float = 0.0
+var eff_ramp_stacks_on_hit: float = 0.0
+var eff_ramp_stacks_on_crit: float = 0.0
+var eff_ramp_stacks_lost_on_graze: float = 0.0
+var eff_ramp_stacks_lost_on_miss: float = 0.0
 
-func apply_weapon(w: WeaponDef, team_id_val: int, d: Area3D) -> void:
+func apply_weapon(w: WeaponDef, team_id_val: int, d: Area3D, snapshot: WeaponStatSnapshot = null) -> void:
 	_weapon = w
+	_weapon_stats = snapshot if snapshot != null else WeaponStatResolver.resolve_snapshot(w)
+	WeaponStatResolver.apply_snapshot_to_turret(self, _weapon_stats)
 	_detector = d
 	team_id = team_id_val
 	if _detector != null:
 		var cs: CollisionShape3D = _detector.get_node("CollisionShape3D") as CollisionShape3D
 		var sphere: SphereShape3D = cs.shape as SphereShape3D
 		if sphere != null and w != null:
-			sphere.radius = w.base_range
+			sphere.radius = max(eff_base_range + eff_range_bonus_add, 0.0)
+
+func get_shot_origin() -> Vector3:
+	if muzzle != null:
+		return muzzle.global_position
+	return global_position
 
 func _ready() -> void:
 	if _detector != null:
@@ -67,7 +98,7 @@ func _physics_process(delta: float) -> void:
 		return
 	
 	_fire_at_with_roll(target)
-	_cooldown = max(0.01, _weapon.fire_rate)
+	_cooldown = max(0.01, eff_fire_rate)
 
 func _pick_nearest() -> Node3D:
 	var best: Node3D = null
@@ -79,63 +110,34 @@ func _pick_nearest() -> Node3D:
 			best = t
 	return best
 
-func _effective_accuracy_vs(target: Node3D) -> float:
-	if _weapon == null:
-		return 0.0
-	var ev: float = 0.0
-	if target.has_method("get_evasion"):
-		ev = float(target.call("get_evasion"))
-	var dist: float = global_position.distance_to(target.global_position)
-	var range_factor: float = clamp(dist / _weapon.base_range, 0.0, 1.0) # 0 close -> 1 far
-	var acc_base: float = clamp(_weapon.base_accuracy + systems_bonus, 0.0, 1.0)
-	var acc_range_scaled: float = acc_base * lerp(1.0, 1.0 - _weapon.accuracy_range_falloff, range_factor)
-	return clamp(acc_range_scaled - ev, 0.0, 1.0)
-
 func _fire_at_with_roll(target: Node3D) -> void:
 	if _weapon == null or _weapon.projectile_scene == null or not target.visible:
 		return
+	if muzzle == null:
+		return
 
-	# Aim (still straight) -- projectile will use proximity fuse to "connect"
 	var dir: Vector3 = (target.global_position - muzzle.global_position).normalized()
 	var aim_basis: Basis = Basis.looking_at(dir, Vector3.UP)
 	
-	var hit_chance: float = _effective_accuracy_vs(target)
-	var outcome: int = _resolve_shot(hit_chance)
+	var hit_chance: float = WeaponCombatResolver.compute_effective_accuracy_vs_target(self, target)
+	var outcome: int = WeaponCombatResolver.resolve_shot_for_turret(self, hit_chance)
 	
-	var dmg: float = randf_range(_weapon.damage_min, _weapon.damage_max)
+	var dmg_min: float = minf(eff_damage_min, eff_damage_max)
+	var dmg_max: float = maxf(eff_damage_min, eff_damage_max)
+	var dmg: float = randf_range(dmg_min, dmg_max)
 
 	var p: Projectile = _weapon.projectile_scene.instantiate() as Projectile
 	if p == null:
 		return
 
 	p.global_transform = Transform3D(aim_basis, muzzle.global_position)
-	p.configure_shot(self, target, outcome, dmg, _weapon.graze_mult, _weapon.crit_mult, _weapon.status_effects, false)
+	if eff_projectile_speed > 0.0:
+		p.speed = eff_projectile_speed
+	if eff_projectile_life > 0.0:
+		p.max_lifetime = eff_projectile_life
+	p.configure_shot(self, target, outcome, dmg, eff_graze_mult, eff_crit_mult, _weapon.status_effects, false)
 	get_tree().current_scene.add_child(p)
 
 	if shot_sound != null:
 		shot_sound.pitch_scale = randf_range(0.90, 1.10)
 		shot_sound.play()
-
-func _resolve_shot(hit_chance: float) -> int:
-	var hc: float = clamp(hit_chance, 0.0, 1.0)
-	var cc: float = clamp(_weapon.crit_chance, 0.0, 1.0)
-	var gh: float = clamp(_weapon.graze_on_hit, 0.0, 1.0)
-	var gm: float = clamp(_weapon.graze_on_miss, 0.0, 1.0)
-
-	# If it hits at all…
-	var r1: float = randf()
-	if r1 <= hc:
-		# crit → graze-on-hit → normal
-		var r2: float = randf()
-		if r2 <= cc:
-			return ShotResult.CRIT
-		elif r2 <= cc + max(0.0, 1.0 - cc) * gh:
-			return ShotResult.GRAZE
-		else:
-			return ShotResult.HIT
-	else:
-		# miss → maybe graze-on-miss
-		var r3: float = randf()
-		if r3 <= gm:
-			return ShotResult.GRAZE
-		return ShotResult.MISS
