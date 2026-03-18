@@ -5,15 +5,24 @@ class_name NameplateManager
 @export var nameplate_scene: PackedScene
 @export var show_within_meters: int = 30000
 @export var pixel_offset_up: int = 35
+@export var docking_manager_path: NodePath
+
+const POI_UNVISITED_COLOR: Color = Color(0.2, 0.95, 1.0, 1.0)
+const POI_VISITED_COLOR: Color = Color(1.0, 0.72, 0.2, 1.0)
 
 var _camera: Camera3D
 var _ship: Node3D
+var _docking_manager: DockingManager
 var _pool: Array[Control] = []
 var _map: Dictionary[Node3D, Control] = {}
+
+func _ready() -> void:
+	_resolve_docking_manager()
 
 func init(cam: Camera3D, ship: Node3D) -> void:
 	_camera = cam
 	_ship = ship
+	_resolve_docking_manager()
 
 func _process(_dt: float) -> void:
 	if _camera == null or nameplate_scene == null:
@@ -61,6 +70,7 @@ func _sync_targets() -> void:
 			var distance_text: String = HudDistanceFormatter.format_distance(d)
 			if label != null:
 				var kind: String = _kind_of(target)
+				_reset_poi_indicator(ui)
 				if kind == "enemy":
 					label.text = "%s (%s)\n%s  •  HP: %d | S: %d" % [
 						target.display_name,
@@ -77,6 +87,7 @@ func _sync_targets() -> void:
 					]
 				elif kind.contains("poi"):
 					var type_tag: String = _get_poi_type_tag(target)
+					_apply_poi_indicator(ui, target)
 					label.text = "%s [%s]\n%s" % [
 						target.display_name,
 						type_tag,
@@ -94,6 +105,7 @@ func _pool_take() -> Control:
 	return _pool.pop_back()
 
 func _pool_release(ui: Control) -> void:
+	_reset_poi_indicator(ui)
 	ui.visible = false
 	if ui.get_parent() != null:
 		ui.get_parent().remove_child(ui)
@@ -135,3 +147,28 @@ func _get_poi_type_tag(poi: Node3D) -> String:
 			PoiDef.PoiType.UTILITY:
 				return "UTL"
 	return "POI"
+
+
+func _resolve_docking_manager() -> void:
+	if docking_manager_path == NodePath(""):
+		return
+	_docking_manager = get_node_or_null(docking_manager_path) as DockingManager
+
+
+func _apply_poi_indicator(ui: Control, poi: Node3D) -> void:
+	var indicator: ColorRect = ui.get_node_or_null("HBox/StateIndicator") as ColorRect
+	if indicator == null:
+		return
+
+	indicator.visible = true
+	var poi_instance: PoiInstance = poi as PoiInstance
+	var is_visited: bool = _docking_manager != null and poi_instance != null and _docking_manager.is_poi_visited(poi_instance)
+	indicator.color = POI_VISITED_COLOR if is_visited else POI_UNVISITED_COLOR
+
+
+func _reset_poi_indicator(ui: Control) -> void:
+	var indicator: ColorRect = ui.get_node_or_null("HBox/StateIndicator") as ColorRect
+	if indicator == null:
+		return
+	indicator.visible = false
+	indicator.color = POI_UNVISITED_COLOR

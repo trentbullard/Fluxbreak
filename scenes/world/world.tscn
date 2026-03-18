@@ -314,6 +314,7 @@ layout_mode = 2
 script = ExtResource("poi_list_layer_script")
 ship_path = NodePath("../../../../../../Ship")
 poi_spawner_path = NodePath("../../../../../../StageRoot/PoiSpawner")
+docking_manager_path = NodePath("../../../../../../StageRoot/DockingManager")
 label_settings = ExtResource("10_m114p")
 
 [node name="TimerWaveLayer" type="Control" parent="HUD/ScreenRoot/TopDock"]
@@ -413,6 +414,7 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("9_gb53w")
 nameplate_scene = ExtResource("10_gb53w")
+docking_manager_path = NodePath("../../../StageRoot/DockingManager")
 
 [node name="OffscreenIndicatorLayer" type="Control" parent="HUD/ScreenRoot"]
 layout_mode = 1

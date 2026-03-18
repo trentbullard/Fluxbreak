@@ -5,14 +5,22 @@ class_name PoiListLayer
 
 @export var ship_path: NodePath
 @export var poi_spawner_path: NodePath
+@export var docking_manager_path: NodePath
 @export var label_settings: LabelSettings
 @export var update_interval: float = 0.25  # How often to update distances (seconds)
 @export var max_display_count: int = 5     # Max POIs to show in list
 
+const POI_UNVISITED_COLOR: Color = Color(0.2, 0.95, 1.0, 1.0)
+const POI_VISITED_COLOR: Color = Color(1.0, 0.72, 0.2, 1.0)
+const POI_INDICATOR_SIZE: Vector2 = Vector2(8.0, 8.0)
+
 var _ship: Node3D
 var _poi_spawner: PoiSpawner
+var _docking_manager: DockingManager
 var _container: VBoxContainer
 var _header_label: Label
+var _poi_rows: Array[HBoxContainer] = []
+var _poi_indicators: Array[ColorRect] = []
 var _poi_labels: Array[Label] = []
 var _update_timer: float = 0.0
 
@@ -42,6 +50,8 @@ func _ready() -> void:
 		_ship = get_node_or_null(ship_path) as Node3D
 	if poi_spawner_path != NodePath(""):
 		_poi_spawner = get_node_or_null(poi_spawner_path) as PoiSpawner
+	if docking_manager_path != NodePath(""):
+		_docking_manager = get_node_or_null(docking_manager_path) as DockingManager
 	
 	# Build UI
 	_build_ui()
@@ -50,19 +60,22 @@ func _ready() -> void:
 	if _poi_spawner != null:
 		_poi_spawner.poi_spawned.connect(_on_poi_spawned)
 		_poi_spawner.poi_counts_changed.connect(_on_poi_counts_changed)
+	if _docking_manager != null and not _docking_manager.docking_complete.is_connected(_on_docking_complete):
+		_docking_manager.docking_complete.connect(_on_docking_complete)
 	
 	# Initial update
 	_update_list()
 
 
 func _exit_tree() -> void:
-	if _poi_spawner == null or not is_instance_valid(_poi_spawner):
-		return
-
-	if _poi_spawner.poi_spawned.is_connected(_on_poi_spawned):
-		_poi_spawner.poi_spawned.disconnect(_on_poi_spawned)
-	if _poi_spawner.poi_counts_changed.is_connected(_on_poi_counts_changed):
-		_poi_spawner.poi_counts_changed.disconnect(_on_poi_counts_changed)
+	if _poi_spawner != null and is_instance_valid(_poi_spawner):
+		if _poi_spawner.poi_spawned.is_connected(_on_poi_spawned):
+			_poi_spawner.poi_spawned.disconnect(_on_poi_spawned)
+		if _poi_spawner.poi_counts_changed.is_connected(_on_poi_counts_changed):
+			_poi_spawner.poi_counts_changed.disconnect(_on_poi_counts_changed)
+	if _docking_manager != null and is_instance_valid(_docking_manager):
+		if _docking_manager.docking_complete.is_connected(_on_docking_complete):
+			_docking_manager.docking_complete.disconnect(_on_docking_complete)
 
 
 func _build_ui() -> void:
@@ -80,11 +93,21 @@ func _build_ui() -> void:
 	
 	# Pre-create pool of labels for POI entries
 	for i in max_display_count:
+		var row: HBoxContainer = HBoxContainer.new()
+		row.visible = false
+		row.add_theme_constant_override("separation", 6)
+		var indicator: ColorRect = ColorRect.new()
+		indicator.custom_minimum_size = POI_INDICATOR_SIZE
+		indicator.size = POI_INDICATOR_SIZE
+		indicator.color = POI_UNVISITED_COLOR
+		row.add_child(indicator)
 		var lbl: Label = Label.new()
-		lbl.visible = false
 		if label_settings != null:
 			lbl.label_settings = label_settings
-		_container.add_child(lbl)
+		row.add_child(lbl)
+		_container.add_child(row)
+		_poi_rows.append(row)
+		_poi_indicators.append(indicator)
 		_poi_labels.append(lbl)
 
 
@@ -126,15 +149,17 @@ func _update_list() -> void:
 	
 	# Update labels
 	for i in max_display_count:
+		var row: HBoxContainer = _poi_rows[i]
+		var indicator: ColorRect = _poi_indicators[i]
 		var lbl: Label = _poi_labels[i]
 		
 		if i < pois.size():
 			var poi: PoiInstance = pois[i]
 			if not _can_use_poi(poi):
-				lbl.visible = false
+				row.visible = false
 				continue
 			
-			lbl.visible = true
+			row.visible = true
 			
 			# Calculate distance
 			var distance: float = 0.0
@@ -147,12 +172,15 @@ func _update_list() -> void:
 			var distance_str: String = _format_distance(distance)
 			
 			lbl.text = "[%s] %s - %s" % [type_name, display_name, distance_str]
+			var is_visited: bool = _docking_manager != null and _docking_manager.is_poi_visited(poi)
+			indicator.color = POI_VISITED_COLOR if is_visited else POI_UNVISITED_COLOR
 			
 			# Apply color based on type
 			var color: Color = TYPE_COLORS.get(poi.poi_type, Color.WHITE)
 			lbl.modulate = color
 		else:
-			lbl.visible = false
+			row.visible = false
+			indicator.color = POI_UNVISITED_COLOR
 
 
 func _format_distance(distance: float) -> String:
@@ -169,6 +197,10 @@ func _on_poi_spawned(_poi: PoiInstance) -> void:
 
 func _on_poi_counts_changed(_offense: int, _defense: int, _utility: int, _total: int) -> void:
 	# Force update on count change (handles removals too)
+	_update_list()
+
+
+func _on_docking_complete(_poi: PoiInstance) -> void:
 	_update_list()
 
 
