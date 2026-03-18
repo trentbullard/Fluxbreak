@@ -7,11 +7,14 @@ signal pilot_unlocked(pilot_id: StringName)
 signal selection_changed(pilot: PilotDef, ship: ShipDef)
 signal stage_changed(stage: StageDef, stage_index: int)
 signal run_completed
+signal run_victory_started(message: String, return_delay_sec: float)
 
 const MENU: String = "res://scenes/world/world.tscn"
 const DEFAULT_PILOT_ROSTER: String = "res://content/data/pilots/pilot_roster.tres"
 const DEFAULT_RUN_DEFINITION: String = "res://content/data/runs/story_mode_intro.tres"
 const SAVE_PATH: String = "user://highscore.cfg"
+const VICTORY_MESSAGE: String = "YOU WON"
+const VICTORY_RETURN_DELAY_SEC: float = 2.5
 
 const SCORE_SECTION: String = "scores"
 const SCORE_KEY_HIGH_SCORE: String = "high_score"
@@ -67,8 +70,10 @@ var _active_run_definition: RunDefinition = null
 var _active_stage_index: int = -1
 var _stage_modifier_rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _rolled_stage_modifiers_by_stage_key: Dictionary = {}
+var _run_end_in_progress: bool = false
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	_load_user_data()
 	_ensure_default_pilot()
 	_stage_modifier_rng.randomize()
@@ -79,11 +84,14 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if not _run_active:
 		return
+	if get_tree().paused:
+		return
 	_run_elapsed_sec += max(delta, 0.0)
 
 func start_new_run(run_definition: RunDefinition = null) -> void:
 	RunState.start_run()
 	_run_active = true
+	_run_end_in_progress = false
 	_run_started_msec = Time.get_ticks_msec()
 	_run_elapsed_sec = 0.0
 	_run_total_nanobots_collected = 0
@@ -229,15 +237,35 @@ func is_weapon_option_unlocked(option: ShipStarterWeaponOptionDef) -> bool:
 func player_died() -> void:
 	_end_run_and_return_to_menu(true)
 
+func player_won() -> void:
+	if not _finalize_run_end(false):
+		return
+	run_completed.emit()
+	run_victory_started.emit(VICTORY_MESSAGE, VICTORY_RETURN_DELAY_SEC)
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	get_tree().paused = true
+	var victory_timer: SceneTreeTimer = get_tree().create_timer(VICTORY_RETURN_DELAY_SEC, true)
+	await victory_timer.timeout
+	get_tree().paused = false
+	get_tree().change_scene_to_file(MENU)
+
 func _on_time_over() -> void:
 	_end_run_and_return_to_menu(false)
 
 func _end_run_and_return_to_menu(count_as_death: bool) -> void:
+	if not _finalize_run_end(count_as_death):
+		return
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	get_tree().change_scene_to_file(MENU)
+
+func _finalize_run_end(count_as_death: bool) -> bool:
+	if _run_end_in_progress or not _run_active:
+		return false
+	_run_end_in_progress = true
 	_finalize_run_stats(count_as_death)
 	_clear_run_progression()
 	check_and_update_high_score(RunState.run_score)
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	get_tree().change_scene_to_file(MENU)
+	return true
 
 func check_and_update_high_score(final_run_score: int) -> void:
 	if final_run_score > high_score:

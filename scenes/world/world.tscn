@@ -1,4 +1,4 @@
-[gd_scene load_steps=75 format=3 uid="uid://ppgr7fveqbrd"]
+[gd_scene load_steps=76 format=3 uid="uid://ppgr7fveqbrd"]
 
 [ext_resource type="Texture2D" uid="uid://d3x23q2en3ng1" path="res://assets/spheremaps/plain_starfield_1.png" id="1_dphjl"]
 [ext_resource type="Script" uid="uid://bksswhha71raw" path="res://scripts/world/world_bootstrap.gd" id="1_ovomx"]
@@ -127,6 +127,17 @@ scene_override = ExtResource("34_q3hpu")
 upgrade_tags = Array[String](["utility", "repair", "misc"])
 metadata/_custom_type_script = "uid://c7bw4eh6k252"
 
+[sub_resource type="SystemFont" id="SystemFont_srmg5"]
+font_names = PackedStringArray("Consolas")
+subpixel_positioning = 0
+
+[sub_resource type="LabelSettings" id="LabelSettings_victory"]
+font = SubResource("SystemFont_srmg5")
+font_size = 56
+font_color = Color(0.984314, 0.941176, 0.603922, 1)
+outline_size = 8
+outline_color = Color(0, 0, 0, 1)
+
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_4jq4u"]
 texture = ExtResource("49_j0rhc")
 
@@ -165,10 +176,6 @@ subpixel_positioning = 0
 font = SubResource("SystemFont_5qq27")
 outline_size = 4
 outline_color = Color(0, 0, 0, 1)
-
-[sub_resource type="SystemFont" id="SystemFont_srmg5"]
-font_names = PackedStringArray("Consolas")
-subpixel_positioning = 0
 
 [sub_resource type="LabelSettings" id="LabelSettings_umvgx"]
 font = SubResource("SystemFont_srmg5")
@@ -269,6 +276,7 @@ alive_label_path = NodePath("ScreenRoot/TopDock/ScoreLayer/VBoxContainer/Alive")
 run_details_label_path = NodePath("ScreenRoot/TopDock/TopRightDock/RunStageDetailsContainer/RunDetails")
 stage_details_label_path = NodePath("ScreenRoot/TopDock/TopRightDock/RunStageDetailsContainer/StageDetails")
 stage_modifiers_label_path = NodePath("ScreenRoot/TopDock/TopRightDock/RunStageDetailsContainer/StageModifiers")
+victory_label_path = NodePath("ScreenRoot/VictoryLabel")
 
 [node name="ScreenRoot" type="Control" parent="HUD"]
 layout_mode = 3
@@ -393,6 +401,25 @@ text = "Salvage Tide
 Sensor Static"
 label_settings = ExtResource("10_m114p")
 horizontal_alignment = 2
+
+[node name="VictoryLabel" type="Label" parent="HUD/ScreenRoot"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -240.0
+offset_top = -40.0
+offset_right = 240.0
+offset_bottom = 40.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "YOU WON"
+label_settings = SubResource("LabelSettings_victory")
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="ReticleLayer" type="Control" parent="HUD/ScreenRoot"]
 layout_mode = 1

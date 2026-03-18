@@ -11,6 +11,7 @@ extends CanvasLayer
 @export var run_details_label_path: NodePath
 @export var stage_details_label_path: NodePath
 @export var stage_modifiers_label_path: NodePath
+@export var victory_label_path: NodePath
 
 @onready var ship: Node3D = get_node_or_null(ship_path)
 @onready var nameplates: NameplateManager = $ScreenRoot/NameplateLayer
@@ -27,6 +28,7 @@ var _alive_label: Label = null
 var _run_details_label: Label = null
 var _stage_details_label: Label = null
 var _stage_modifiers_label: Label = null
+var _victory_label: Label = null
 
 func _ready() -> void:
 	_refresh_camera()
@@ -59,6 +61,10 @@ func _ready() -> void:
 		_stage_details_label = get_node_or_null(stage_details_label_path) as Label
 	if stage_modifiers_label_path != NodePath(""):
 		_stage_modifiers_label = get_node_or_null(stage_modifiers_label_path) as Label
+	if victory_label_path != NodePath(""):
+		_victory_label = get_node_or_null(victory_label_path) as Label
+		if _victory_label != null:
+			_victory_label.visible = false
 	
 	if _spawner != null and _spawner.has_signal("alive_counts_changed"):
 		_spawner.connect("alive_counts_changed", Callable(self, "_on_alive_counts_changed"))
@@ -75,6 +81,8 @@ func _ready() -> void:
 		GameFlow.stage_changed.connect(_on_game_flow_stage_changed)
 	if not GameFlow.run_completed.is_connected(_on_game_flow_run_completed):
 		GameFlow.run_completed.connect(_on_game_flow_run_completed)
+	if not GameFlow.run_victory_started.is_connected(_on_game_flow_run_victory_started):
+		GameFlow.run_victory_started.connect(_on_game_flow_run_victory_started)
 
 	_refresh_run_details()
 	_refresh_stage_details()
@@ -102,6 +110,12 @@ func _on_game_flow_stage_changed(_stage: StageDef, _stage_index: int) -> void:
 func _on_game_flow_run_completed() -> void:
 	_refresh_run_details()
 	_refresh_stage_details()
+
+func _on_game_flow_run_victory_started(message: String, _return_delay_sec: float) -> void:
+	if _victory_label == null:
+		return
+	_victory_label.text = message
+	_victory_label.visible = true
 
 func _refresh_run_details() -> void:
 	if _run_details_label == null:

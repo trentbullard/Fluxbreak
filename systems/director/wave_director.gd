@@ -25,6 +25,7 @@ signal next_wave_eta(seconds: float)
 
 @export var wave_clear_carryover_ok: int = 0
 @export var wave_timeout_sec: float = 25.0
+@export var victory_wave_index: int = 30
 
 @export_group("Soft Density")
 @export var soft_enemy_density_base: float = 6.0
@@ -726,6 +727,9 @@ func _run_requests_coroutine(
 
 		if _wave_timer >= wave_timeout_sec:
 			emit_signal("wave_forced_next", _wave_index)
+			if _should_trigger_victory():
+				GameFlow.player_won()
+				return
 			_start_downtime()
 			return
 
@@ -739,12 +743,18 @@ func _clear_or_timeout_then_downtime(token: int) -> void:
 		var enemies_alive: int = _alive_enemy_count()
 		if enemies_alive <= wave_clear_carryover_ok:
 			emit_signal("wave_cleared", _wave_index, _wave_timer)
+			if _should_trigger_victory():
+				GameFlow.player_won()
+				return
 			_start_downtime()
 			return
 		var t: SceneTreeTimer = _create_pausable_timer(0.5)
 		await t.timeout
 
 	emit_signal("wave_forced_next", _wave_index)
+	if _should_trigger_victory():
+		GameFlow.player_won()
+		return
 	_start_downtime()
 
 func _on_stage_changed(_stage: StageDef, _stage_index: int) -> void:
@@ -753,3 +763,6 @@ func _on_stage_changed(_stage: StageDef, _stage_index: int) -> void:
 	_recent_card_ids.clear()
 	if _buyer != null:
 		_buyer.clear_history()
+
+func _should_trigger_victory() -> bool:
+	return victory_wave_index > 0 and _wave_index >= victory_wave_index
