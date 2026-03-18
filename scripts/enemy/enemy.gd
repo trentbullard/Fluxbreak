@@ -115,17 +115,31 @@ func configure_enemy(d: EnemyDef, spawn_context: EnemySpawnContext = null) -> vo
 		weapon_snapshot = _stat_snapshot.weapon_stats
 	_apply_weapon_to_turrets(d.weapon, d.team_id, weapon_snapshot)
 
-func apply_damage(amount: float) -> void:
+func apply_damage(amount: float, combat_stat_context: CombatStatContext = null) -> void:
 	if _dead:
 		return
 	var incoming: float = max(0.0, amount)
+	if incoming <= 0.0:
+		return
 	var remaining: float = incoming
+	var shield_damage: float = 0.0
 	if shield > 0.0:
 		var absorbed: float = min(shield, remaining)
 		shield -= absorbed
 		remaining -= absorbed
+		shield_damage = absorbed
+	var hull_damage: float = 0.0
 	if remaining > 0.0:
+		hull_damage = min(hull, remaining)
 		hull -= remaining
+	var total_damage_applied: float = shield_damage + hull_damage
+	var dealt_killing_blow: bool = hull_damage > 0.0 and hull <= 0.0
+	if total_damage_applied > 0.0 and combat_stat_context != null:
+		var effective_context: CombatStatContext = combat_stat_context.duplicate_context()
+		effective_context.set_enemy_identity_from_source(self)
+		GameFlow.record_damage_dealt(total_damage_applied, effective_context)
+		if dealt_killing_blow:
+			GameFlow.record_enemy_kill(effective_context)
 	if hull <= 0.0:
 		_die()
 
@@ -141,6 +155,9 @@ func get_faction_id() -> StringName:
 func get_role_id() -> StringName:
 	return role_id
 
+func get_enemy_id() -> StringName:
+	return StringName(enemy_id)
+
 func get_faction_display_name() -> String:
 	if faction == null:
 		return ""
@@ -153,6 +170,11 @@ func get_role_display_name() -> String:
 
 func get_effective_stat_snapshot() -> EnemyStatSnapshot:
 	return _stat_snapshot
+
+func build_combat_stat_context() -> CombatStatContext:
+	var context: CombatStatContext = CombatStatContext.new()
+	context.set_enemy_identity_from_source(self)
+	return context
 
 func play_warp_in(delay_sec: float = 0.0) -> void:
 	var model_root: Node3D = get_node_or_null(model_root_path) as Node3D

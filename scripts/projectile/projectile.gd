@@ -14,6 +14,7 @@ var _graze_mult: float = 0.3
 var _from_player: bool = false
 var _base_damage: float = 0.0
 var _effects: Array[StatusEffectDef] = []
+var _combat_stat_context: CombatStatContext = null
 
 # --- targeting & flight ---
 var _tref: WeakRef = null
@@ -25,7 +26,7 @@ var _life: float = 0.0
 var _dmg_applied: bool = false
 
 func configure_shot(source: Node, target: Node3D, outcome: int, rolled_dmg: float,
-					graze_mult: float, crit_mult: float, effects: Array[StatusEffectDef], from_player: bool) -> void:
+					graze_mult: float, crit_mult: float, effects: Array[StatusEffectDef], from_player: bool, combat_stat_context: CombatStatContext = null) -> void:
 	exclude_owner = source
 	_tref = weakref(target)
 	_outcome = outcome
@@ -34,6 +35,7 @@ func configure_shot(source: Node, target: Node3D, outcome: int, rolled_dmg: floa
 	_from_player = from_player
 	_base_damage = max(0.0, rolled_dmg)
 	_effects = effects if effects != null else []
+	_combat_stat_context = combat_stat_context.duplicate_context() if combat_stat_context != null else null
 	
 	if target != null:
 		_cleanup_distance_sq = 0.0
@@ -83,7 +85,8 @@ func _apply_to_target(target: Object) -> void:
 		_graze_mult,
 		_crit_mult,
 		_effects,
-		_from_player
+		_from_player,
+		_combat_stat_context
 	)
 	_dmg_applied = true
 

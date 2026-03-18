@@ -104,6 +104,13 @@ func get_weapon() -> WeaponDef:
 func get_runtime() -> WeaponRuntime:
 	return _runtime
 
+func build_combat_stat_context(target: Object = null) -> CombatStatContext:
+	var owner_ship: Ship = _resolve_owner_ship()
+	if owner_ship == null:
+		return null
+	var weapon_id: StringName = _weapon.get_weapon_id() if _weapon != null else &""
+	return owner_ship.build_combat_stat_context(weapon_id, target)
+
 func swap_weapon(new_weapon: WeaponDef, keep_cooldown: bool = true, team_id_val: int = team_id) -> void:
 	var prev_cd: float = _runtime.get_cooldown() if _runtime != null else 0.0
 	apply_weapon(new_weapon, team_id_val)
@@ -204,3 +211,11 @@ func _refresh_effective_weapon_stats() -> void:
 			return aggr.compute_for_context(stat_id, base_value, StatAggregator.Context.PLAYER)
 	var snapshot: WeaponStatSnapshot = WeaponStatResolver.resolve_snapshot(_weapon, compute_value)
 	WeaponStatResolver.apply_snapshot_to_turret(self, snapshot)
+
+func _resolve_owner_ship() -> Ship:
+	var node: Node = self
+	while node != null:
+		if node is Ship:
+			return node as Ship
+		node = node.get_parent()
+	return null

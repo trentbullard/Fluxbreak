@@ -83,7 +83,7 @@ func configure_target(d: TargetDef) -> void:
 func set_ship(ship: Ship):
 	player_ship = ship
 
-func apply_damage(amount: float) -> void:
+func apply_damage(amount: float, _combat_stat_context: CombatStatContext = null) -> void:
 	if _dead: return
 	hull -= amount
 	if hull <= 0.0:

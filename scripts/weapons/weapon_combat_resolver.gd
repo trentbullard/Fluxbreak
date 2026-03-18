@@ -57,7 +57,7 @@ static func resolve_shot_for_turret(turret: Object, hit_chance: float) -> int:
 		return ShotResult.GRAZE
 	return ShotResult.MISS
 
-static func apply_shot_to_target(source: Object, target: Object, outcome: int, rolled_damage: float, graze_mult: float, crit_mult: float, effects: Array[StatusEffectDef], from_player: bool) -> float:
+static func apply_shot_to_target(source: Object, target: Object, outcome: int, rolled_damage: float, graze_mult: float, crit_mult: float, effects: Array[StatusEffectDef], from_player: bool, combat_stat_context: CombatStatContext = null) -> float:
 	if target == null:
 		return 0.0
 
@@ -86,7 +86,8 @@ static func apply_shot_to_target(source: Object, target: Object, outcome: int, r
 			damage = 0.0
 
 	if damage > 0.0 and target.has_method("apply_damage"):
-		target.call("apply_damage", damage)
+		var effective_context: CombatStatContext = combat_stat_context.duplicate_context() if combat_stat_context != null else null
+		target.call("apply_damage", damage, effective_context)
 		if from_player:
 			CombatStats.report_damage(damage)
 

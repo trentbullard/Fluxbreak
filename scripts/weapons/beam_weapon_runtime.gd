@@ -190,6 +190,7 @@ func _apply_tick() -> void:
 	var rolled_damage: float = randf_range(damage_min, damage_max)
 	var ramp_multiplier: float = 1.0 + get_effective_ramp_damage_per_stack() * float(_ramp_stacks)
 	var ramped_damage: float = rolled_damage * max(0.0, ramp_multiplier)
+	var combat_stat_context: CombatStatContext = turret.build_combat_stat_context(target)
 	WeaponCombatResolver.apply_shot_to_target(
 		turret,
 		target,
@@ -198,7 +199,8 @@ func _apply_tick() -> void:
 		turret.eff_graze_mult,
 		turret.eff_crit_mult,
 		weapon.status_effects,
-		true
+		true,
+		combat_stat_context
 	)
 	_apply_ramp_delta(outcome)
 

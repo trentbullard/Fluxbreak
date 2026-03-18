@@ -28,8 +28,10 @@ const SELECTION_KEY_SELECTED_WEAPON_ID: String = "selected_weapon_id"
 const PILOT_STATS_SECTION_PREFIX: String = "pilot_stats."
 const PILOT_SHIP_SELECTION_SECTION_PREFIX: String = "pilot_ship_selection."
 const SHIP_WEAPON_SELECTION_SECTION_PREFIX: String = "ship_weapon_selection."
+const META_STATS_GLOBAL_SECTION: String = "meta_stats.global"
+const META_STATS_PILOT_SECTION_PREFIX: String = "meta_stats.pilot."
 const ARCHIVE_SECTION_PREFIX: String = "archive."
-const CURRENT_SAVE_SCHEMA_VERSION: int = 1
+const CURRENT_SAVE_SCHEMA_VERSION: int = 2
 
 const STAT_HIGHEST_SCORE: StringName = &"highest_score"
 const STAT_LONGEST_RUN_SECONDS: StringName = &"longest_run_seconds"
@@ -37,6 +39,9 @@ const STAT_DEATH_RUNS: StringName = &"death_runs"
 const STAT_TOTAL_NANOBOTS_IN_RUN: StringName = &"total_nanobots_in_run"
 const STAT_HIGHEST_NANOBOTS_IN_RUN: StringName = &"highest_nanobots_in_run"
 const STAT_HIGHEST_WAVE_REACHED: StringName = &"highest_wave_reached"
+const META_STAT_KILLS: StringName = &"kills"
+const META_STAT_DAMAGE_DEALT: StringName = &"damage_dealt"
+const META_STAT_DAMAGE_TAKEN: StringName = &"damage_taken"
 
 const PILOT_STAT_DEFAULTS: Dictionary = {
 	STAT_HIGHEST_SCORE: 0,
@@ -53,6 +58,8 @@ var selected_ship: ShipDef = null
 var selected_weapon: WeaponDef = null
 
 var _pilot_stats_by_id: Dictionary = {}
+var _meta_stats_global: Dictionary = {}
+var _meta_stats_by_pilot_id: Dictionary = {}
 var _cached_roster: PilotRoster = null
 var _loaded_selected_pilot_id: StringName = &""
 var _loaded_selected_ship_id: StringName = &""
@@ -66,6 +73,8 @@ var _run_pilot_id: StringName = &""
 var _run_total_nanobots_collected: int = 0
 var _run_peak_nanobots: int = 0
 var _run_last_nanobots_value: int = 0
+var _run_meta_stats_global: Dictionary = {}
+var _run_meta_stats_by_pilot_id: Dictionary = {}
 var _active_run_definition: RunDefinition = null
 var _active_stage_index: int = -1
 var _stage_modifier_rng: RandomNumberGenerator = RandomNumberGenerator.new()
@@ -97,6 +106,8 @@ func start_new_run(run_definition: RunDefinition = null) -> void:
 	_run_total_nanobots_collected = 0
 	_run_peak_nanobots = 0
 	_run_last_nanobots_value = 0
+	_run_meta_stats_global.clear()
+	_run_meta_stats_by_pilot_id.clear()
 	_rolled_stage_modifiers_by_stage_key.clear()
 	_active_run_definition = _resolve_run_definition(run_definition)
 	_active_stage_index = -1
@@ -105,6 +116,15 @@ func start_new_run(run_definition: RunDefinition = null) -> void:
 	_resolve_selected_or_default_ship()
 	_resolve_selected_or_default_weapon()
 	_emit_stage_changed(0)
+
+func record_damage_dealt(amount: float, combat_stat_context: CombatStatContext) -> void:
+	_record_run_meta_stat(META_STAT_DAMAGE_DEALT, amount, combat_stat_context)
+
+func record_enemy_kill(combat_stat_context: CombatStatContext) -> void:
+	_record_run_meta_stat(META_STAT_KILLS, 1.0, combat_stat_context)
+
+func record_damage_taken(amount: float, combat_stat_context: CombatStatContext) -> void:
+	_record_run_meta_stat(META_STAT_DAMAGE_TAKEN, amount, combat_stat_context)
 
 func set_selected_pilot(pilot: PilotDef) -> void:
 	if pilot == null:
@@ -281,6 +301,14 @@ func get_pilot_stats(pilot_id: StringName) -> Dictionary:
 	if not _pilot_stats_by_id.has(key):
 		return _make_default_pilot_stats()
 	return (_pilot_stats_by_id[key] as Dictionary).duplicate(true)
+
+func get_meta_stat_value(metric_key: StringName, pilot_id: StringName = &"", key: String = "") -> int:
+	var slice: Dictionary = _meta_stats_global
+	if pilot_id != &"":
+		slice = _meta_stats_by_pilot_id.get(String(pilot_id), {})
+	if key == "":
+		return max(0, int(slice.get(String(metric_key), 0)))
+	return max(0, int(slice.get(key, 0)))
 
 func is_pilot_unlocked(pilot: PilotDef) -> bool:
 	if pilot == null:
@@ -815,6 +843,8 @@ func _clear_run_progression() -> void:
 	_active_run_definition = null
 	_active_stage_index = -1
 	_run_elapsed_sec = 0.0
+	_run_meta_stats_global.clear()
+	_run_meta_stats_by_pilot_id.clear()
 	_rolled_stage_modifiers_by_stage_key.clear()
 
 func _on_run_nanobots_updated(amount: int) -> void:
@@ -828,6 +858,123 @@ func _on_run_nanobots_updated(amount: int) -> void:
 		_run_total_nanobots_collected += amount - _run_last_nanobots_value
 
 	_run_last_nanobots_value = amount
+
+func _record_run_meta_stat(metric_key: StringName, amount: float, combat_stat_context: CombatStatContext) -> void:
+	if not _run_active:
+		return
+	if combat_stat_context == null:
+		return
+	if amount <= 0.0:
+		return
+
+	var effective_context: CombatStatContext = _prepare_combat_stat_context(combat_stat_context)
+	var keys: Array[String] = _build_meta_stat_keys_for_context(String(metric_key), effective_context)
+	if keys.is_empty():
+		return
+
+	for key in keys:
+		_add_run_meta_stat_value(_run_meta_stats_global, key, amount)
+
+	var pilot_id: StringName = effective_context.pilot_id
+	if pilot_id != &"":
+		var pilot_slice: Dictionary = _get_or_create_run_meta_stat_slice(pilot_id)
+		for key in keys:
+			_add_run_meta_stat_value(pilot_slice, key, amount)
+
+func _prepare_combat_stat_context(combat_stat_context: CombatStatContext) -> CombatStatContext:
+	var effective_context: CombatStatContext = combat_stat_context.duplicate_context()
+	if effective_context.pilot_id == &"":
+		effective_context.pilot_id = _run_pilot_id
+	if effective_context.ship_id == &"":
+		var active_ship: ShipDef = _resolve_selected_or_default_ship()
+		effective_context.ship_id = active_ship.get_ship_id() if active_ship != null else &""
+	effective_context.equipped_weapon_ids = effective_context.get_normalized_equipped_weapon_ids()
+	return effective_context
+
+func _add_run_meta_stat_value(target: Dictionary, key: String, amount: float) -> void:
+	target[key] = float(target.get(key, 0.0)) + amount
+
+func _get_or_create_run_meta_stat_slice(pilot_id: StringName) -> Dictionary:
+	var key: String = String(pilot_id)
+	if key == "":
+		return {}
+	if not _run_meta_stats_by_pilot_id.has(key):
+		_run_meta_stats_by_pilot_id[key] = {}
+	return _run_meta_stats_by_pilot_id[key] as Dictionary
+
+func _get_or_create_meta_stat_slice(pilot_id: StringName) -> Dictionary:
+	var key: String = String(pilot_id)
+	if key == "":
+		return _meta_stats_global
+	if not _meta_stats_by_pilot_id.has(key):
+		_meta_stats_by_pilot_id[key] = {}
+	return _meta_stats_by_pilot_id[key] as Dictionary
+
+func _flush_run_meta_stats_to_lifetime() -> void:
+	_merge_run_meta_stat_slice(_meta_stats_global, _run_meta_stats_global)
+	for pilot_key_variant in _run_meta_stats_by_pilot_id.keys():
+		var pilot_key: String = String(pilot_key_variant)
+		var target_slice: Dictionary = _get_or_create_meta_stat_slice(StringName(pilot_key))
+		var source_slice: Dictionary = _run_meta_stats_by_pilot_id[pilot_key] as Dictionary
+		_merge_run_meta_stat_slice(target_slice, source_slice)
+
+func _merge_run_meta_stat_slice(target: Dictionary, source: Dictionary) -> void:
+	for raw_key_variant in source.keys():
+		var raw_key: String = String(raw_key_variant)
+		var amount: float = float(source[raw_key_variant])
+		var rounded_amount: int = int(round(amount))
+		if rounded_amount <= 0:
+			continue
+		target[raw_key] = int(target.get(raw_key, 0)) + rounded_amount
+
+func _build_meta_stat_keys_for_context(metric_key: String, combat_stat_context: CombatStatContext) -> Array[String]:
+	var keys_set: Dictionary = {}
+	if metric_key == "":
+		return []
+	keys_set[metric_key] = true
+
+	var axes: Array[Dictionary] = []
+	if combat_stat_context.ship_id != &"":
+		axes.append({ "axis": "ship", "values": [String(combat_stat_context.ship_id)] })
+	if combat_stat_context.weapon_direct_id != &"":
+		axes.append({ "axis": "weapon_direct", "values": [String(combat_stat_context.weapon_direct_id)] })
+	var equipped_weapon_values: Array[String] = []
+	for weapon_id in combat_stat_context.get_normalized_equipped_weapon_ids():
+		equipped_weapon_values.append(String(weapon_id))
+	if not equipped_weapon_values.is_empty():
+		axes.append({ "axis": "weapon_equipped", "values": equipped_weapon_values })
+	if combat_stat_context.enemy_id != &"":
+		axes.append({ "axis": "enemy", "values": [String(combat_stat_context.enemy_id)] })
+	if combat_stat_context.faction_id != &"":
+		axes.append({ "axis": "faction", "values": [String(combat_stat_context.faction_id)] })
+	if combat_stat_context.role_id != &"":
+		axes.append({ "axis": "role", "values": [String(combat_stat_context.role_id)] })
+
+	var initial_parts: Array[String] = []
+	_append_meta_stat_key_combinations(metric_key, axes, 0, initial_parts, keys_set)
+
+	var keys: Array[String] = []
+	for key_variant in keys_set.keys():
+		keys.append(String(key_variant))
+	return keys
+
+func _append_meta_stat_key_combinations(metric_key: String, axes: Array[Dictionary], axis_index: int, parts: Array[String], keys_set: Dictionary) -> void:
+	if axis_index >= axes.size():
+		if parts.is_empty():
+			return
+		keys_set["%s|%s" % [metric_key, "|".join(parts)]] = true
+		return
+
+	_append_meta_stat_key_combinations(metric_key, axes, axis_index + 1, parts, keys_set)
+
+	var axis_entry: Dictionary = axes[axis_index] as Dictionary
+	var axis_name: String = String(axis_entry.get("axis", ""))
+	var values: Array = axis_entry.get("values", [])
+	for raw_value in values:
+		var next_parts: Array[String] = parts.duplicate()
+		next_parts.append(axis_name)
+		next_parts.append(String(raw_value))
+		_append_meta_stat_key_combinations(metric_key, axes, axis_index + 1, next_parts, keys_set)
 
 func _finalize_run_stats(count_as_death: bool) -> void:
 	if not _run_active:
@@ -860,6 +1007,7 @@ func _finalize_run_stats(count_as_death: bool) -> void:
 		stats[STAT_DEATH_RUNS] = int(stats[STAT_DEATH_RUNS]) + 1
 
 	_pilot_stats_by_id[String(pilot_id)] = stats
+	_flush_run_meta_stats_to_lifetime()
 	_save_user_data()
 	pilot_stats_updated.emit(pilot_id, stats.duplicate(true))
 	_emit_new_unlocks(before_unlocks, _build_unlock_state())
@@ -907,9 +1055,25 @@ func _is_unlock_requirement_met(requirement: UnlockRequirement) -> bool:
 	return _get_requirement_stat_value(requirement) >= max(requirement.minimum_value, 0)
 
 func _get_requirement_stat_value(requirement: UnlockRequirement) -> int:
+	if _is_matrix_unlock_stat(requirement.stat):
+		return _get_matrix_requirement_stat_value(requirement)
 	if requirement.source_pilot_id != &"":
 		return _get_pilot_stat_value(requirement.source_pilot_id, requirement.stat)
 	return _get_global_stat_value(requirement.stat)
+
+func _is_matrix_unlock_stat(stat: UnlockRequirement.UnlockStat) -> bool:
+	return (
+		stat == UnlockRequirement.UnlockStat.KILLS
+		or stat == UnlockRequirement.UnlockStat.DAMAGE_DEALT
+		or stat == UnlockRequirement.UnlockStat.DAMAGE_TAKEN
+	)
+
+func _get_matrix_requirement_stat_value(requirement: UnlockRequirement) -> int:
+	var metric_key: StringName = _map_unlock_stat_to_meta_stat_key(requirement.stat)
+	if metric_key == &"":
+		return 0
+	var storage_key: String = _build_requirement_meta_stat_key(metric_key, requirement)
+	return get_meta_stat_value(metric_key, requirement.source_pilot_id, storage_key)
 
 func _get_pilot_stat_value(pilot_id: StringName, stat: UnlockRequirement.UnlockStat) -> int:
 	var key: StringName = _map_unlock_stat_to_key(stat)
@@ -950,6 +1114,40 @@ func _map_unlock_stat_to_key(stat: UnlockRequirement.UnlockStat) -> StringName:
 			return STAT_HIGHEST_WAVE_REACHED
 	return STAT_HIGHEST_SCORE
 
+func _map_unlock_stat_to_meta_stat_key(stat: UnlockRequirement.UnlockStat) -> StringName:
+	match stat:
+		UnlockRequirement.UnlockStat.KILLS:
+			return META_STAT_KILLS
+		UnlockRequirement.UnlockStat.DAMAGE_DEALT:
+			return META_STAT_DAMAGE_DEALT
+		UnlockRequirement.UnlockStat.DAMAGE_TAKEN:
+			return META_STAT_DAMAGE_TAKEN
+	return &""
+
+func _build_requirement_meta_stat_key(metric_key: StringName, requirement: UnlockRequirement) -> String:
+	var parts: Array[String] = []
+	if requirement.ship_id != &"":
+		parts.append("ship")
+		parts.append(String(requirement.ship_id))
+	if requirement.weapon_id != &"":
+		var axis_name: String = "weapon_direct"
+		if requirement.weapon_context == UnlockRequirement.WeaponContext.EQUIPPED:
+			axis_name = "weapon_equipped"
+		parts.append(axis_name)
+		parts.append(String(requirement.weapon_id))
+	if requirement.enemy_id != &"":
+		parts.append("enemy")
+		parts.append(String(requirement.enemy_id))
+	if requirement.faction_id != &"":
+		parts.append("faction")
+		parts.append(String(requirement.faction_id))
+	if requirement.role_id != &"":
+		parts.append("role")
+		parts.append(String(requirement.role_id))
+	if parts.is_empty():
+		return String(metric_key)
+	return "%s|%s" % [String(metric_key), "|".join(parts)]
+
 func _get_or_create_stats_for_pilot(pilot_id: StringName) -> Dictionary:
 	var key: String = String(pilot_id)
 	if key == "":
@@ -965,10 +1163,8 @@ func _get_current_game_version() -> String:
 	var value: String = String(ProjectSettings.get_setting("application/config/version", "")).strip_edges()
 	return value if value != "" else "dev"
 
-func _should_reset_save(saved_schema_version: int, saved_game_version: String, current_game_version: String) -> bool:
+func _should_reset_save(saved_schema_version: int, _saved_game_version: String, _current_game_version: String) -> bool:
 	if saved_schema_version > 0 and saved_schema_version != CURRENT_SAVE_SCHEMA_VERSION:
-		return true
-	if saved_game_version != "" and saved_game_version != current_game_version:
 		return true
 	return false
 
@@ -982,7 +1178,7 @@ func _archive_current_save(cfg: ConfigFile, saved_schema_version: int, saved_gam
 		var keys: PackedStringArray = cfg.get_section_keys(section)
 		for key in keys:
 			cfg.set_value("%s.%s" % [archive_base, section], key, cfg.get_value(section, key))
-	cfg.set_value("%s.meta" % archive_base, "reason", "version_mismatch")
+	cfg.set_value("%s.meta" % archive_base, "reason", "schema_mismatch")
 	cfg.set_value("%s.meta" % archive_base, "saved_schema_version", saved_schema_version)
 	cfg.set_value("%s.meta" % archive_base, "saved_game_version", saved_game_version)
 	cfg.set_value("%s.meta" % archive_base, "current_schema_version", CURRENT_SAVE_SCHEMA_VERSION)
@@ -1005,6 +1201,8 @@ func _write_default_live_save(cfg: ConfigFile, game_version: String) -> void:
 
 func _load_user_data() -> void:
 	_pilot_stats_by_id.clear()
+	_meta_stats_global.clear()
+	_meta_stats_by_pilot_id.clear()
 	_selected_ship_id_by_pilot_id.clear()
 	_selected_weapon_id_by_ship_id.clear()
 	_loaded_selected_pilot_id = &""
@@ -1044,6 +1242,15 @@ func _load_user_data() -> void:
 				loaded_stats[stat_key] = max(0, int(cfg.get_value(section, String(stat_key), default_value)))
 			_pilot_stats_by_id[pilot_id] = loaded_stats
 			continue
+		if section == META_STATS_GLOBAL_SECTION:
+			_meta_stats_global = _load_meta_stat_section(cfg, section)
+			continue
+		if section.begins_with(META_STATS_PILOT_SECTION_PREFIX):
+			var meta_pilot_id: String = section.trim_prefix(META_STATS_PILOT_SECTION_PREFIX)
+			if meta_pilot_id == "":
+				continue
+			_meta_stats_by_pilot_id[meta_pilot_id] = _load_meta_stat_section(cfg, section)
+			continue
 		if section.begins_with(PILOT_SHIP_SELECTION_SECTION_PREFIX):
 			var selection_pilot_id: String = section.trim_prefix(PILOT_SHIP_SELECTION_SECTION_PREFIX)
 			if selection_pilot_id == "":
@@ -1074,6 +1281,12 @@ func _save_user_data() -> void:
 		if section.begins_with(PILOT_STATS_SECTION_PREFIX):
 			cfg.erase_section(section)
 			continue
+		if section == META_STATS_GLOBAL_SECTION:
+			cfg.erase_section(section)
+			continue
+		if section.begins_with(META_STATS_PILOT_SECTION_PREFIX):
+			cfg.erase_section(section)
+			continue
 		if section.begins_with(PILOT_SHIP_SELECTION_SECTION_PREFIX):
 			cfg.erase_section(section)
 			continue
@@ -1086,6 +1299,12 @@ func _save_user_data() -> void:
 		for key in PILOT_STAT_DEFAULTS.keys():
 			var stat_key: StringName = key as StringName
 			cfg.set_value(section, String(stat_key), max(0, int(stats.get(stat_key, 0))))
+
+	_save_meta_stat_section(cfg, META_STATS_GLOBAL_SECTION, _meta_stats_global)
+	for pilot_id in _meta_stats_by_pilot_id.keys():
+		var meta_section: String = "%s%s" % [META_STATS_PILOT_SECTION_PREFIX, String(pilot_id)]
+		var meta_stats: Dictionary = _meta_stats_by_pilot_id[pilot_id] as Dictionary
+		_save_meta_stat_section(cfg, meta_section, meta_stats)
 
 	for pilot_id in _selected_ship_id_by_pilot_id.keys():
 		var ship_section: String = "%s%s" % [PILOT_SHIP_SELECTION_SECTION_PREFIX, String(pilot_id)]
@@ -1104,3 +1323,17 @@ func _save_user_data() -> void:
 	var err: int = cfg.save(SAVE_PATH)
 	if err != OK:
 		push_warning("Failed to save user data to %s (err %d)".format([SAVE_PATH, err]))
+
+func _load_meta_stat_section(cfg: ConfigFile, section: String) -> Dictionary:
+	var loaded: Dictionary = {}
+	for key in cfg.get_section_keys(section):
+		loaded[String(key)] = max(0, int(cfg.get_value(section, key, 0)))
+	return loaded
+
+func _save_meta_stat_section(cfg: ConfigFile, section: String, values: Dictionary) -> void:
+	for key_variant in values.keys():
+		var key: String = String(key_variant)
+		var amount: int = max(0, int(values[key_variant]))
+		if amount <= 0:
+			continue
+		cfg.set_value(section, key, amount)

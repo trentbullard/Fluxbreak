@@ -137,6 +137,7 @@ var _runtime_anchors_root: Node3D
 var _runtime_thruster_nodes: Array[Node3D] = []
 var _runtime_thruster_materials: Array[BaseMaterial3D] = []
 var _runtime_thruster_particles: Array[GPUParticles3D] = []
+var _active_ship_id: StringName = &""
 
 func _ready() -> void:
 	add_to_group("player")
@@ -187,6 +188,7 @@ func reconfigure_from_selected_pilot(reset_current_health: bool = true) -> void:
 func _apply_selected_defs() -> void:
 	var selected_pilot: PilotDef = _resolve_selected_pilot()
 	var selected_ship_def: ShipDef = ship_override
+	_active_ship_id = &""
 	if selected_ship_def == null:
 		selected_ship_def = GameFlow.get_selected_ship()
 
@@ -304,6 +306,7 @@ func _apply_selected_starting_weapon() -> void:
 func _apply_ship_def(def: ShipDef) -> void:
 	if def == null:
 		return
+	_active_ship_id = def.get_ship_id()
 
 	if def.loadout != null:
 		loadout = def.loadout
@@ -532,6 +535,49 @@ func get_effective_nanobot_gain_mult() -> float:
 func get_effective_score_gain_mult() -> float:
 	return eff_score_gain_mult
 
+func get_equipped_weapon_ids() -> Array[StringName]:
+	var weapon_ids: Array[StringName] = []
+	if hardpoint_manager != null:
+		for weapon in hardpoint_manager.get_weapons():
+			if weapon == null:
+				continue
+			var weapon_id: StringName = weapon.get_weapon_id()
+			if weapon_id == &"":
+				continue
+			var already_present: bool = false
+			for existing_id in weapon_ids:
+				if existing_id == weapon_id:
+					already_present = true
+					break
+			if not already_present:
+				weapon_ids.append(weapon_id)
+	if weapon_ids.is_empty() and loadout != null:
+		for mount in loadout.mounts:
+			if mount == null or mount.weapon == null:
+				continue
+			var mount_weapon_id: StringName = mount.weapon.get_weapon_id()
+			if mount_weapon_id == &"":
+				continue
+			var has_weapon_id: bool = false
+			for existing_id in weapon_ids:
+				if existing_id == mount_weapon_id:
+					has_weapon_id = true
+					break
+			if not has_weapon_id:
+				weapon_ids.append(mount_weapon_id)
+	return weapon_ids
+
+func build_combat_stat_context(weapon_direct_id: StringName = &"", target: Object = null) -> CombatStatContext:
+	var context: CombatStatContext = CombatStatContext.new()
+	var active_pilot: PilotDef = _resolve_selected_pilot()
+	context.pilot_id = active_pilot.get_pilot_id() if active_pilot != null else &""
+	context.ship_id = _active_ship_id
+	context.weapon_direct_id = weapon_direct_id
+	context.equipped_weapon_ids = get_equipped_weapon_ids()
+	if target != null:
+		context.set_enemy_identity_from_source(target)
+	return context
+
 func get_pilot_g_tolerance() -> float:
 	return _pilot_forward_g_tolerance
 
@@ -595,13 +641,12 @@ func get_effective_pilot_ingenuity() -> float:
 func is_alive() -> bool:
 	return not _dead
 
-func apply_damage(amount: float) -> void:
+func apply_damage(amount: float, combat_stat_context: CombatStatContext = null) -> void:
 	if _dead:
 		return
 	var incoming: float = max(0.0, amount * eff_damage_taken_mult)
 	if incoming <= 0.0:
 		return
-	CombatStats.report_damage_taken(incoming)
 	var remaining: float = incoming
 	var shield_damage: float = 0.0
 	if shield > 0.0:
@@ -612,8 +657,13 @@ func apply_damage(amount: float) -> void:
 			shield_damage = absorbed
 	var hull_damage: float = 0.0
 	if remaining > 0.0:
+		hull_damage = min(hull, remaining)
 		hull -= remaining
-		hull_damage = remaining
+	var total_damage_applied: float = shield_damage + hull_damage
+	if total_damage_applied > 0.0:
+		CombatStats.report_damage_taken(total_damage_applied)
+		if combat_stat_context != null:
+			GameFlow.record_damage_taken(total_damage_applied, combat_stat_context)
 	_update_shield_mesh_visibility()
 	if hull_damage > 0.0:
 		_play_hit_sound(hull_hit_audio)

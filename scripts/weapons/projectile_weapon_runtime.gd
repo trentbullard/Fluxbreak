@@ -58,7 +58,8 @@ func _fire_at_with_roll(target: Node3D) -> void:
 		projectile.speed = turret.eff_projectile_speed
 	if turret.eff_projectile_life > 0.0:
 		projectile.max_lifetime = turret.eff_projectile_life
-	projectile.configure_shot(turret, target, outcome, dmg, turret.eff_graze_mult, turret.eff_crit_mult, weapon.status_effects, true)
+	var combat_stat_context: CombatStatContext = turret.build_combat_stat_context(target)
+	projectile.configure_shot(turret, target, outcome, dmg, turret.eff_graze_mult, turret.eff_crit_mult, weapon.status_effects, true, combat_stat_context)
 	turret.get_tree().current_scene.add_child(projectile)
 
 	if turret.shot_sound != null:

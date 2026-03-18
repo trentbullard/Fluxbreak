@@ -67,6 +67,13 @@ func configure_drone(origin_bay_id_value: int, slot_index_value: int, anchor: No
 func set_weapon_profile(drone_weapon: WeaponDef) -> void:
 	_drone_weapon = drone_weapon
 
+func build_combat_stat_context(target: Object = null) -> CombatStatContext:
+	var owner_ship: Ship = _resolve_owner_ship()
+	if owner_ship == null:
+		return null
+	var weapon_id: StringName = _drone_weapon.get_weapon_id() if _drone_weapon != null else &""
+	return owner_ship.build_combat_stat_context(weapon_id, target)
+
 func _seed_swarm_jitter() -> void:
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	var bay_bits: int = int(origin_bay_id) & 0x7fffffff
@@ -227,7 +234,8 @@ func _tick_attack_fire(target: Node3D) -> void:
 	var dmg_max: float = maxf(_drone_weapon.damage_min, _drone_weapon.damage_max)
 	var dmg: float = randf_range(dmg_min, dmg_max)
 	if dmg > 0.0 and target.has_method("apply_damage"):
-		target.call("apply_damage", dmg)
+		var combat_stat_context: CombatStatContext = build_combat_stat_context(target)
+		target.call("apply_damage", dmg, combat_stat_context)
 
 	_fire_projectile_visual(target)
 
@@ -267,3 +275,12 @@ func _get_next_muzzle_transform() -> Transform3D:
 
 func _report_state(next_state: int) -> void:
 	state_reported.emit(origin_bay_id, slot_index, next_state)
+
+func _resolve_owner_ship() -> Ship:
+	var anchor: Node3D = _get_anchor()
+	var node: Node = anchor if anchor != null else self
+	while node != null:
+		if node is Ship:
+			return node as Ship
+		node = node.get_parent()
+	return null

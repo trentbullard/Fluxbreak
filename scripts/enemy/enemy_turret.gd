@@ -57,6 +57,12 @@ func get_shot_origin() -> Vector3:
 		return muzzle.global_position
 	return global_position
 
+func build_combat_stat_context(_target: Object = null) -> CombatStatContext:
+	var owner_enemy: Enemy = _resolve_owner_enemy()
+	if owner_enemy == null:
+		return null
+	return owner_enemy.build_combat_stat_context()
+
 func _ready() -> void:
 	if _detector != null:
 		_detector.body_entered.connect(_on_body_entered)
@@ -135,9 +141,18 @@ func _fire_at_with_roll(target: Node3D) -> void:
 		p.speed = eff_projectile_speed
 	if eff_projectile_life > 0.0:
 		p.max_lifetime = eff_projectile_life
-	p.configure_shot(self, target, outcome, dmg, eff_graze_mult, eff_crit_mult, _weapon.status_effects, false)
+	var combat_stat_context: CombatStatContext = build_combat_stat_context(target)
+	p.configure_shot(self, target, outcome, dmg, eff_graze_mult, eff_crit_mult, _weapon.status_effects, false, combat_stat_context)
 	get_tree().current_scene.add_child(p)
 
 	if shot_sound != null:
 		shot_sound.pitch_scale = randf_range(0.90, 1.10)
 		shot_sound.play()
+
+func _resolve_owner_enemy() -> Enemy:
+	var node: Node = self
+	while node != null:
+		if node is Enemy:
+			return node as Enemy
+		node = node.get_parent()
+	return null
