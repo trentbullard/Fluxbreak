@@ -24,5 +24,6 @@ display_name = "Adaptive Shield Matrix I"
 descripton = "+40 Shields, +.8 Shield Regen"
 cost = 840
 tags = Array[String](["defense", "shields"])
+family_id = "adaptive_shield_matrix"
 modifiers = Array[ExtResource("1_o4mvm")]([SubResource("Resource_o4mvm"), SubResource("Resource_hlxwi")])
 metadata/_custom_type_script = "uid://f3a4tqbwupk2"

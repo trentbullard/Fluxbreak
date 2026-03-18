@@ -42,5 +42,6 @@ display_name = "Systems Optimization I"
 descripton = "110% Max Hull, 110% Max Shield, 105% Damage"
 cost = 860
 tags = Array[String](["utility", "misc", "repair"])
+family_id = "systems_optimization"
 modifiers = Array[ExtResource("1_qlkcg")]([SubResource("Resource_qlkcg"), SubResource("Resource_0t1dx"), SubResource("Resource_d8sut"), SubResource("Resource_hahl6")])
 metadata/_custom_type_script = "uid://f3a4tqbwupk2"

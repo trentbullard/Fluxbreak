@@ -33,5 +33,6 @@ descripton = "+90 Max Hull, 90% Damage Taken, -.02 Evasion"
 cost = 1240
 tags = Array[String](["defense", "hull"])
 tier = 2
+family_id = "reinforced_bulkheads"
 modifiers = Array[ExtResource("1_mod")]([SubResource("Resource_hull"), SubResource("Resource_damage_taken"), SubResource("Resource_evasion_tradeoff")])
 metadata/_custom_type_script = "uid://f3a4tqbwupk2"

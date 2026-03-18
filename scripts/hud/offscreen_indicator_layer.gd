@@ -7,7 +7,7 @@ class_name OffscreenIndicatorLayer
 @export var ship_path: NodePath
 @export var edge_margin: float = 10.0  # Distance from screen edge for icons
 @export var min_distance: float = 50.0  # Don't show indicators for very close objects
-@export var max_distance: float = 2000.0  # Don't show indicators beyond this range
+@export var max_distance: float = 30000.0  # Don't show indicators beyond this range
 @export var fade_near_edge: bool = true  # Fade icons as they approach screen edge
 @export var show_distance_text: bool = true
 @export var distance_font_size: int = 10
@@ -49,6 +49,8 @@ func _draw() -> void:
 	var vp_size: Vector2 = get_viewport_rect().size
 	var screen_center: Vector2 = vp_size * 0.5
 	var ship_pos: Vector3 = _ship.global_position if _ship != null else _camera.global_position
+	var min_distance_sq: float = min_distance * min_distance
+	var max_distance_sq: float = max_distance * max_distance
 	
 	for obj in _tracked.keys():
 		if not is_instance_valid(obj):
@@ -56,11 +58,13 @@ func _draw() -> void:
 		
 		var kind: String = _tracked[obj]
 		var obj_pos: Vector3 = obj.global_position
-		var distance: float = obj_pos.distance_to(ship_pos)
+		var distance_sq: float = obj_pos.distance_squared_to(ship_pos)
 		
 		# Skip if too close or too far
-		if distance < min_distance or distance > max_distance:
+		if distance_sq < min_distance_sq or distance_sq > max_distance_sq:
 			continue
+		
+		var distance: float = sqrt(distance_sq)
 		
 		# Check if object is on screen (in frustum and in front)
 		var is_in_frustum: bool = _camera.is_position_in_frustum(obj_pos)
@@ -82,7 +86,7 @@ func _draw() -> void:
 		
 		# Apply distance-based alpha fade
 		var alpha_mult: float = _get_distance_alpha(distance)
-		var adjusted_entry := _create_faded_entry(entry, alpha_mult)
+		var adjusted_entry: OffscreenIconRegistry.IconEntry = _create_faded_entry(entry, alpha_mult)
 		
 		# Draw the icon
 		OffscreenIconRegistry.draw_icon(self, adjusted_entry, edge_pos, rotation_angle)
@@ -250,7 +254,7 @@ func _get_distance_alpha(distance: float) -> float:
 	return 1.0
 
 func _create_faded_entry(entry: OffscreenIconRegistry.IconEntry, alpha_mult: float) -> OffscreenIconRegistry.IconEntry:
-	var faded := OffscreenIconRegistry.IconEntry.new(entry.shape, entry.color, entry.size)
+	var faded: OffscreenIconRegistry.IconEntry = OffscreenIconRegistry.IconEntry.new(entry.shape, entry.color, entry.size)
 	faded.color.a *= alpha_mult
 	faded.outline_color = entry.outline_color
 	faded.outline_color.a *= alpha_mult
@@ -259,7 +263,7 @@ func _create_faded_entry(entry: OffscreenIconRegistry.IconEntry, alpha_mult: flo
 	return faded
 
 func _draw_distance_label(pos: Vector2, distance: float, angle: float, icon_size: float) -> void:
-	var distance_text: String = "%dm" % int(round(distance))
+	var distance_text: String = HudDistanceFormatter.format_distance(distance)
 	
 	# Position text slightly offset from the icon, opposite the direction it points
 	var offset_dir: Vector2 = Vector2(cos(angle), sin(angle))
@@ -276,7 +280,7 @@ func _draw_distance_label(pos: Vector2, distance: float, angle: float, icon_size
 
 # Public API for manual registration (e.g., for POIs or quest markers)
 func register_icon_type(kind: String, shape: OffscreenIconRegistry.IconShape, color: Color, font_size: float = 14.0) -> void:
-	var entry := OffscreenIconRegistry.IconEntry.new(shape, color, font_size)
+	var entry: OffscreenIconRegistry.IconEntry = OffscreenIconRegistry.IconEntry.new(shape, color, font_size)
 	_registry.register(kind, entry)
 
 func track_object(obj: Node3D, kind: String) -> void:

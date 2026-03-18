@@ -42,5 +42,6 @@ descripton = "145% Pickup Range, 135% Nanobot Gain, 125% Score Gain, +300m Scann
 cost = 1380
 tags = Array[String](["utility", "misc", "repair"])
 tier = 2
+family_id = "salvage_magnet"
 modifiers = Array[ExtResource("1_mod")]([SubResource("Resource_pickup"), SubResource("Resource_nanobots"), SubResource("Resource_score"), SubResource("Resource_scanner")])
 metadata/_custom_type_script = "uid://f3a4tqbwupk2"

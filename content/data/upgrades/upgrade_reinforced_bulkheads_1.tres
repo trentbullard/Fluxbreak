@@ -25,5 +25,6 @@ display_name = "Reinforced Bulkheads I"
 descripton = "+50 Max Hull, 95% Damage Taken"
 cost = 820
 tags = Array[String](["defense", "hull"])
+family_id = "reinforced_bulkheads"
 modifiers = Array[ExtResource("1_vomjb")]([SubResource("Resource_vomjb"), SubResource("Resource_ytepu")])
 metadata/_custom_type_script = "uid://f3a4tqbwupk2"

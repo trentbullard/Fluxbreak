@@ -40,5 +40,6 @@ descripton = "-.8 Shot Delay, +6 Min Damage, +8 Max Damage, +.03 Crit Chance"
 cost = 1800
 tags = Array[String](["offense", "weapons", "damage"])
 tier = 2
+family_id = "overcharged_capacitors"
 modifiers = Array[ExtResource("1_mod")]([SubResource("Resource_fire_rate"), SubResource("Resource_damage_min"), SubResource("Resource_damage_max"), SubResource("Resource_crit_chance")])
 metadata/_custom_type_script = "uid://f3a4tqbwupk2"

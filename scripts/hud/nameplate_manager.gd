@@ -3,8 +3,8 @@ extends Control
 class_name NameplateManager
 
 @export var nameplate_scene: PackedScene
-@export var show_within_meters := 20000
-@export var pixel_offset_up := 35
+@export var show_within_meters: int = 30000
+@export var pixel_offset_up: int = 35
 
 var _camera: Camera3D
 var _ship: Node3D
@@ -57,29 +57,30 @@ func _sync_targets() -> void:
 			var sp: Vector2 = _camera.unproject_position(pos3)
 			ui.visible = true
 
-			var label := ui.get_node("HBox/Label") as Label
+			var label: Label = ui.get_node("HBox/Label") as Label
+			var distance_text: String = HudDistanceFormatter.format_distance(d)
 			if label != null:
 				var kind: String = _kind_of(target)
 				if kind == "enemy":
-					label.text = "%s (%s)\n%dm  •  HP: %d | S: %d" % [
+					label.text = "%s (%s)\n%s  •  HP: %d | S: %d" % [
 						target.display_name,
 						target.get_faction_display_name(),
-						int(round(d)),
+						distance_text,
 						int(round(max(target.hull, 0.0))),
 						int(round(max(target.shield, 0.0)))
 					]
 				elif kind == "target":
-					label.text = "%s\n%dm  •  HP: %d" % [
+					label.text = "%s\n%s  •  HP: %d" % [
 						target.display_name,
-						int(round(d)),
+						distance_text,
 						int(round(max(target.hull, 0.0)))
 					]
 				elif kind.contains("poi"):
 					var type_tag: String = _get_poi_type_tag(target)
-					label.text = "%s [%s]\n%dm" % [
+					label.text = "%s [%s]\n%s" % [
 						target.display_name,
 						type_tag,
-						int(round(d))
+						distance_text
 					]
 
 			_place_center_bottom(ui, sp, vp_size)

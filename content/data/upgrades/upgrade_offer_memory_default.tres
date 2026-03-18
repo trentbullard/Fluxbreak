@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="UpgradeOfferMemoryDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://content/defs/upgrade_offer_memory_def.gd" id="1_offer_memory_def"]
+
+[resource]
+script = ExtResource("1_offer_memory_def")
+start_wave = 2
+per_wave_linear = 0.06
+per_wave_quadratic = 0.004
+intensity_cap = 1.5
+owned_family_base_bonus = 1.0
+owned_family_count_bonus = 0.35
+purchased_family_share_cap = 0.7
+non_purchased_family_share_floor = 0.3
+same_family_repeat_bonus = 0.15
+same_family_next_tier_bonus = 0.3

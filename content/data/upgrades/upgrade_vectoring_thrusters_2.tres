@@ -42,5 +42,6 @@ descripton = "110% Forward Speed, 118% Forward Acceleration, 112% Reverse Accele
 cost = 1560
 tags = Array[String](["utility", "misc"])
 tier = 2
+family_id = "vectoring_thrusters"
 modifiers = Array[ExtResource("1_mod")]([SubResource("Resource_speed_fwd"), SubResource("Resource_accel_fwd"), SubResource("Resource_accel_rev"), SubResource("Resource_boost")])
 metadata/_custom_type_script = "uid://f3a4tqbwupk2"

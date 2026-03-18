@@ -38,5 +38,6 @@ display_name = "Targeting Link Array I"
 descripton = "+.08 Accuracy, 120% Weapon Range Bonus, -.08 Range Falloff, +.02 Crit Chance"
 cost = 930
 tags = Array[String](["offense", "weapons", "damage"])
+family_id = "targeting_link_array"
 modifiers = Array[ExtResource("1_mod")]([SubResource("Resource_accuracy"), SubResource("Resource_range_bonus"), SubResource("Resource_falloff"), SubResource("Resource_crit_chance")])
 metadata/_custom_type_script = "uid://f3a4tqbwupk2"

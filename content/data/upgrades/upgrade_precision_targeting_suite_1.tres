@@ -31,5 +31,6 @@ display_name = "Precision Targeting Suite I"
 descripton = "+5 Accuracy, +.05 Crit Chance, -.05 Range Falloff"
 cost = 880
 tags = Array[String](["offense", "weapons", "damage"])
+family_id = "precision_targeting_suite"
 modifiers = Array[ExtResource("1_swfr7")]([SubResource("Resource_swfr7"), SubResource("Resource_h4aac"), SubResource("Resource_ta2ub")])
 metadata/_custom_type_script = "uid://f3a4tqbwupk2"

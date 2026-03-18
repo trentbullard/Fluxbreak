@@ -34,5 +34,6 @@ display_name = "Salvage Magnet I"
 descripton = "130% Pickup Range, 120% Nanobot Gain, 115% Score Gain"
 cost = 780
 tags = Array[String](["utility", "misc", "repair"])
+family_id = "salvage_magnet"
 modifiers = Array[ExtResource("1_td3ek")]([SubResource("Resource_td3ek"), SubResource("Resource_7wuqf"), SubResource("Resource_dqdnr")])
 metadata/_custom_type_script = "uid://f3a4tqbwupk2"

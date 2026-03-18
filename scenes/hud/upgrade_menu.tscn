@@ -1,4 +1,4 @@
-[gd_scene load_steps=32 format=3 uid="uid://vui0na1ujbtt"]
+[gd_scene load_steps=33 format=3 uid="uid://vui0na1ujbtt"]
 
 [ext_resource type="Script" uid="uid://yd5vh5eayilh" path="res://scripts/hud/upgrade_menu.gd" id="1_upgrade"]
 [ext_resource type="Script" uid="uid://f3a4tqbwupk2" path="res://content/defs/upgrade_def.gd" id="2_b55ha"]
@@ -30,6 +30,7 @@
 [ext_resource type="Resource" path="res://content/data/upgrades/upgrade_phase_lock_stabilizer_2.tres" id="24_beam_defense2"]
 [ext_resource type="Resource" path="res://content/data/upgrades/upgrade_coherence_relay_1.tres" id="25_beam_utility1"]
 [ext_resource type="Resource" path="res://content/data/upgrades/upgrade_coherence_relay_2.tres" id="26_beam_utility2"]
+[ext_resource type="Resource" path="res://content/data/upgrades/upgrade_offer_memory_default.tres" id="27_offer_memory"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fs0iu"]
 bg_color = Color(0, 0, 0, 0)
@@ -48,6 +49,7 @@ layer = 3
 script = ExtResource("1_upgrade")
 available_upgrades = Array[ExtResource("2_b55ha")]([ExtResource("2_bulkhead"), ExtResource("3_shield"), ExtResource("4_targeting"), ExtResource("5_systems"), ExtResource("6_salvage"), ExtResource("7_thrusters"), ExtResource("8_bulkhead2"), ExtResource("9_shield2"), ExtResource("10_targeting2"), ExtResource("11_capacitor2"), ExtResource("12_salvage2"), ExtResource("13_thrusters2"), ExtResource("14_drone1"), ExtResource("15_drone2"), ExtResource("16_drone3"), ExtResource("17_drone4"), ExtResource("19_drone5"), ExtResource("20_drone6"), ExtResource("21_beam_offense1"), ExtResource("22_beam_offense2"), ExtResource("23_beam_defense1"), ExtResource("24_beam_defense2"), ExtResource("25_beam_utility1"), ExtResource("26_beam_utility2")])
 available_weapons = Array[ExtResource("9_tt14d")]([ExtResource("8_pulse"), ExtResource("9_laser"), ExtResource("18_bi86j")])
+offer_memory_def = ExtResource("27_offer_memory")
 
 [node name="Close" type="Button" parent="."]
 anchors_preset = 1

@@ -11,6 +11,7 @@ signal menu_closed
 @export_group("Upgrade Pool")
 @export var available_upgrades: Array[Upgrade] = []
 @export var available_weapons: Array[WeaponDef] = []
+@export var offer_memory_def: UpgradeOfferMemoryDef
 
 @export_group("Display")
 @export var num_upgrade_choices: int = 3
@@ -31,6 +32,7 @@ var _current_poi: PoiInstance = null
 var _upgrade_choices: Array[Upgrade] = []
 var _upgrade_offer_costs: Array[int] = []
 var _weapon_choice: WeaponDef = null
+var _last_offer_debug: Dictionary = {}
 
 # Nanobot tracking
 var _current_nanobots: int = 0
@@ -144,13 +146,14 @@ func _randomize_choices(poi: PoiInstance) -> void:
 	_upgrade_choices.clear()
 	_upgrade_offer_costs.clear()
 	_weapon_choice = null
+	_last_offer_debug.clear()
 	
 	var choice_count: int = _get_upgrade_choice_count_for_poi(poi)
 	var candidate_upgrades: Array[Upgrade] = _build_upgrade_pool_for_poi(poi)
 	if candidate_upgrades.is_empty():
 		candidate_upgrades = available_upgrades.duplicate()
 
-	_upgrade_choices = _pick_weighted_upgrade_choices(candidate_upgrades, choice_count)
+	_upgrade_choices = _pick_weighted_upgrade_choices(candidate_upgrades, choice_count, poi)
 	if _upgrade_choices.size() < mini(choice_count, candidate_upgrades.size()):
 		var fill_pool: Array[Upgrade] = candidate_upgrades.duplicate()
 		fill_pool.shuffle()
@@ -162,6 +165,7 @@ func _randomize_choices(poi: PoiInstance) -> void:
 
 	for upgrade: Upgrade in _upgrade_choices:
 		_upgrade_offer_costs.append(_roll_upgrade_offer_cost(upgrade))
+	_append_offer_debug_choices()
 	
 	# Pick a random weapon
 	if available_weapons.size() > 0:
@@ -170,16 +174,20 @@ func _randomize_choices(poi: PoiInstance) -> void:
 		_weapon_choice = shuffled_weapons[0]
 
 
-func _pick_weighted_upgrade_choices(pool: Array[Upgrade], count: int) -> Array[Upgrade]:
+func _pick_weighted_upgrade_choices(pool: Array[Upgrade], count: int, poi: PoiInstance) -> Array[Upgrade]:
 	var results: Array[Upgrade] = []
 	if pool.is_empty() or count <= 0:
 		return results
 
 	var remaining: Array[Upgrade] = pool.duplicate()
-	var context: Dictionary = _build_upgrade_context()
+	var context: Dictionary = _build_upgrade_context(poi)
 	var desired: int = mini(count, remaining.size())
 
 	while results.size() < desired and not remaining.is_empty():
+		var family_weight_data: Dictionary = _build_family_weight_data(remaining, context)
+		context["family_multipliers"] = family_weight_data.get("family_multipliers", {})
+		if _last_offer_debug.is_empty():
+			_last_offer_debug = family_weight_data.get("debug", {}).duplicate(true)
 		var total_weight: float = 0.0
 		var weights: Array[float] = []
 		for upgrade: Upgrade in remaining:
@@ -205,7 +213,7 @@ func _pick_weighted_upgrade_choices(pool: Array[Upgrade], count: int) -> Array[U
 	return results
 
 
-func _build_upgrade_context() -> Dictionary:
+func _build_upgrade_context(poi: PoiInstance) -> Dictionary:
 	var purchased_ids: Array[String] = []
 	if RunState.has_method("get_purchased_upgrade_ids"):
 		purchased_ids = RunState.get_purchased_upgrade_ids()
@@ -228,15 +236,34 @@ func _build_upgrade_context() -> Dictionary:
 	if RunState.has_method("get_wave_index"):
 		wave_index = max(1, int(RunState.get_wave_index()))
 	var wave_progress: float = clamp(float(wave_index - 1) / TIER_PROGRESS_WAVE_SPAN, 0.0, 1.0)
+	var poi_type: int = _get_poi_type(poi)
+	var poi_purchase_memory: Dictionary = {}
+	if RunState.has_method("get_upgrade_purchase_memory_for_poi_type"):
+		poi_purchase_memory = RunState.get_upgrade_purchase_memory_for_poi_type(poi_type)
 
 	return {
 		"counts_by_id": counts_by_id,
 		"highest_tier_by_family": highest_tier_by_family,
 		"wave_progress": wave_progress,
+		"wave_index": wave_index,
+		"poi_type": poi_type,
+		"poi_purchase_memory": poi_purchase_memory,
+		"stickiness_intensity": _compute_offer_memory_intensity(wave_index),
+		"family_multipliers": {},
 	}
 
 
 func _get_upgrade_offer_weight(upgrade: Upgrade, context: Dictionary) -> float:
+	var weight: float = _get_base_upgrade_offer_weight(upgrade, context)
+	if upgrade == null:
+		return weight
+	var family: String = _get_upgrade_family(upgrade)
+	var family_multipliers: Dictionary = context.get("family_multipliers", {})
+	weight *= float(family_multipliers.get(family, 1.0))
+	return max(weight, 0.0)
+
+
+func _get_base_upgrade_offer_weight(upgrade: Upgrade, context: Dictionary) -> float:
 	if upgrade == null:
 		return 0.0
 
@@ -272,6 +299,112 @@ func _get_upgrade_offer_weight(upgrade: Upgrade, context: Dictionary) -> float:
 		weight *= lerp(0.55, 1.15, wave_progress)
 
 	return max(weight, 0.0)
+
+
+func _build_family_weight_data(pool: Array[Upgrade], context: Dictionary) -> Dictionary:
+	var family_base_weights: Dictionary = {}
+	var family_highest_candidate_tier: Dictionary = {}
+	var family_has_repeat_candidates: Dictionary = {}
+	var family_has_next_tier_candidates: Dictionary = {}
+	var highest_tier_by_family: Dictionary = context.get("highest_tier_by_family", {})
+	var poi_purchase_memory: Dictionary = context.get("poi_purchase_memory", {})
+	var purchased_family_counts: Dictionary = poi_purchase_memory.get("counts_by_family", {})
+	var intensity: float = float(context.get("stickiness_intensity", 0.0))
+
+	for upgrade: Upgrade in pool:
+		if upgrade == null:
+			continue
+		var family: String = _get_upgrade_family(upgrade)
+		var tier: int = _get_upgrade_tier(upgrade)
+		var base_weight: float = _get_base_upgrade_offer_weight(upgrade, context)
+		family_base_weights[family] = float(family_base_weights.get(family, 0.0)) + base_weight
+		family_highest_candidate_tier[family] = max(int(family_highest_candidate_tier.get(family, 0)), tier)
+		var highest_owned_tier: int = int(highest_tier_by_family.get(family, 0))
+		if highest_owned_tier > 0:
+			if tier == highest_owned_tier + 1:
+				family_has_next_tier_candidates[family] = true
+			elif tier <= highest_owned_tier:
+				family_has_repeat_candidates[family] = true
+
+	var adjusted_family_weights: Dictionary = {}
+	var family_multipliers: Dictionary = {}
+	var debug_family_weights: Dictionary = {}
+	var purchased_total: float = 0.0
+	var unpurchased_total: float = 0.0
+
+	for family_variant in family_base_weights.keys():
+		var family: String = String(family_variant)
+		var base_family_weight: float = float(family_base_weights.get(family, 0.0))
+		var raw_multiplier: float = 1.0
+		var purchase_count: int = int(purchased_family_counts.get(family, 0))
+		var is_purchased: bool = purchase_count > 0
+		if is_purchased and offer_memory_def != null:
+			raw_multiplier += intensity * offer_memory_def.owned_family_base_bonus
+			raw_multiplier += intensity * float(purchase_count) * offer_memory_def.owned_family_count_bonus
+			if bool(family_has_repeat_candidates.get(family, false)):
+				raw_multiplier += intensity * offer_memory_def.same_family_repeat_bonus
+			if bool(family_has_next_tier_candidates.get(family, false)):
+				raw_multiplier += intensity * offer_memory_def.same_family_next_tier_bonus
+
+		var adjusted_weight: float = base_family_weight * max(raw_multiplier, 0.0)
+		adjusted_family_weights[family] = adjusted_weight
+		if is_purchased:
+			purchased_total += adjusted_weight
+		else:
+			unpurchased_total += adjusted_weight
+
+		debug_family_weights[family] = {
+			"base_weight": base_family_weight,
+			"raw_multiplier": raw_multiplier,
+			"raw_weight": adjusted_weight,
+			"purchase_count": purchase_count,
+			"is_purchased": is_purchased,
+			"has_repeat_candidate": bool(family_has_repeat_candidates.get(family, false)),
+			"has_next_tier_candidate": bool(family_has_next_tier_candidates.get(family, false)),
+			"highest_candidate_tier": int(family_highest_candidate_tier.get(family, 0)),
+			"highest_owned_tier": int(highest_tier_by_family.get(family, 0)),
+		}
+
+	var purchased_scale: float = 1.0
+	var unpurchased_scale: float = 1.0
+	var total_weight: float = purchased_total + unpurchased_total
+	if total_weight > 0.0 and purchased_total > 0.0 and unpurchased_total > 0.0 and offer_memory_def != null:
+		var max_purchased_share: float = clamp(offer_memory_def.purchased_family_share_cap, 0.0, 1.0)
+		var min_unpurchased_share: float = clamp(offer_memory_def.non_purchased_family_share_floor, 0.0, 1.0)
+		max_purchased_share = min(max_purchased_share, 1.0 - min_unpurchased_share)
+
+		var current_purchased_share: float = purchased_total / total_weight
+		if current_purchased_share > max_purchased_share and current_purchased_share > 0.0:
+			purchased_scale = max_purchased_share / current_purchased_share
+			var current_unpurchased_share: float = unpurchased_total / total_weight
+			var target_unpurchased_share: float = 1.0 - max_purchased_share
+			if current_unpurchased_share > 0.0:
+				unpurchased_scale = target_unpurchased_share / current_unpurchased_share
+
+	for family_variant in adjusted_family_weights.keys():
+		var family: String = String(family_variant)
+		var base_family_weight: float = float(family_base_weights.get(family, 0.0))
+		var family_debug: Dictionary = debug_family_weights.get(family, {})
+		var is_purchased: bool = bool(family_debug.get("is_purchased", false))
+		var capped_weight: float = float(adjusted_family_weights.get(family, 0.0))
+		capped_weight *= purchased_scale if is_purchased else unpurchased_scale
+		family_multipliers[family] = (capped_weight / base_family_weight) if base_family_weight > 0.0 else 1.0
+		family_debug["capped_weight"] = capped_weight
+		family_debug["final_multiplier"] = family_multipliers[family]
+		debug_family_weights[family] = family_debug
+
+	return {
+		"family_multipliers": family_multipliers,
+		"debug": {
+			"poi_type": _get_poi_type_label(int(context.get("poi_type", PoiDef.PoiType.OFFENSE))),
+			"stickiness_intensity": intensity,
+			"purchased_families": PackedStringArray(poi_purchase_memory.get("families", PackedStringArray())),
+			"purchase_counts_by_family": purchased_family_counts.duplicate(true),
+			"family_weights": debug_family_weights,
+			"purchased_family_share_cap": offer_memory_def.purchased_family_share_cap if offer_memory_def != null else 1.0,
+			"non_purchased_family_share_floor": offer_memory_def.non_purchased_family_share_floor if offer_memory_def != null else 0.0,
+		},
+	}
 
 
 func _extract_tier_from_id(raw_id: String) -> int:
@@ -477,6 +610,8 @@ func _on_button_pressed(index: int) -> void:
 			return  # Can't afford
 		_spend_nanobots(offer_cost)
 		RunState.record_upgrade_purchase(upgrade.id)
+		if _current_poi != null and _current_poi.poi_def != null and RunState.has_method("record_upgrade_purchase_for_poi"):
+			RunState.record_upgrade_purchase_for_poi(upgrade.id, _get_upgrade_family(upgrade), int(_current_poi.poi_def.poi_type))
 		_apply_upgrade(upgrade)
 		upgrade_selected.emit(upgrade)
 	elif index == _buttons.size() - 1 and _weapon_choice != null:
@@ -586,3 +721,49 @@ func _is_controller_event(event: InputEvent) -> bool:
 		return joy_button.pressed
 	var joy_motion: InputEventJoypadMotion = event as InputEventJoypadMotion
 	return joy_motion != null and absf(joy_motion.axis_value) >= 0.5
+
+func get_last_offer_debug() -> Dictionary:
+	return _last_offer_debug.duplicate(true)
+
+func _append_offer_debug_choices() -> void:
+	if _last_offer_debug.is_empty():
+		return
+	var family_weights: Dictionary = _last_offer_debug.get("family_weights", {})
+	var offered_upgrades: Array[Dictionary] = []
+	for upgrade: Upgrade in _upgrade_choices:
+		if upgrade == null:
+			continue
+		var family: String = _get_upgrade_family(upgrade)
+		var family_entry: Dictionary = family_weights.get(family, {})
+		offered_upgrades.append({
+			"id": upgrade.id,
+			"family": family,
+			"tier": _get_upgrade_tier(upgrade),
+			"final_family_multiplier": float(family_entry.get("final_multiplier", 1.0)),
+		})
+	_last_offer_debug["offered_upgrades"] = offered_upgrades
+
+func _compute_offer_memory_intensity(wave_index: int) -> float:
+	if offer_memory_def == null:
+		return 0.0
+	var wave_progress: float = float(max(wave_index - offer_memory_def.start_wave, 0))
+	var intensity: float = (
+		wave_progress * offer_memory_def.per_wave_linear +
+		wave_progress * wave_progress * offer_memory_def.per_wave_quadratic
+	)
+	if offer_memory_def.intensity_cap > 0.0:
+		intensity = min(intensity, offer_memory_def.intensity_cap)
+	return max(intensity, 0.0)
+
+func _get_poi_type(poi: PoiInstance) -> int:
+	if poi == null or poi.poi_def == null:
+		return PoiDef.PoiType.OFFENSE
+	return int(poi.poi_def.poi_type)
+
+func _get_poi_type_label(poi_type: int) -> String:
+	match poi_type:
+		PoiDef.PoiType.DEFENSE:
+			return "DEFENSE"
+		PoiDef.PoiType.UTILITY:
+			return "UTILITY"
+	return "OFFENSE"

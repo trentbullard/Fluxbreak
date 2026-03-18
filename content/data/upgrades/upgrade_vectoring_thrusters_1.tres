@@ -33,5 +33,6 @@ display_name = "Vectoring Thrusters I"
 descripton = "108% Max Forward Speed, 112% Forward Acceleration, 110% Reverse Acceleration"
 cost = 850
 tags = Array[String](["utility", "misc", "movement"])
+family_id = "vectoring_thrusters"
 modifiers = Array[ExtResource("1_m0hei")]([SubResource("Resource_m0hei"), SubResource("Resource_t3q77"), SubResource("Resource_ibbii")])
 metadata/_custom_type_script = "uid://f3a4tqbwupk2"

@@ -424,7 +424,6 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("21_osil")
 ship_path = NodePath("../../../Ship")
-max_distance = 20000.0
 
 [node name="DockingHud" type="Control" parent="HUD/ScreenRoot"]
 layout_mode = 1

@@ -32,5 +32,6 @@ display_name = "Emergency Shield Relays I"
 descripton = "+70 Shields, +3 Shield Regen, 96% Damage"
 cost = 920
 tags = Array[String](["defense", "shields"])
+family_id = "emergency_shield_relays"
 modifiers = Array[ExtResource("1_mod")]([SubResource("Resource_shield"), SubResource("Resource_regen"), SubResource("Resource_damage_taken")])
 metadata/_custom_type_script = "uid://f3a4tqbwupk2"

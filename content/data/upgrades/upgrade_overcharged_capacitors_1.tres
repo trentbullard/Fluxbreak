@@ -31,5 +31,6 @@ display_name = "Overcharged Capacitors I"
 descripton = "-.88 Shot Delay, +3 Min Damage, +5 Max Damage"
 cost = 900
 tags = Array[String](["offense", "weapons", "damage"])
+family_id = "overcharged_capacitors"
 modifiers = Array[ExtResource("1_8l3ah")]([SubResource("Resource_8l3ah"), SubResource("Resource_s0n1b"), SubResource("Resource_qf8jg")])
 metadata/_custom_type_script = "uid://f3a4tqbwupk2"
