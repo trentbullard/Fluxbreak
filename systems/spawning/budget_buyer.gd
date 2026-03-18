@@ -134,6 +134,7 @@ func _build_enemy_requests(
 		packages[0]["budget"] = int(packages[0].get("budget", 0)) + flex_budget
 
 	var spent_by_id: Dictionary = {}
+	var package_serial: int = 0
 	for package in packages:
 		var package_label: String = String(package.get("label", "package"))
 		var package_role: EnemyRoleDef = package.get("role", null) as EnemyRoleDef
@@ -141,9 +142,12 @@ func _build_enemy_requests(
 		var leader: EnemyDef = package.get("leader", null) as EnemyDef
 		if package_budget <= 0:
 			continue
+		var package_id: String = "pkg_%d_%s" % [package_serial, package_label]
+		package_serial += 1
 
 		var package_debug: Dictionary = {
 			"label": package_label,
+			"package_id": package_id,
 			"role_id": _role_debug_id(package_role),
 			"budget": package_budget,
 			"units": [],
@@ -162,7 +166,18 @@ func _build_enemy_requests(
 				package_label == "primary"
 			)
 			if leader_copies > 0:
-				_append_enemy_request(reqs, leader, leader_copies, card, wave_index, stage_index, elapsed_sec)
+				_append_enemy_request(
+					reqs,
+					leader,
+					leader_copies,
+					card,
+					wave_index,
+					stage_index,
+					elapsed_sec,
+					package_id,
+					package_label,
+					package_budget
+				)
 				var leader_points: int = leader_copies * leader.threat_cost
 				points_left = max(points_left - leader_points, 0)
 				spent_by_id[leader.id] = int(spent_by_id.get(leader.id, 0)) + leader_points
@@ -199,7 +214,18 @@ func _build_enemy_requests(
 				blocked_ids[pick.id] = true
 				max_picks -= 1
 				continue
-			_append_enemy_request(reqs, pick, copies, card, wave_index, stage_index, elapsed_sec)
+			_append_enemy_request(
+				reqs,
+				pick,
+				copies,
+				card,
+				wave_index,
+				stage_index,
+				elapsed_sec,
+				package_id,
+				package_label,
+				package_budget
+			)
 			var spent_points: int = copies * pick.threat_cost
 			points_left = max(points_left - spent_points, 0)
 			spent_by_id[pick.id] = int(spent_by_id.get(pick.id, 0)) + spent_points
@@ -380,7 +406,10 @@ func _append_enemy_request(
 	card: WaveCard,
 	wave_index: int,
 	stage_index: int,
-	elapsed_sec: float
+	elapsed_sec: float,
+	package_id: String,
+	package_label: String,
+	package_budget_points: int
 ) -> void:
 	if pick == null or copies <= 0:
 		return
@@ -391,6 +420,9 @@ func _append_enemy_request(
 	req.batch_size_min = card.batch_size_min
 	req.batch_size_max = card.batch_size_max
 	req.inter_batch_sec = card.inter_batch_sec
+	req.package_id = package_id
+	req.package_label = package_label
+	req.package_budget_points = package_budget_points
 	req.wave_card = card
 	req.wave_index = wave_index
 	req.stage_index = stage_index

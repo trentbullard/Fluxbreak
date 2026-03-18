@@ -9,6 +9,9 @@ class_name SpawnRequest
 @export var batch_size_min: int = 2
 @export var batch_size_max: int = 4
 @export var inter_batch_sec: float = 0.7
+@export var package_id: String = ""
+@export var package_label: String = ""
+@export var package_budget_points: int = 0
 @export var wave_card: WaveCard
 @export var wave_index: int = 0
 @export var stage_index: int = 0

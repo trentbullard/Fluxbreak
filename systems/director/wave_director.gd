@@ -259,6 +259,10 @@ func _next_wave() -> void:
 			_elapsed_sec
 		)
 	reqs = _prioritize_requests(reqs, _active_card)
+	var spawn_profile: Dictionary = _build_spawn_profile(reqs, int(budgets["enemy_points"]))
+	var package_order: Array[String] = _get_enemy_package_order(reqs)
+	var package_layouts: Dictionary = _build_enemy_package_layouts(package_order, spawn_profile)
+	_apply_spawn_profile_anchor_radii(spawn_profile, package_order, package_layouts)
 	_apply_enemy_combat_scaling(reqs, combat_scaling)
 
 	_last_debug_snapshot = _build_wave_debug_snapshot(
@@ -267,11 +271,12 @@ func _next_wave() -> void:
 		threat,
 		budgets,
 		opening_adjustment,
-		combat_scaling
+		combat_scaling,
+		spawn_profile
 	)
 
 	emit_signal("wave_started", _wave_index, budgets["enemy_points"], budgets["target_points"])
-	_run_requests_async(reqs, _active_card)
+	_run_requests_async(reqs, spawn_profile, package_layouts)
 
 func _build_wave_debug_snapshot(
 	card: WaveCard,
@@ -279,7 +284,8 @@ func _build_wave_debug_snapshot(
 	threat: float,
 	budgets: Dictionary,
 	opening_adjustment: Dictionary,
-	combat_scaling: EnemyCombatScalingSnapshot
+	combat_scaling: EnemyCombatScalingSnapshot,
+	spawn_profile: Dictionary
 ) -> Dictionary:
 	var snapshot: Dictionary = {
 		"wave_index": _wave_index,
@@ -297,6 +303,7 @@ func _build_wave_debug_snapshot(
 		"combat_scaling_active": combat_scaling.has_scaling() if combat_scaling != null else false,
 		"enemy_nanobot_multiplier": combat_scaling.nanobot_multiplier if combat_scaling != null else 1.0,
 	}
+	snapshot["spawn_profile"] = spawn_profile.duplicate(true)
 	snapshot["enemy_effective_context"] = EnemyStatResolver.build_wave_debug_summary(
 		card,
 		_wave_index,
@@ -389,16 +396,39 @@ func _run_pressure_coroutine(token: int) -> void:
 			_elapsed_sec
 		)
 		pressure_reqs = _prioritize_requests(pressure_reqs, active_card)
+		var pressure_spawn_profile: Dictionary = _build_spawn_profile(pressure_reqs, pressure_enemy_budget)
+		var pressure_package_order: Array[String] = _get_enemy_package_order(pressure_reqs)
+		var pressure_package_layouts: Dictionary = _build_enemy_package_layouts(pressure_package_order, pressure_spawn_profile)
+		_apply_spawn_profile_anchor_radii(
+			pressure_spawn_profile,
+			pressure_package_order,
+			pressure_package_layouts
+		)
 		_apply_enemy_combat_scaling(pressure_reqs, pressure_combat_scaling)
-		for req in pressure_reqs:
+		var pressure_spawned_portals: Dictionary = {}
+		for index in pressure_reqs.size():
+			var req: SpawnRequest = pressure_reqs[index]
+			if req == null:
+				continue
 			if req.kind == "Enemy" and req.enemy_def != null and req.count > 0:
-				_spawner.spawn_enemy_burst(req.enemy_def, req.count, req)
+				_ensure_package_portal_spawned(
+					req,
+					index,
+					pressure_package_layouts,
+					pressure_spawned_portals
+				)
+				_spawn_enemy_request_batch(
+					req,
+					req.count,
+					_get_package_layout_for_request(req, index, pressure_package_layouts)
+				)
 			elif req.kind == "Target" and req.target_def != null and req.count > 0:
 				_spawner.spawn_target_burst(req.target_def, req.count)
 
 		_last_debug_snapshot["pressure_state"] = pressure_plan.get("state", "hold")
 		_last_debug_snapshot["pressure_enemy_points"] = pressure_enemy_budget
 		_last_debug_snapshot["pressure_target_points"] = pressure_target_budget
+		_last_debug_snapshot["pressure_spawn_profile"] = pressure_spawn_profile.duplicate(true)
 		_last_debug_snapshot["combat_scaling_intensity"] = pressure_combat_scaling.intensity if pressure_combat_scaling != null else 0.0
 		_last_debug_snapshot["enemy_nanobot_multiplier"] = pressure_combat_scaling.nanobot_multiplier if pressure_combat_scaling != null else 1.0
 
@@ -448,8 +478,8 @@ func _apply_enemy_combat_scaling(reqs: Array[SpawnRequest], combat_scaling: Enem
 func _rand_batch() -> int:
 	return _rng.randi_range(batch_size_min, batch_size_max)
 
-func _run_requests_async(reqs: Array[SpawnRequest], card: WaveCard) -> void:
-	_run_requests_coroutine(reqs, card, _wave_token)
+func _run_requests_async(reqs: Array[SpawnRequest], spawn_profile: Dictionary, package_layouts: Dictionary) -> void:
+	_run_requests_coroutine(reqs, spawn_profile, package_layouts, _wave_token)
 
 func _alive_enemy_count() -> int:
 	var alive_now: Dictionary = _spawner.get_alive_counts()
@@ -461,28 +491,196 @@ func _any_remaining(rem: Array[int]) -> bool:
 			return true
 	return false
 
-func _run_requests_coroutine(reqs: Array[SpawnRequest], card: WaveCard, token: int) -> void:
+func _build_spawn_profile(reqs: Array[SpawnRequest], enemy_points: int) -> Dictionary:
+	var package_count: int = _get_enemy_package_order(reqs).size()
+	var total_enemy_units: int = 0
+	for req in reqs:
+		if req == null or req.kind != "Enemy":
+			continue
+		total_enemy_units += max(req.count, 0)
+	var budget_scale: float = clampf(float(enemy_points) / 18.0, 0.0, 1.0)
+	var composition_scale: float = clampf(float(max(package_count - 1, 0)) / 3.0, 0.0, 1.0)
+	var kill_nudge: float = clampf(CombatStats.get_enemy_kill_pressure_rate() / 20.0, 0.0, 0.15)
+	var spawn_pressure_scale: float = clampf(
+		budget_scale * 0.75 + composition_scale * 0.25 + kill_nudge,
+		0.0,
+		1.0
+	)
+	var opening_unit_cap: int = 0
+	if total_enemy_units > 0:
+		opening_unit_cap = min(
+			total_enemy_units,
+			clampi(int(round(lerpf(4.0, 18.0, spawn_pressure_scale))), 4, 18)
+		)
+	return {
+		"package_count": package_count,
+		"total_enemy_units": total_enemy_units,
+		"budget_scale": budget_scale,
+		"composition_scale": composition_scale,
+		"kill_nudge": kill_nudge,
+		"spawn_pressure_scale": spawn_pressure_scale,
+		"opening_unit_cap": opening_unit_cap,
+		"anchor_radii": [],
+	}
+
+func _get_enemy_package_order(reqs: Array[SpawnRequest]) -> Array[String]:
+	var package_order: Array[String] = []
+	var seen: Dictionary = {}
+	for index in reqs.size():
+		var req: SpawnRequest = reqs[index]
+		if req == null or req.kind != "Enemy":
+			continue
+		var package_id: String = _resolve_package_id(req, index)
+		if seen.has(package_id):
+			continue
+		seen[package_id] = true
+		package_order.append(package_id)
+	return package_order
+
+func _apply_spawn_profile_anchor_radii(
+	spawn_profile: Dictionary,
+	package_order: Array[String],
+	package_layouts: Dictionary
+) -> void:
+	var anchor_radii: Array[float] = []
+	for package_id in package_order:
+		if not package_layouts.has(package_id):
+			continue
+		var layout: Dictionary = package_layouts[package_id]
+		anchor_radii.append(float(layout.get("anchor_radius", 0.0)))
+	spawn_profile["anchor_radii"] = anchor_radii
+
+func _build_enemy_package_layouts(package_order: Array[String], spawn_profile: Dictionary) -> Dictionary:
+	var layouts: Dictionary = {}
+	if _spawner == null:
+		return layouts
+	var chosen_anchors: Array[Vector3] = []
+	var spawn_pressure_scale: float = float(spawn_profile.get("spawn_pressure_scale", 0.0))
+	for package_id in package_order:
+		var layout: Dictionary = _spawner.build_enemy_pack_layout(spawn_pressure_scale, chosen_anchors)
+		layouts[package_id] = layout
+		var anchor: Vector3 = layout.get("anchor", Vector3.ZERO)
+		chosen_anchors.append(anchor)
+	return layouts
+
+func _build_package_request_indices(reqs: Array[SpawnRequest]) -> Dictionary:
+	var package_indices: Dictionary = {}
+	for index in reqs.size():
+		var req: SpawnRequest = reqs[index]
+		if req == null or req.kind != "Enemy":
+			continue
+		var package_id: String = _resolve_package_id(req, index)
+		if not package_indices.has(package_id):
+			package_indices[package_id] = []
+		var indices: Array = package_indices[package_id]
+		indices.append(index)
+		package_indices[package_id] = indices
+	return package_indices
+
+func _resolve_package_id(req: SpawnRequest, fallback_index: int) -> String:
+	if req != null:
+		var trimmed: String = req.package_id.strip_edges()
+		if trimmed != "":
+			return trimmed
+	return "package_%d" % fallback_index
+
+func _get_package_layout_for_request(req: SpawnRequest, req_index: int, package_layouts: Dictionary) -> Dictionary:
+	var package_id: String = _resolve_package_id(req, req_index)
+	if package_layouts.has(package_id):
+		return package_layouts[package_id]
+	return {}
+
+func _ensure_package_portal_spawned(
+	req: SpawnRequest,
+	req_index: int,
+	package_layouts: Dictionary,
+	spawned_portals: Dictionary
+) -> void:
+	if req == null or req.kind != "Enemy" or _spawner == null:
+		return
+	var package_id: String = _resolve_package_id(req, req_index)
+	if spawned_portals.has(package_id):
+		return
+	var package_layout: Dictionary = _get_package_layout_for_request(req, req_index, package_layouts)
+	if package_layout.is_empty():
+		return
+	var anchor: Vector3 = package_layout.get("anchor", Vector3.ZERO)
+	var member_radius: float = float(package_layout.get("member_radius", 0.0))
+	var spawn_pressure_scale: float = float(package_layout.get("spawn_pressure_scale", 0.0))
+	_spawner.spawn_enemy_pack_warp(anchor, member_radius, spawn_pressure_scale)
+	spawned_portals[package_id] = true
+
+func _spawn_enemy_request_batch(req: SpawnRequest, count: int, package_layout: Dictionary = {}) -> int:
+	if req == null or req.enemy_def == null or count <= 0:
+		return 0
+	if _spawner == null:
+		return 0
+	if package_layout.is_empty():
+		return _spawner.spawn_enemy_burst(req.enemy_def, count, req)
+	var anchor: Vector3 = package_layout.get("anchor", Vector3.ZERO)
+	var member_radius: float = float(package_layout.get("member_radius", 0.0))
+	return _spawner.spawn_enemy_pack_burst(req.enemy_def, count, anchor, member_radius, req)
+
+func _run_requests_coroutine(
+	reqs: Array[SpawnRequest],
+	spawn_profile: Dictionary,
+	package_layouts: Dictionary,
+	token: int
+) -> void:
 	var remaining: Array[int] = []
 	for req in reqs:
 		remaining.append(req.count)
 
-	var req_index: int = 0
-	if reqs.size() > 0:
-		var first: SpawnRequest = reqs[0]
-		var first_batch: int = _rand_batch()
-		var n0: int = min(first_batch, remaining[0])
-		if n0 > 0:
-			var spawned0: int = 0
-			if first.kind == "Enemy":
-				spawned0 = _spawner.spawn_enemy_burst(first.enemy_def, n0, first)
-			else:
-				spawned0 = _spawner.spawn_target_burst(first.target_def, n0)
-			remaining[0] = max(remaining[0] - spawned0, 0)
-		var timer0: SceneTreeTimer = _create_pausable_timer(inter_batch_delay)
-		await timer0.timeout
-		if token != _wave_token:
-			return
+	var package_order: Array[String] = _get_enemy_package_order(reqs)
+	var package_indices: Dictionary = _build_package_request_indices(reqs)
+	var spawned_package_portals: Dictionary = {}
+	var opening_remaining: int = int(spawn_profile.get("opening_unit_cap", 0))
+	if opening_remaining > 0:
+		for package_id in package_order:
+			if opening_remaining <= 0:
+				break
+			if not package_indices.has(package_id):
+				continue
+			var indices: Array = package_indices[package_id]
+			var package_layout: Dictionary = package_layouts.get(package_id, {})
+			var package_spawned_any: bool = false
+			var package_stalled: bool = false
+			for index_variant in indices:
+				if opening_remaining <= 0:
+					break
+				var req_index: int = int(index_variant)
+				if req_index < 0 or req_index >= reqs.size():
+					continue
+				var req: SpawnRequest = reqs[req_index]
+				if req == null or req.kind != "Enemy" or req.enemy_def == null:
+					continue
+				var spawn_now: int = min(remaining[req_index], opening_remaining)
+				if spawn_now <= 0:
+					continue
+				_ensure_package_portal_spawned(
+					req,
+					req_index,
+					package_layouts,
+					spawned_package_portals
+				)
+				var opening_spawned: int = _spawn_enemy_request_batch(req, spawn_now, package_layout)
+				if opening_spawned <= 0:
+					package_stalled = true
+					break
+				remaining[req_index] = max(remaining[req_index] - opening_spawned, 0)
+				opening_remaining = max(opening_remaining - opening_spawned, 0)
+				package_spawned_any = true
+			if package_stalled:
+				var opening_retry: SceneTreeTimer = _create_pausable_timer(0.35)
+				await opening_retry.timeout
+				if token != _wave_token:
+					return
+			elif package_spawned_any:
+				await get_tree().process_frame
+				if token != _wave_token:
+					return
 
+	var req_index: int = 0
 	while _any_remaining(remaining):
 		var found: bool = false
 		for step in reqs.size():
@@ -500,7 +698,17 @@ func _run_requests_coroutine(reqs: Array[SpawnRequest], card: WaveCard, token: i
 
 		var spawned: int = 0
 		if req.kind == "Enemy":
-			spawned = _spawner.spawn_enemy_burst(req.enemy_def, batch_size, req)
+			_ensure_package_portal_spawned(
+				req,
+				req_index,
+				package_layouts,
+				spawned_package_portals
+			)
+			spawned = _spawn_enemy_request_batch(
+				req,
+				batch_size,
+				_get_package_layout_for_request(req, req_index, package_layouts)
+			)
 		else:
 			spawned = _spawner.spawn_target_burst(req.target_def, batch_size)
 

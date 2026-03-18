@@ -1,0 +1,86 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" uid="uid://ctaj6bkq1mtoe" path="res://scripts/vfx/pack_warp_exit.gd" id="1_packwarp"]
+[ext_resource type="AudioStream" path="res://assets/sounds/plasma_shot.wav" id="2_whoosh"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ring"]
+transparency = 1
+shading_mode = 0
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.23, 0.93, 1, 1)
+emission_enabled = true
+emission = Color(0.23, 0.93, 1, 1)
+emission_energy_multiplier = 3.8
+cull_mode = 2
+
+[sub_resource type="TorusMesh" id="TorusMesh_ring"]
+material = SubResource("StandardMaterial3D_ring")
+inner_radius = 0.82
+outer_radius = 1.08
+rings = 24
+ring_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_core"]
+material = SubResource("StandardMaterial3D_ring")
+radius = 0.72
+height = 1.44
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_particles"]
+transparency = 1
+shading_mode = 0
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.23, 0.93, 1, 0.8)
+emission_enabled = true
+emission = Color(0.23, 0.93, 1, 1)
+emission_energy_multiplier = 3
+billboard_mode = 3
+cull_mode = 2
+
+[sub_resource type="QuadMesh" id="QuadMesh_particles"]
+material = SubResource("StandardMaterial3D_particles")
+size = Vector2(0.16, 0.16)
+
+[node name="PackWarpExit" type="Node3D"]
+script = ExtResource("1_packwarp")
+
+[node name="RingA" type="MeshInstance3D" parent="."]
+cast_shadow = 0
+mesh = SubResource("TorusMesh_ring")
+material_override = SubResource("StandardMaterial3D_ring")
+
+[node name="RingB" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0)
+cast_shadow = 0
+mesh = SubResource("TorusMesh_ring")
+material_override = SubResource("StandardMaterial3D_ring")
+
+[node name="Core" type="MeshInstance3D" parent="."]
+cast_shadow = 0
+mesh = SubResource("SphereMesh_core")
+material_override = SubResource("StandardMaterial3D_ring")
+
+[node name="Swirl" type="CPUParticles3D" parent="."]
+emitting = false
+amount = 52
+lifetime = 0.42
+one_shot = true
+explosiveness = 1.0
+randomness = 0.35
+local_coords = true
+mesh = SubResource("QuadMesh_particles")
+emission_shape = 1
+emission_sphere_radius = 0.4
+direction = Vector3(0, 0, 0)
+spread = 180.0
+gravity = Vector3(0, 0, 0)
+initial_velocity_min = 6.0
+initial_velocity_max = 18.0
+damping_min = 4.0
+damping_max = 7.0
+scale_amount_min = 0.08
+scale_amount_max = 0.55
+
+[node name="Whoosh" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("2_whoosh")
+unit_size = 20.0
+max_distance = 900.0

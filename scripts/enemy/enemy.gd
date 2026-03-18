@@ -28,6 +28,12 @@ const NanobotSwarmScene: PackedScene = preload("res://scenes/drops/nanobot_swarm
 @export var max_distance: float = 400.0
 @export var model_root_path: NodePath = ^"ModelRoot"
 
+@export_group("Warp In")
+@export var warp_fade_duration_sec: float = 0.35
+@export var warp_start_scale: float = 0.72
+@export_range(0.0, 1.0, 0.01) var warp_start_alpha: float = 0.18
+@export var warp_emission_boost: float = 2.6
+
 # designer test entry point
 @export var editor_preview_def: EnemyDef
 
@@ -56,6 +62,10 @@ var _tangent_axis: Vector3 = Vector3.UP
 var _axis_timer: float = 0.0
 var _spawn_context: EnemySpawnContext = null
 var _stat_snapshot: EnemyStatSnapshot = null
+var _warp_tween: Tween = null
+var _warp_material_entries: Array[Dictionary] = []
+var _warp_model_root: Node3D = null
+var _warp_original_model_scale: Vector3 = Vector3.ONE
 
 func configure_enemy(d: EnemyDef, spawn_context: EnemySpawnContext = null) -> void:
 	if d == null: return
@@ -143,6 +153,28 @@ func get_role_display_name() -> String:
 
 func get_effective_stat_snapshot() -> EnemyStatSnapshot:
 	return _stat_snapshot
+
+func play_warp_in(delay_sec: float = 0.0) -> void:
+	var model_root: Node3D = get_node_or_null(model_root_path) as Node3D
+	if model_root == null:
+		return
+
+	_stop_warp_in()
+	_warp_model_root = model_root
+	_warp_original_model_scale = model_root.scale
+
+	var tween: Tween = create_tween()
+	_warp_tween = tween
+	if delay_sec > 0.0:
+		tween.tween_interval(delay_sec)
+	tween.tween_callback(Callable(self, "_begin_warp_in"))
+	tween.tween_method(
+		Callable(self, "_set_warp_in_progress"),
+		0.0,
+		1.0,
+		max(warp_fade_duration_sec, 0.01)
+	)
+	tween.tween_callback(Callable(self, "_finish_warp_in"))
 
 func refresh_effective_stats(reinitialize_current_values: bool = false) -> void:
 	_refresh_effective_stats()
@@ -295,7 +327,121 @@ func _pick_new_axis() -> void:
 	_tangent_axis = choices.pick_random()
 	_axis_timer = randf_range(1.0, 4.0)
 
+func _begin_warp_in() -> void:
+	if _dead:
+		return
+	if _warp_model_root == null or not is_instance_valid(_warp_model_root):
+		return
+	_prepare_warp_materials()
+	_set_warp_in_progress(0.0)
+
+func _set_warp_in_progress(progress_variant: Variant) -> void:
+	var progress: float = clampf(float(progress_variant), 0.0, 1.0)
+	if _warp_model_root != null and is_instance_valid(_warp_model_root):
+		var visual_scale: float = lerpf(max(warp_start_scale, 0.01), 1.0, progress)
+		_warp_model_root.scale = _warp_original_model_scale * visual_scale
+
+	var alpha: float = lerpf(warp_start_alpha, 1.0, progress)
+	var emission_scale: float = lerpf(warp_emission_boost, 1.0, progress)
+	for entry in _warp_material_entries:
+		var runtime_material: BaseMaterial3D = entry.get("runtime_material", null) as BaseMaterial3D
+		if runtime_material == null:
+			continue
+		var base_color: Color = entry.get("base_color", Color.WHITE)
+		var base_emission_color: Color = entry.get("base_emission_color", base_color)
+		var base_emission_energy: float = float(entry.get("base_emission_energy", 1.0))
+		runtime_material.albedo_color = Color(
+			base_color.r,
+			base_color.g,
+			base_color.b,
+			base_color.a * alpha
+		)
+		runtime_material.emission = base_emission_color
+		runtime_material.emission_energy_multiplier = base_emission_energy * emission_scale
+
+func _finish_warp_in() -> void:
+	if _warp_model_root != null and is_instance_valid(_warp_model_root):
+		_warp_model_root.scale = _warp_original_model_scale
+	_restore_warp_materials()
+	_warp_tween = null
+
+func _stop_warp_in() -> void:
+	if _warp_tween != null:
+		_warp_tween.kill()
+		_warp_tween = null
+	if _warp_model_root != null and is_instance_valid(_warp_model_root):
+		_warp_model_root.scale = _warp_original_model_scale
+	_restore_warp_materials()
+
+func _prepare_warp_materials() -> void:
+	_restore_warp_materials()
+	if _warp_model_root == null or not is_instance_valid(_warp_model_root):
+		return
+
+	var mesh_nodes: Array[Node] = _warp_model_root.find_children("*", "MeshInstance3D", true, false)
+	for node in mesh_nodes:
+		var mesh_instance: MeshInstance3D = node as MeshInstance3D
+		if mesh_instance == null:
+			continue
+		if mesh_instance.material_override is BaseMaterial3D:
+			var runtime_override: BaseMaterial3D = _duplicate_warp_material(mesh_instance.material_override)
+			if runtime_override != null:
+				var original_override: Material = mesh_instance.material_override
+				mesh_instance.material_override = runtime_override
+				_warp_material_entries.append({
+					"mesh": mesh_instance,
+					"surface_index": -1,
+					"original_override": original_override,
+					"runtime_material": runtime_override,
+					"base_color": runtime_override.albedo_color,
+					"base_emission_color": runtime_override.emission,
+					"base_emission_energy": runtime_override.emission_energy_multiplier,
+				})
+			continue
+		if mesh_instance.mesh == null:
+			continue
+		for surface_index in mesh_instance.mesh.get_surface_count():
+			var original_surface_override: Material = mesh_instance.get_surface_override_material(surface_index)
+			var source_material: Material = original_surface_override
+			if source_material == null:
+				source_material = mesh_instance.mesh.surface_get_material(surface_index)
+			var runtime_material: BaseMaterial3D = _duplicate_warp_material(source_material)
+			if runtime_material == null:
+				continue
+			mesh_instance.set_surface_override_material(surface_index, runtime_material)
+			_warp_material_entries.append({
+				"mesh": mesh_instance,
+				"surface_index": surface_index,
+				"original_override": original_surface_override,
+				"runtime_material": runtime_material,
+				"base_color": runtime_material.albedo_color,
+				"base_emission_color": runtime_material.emission,
+				"base_emission_energy": runtime_material.emission_energy_multiplier,
+			})
+
+func _duplicate_warp_material(source_material: Material) -> BaseMaterial3D:
+	if not source_material is BaseMaterial3D:
+		return null
+	var runtime_material: BaseMaterial3D = source_material.duplicate(true) as BaseMaterial3D
+	runtime_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	runtime_material.emission_enabled = true
+	return runtime_material
+
+func _restore_warp_materials() -> void:
+	for entry in _warp_material_entries:
+		var mesh_instance: MeshInstance3D = entry.get("mesh", null) as MeshInstance3D
+		if mesh_instance == null or not is_instance_valid(mesh_instance):
+			continue
+		var surface_index: int = int(entry.get("surface_index", -1))
+		var original_override: Material = entry.get("original_override", null) as Material
+		if surface_index < 0:
+			mesh_instance.material_override = original_override
+		else:
+			mesh_instance.set_surface_override_material(surface_index, original_override)
+	_warp_material_entries.clear()
+
 func _finalize_death() -> void:
+	_stop_warp_in()
 	queue_free()
 
 func _snap_to_socket(local_node_path: NodePath, socket_rel_path: NodePath, copy_rot := true, copy_scale := false) -> void:

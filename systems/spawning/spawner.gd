@@ -13,11 +13,21 @@ var spawn_mode: int = 0
 
 @export var target_scene: PackedScene
 @export var enemy_scene: PackedScene
+@export var pack_warp_scene: PackedScene = preload("res://scenes/vfx/pack_warp_exit.tscn")
 @export var ship_path: NodePath
 
 @export var spawn_radius: float = 400
 @export var spawn_interval: float = 1.5
 @export var min_distance_from_ship: float = 150.0
+@export_group("Enemy Pack Spawn")
+@export var close_spawn_radius: float = 600.0
+@export var far_spawn_radius: float = 2400.0
+@export var pack_member_radius_min: float = 80.0
+@export var pack_member_radius_max: float = 220.0
+@export var pack_anchor_min_separation: float = 450.0
+@export var pack_anchor_attempts: int = 10
+@export var enemy_warp_stagger_sec: float = 0.04
+@export var enemy_warp_stagger_max_sec: float = 0.12
 @export_group("Legacy Caps")
 @export var max_alive_total: int = 30
 @export var max_enemies_alive: int = 10
@@ -53,6 +63,12 @@ func _ready() -> void:
 	add_child(_target_topup)
 
 func spawn_one_with_def(kind: int, def: Resource, request: SpawnRequest = null) -> Node3D:
+	return _spawn_one_with_def_at_position(kind, def, request, false, Vector3.ZERO)
+
+func spawn_one_with_def_at_position(kind: int, def: Resource, position: Vector3, request: SpawnRequest = null) -> Node3D:
+	return _spawn_one_with_def_at_position(kind, def, request, true, position)
+
+func _spawn_one_with_def_at_position(kind: int, def: Resource, request: SpawnRequest, use_position_override: bool, position_override: Vector3) -> Node3D:
 	if enemy_scene == null or target_scene == null:
 		return null
 	if not _can_spawn_now():
@@ -62,7 +78,8 @@ func spawn_one_with_def(kind: int, def: Resource, request: SpawnRequest = null) 
 	_last_kind_was_enemy = (kind == SpawnKind.ENEMY)
 	_have_last = true
 	
-	var pos: Vector3 = _pick_spawn_position()
+	var pos: Vector3 = position_override if use_position_override else _pick_spawn_position()
+	pos = _ensure_min_distance_from_ship(pos)
 	if inst.has_method("set_ship"):
 		inst.call("set_ship", _player_ship)
 	
@@ -158,6 +175,55 @@ func spawn_enemy_burst(def: EnemyDef, count: int, request: SpawnRequest = null) 
 		spawned += 1
 	return spawned
 
+func spawn_enemy_pack_burst(
+	def: EnemyDef,
+	count: int,
+	anchor: Vector3,
+	member_radius: float,
+	request: SpawnRequest = null
+) -> int:
+	var spawned: int = 0
+	for i in count:
+		var spawn_position: Vector3 = _pick_pack_member_position(anchor, member_radius)
+		var inst: Node3D = spawn_one_with_def_at_position(SpawnKind.ENEMY, def, spawn_position, request)
+		if inst == null:
+			break
+		if inst.has_method("play_warp_in"):
+			var warp_delay_sec: float = min(float(spawned) * enemy_warp_stagger_sec, enemy_warp_stagger_max_sec)
+			inst.call("play_warp_in", warp_delay_sec)
+		spawned += 1
+	return spawned
+
+func spawn_enemy_pack_warp(anchor: Vector3, member_radius: float, spawn_pressure_scale: float = 0.0) -> Node3D:
+	if pack_warp_scene == null:
+		return null
+	var tree: SceneTree = get_tree()
+	if tree == null or tree.current_scene == null:
+		return null
+	var warp_node: Node3D = pack_warp_scene.instantiate() as Node3D
+	if warp_node == null:
+		return null
+	if warp_node.has_method("configure_for_pack"):
+		warp_node.call("configure_for_pack", member_radius, spawn_pressure_scale)
+	tree.current_scene.add_child(warp_node)
+	warp_node.global_position = anchor
+	return warp_node
+
+func build_enemy_pack_layout(spawn_pressure_scale: float, prior_anchors: Array[Vector3]) -> Dictionary:
+	var scale: float = clampf(spawn_pressure_scale, 0.0, 1.0)
+	var base_anchor_radius: float = lerpf(close_spawn_radius, far_spawn_radius, scale)
+	var anchor_radius: float = max(base_anchor_radius * _rng.randf_range(0.85, 1.15), min_distance_from_ship)
+	var member_radius: float = lerpf(pack_member_radius_min, pack_member_radius_max, scale)
+	var anchor: Vector3 = _pick_pack_anchor(anchor_radius, prior_anchors)
+	var center: Vector3 = _player_ship.global_position if _player_ship != null else Vector3.ZERO
+	var actual_anchor_radius: float = sqrt(anchor.distance_squared_to(center))
+	return {
+		"anchor": anchor,
+		"anchor_radius": actual_anchor_radius,
+		"member_radius": member_radius,
+		"spawn_pressure_scale": scale,
+	}
+
 func spawn_target_burst(def: TargetDef, count: int) -> int:
 	var spawned: int = 0
 	for i in count:
@@ -193,11 +259,71 @@ func _try_spawn() -> void:
 
 func _pick_spawn_position() -> Vector3:
 	var center: Vector3 = _player_ship.global_position if _player_ship != null else Vector3.ZERO
-	var dir: Vector3 = Vector3(_rng.randf()*2.0 - 1.0, _rng.randf()*2.0 - 1.0, _rng.randf()*2.0 - 1.0).normalized()
+	var dir: Vector3 = _random_direction()
 	var pos: Vector3 = center + dir * spawn_radius
-	if _player_ship != null and pos.distance_to(center) < min_distance_from_ship:
-		pos = center + dir * min_distance_from_ship
-	return pos
+	return _ensure_min_distance_from_ship(pos)
+
+func _pick_pack_anchor(anchor_radius: float, prior_anchors: Array[Vector3]) -> Vector3:
+	var center: Vector3 = _player_ship.global_position if _player_ship != null else Vector3.ZERO
+	var current_separation: float = max(pack_anchor_min_separation, 0.0)
+	var attempts: int = max(pack_anchor_attempts, 1)
+	for attempt in attempts:
+		var candidate: Vector3 = center + _random_direction() * anchor_radius
+		if _is_valid_pack_anchor(candidate, prior_anchors, current_separation):
+			return candidate
+		if attempt > 0 and (attempt + 1) % 3 == 0:
+			current_separation *= 0.75
+	var fallback: Vector3 = center + _random_direction() * anchor_radius
+	return _ensure_min_distance_from_ship(fallback)
+
+func _pick_pack_member_position(anchor: Vector3, member_radius: float) -> Vector3:
+	var offset: Vector3 = Vector3.ZERO
+	if member_radius > 0.0:
+		offset = _random_point_in_sphere(member_radius)
+	return _ensure_min_distance_from_ship(anchor + offset)
+
+func _is_valid_pack_anchor(candidate: Vector3, prior_anchors: Array[Vector3], separation: float) -> bool:
+	if _player_ship != null:
+		var center: Vector3 = _player_ship.global_position
+		var min_distance_sq: float = min_distance_from_ship * min_distance_from_ship
+		if candidate.distance_squared_to(center) < min_distance_sq:
+			return false
+	var separation_sq: float = separation * separation
+	for anchor in prior_anchors:
+		if candidate.distance_squared_to(anchor) < separation_sq:
+			return false
+	return true
+
+func _ensure_min_distance_from_ship(position: Vector3) -> Vector3:
+	if _player_ship == null or not is_instance_valid(_player_ship):
+		return position
+	var center: Vector3 = _player_ship.global_position
+	var min_distance_sq: float = min_distance_from_ship * min_distance_from_ship
+	if position.distance_squared_to(center) >= min_distance_sq:
+		return position
+	var outward: Vector3 = position - center
+	if outward.length_squared() < 0.0001:
+		outward = _random_direction()
+	else:
+		outward = outward.normalized()
+	return center + outward * min_distance_from_ship
+
+func _random_direction() -> Vector3:
+	var direction: Vector3 = Vector3.ZERO
+	while direction.length_squared() < 0.0001:
+		direction = Vector3(
+			_rng.randf() * 2.0 - 1.0,
+			_rng.randf() * 2.0 - 1.0,
+			_rng.randf() * 2.0 - 1.0
+		)
+	return direction.normalized()
+
+func _random_point_in_sphere(radius: float) -> Vector3:
+	if radius <= 0.0:
+		return Vector3.ZERO
+	var direction: Vector3 = _random_direction()
+	var distance: float = radius * pow(_rng.randf(), 1.0 / 3.0)
+	return direction * distance
 
 func _pick_spawn_kind() -> int:
 	var allowed_enemy: bool = (spawn_mode != 2)

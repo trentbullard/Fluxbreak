@@ -85,6 +85,10 @@ Wave assembly should therefore favor systems that can express:
 
 It should not be overly locked to simplistic "buy the biggest affordable unit repeatedly" logic in the final form.
 
+Runtime delivery should also scale with encounter shape, not just composition purchase.
+High-budget and mixed-package waves should be able to arrive in fast opening dumps from multiple anchors, while smaller buys remain compact and nearer the player.
+Those spawn distance and delivery changes should scale continuously from budget/composition pressure with only mild bounded performance nudges, not hard wave-number thresholds.
+
 ### Faction Bias
 
 Faction identity should strongly influence wave logic, but not require one rigid implementation strategy.
