@@ -3,7 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://l62gx0wmdeq1" path="res://scenes/enemies/machine_coremind_mk1.tscn" id="1_okvwc"]
 [ext_resource type="Script" uid="uid://bx6wive40u6f" path="res://content/defs/enemy_def.gd" id="2_kh6w4"]
 [ext_resource type="Resource" uid="uid://u118lh0nmv2k" path="res://content/data/factions/machines.tres" id="3_faction"]
-[ext_resource type="Resource" path="res://content/data/enemy_roles/support.tres" id="4_role"]
+[ext_resource type="Resource" uid="uid://du0fgrlhxumo5" path="res://content/data/enemy_roles/support.tres" id="4_role"]
 [ext_resource type="PackedScene" uid="uid://bso2dpcl7d5tx" path="res://scenes/weapons/laser_bolt.tscn" id="5_projectile"]
 [ext_resource type="Script" uid="uid://dby70n1hr4uk3" path="res://content/defs/weapon_def.gd" id="6_weapon_def"]
 [ext_resource type="AudioStream" uid="uid://cg2afukmlkc53" path="res://assets/sounds/laser_bolt.wav" id="7_shot_sound"]
@@ -30,7 +30,8 @@ id = "machine_coremind_mk1"
 display_name = "Coremind Mk I"
 faction = ExtResource("3_faction")
 role = ExtResource("4_role")
-bounty_scrap = 2
+threat_cost = 3
+bounty_scrap = 4
 affixes = Array[String](["Prime", "Core", "Sigma"])
 score_on_kill = 20
 max_hull = 110.0

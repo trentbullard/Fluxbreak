@@ -7,6 +7,7 @@ var elapsed_sec: float = 0.0
 var wave_card: WaveCard = null
 var faction: FactionDef = null
 var role: EnemyRoleDef = null
+var enemy_combat_scaling: EnemyCombatScalingSnapshot = null
 var is_elite: bool = false
 var affix_ids: PackedStringArray = PackedStringArray()
 var source_tags: PackedStringArray = PackedStringArray()
@@ -27,6 +28,7 @@ func duplicate_context() -> EnemySpawnContext:
 	context.wave_card = wave_card
 	context.faction = faction
 	context.role = role
+	context.enemy_combat_scaling = enemy_combat_scaling
 	context.is_elite = is_elite
 	context.affix_ids = PackedStringArray(affix_ids)
 	context.source_tags = PackedStringArray(source_tags)

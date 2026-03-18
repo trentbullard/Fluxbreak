@@ -9,6 +9,8 @@ var thrust: float = 0.0
 var weapon_stats: WeaponStatSnapshot = WeaponStatSnapshot.new()
 var faction_id: StringName = &""
 var role_id: StringName = &""
+var combat_scaling_intensity: float = 0.0
+var nanobot_multiplier: float = 1.0
 var active_layers: PackedStringArray = PackedStringArray()
 var layer_counts: Dictionary = {}
 var source_tags: PackedStringArray = PackedStringArray()
@@ -28,6 +30,8 @@ func get_debug_summary() -> Dictionary:
 			"thrust": thrust,
 		},
 		"weapon_stats": weapon_stats.get_debug_summary() if weapon_stats != null else {},
+		"combat_scaling_intensity": combat_scaling_intensity,
+		"nanobot_multiplier": nanobot_multiplier,
 		"active_layers": PackedStringArray(active_layers),
 		"layer_counts": layer_counts.duplicate(true),
 		"source_tags": PackedStringArray(source_tags),

@@ -34,12 +34,14 @@ signal next_wave_eta(seconds: float)
 @export var wave_budgeter_path: NodePath
 @export var budget_buyer_path: NodePath
 @export var wave_intensity_director_path: NodePath
+@export var enemy_combat_scaling_director_path: NodePath
 @export var wave_cards: Array[WaveCard] = []
 
 var _buyer: BudgetBuyer
 var _threat_dir: ThreatDirector
 var _wave_budgeter: WaveBudgeter
 var _intensity_dir: WaveIntensityDirector
+var _enemy_combat_scaling_dir: EnemyCombatScalingDirector
 var _elapsed_sec: float = 0.0
 
 var _spawner: Spawner
@@ -82,10 +84,15 @@ func _ready() -> void:
 	_spawner = get_node_or_null(spawner_path) as Spawner
 	_buyer = get_node_or_null(budget_buyer_path) as BudgetBuyer
 	_intensity_dir = get_node_or_null(wave_intensity_director_path) as WaveIntensityDirector
+	_enemy_combat_scaling_dir = get_node_or_null(enemy_combat_scaling_director_path) as EnemyCombatScalingDirector
 	if _intensity_dir == null:
 		_intensity_dir = WaveIntensityDirector.new()
 		_intensity_dir.name = "WaveIntensityDirectorRuntime"
 		add_child(_intensity_dir)
+	if _enemy_combat_scaling_dir == null:
+		_enemy_combat_scaling_dir = EnemyCombatScalingDirector.new()
+		_enemy_combat_scaling_dir.name = "EnemyCombatScalingDirectorRuntime"
+		add_child(_enemy_combat_scaling_dir)
 	if _spawner == null:
 		push_error("WaveDirector: spawner_path not set.")
 		return
@@ -240,6 +247,7 @@ func _next_wave() -> void:
 
 	var max_tier: int = clamp(1 + _wave_index / 3 + stage_index, 1, 5)
 	var reqs: Array[SpawnRequest] = []
+	var combat_scaling: EnemyCombatScalingSnapshot = _build_enemy_combat_scaling_snapshot(_wave_index, _elapsed_sec)
 	if _buyer != null:
 		reqs = _buyer.buy_wave(
 			int(budgets["enemy_points"]),
@@ -251,13 +259,15 @@ func _next_wave() -> void:
 			_elapsed_sec
 		)
 	reqs = _prioritize_requests(reqs, _active_card)
+	_apply_enemy_combat_scaling(reqs, combat_scaling)
 
 	_last_debug_snapshot = _build_wave_debug_snapshot(
 		_active_card,
 		stage_index,
 		threat,
 		budgets,
-		opening_adjustment
+		opening_adjustment,
+		combat_scaling
 	)
 
 	emit_signal("wave_started", _wave_index, budgets["enemy_points"], budgets["target_points"])
@@ -268,7 +278,8 @@ func _build_wave_debug_snapshot(
 	stage_index: int,
 	threat: float,
 	budgets: Dictionary,
-	opening_adjustment: Dictionary
+	opening_adjustment: Dictionary,
+	combat_scaling: EnemyCombatScalingSnapshot
 ) -> Dictionary:
 	var snapshot: Dictionary = {
 		"wave_index": _wave_index,
@@ -282,12 +293,16 @@ func _build_wave_debug_snapshot(
 		"soft_enemy_density_reference": _current_enemy_density_reference,
 		"opening_enemy_scale": float(opening_adjustment.get("scale", 1.0)),
 		"pressure_state": _intensity_dir.get_last_pressure_state() if _intensity_dir != null else "n/a",
+		"combat_scaling_intensity": combat_scaling.intensity if combat_scaling != null else 0.0,
+		"combat_scaling_active": combat_scaling.has_scaling() if combat_scaling != null else false,
+		"enemy_nanobot_multiplier": combat_scaling.nanobot_multiplier if combat_scaling != null else 1.0,
 	}
 	snapshot["enemy_effective_context"] = EnemyStatResolver.build_wave_debug_summary(
 		card,
 		_wave_index,
 		stage_index,
-		_elapsed_sec
+		_elapsed_sec,
+		combat_scaling
 	)
 	if _buyer != null:
 		snapshot["wave_plan"] = _buyer.get_last_wave_plan()
@@ -363,6 +378,7 @@ func _run_pressure_coroutine(token: int) -> void:
 			continue
 
 		var max_tier: int = clamp(1 + _wave_index / 3 + max(GameFlow.get_active_stage_index(), 0), 1, 5)
+		var pressure_combat_scaling: EnemyCombatScalingSnapshot = _build_enemy_combat_scaling_snapshot(_wave_index, _elapsed_sec)
 		var pressure_reqs: Array[SpawnRequest] = _buyer.buy_wave(
 			pressure_enemy_budget,
 			pressure_target_budget,
@@ -373,6 +389,7 @@ func _run_pressure_coroutine(token: int) -> void:
 			_elapsed_sec
 		)
 		pressure_reqs = _prioritize_requests(pressure_reqs, active_card)
+		_apply_enemy_combat_scaling(pressure_reqs, pressure_combat_scaling)
 		for req in pressure_reqs:
 			if req.kind == "Enemy" and req.enemy_def != null and req.count > 0:
 				_spawner.spawn_enemy_burst(req.enemy_def, req.count, req)
@@ -382,6 +399,8 @@ func _run_pressure_coroutine(token: int) -> void:
 		_last_debug_snapshot["pressure_state"] = pressure_plan.get("state", "hold")
 		_last_debug_snapshot["pressure_enemy_points"] = pressure_enemy_budget
 		_last_debug_snapshot["pressure_target_points"] = pressure_target_budget
+		_last_debug_snapshot["combat_scaling_intensity"] = pressure_combat_scaling.intensity if pressure_combat_scaling != null else 0.0
+		_last_debug_snapshot["enemy_nanobot_multiplier"] = pressure_combat_scaling.nanobot_multiplier if pressure_combat_scaling != null else 1.0
 
 func _prioritize_requests(reqs: Array[SpawnRequest], card: WaveCard) -> Array[SpawnRequest]:
 	if reqs.is_empty():
@@ -412,6 +431,19 @@ func _prioritize_requests(reqs: Array[SpawnRequest], card: WaveCard) -> Array[Sp
 		for req in enemy_reqs:
 			ordered.append(req)
 	return ordered
+
+func _build_enemy_combat_scaling_snapshot(wave_index: int, elapsed_sec: float) -> EnemyCombatScalingSnapshot:
+	if _enemy_combat_scaling_dir == null:
+		return EnemyCombatScalingSnapshot.new()
+	return _enemy_combat_scaling_dir.build_snapshot(wave_index, elapsed_sec)
+
+func _apply_enemy_combat_scaling(reqs: Array[SpawnRequest], combat_scaling: EnemyCombatScalingSnapshot) -> void:
+	if reqs.is_empty():
+		return
+	for req in reqs:
+		if req == null or req.kind != "Enemy":
+			continue
+		req.enemy_combat_scaling = combat_scaling
 
 func _rand_batch() -> int:
 	return _rng.randi_range(batch_size_min, batch_size_max)

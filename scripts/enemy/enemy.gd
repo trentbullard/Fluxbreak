@@ -206,8 +206,8 @@ func _die() -> void:
 			# add to the same parent as the enemy so it sits in the world
 			var parent_node := (get_parent() if get_parent() != null else get_tree().root)
 			parent_node.add_child(swarm_node)
-			var pps: float = CombatStats.get_pps()
-			swarm_node.value = RunState.calc_enemy_nanobots(def, pps)
+			var combat_scaling: EnemyCombatScalingSnapshot = _spawn_context.enemy_combat_scaling if _spawn_context != null else null
+			swarm_node.value = RunState.calc_enemy_nanobots(def, combat_scaling)
 	
 	remove_from_group("targets")
 	if has_node("CollisionShape3D"):

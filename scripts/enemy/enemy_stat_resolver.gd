@@ -11,6 +11,7 @@ static func resolve(enemy_def: EnemyDef, context: EnemySpawnContext) -> EnemySta
 		return snapshot
 
 	var safe_context: EnemySpawnContext = context if context != null else EnemySpawnContext.from_enemy_def(enemy_def)
+	var combat_scaling: EnemyCombatScalingSnapshot = safe_context.enemy_combat_scaling
 	var wave_modifiers: Array[StatModifier] = _build_wave_modifiers(enemy_def, safe_context)
 	var stage_modifiers: Array[StatModifier] = _build_stage_modifiers()
 	var card_modifiers: Array[StatModifier] = _build_card_modifiers(safe_context.wave_card)
@@ -20,20 +21,22 @@ static func resolve(enemy_def: EnemyDef, context: EnemySpawnContext) -> EnemySta
 
 	snapshot.faction_id = _resolve_faction_id(enemy_def, safe_context)
 	snapshot.role_id = _resolve_role_id(enemy_def, safe_context)
-	snapshot.max_hull = _resolve_stat_through_layers(Stat.MAX_HULL, enemy_def.max_hull, wave_modifiers, stage_modifiers, card_modifiers, faction_modifiers, elite_modifiers, affix_modifiers)
-	snapshot.max_shield = _resolve_stat_through_layers(Stat.MAX_SHIELD, enemy_def.max_shield, wave_modifiers, stage_modifiers, card_modifiers, faction_modifiers, elite_modifiers, affix_modifiers)
-	snapshot.shield_regen = _resolve_stat_through_layers(Stat.SHIELD_REGEN, enemy_def.shield_regen, wave_modifiers, stage_modifiers, card_modifiers, faction_modifiers, elite_modifiers, affix_modifiers)
-	snapshot.evasion = clamp(_resolve_stat_through_layers(Stat.EVASION_BASE, enemy_def.evasion, wave_modifiers, stage_modifiers, card_modifiers, faction_modifiers, elite_modifiers, affix_modifiers), 0.0, 1.0)
-	snapshot.thrust = max(0.0, _resolve_stat_through_layers(Stat.ENEMY_THRUST, enemy_def.thrust, wave_modifiers, stage_modifiers, card_modifiers, faction_modifiers, elite_modifiers, affix_modifiers))
+	snapshot.combat_scaling_intensity = combat_scaling.intensity if combat_scaling != null else 0.0
+	snapshot.nanobot_multiplier = combat_scaling.nanobot_multiplier if combat_scaling != null else 1.0
+	snapshot.max_hull = _resolve_scaled_stat_through_layers(Stat.MAX_HULL, enemy_def.max_hull, combat_scaling, wave_modifiers, stage_modifiers, card_modifiers, faction_modifiers, elite_modifiers, affix_modifiers)
+	snapshot.max_shield = _resolve_scaled_stat_through_layers(Stat.MAX_SHIELD, enemy_def.max_shield, combat_scaling, wave_modifiers, stage_modifiers, card_modifiers, faction_modifiers, elite_modifiers, affix_modifiers)
+	snapshot.shield_regen = _resolve_scaled_stat_through_layers(Stat.SHIELD_REGEN, enemy_def.shield_regen, combat_scaling, wave_modifiers, stage_modifiers, card_modifiers, faction_modifiers, elite_modifiers, affix_modifiers)
+	snapshot.evasion = clamp(_resolve_scaled_stat_through_layers(Stat.EVASION_BASE, enemy_def.evasion, combat_scaling, wave_modifiers, stage_modifiers, card_modifiers, faction_modifiers, elite_modifiers, affix_modifiers), 0.0, 1.0)
+	snapshot.thrust = max(0.0, _resolve_scaled_stat_through_layers(Stat.ENEMY_THRUST, enemy_def.thrust, combat_scaling, wave_modifiers, stage_modifiers, card_modifiers, faction_modifiers, elite_modifiers, affix_modifiers))
 
 	var compute_value: Callable = func(stat_id: int, base_value: float) -> float:
-		return _resolve_stat_through_layers(stat_id, base_value, wave_modifiers, stage_modifiers, card_modifiers, faction_modifiers, elite_modifiers, affix_modifiers)
+		return _resolve_scaled_stat_through_layers(stat_id, base_value, combat_scaling, wave_modifiers, stage_modifiers, card_modifiers, faction_modifiers, elite_modifiers, affix_modifiers)
 	snapshot.weapon_stats = WeaponStatResolver.resolve_snapshot(enemy_def.weapon, compute_value)
 
-	_populate_layer_debug(snapshot, safe_context, wave_modifiers, stage_modifiers, card_modifiers, faction_modifiers, elite_modifiers, affix_modifiers)
+	_populate_layer_debug(snapshot, safe_context, combat_scaling, wave_modifiers, stage_modifiers, card_modifiers, faction_modifiers, elite_modifiers, affix_modifiers)
 	return snapshot
 
-static func build_wave_debug_summary(card: WaveCard, wave_index: int, stage_index: int, elapsed_sec: float) -> Dictionary:
+static func build_wave_debug_summary(card: WaveCard, wave_index: int, stage_index: int, elapsed_sec: float, combat_scaling: EnemyCombatScalingSnapshot = null) -> Dictionary:
 	var stage_modifiers: Array[StageModifierDef] = GameFlow.get_active_stage_modifiers()
 	var active_stage_modifier_ids: PackedStringArray = PackedStringArray()
 	var stage_enemy_modifier_count: int = 0
@@ -51,12 +54,13 @@ static func build_wave_debug_summary(card: WaveCard, wave_index: int, stage_inde
 		"wave_index": wave_index,
 		"stage_index": stage_index,
 		"elapsed_sec": elapsed_sec,
+		"combat_scaling": combat_scaling.get_debug_summary() if combat_scaling != null else EnemyCombatScalingSnapshot.new().get_debug_summary(),
 		"stage_modifier_ids": active_stage_modifier_ids,
 		"stage_enemy_modifier_count": stage_enemy_modifier_count,
 		"card_enemy_modifier_count": card_enemy_modifier_count,
 		"card_faction_bias_id": String(card.get_faction_bias_id()) if card != null else "",
 		"card_role_bias_ids": card.get_role_bias_ids() if card != null else PackedStringArray(),
-		"has_non_base_layers": stage_enemy_modifier_count > 0 or card_enemy_modifier_count > 0,
+		"has_non_base_layers": (combat_scaling != null and combat_scaling.has_scaling()) or stage_enemy_modifier_count > 0 or card_enemy_modifier_count > 0,
 	}
 
 static func _resolve_faction_id(enemy_def: EnemyDef, context: EnemySpawnContext) -> StringName:
@@ -82,6 +86,35 @@ static func _resolve_stat_through_layers(stat_id: int, base_value: float, wave_m
 	value = _apply_modifier_layer(stat_id, value, elite_modifiers)
 	value = _apply_modifier_layer(stat_id, value, affix_modifiers)
 	return value
+
+static func _resolve_scaled_stat_through_layers(stat_id: int, base_value: float, combat_scaling: EnemyCombatScalingSnapshot, wave_modifiers: Array[StatModifier], stage_modifiers: Array[StatModifier], card_modifiers: Array[StatModifier], faction_modifiers: Array[StatModifier], elite_modifiers: Array[StatModifier], affix_modifiers: Array[StatModifier]) -> float:
+	var scaled_value: float = _apply_combat_scaling(stat_id, base_value, combat_scaling)
+	return _resolve_stat_through_layers(stat_id, scaled_value, wave_modifiers, stage_modifiers, card_modifiers, faction_modifiers, elite_modifiers, affix_modifiers)
+
+static func _apply_combat_scaling(stat_id: int, base_value: float, combat_scaling: EnemyCombatScalingSnapshot) -> float:
+	if combat_scaling == null:
+		return base_value
+
+	match stat_id:
+		Stat.MAX_HULL:
+			return base_value * combat_scaling.hull_multiplier
+		Stat.MAX_SHIELD:
+			return base_value * combat_scaling.shield_multiplier
+		Stat.SHIELD_REGEN:
+			return base_value * combat_scaling.shield_regen_multiplier
+		Stat.ENEMY_THRUST:
+			return base_value * combat_scaling.thrust_multiplier
+		Stat.WEAPON_DAMAGE_MIN, Stat.WEAPON_DAMAGE_MAX:
+			return base_value * combat_scaling.damage_multiplier
+		Stat.WEAPON_BASE_RANGE:
+			return base_value * combat_scaling.range_multiplier
+		Stat.WEAPON_BASE_ACCURACY:
+			return clamp(base_value + combat_scaling.accuracy_bonus, 0.0, 1.0)
+		Stat.EVASION_BASE:
+			return clamp(base_value + combat_scaling.evasion_bonus, 0.0, 1.0)
+		Stat.WEAPON_FIRE_RATE:
+			return max(base_value * combat_scaling.fire_rate_multiplier, 0.01)
+	return base_value
 
 static func _apply_modifier_layer(stat_id: int, current_value: float, layer_modifiers: Array[StatModifier]) -> float:
 	if layer_modifiers.is_empty():
@@ -210,11 +243,11 @@ static func _build_elite_modifiers(_enemy_def: EnemyDef, _context: EnemySpawnCon
 static func _build_affix_modifiers(_enemy_def: EnemyDef, _context: EnemySpawnContext) -> Array[StatModifier]:
 	return []
 
-static func _populate_layer_debug(snapshot: EnemyStatSnapshot, context: EnemySpawnContext, wave_modifiers: Array[StatModifier], stage_modifiers: Array[StatModifier], card_modifiers: Array[StatModifier], faction_modifiers: Array[StatModifier], elite_modifiers: Array[StatModifier], affix_modifiers: Array[StatModifier]) -> void:
+static func _populate_layer_debug(snapshot: EnemyStatSnapshot, context: EnemySpawnContext, combat_scaling: EnemyCombatScalingSnapshot, wave_modifiers: Array[StatModifier], stage_modifiers: Array[StatModifier], card_modifiers: Array[StatModifier], faction_modifiers: Array[StatModifier], elite_modifiers: Array[StatModifier], affix_modifiers: Array[StatModifier]) -> void:
 	if snapshot == null:
 		return
 	var active_layers: PackedStringArray = PackedStringArray()
-	if not wave_modifiers.is_empty():
+	if (combat_scaling != null and combat_scaling.has_scaling()) or not wave_modifiers.is_empty():
 		active_layers.append("wave")
 	if not stage_modifiers.is_empty():
 		active_layers.append("stage")
@@ -229,7 +262,7 @@ static func _populate_layer_debug(snapshot: EnemyStatSnapshot, context: EnemySpa
 
 	snapshot.active_layers = active_layers
 	snapshot.layer_counts = {
-		"wave": wave_modifiers.size(),
+		"wave": max(wave_modifiers.size(), 1 if combat_scaling != null and combat_scaling.has_scaling() else 0),
 		"stage": stage_modifiers.size(),
 		"card": card_modifiers.size(),
 		"faction": faction_modifiers.size(),

@@ -11,6 +11,7 @@ id = "merc_frigate_mk1"
 display_name = "Frigate Mk I"
 faction = ExtResource("2_faction")
 role = ExtResource("3_role")
+threat_cost = 3
 bounty_scrap = 2
 score_on_kill = 20
 max_hull = 80.0

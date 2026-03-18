@@ -15,6 +15,7 @@ class_name SpawnRequest
 @export var elapsed_sec: float = 0.0
 @export var is_elite: bool = false
 @export var affix_ids: PackedStringArray = PackedStringArray()
+var enemy_combat_scaling: EnemyCombatScalingSnapshot = null
 
 func build_enemy_spawn_context(def_override: EnemyDef = null) -> EnemySpawnContext:
 	var resolved_def: EnemyDef = def_override if def_override != null else enemy_def
@@ -23,6 +24,7 @@ func build_enemy_spawn_context(def_override: EnemyDef = null) -> EnemySpawnConte
 	context.stage_index = stage_index
 	context.elapsed_sec = elapsed_sec
 	context.wave_card = wave_card
+	context.enemy_combat_scaling = enemy_combat_scaling
 	context.is_elite = is_elite
 	context.affix_ids = PackedStringArray(affix_ids)
 	if wave_card != null:

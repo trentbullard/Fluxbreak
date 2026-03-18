@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="EnemyCombatScalingDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://content/defs/enemy_combat_scaling_def.gd" id="1_scaling_def"]
+
+[resource]
+script = ExtResource("1_scaling_def")
+start_wave = 2
+per_wave_linear = 0.08
+per_wave_quadratic = 0.0035
+per_min_linear = 0.0
+per_min_quadratic = 0.0
+intensity_cap = 3.5
+hull_strength = 0.45
+shield_strength = 0.45
+shield_regen_strength = 0.3
+thrust_strength = 0.2
+damage_strength = 0.3
+range_strength = 0.08
+fire_rate_haste_strength = 0.2
+fire_rate_floor_scale = 0.55
+accuracy_bonus_per_intensity = 0.015
+accuracy_bonus_cap = 0.08
+evasion_bonus_per_intensity = 0.01
+evasion_bonus_cap = 0.05
+nanobot_base_strength = 0.55
+nanobot_variance_pct = 0.15
+nanobot_min_multiplier = 1.0

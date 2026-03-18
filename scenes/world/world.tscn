@@ -1,4 +1,4 @@
-[gd_scene load_steps=73 format=3 uid="uid://ppgr7fveqbrd"]
+[gd_scene load_steps=75 format=3 uid="uid://ppgr7fveqbrd"]
 
 [ext_resource type="Texture2D" uid="uid://d3x23q2en3ng1" path="res://assets/spheremaps/plain_starfield_1.png" id="1_dphjl"]
 [ext_resource type="Script" uid="uid://bksswhha71raw" path="res://scripts/world/world_bootstrap.gd" id="1_ovomx"]
@@ -15,6 +15,7 @@
 [ext_resource type="Resource" uid="uid://cem52uptcff4c" path="res://content/data/cards/basic_wave.tres" id="9_26xou"]
 [ext_resource type="Script" uid="uid://dw6cm3pc4tv74" path="res://scripts/components/wave_budgeter.gd" id="9_bt7bg"]
 [ext_resource type="Script" uid="uid://i56d1j8euse1" path="res://scripts/hud/nameplate_manager.gd" id="9_gb53w"]
+[ext_resource type="Script" path="res://scripts/components/enemy_combat_scaling_director.gd" id="9_scalingdir"]
 [ext_resource type="Script" uid="uid://dbbf334sll6co" path="res://systems/catalogs/enemy_catalog.gd" id="10_6hctx"]
 [ext_resource type="PackedScene" uid="uid://icnhxdf4gt2c" path="res://scenes/hud/nameplate.tscn" id="10_gb53w"]
 [ext_resource type="LabelSettings" uid="uid://coy4ocfodghm4" path="res://scripts/hud/status_label_settings.tres" id="10_m114p"]
@@ -46,6 +47,7 @@
 [ext_resource type="Resource" uid="uid://bskk7qmspf063" path="res://content/data/weapons/laser_bolt_mk1.tres" id="54_phx5y"]
 [ext_resource type="Resource" uid="uid://b7qjg75iq2hov" path="res://content/data/weapons/drone_bay_mk1.tres" id="55_554ci"]
 [ext_resource type="Resource" uid="uid://kw3uc16q3yo0" path="res://content/data/weapons/particle_beam_mk1.tres" id="56_hph6x"]
+[ext_resource type="Resource" path="res://content/data/scaling/enemy_combat_scaling_default.tres" id="56_scalingres"]
 [ext_resource type="Script" uid="uid://ciqwfvtmjs36w" path="res://scripts/hud/docking_hud.gd" id="docking_hud_script"]
 [ext_resource type="Script" uid="uid://nc1iigswua3o" path="res://scripts/poi/docking_manager.gd" id="docking_manager_script"]
 [ext_resource type="Script" uid="uid://c7bw4eh6k252" path="res://content/defs/poi_def.gd" id="poi_def_script"]
@@ -212,6 +214,7 @@ wave_timeout_sec = 60.0
 threat_director_path = NodePath("../ThreatDirector")
 wave_budgeter_path = NodePath("../WaveBudgeter")
 budget_buyer_path = NodePath("../BudgetBuyer")
+enemy_combat_scaling_director_path = NodePath("../EnemyCombatScalingDirector")
 wave_cards = Array[ExtResource("8_wnndm")]([ExtResource("9_26xou")])
 
 [node name="ThreatDirector" type="Node" parent="StageRoot"]
@@ -219,6 +222,10 @@ script = ExtResource("8_71ii3")
 
 [node name="WaveBudgeter" type="Node" parent="StageRoot"]
 script = ExtResource("9_bt7bg")
+
+[node name="EnemyCombatScalingDirector" type="Node" parent="StageRoot"]
+script = ExtResource("9_scalingdir")
+scaling_def = ExtResource("56_scalingres")
 
 [node name="EnemyCatalog" type="Node" parent="StageRoot"]
 script = ExtResource("10_6hctx")
