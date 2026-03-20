@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=3 uid="uid://ce8s25qh3un6e"]
+
+[ext_resource type="Script" uid="uid://dl1ykpbpwp767" path="res://scripts/enemy/machine_boss_1_mk_1_controller.gd" id="1_4bl73"]
+[ext_resource type="PackedScene" uid="uid://1ji5yid7wtgc" path="res://assets/meshes/machine_boss_1.glb" id="1_5dghd"]
+
+[node name="MachineBoss1" type="Node3D"]
+script = ExtResource("1_4bl73")
+preview_in_editor = false
+
+[node name="MachineBoss1Mesh" parent="." instance=ExtResource("1_5dghd")]
+
+[node name="machine_boss_1_back_orbiters" parent="MachineBoss1Mesh/machine_boss_1_root" index="0"]
+transform = Transform3D(0.95931387, -0.2823212, 0, 0.2823212, 0.95931387, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="machine_boss_1_front_orbiters" parent="MachineBoss1Mesh/machine_boss_1_root" index="2"]
+transform = Transform3D(-0.6980876, 0.71599853, 0, -0.71599853, -0.6980876, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="machine_boss_1_inner_orbiters" parent="MachineBoss1Mesh/machine_boss_1_root" index="3"]
+transform = Transform3D(0.30216926, -0.95324826, 0, 0.95324826, 0.30216926, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="machine_boss_1_outer_orbiters" parent="MachineBoss1Mesh/machine_boss_1_root" index="4"]
+transform = Transform3D(-0.8166502, -0.5771129, 0, 0.5771129, -0.8166502, 0, 0, 0, 1, 0, 0, 0)
+
+[editable path="MachineBoss1Mesh"]

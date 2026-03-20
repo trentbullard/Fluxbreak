@@ -15,7 +15,7 @@
 [ext_resource type="Resource" uid="uid://cem52uptcff4c" path="res://content/data/cards/basic_wave.tres" id="9_26xou"]
 [ext_resource type="Script" uid="uid://dw6cm3pc4tv74" path="res://scripts/components/wave_budgeter.gd" id="9_bt7bg"]
 [ext_resource type="Script" uid="uid://i56d1j8euse1" path="res://scripts/hud/nameplate_manager.gd" id="9_gb53w"]
-[ext_resource type="Script" path="res://scripts/components/enemy_combat_scaling_director.gd" id="9_scalingdir"]
+[ext_resource type="Script" uid="uid://wtq7ap1rj5pn" path="res://scripts/components/enemy_combat_scaling_director.gd" id="9_scalingdir"]
 [ext_resource type="Script" uid="uid://dbbf334sll6co" path="res://systems/catalogs/enemy_catalog.gd" id="10_6hctx"]
 [ext_resource type="PackedScene" uid="uid://icnhxdf4gt2c" path="res://scenes/hud/nameplate.tscn" id="10_gb53w"]
 [ext_resource type="LabelSettings" uid="uid://coy4ocfodghm4" path="res://scripts/hud/status_label_settings.tres" id="10_m114p"]
