@@ -9,16 +9,29 @@
 
 [node name="MachineCoremind" type="Node3D"]
 script = ExtResource("1_ww7pj")
+inner_sphere_path = NodePath("ModelRoot/MachineCoremindInnerSphereMesh")
+secondary_sphere_path = NodePath("ModelRoot/MachineCoremindSecondarySphereMesh")
+outer_sphere_path = NodePath("ModelRoot/MachineCoremindOuterSphereMesh")
 sphere_speed_min_deg = 20.0
 sphere_speed_max_deg = 40.0
 preview_in_editor = false
 
-[node name="MachineCoremindCoreMesh" parent="." instance=ExtResource("2_spnxd")]
+[node name="ModelRoot" type="Node3D" parent="."]
 
-[node name="MachineCoremindInnerSphereMesh" parent="." instance=ExtResource("3_kknys")]
+[node name="MachineCoremindCoreMesh" parent="ModelRoot" instance=ExtResource("2_spnxd")]
+skeleton = NodePath("../..")
 
-[node name="MachineCoremindSecondarySphereMesh" parent="." instance=ExtResource("4_j4ma0")]
+[node name="MachineCoremindInnerSphereMesh" parent="ModelRoot" instance=ExtResource("3_kknys")]
+skeleton = NodePath("../..")
 
-[node name="MachineCoremindOuterSphereMesh" parent="." instance=ExtResource("5_r6ta1")]
+[node name="MachineCoremindSecondarySphereMesh" parent="ModelRoot" instance=ExtResource("4_j4ma0")]
+skeleton = NodePath("../..")
 
-[node name="MachineCoremindShieldMesh" parent="." instance=ExtResource("6_rtds6")]
+[node name="MachineCoremindOuterSphereMesh" parent="ModelRoot" instance=ExtResource("5_r6ta1")]
+skeleton = NodePath("../..")
+
+[node name="MachineCoremindShieldMesh" parent="ModelRoot" instance=ExtResource("6_rtds6")]
+skeleton = NodePath("../..")
+
+[node name="MuzzleSocket" type="Marker3D" parent="ModelRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -13)

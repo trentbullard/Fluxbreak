@@ -5,16 +5,18 @@
 
 [node name="MachineBoss1" type="Node3D"]
 script = ExtResource("1_4bl73")
+back_orbiters_path = NodePath("ModelRoot/MachineBoss1Mesh/machine_boss_1_root/machine_boss_1_back_orbiters")
+front_orbiters_path = NodePath("ModelRoot/MachineBoss1Mesh/machine_boss_1_root/machine_boss_1_front_orbiters")
+inner_orbiters_path = NodePath("ModelRoot/MachineBoss1Mesh/machine_boss_1_root/machine_boss_1_inner_orbiters")
+outer_orbiters_path = NodePath("ModelRoot/MachineBoss1Mesh/machine_boss_1_root/machine_boss_1_outer_orbiters")
 preview_in_editor = false
 
-[node name="MachineBoss1Mesh" parent="." instance=ExtResource("1_5dghd")]
+[node name="ModelRoot" type="Node3D" parent="."]
 
-[node name="machine_boss_1_back_orbiters" parent="MachineBoss1Mesh/machine_boss_1_root" index="0"]
+[node name="MachineBoss1Mesh" parent="ModelRoot" instance=ExtResource("1_5dghd")]
+skeleton = NodePath("../..")
 
-[node name="machine_boss_1_front_orbiters" parent="MachineBoss1Mesh/machine_boss_1_root" index="2"]
+[node name="MuzzleSocket" type="Marker3D" parent="ModelRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -148)
 
-[node name="machine_boss_1_inner_orbiters" parent="MachineBoss1Mesh/machine_boss_1_root" index="3"]
-
-[node name="machine_boss_1_outer_orbiters" parent="MachineBoss1Mesh/machine_boss_1_root" index="4"]
-
-[editable path="MachineBoss1Mesh"]
+[editable path="ModelRoot/MachineBoss1Mesh"]

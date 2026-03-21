@@ -80,5 +80,5 @@ skeleton = NodePath("../..")
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0)
 mesh = SubResource("TorusMesh_2x2wk")
 
-[node name="MuzzleSocket" type="Marker3D" parent="."]
+[node name="MuzzleSocket" type="Marker3D" parent="ModelRoot"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.5, -7.5)

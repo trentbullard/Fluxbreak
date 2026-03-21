@@ -8,6 +8,9 @@
 
 [node name="MachineWarden" type="Node3D"]
 script = ExtResource("1_fk6bi")
+shield_mesh_path = NodePath("ModelRoot/MachineWardenShieldsMesh")
+sensor_ring_1_path = NodePath("ModelRoot/MachineWardenSensorRing1Mesh")
+sensor_ring_2_path = NodePath("ModelRoot/MachineWardenSensorRing2Mesh")
 shield_speed_min_deg = 20.0
 shield_speed_max_deg = 40.0
 shield_retarget_min_sec = 10.0
@@ -18,10 +21,19 @@ sensor_retarget_min_sec = 10.0
 sensor_retarget_max_sec = 20.0
 preview_in_editor = false
 
-[node name="MachineWardenBodyMesh" parent="." instance=ExtResource("2_1ufxs")]
+[node name="ModelRoot" type="Node3D" parent="."]
 
-[node name="MachineWardenSensorRing1Mesh" parent="." instance=ExtResource("3_hrwsw")]
+[node name="MachineWardenBodyMesh" parent="ModelRoot" instance=ExtResource("2_1ufxs")]
+skeleton = NodePath("../..")
 
-[node name="MachineWardenSensorRing2Mesh" parent="." instance=ExtResource("4_nt6wi")]
+[node name="MachineWardenSensorRing1Mesh" parent="ModelRoot" instance=ExtResource("3_hrwsw")]
+skeleton = NodePath("../..")
 
-[node name="MachineWardenShieldsMesh" parent="." instance=ExtResource("5_aix8p")]
+[node name="MachineWardenSensorRing2Mesh" parent="ModelRoot" instance=ExtResource("4_nt6wi")]
+skeleton = NodePath("../..")
+
+[node name="MachineWardenShieldsMesh" parent="ModelRoot" instance=ExtResource("5_aix8p")]
+skeleton = NodePath("../..")
+
+[node name="MuzzleSocket" type="Marker3D" parent="ModelRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -33)

@@ -7,13 +7,14 @@ class_name EnemyTurret
 @export var team_id: int = 0
 
 @onready var shot_sound: AudioStreamPlayer3D = $ShotSound
-@onready var muzzle: Marker3D   = $Muzzle
 
 var _detector: Area3D = null
 var _weapon: WeaponDef = null
 var _weapon_stats: WeaponStatSnapshot = null
 var _cooldown: float = 0.0
 var _targets: Array[Node3D] = []
+var _muzzle_socket: Marker3D = null
+var _muzzle_socket_error_logged: bool = false
 
 var eff_fire_rate: float = 0.0
 var eff_base_accuracy: float = 0.0
@@ -46,6 +47,7 @@ func apply_weapon(w: WeaponDef, team_id_val: int, d: Area3D, snapshot: WeaponSta
 	WeaponStatResolver.apply_snapshot_to_turret(self, _weapon_stats)
 	_detector = d
 	team_id = team_id_val
+	_muzzle_socket = _resolve_muzzle_socket()
 	if _detector != null:
 		var cs: CollisionShape3D = _detector.get_node("CollisionShape3D") as CollisionShape3D
 		var sphere: SphereShape3D = cs.shape as SphereShape3D
@@ -53,8 +55,9 @@ func apply_weapon(w: WeaponDef, team_id_val: int, d: Area3D, snapshot: WeaponSta
 			sphere.radius = max(eff_base_range + eff_range_bonus_add, 0.0)
 
 func get_shot_origin() -> Vector3:
-	if muzzle != null:
-		return muzzle.global_position
+	var muzzle_socket: Marker3D = _get_muzzle_socket()
+	if muzzle_socket != null:
+		return muzzle_socket.global_position
 	return global_position
 
 func build_combat_stat_context(_target: Object = null) -> CombatStatContext:
@@ -64,6 +67,7 @@ func build_combat_stat_context(_target: Object = null) -> CombatStatContext:
 	return owner_enemy.build_combat_stat_context()
 
 func _ready() -> void:
+	_muzzle_socket = _resolve_muzzle_socket()
 	if _detector != null:
 		_detector.body_entered.connect(_on_body_entered)
 		_detector.body_exited.connect(_on_body_exited)
@@ -119,10 +123,11 @@ func _pick_nearest() -> Node3D:
 func _fire_at_with_roll(target: Node3D) -> void:
 	if _weapon == null or _weapon.projectile_scene == null or not target.visible:
 		return
-	if muzzle == null:
+	var muzzle_socket: Marker3D = _get_muzzle_socket()
+	if muzzle_socket == null:
 		return
 
-	var dir: Vector3 = (target.global_position - muzzle.global_position).normalized()
+	var dir: Vector3 = (target.global_position - muzzle_socket.global_position).normalized()
 	var aim_basis: Basis = Basis.looking_at(dir, Vector3.UP)
 	
 	var hit_chance: float = WeaponCombatResolver.compute_effective_accuracy_vs_target(self, target)
@@ -136,7 +141,7 @@ func _fire_at_with_roll(target: Node3D) -> void:
 	if p == null:
 		return
 
-	p.global_transform = Transform3D(aim_basis, muzzle.global_position)
+	p.global_transform = Transform3D(aim_basis, muzzle_socket.global_position)
 	if eff_projectile_speed > 0.0:
 		p.speed = eff_projectile_speed
 	if eff_projectile_life > 0.0:
@@ -156,3 +161,35 @@ func _resolve_owner_enemy() -> Enemy:
 			return node as Enemy
 		node = node.get_parent()
 	return null
+
+func _get_muzzle_socket() -> Marker3D:
+	if _muzzle_socket != null and is_instance_valid(_muzzle_socket):
+		return _muzzle_socket
+	_muzzle_socket = _resolve_muzzle_socket()
+	return _muzzle_socket
+
+func _resolve_muzzle_socket() -> Marker3D:
+	var owner_enemy: Enemy = _resolve_owner_enemy()
+	if owner_enemy == null:
+		return null
+	var muzzle_socket: Marker3D = owner_enemy.get_muzzle_socket()
+	if muzzle_socket != null:
+		_muzzle_socket_error_logged = false
+		return muzzle_socket
+	if not _muzzle_socket_error_logged:
+		_muzzle_socket_error_logged = true
+		push_error("Enemy turret is skipping fire because `%s` (%s) is missing `VisualScene/ModelRoot/MuzzleSocket`." % [_enemy_debug_id(owner_enemy), _enemy_scene_context(owner_enemy)])
+	return null
+
+func _enemy_debug_id(owner_enemy: Enemy) -> String:
+	var enemy_id: String = String(owner_enemy.get_enemy_id())
+	if enemy_id == "":
+		return owner_enemy.name
+	return enemy_id
+
+func _enemy_scene_context(owner_enemy: Enemy) -> String:
+	if owner_enemy.def != null and owner_enemy.def.model_scene != null and owner_enemy.def.model_scene.resource_path != "":
+		return owner_enemy.def.model_scene.resource_path
+	if owner_enemy.scene_file_path != "":
+		return owner_enemy.scene_file_path
+	return "<unspecified>"

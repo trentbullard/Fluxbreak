@@ -35,22 +35,27 @@ explosion_scene = ExtResource("2_8e3ao")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("SphereShape3D_6xk8f")
 
-[node name="ModelRoot" type="Node3D" parent="."]
+[node name="VisualScene" type="Node3D" parent="."]
 
-[node name="Body" type="MeshInstance3D" parent="ModelRoot"]
+[node name="ModelRoot" type="Node3D" parent="VisualScene"]
+
+[node name="Body" type="MeshInstance3D" parent="VisualScene/ModelRoot"]
 transform = Transform3D(30, 0, 0, 0, 30, 0, 0, 0, 30, 0, 0, 0)
 mesh = SubResource("BoxMesh_8e3ao")
-skeleton = NodePath("../..")
+skeleton = NodePath("../../..")
 
-[node name="Barrel" type="MeshInstance3D" parent="ModelRoot"]
+[node name="Barrel" type="MeshInstance3D" parent="VisualScene/ModelRoot"]
 transform = Transform3D(4, 0, 0, 0, -2.8512937e-07, 4, 0, -6.523, -1.7484555e-07, 0, 21.864933, -2.8426156)
 mesh = SubResource("CylinderMesh_38ino")
-skeleton = NodePath("../..")
+skeleton = NodePath("../../..")
 
-[node name="Mount" type="MeshInstance3D" parent="ModelRoot"]
+[node name="Mount" type="MeshInstance3D" parent="VisualScene/ModelRoot"]
 transform = Transform3D(3, 0, 0, 0, 3.147955, 0, 0, 0, 3, 0, 17.983444, 0)
 mesh = SubResource("CylinderMesh_8e3ao")
-skeleton = NodePath("../..")
+skeleton = NodePath("../../..")
+
+[node name="MuzzleSocket" type="Marker3D" parent="VisualScene/ModelRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 21.98146, -8.429119)
 
 [node name="Detector" type="Area3D" parent="."]
 collision_layer = 0
@@ -62,9 +67,6 @@ shape = SubResource("SphereShape3D_n7575")
 script = ExtResource("3_lu5c6")
 target_groups = Array[String](["player"])
 systems_bonus = 0.0
-
-[node name="Muzzle" type="Marker3D" parent="Turret"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 21.98146, -8.429119)
 
 [node name="ShotSound" type="AudioStreamPlayer3D" parent="Turret"]
 stream = ExtResource("5_jt03m")

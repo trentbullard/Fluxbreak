@@ -5,6 +5,9 @@ class_name Enemy
 signal about_to_die(target: Enemy)
 
 const NanobotSwarmScene: PackedScene = preload("res://scenes/drops/nanobot_swarm.tscn")
+const VISUAL_SCENE_PATH: NodePath = ^"VisualScene"
+const MODEL_ROOT_RELATIVE_PATH: NodePath = ^"ModelRoot"
+const MUZZLE_SOCKET_RELATIVE_PATH: NodePath = ^"MuzzleSocket"
 
 @export_group("Paths")
 @export var turret_paths: Array[NodePath] = []
@@ -26,7 +29,6 @@ const NanobotSwarmScene: PackedScene = preload("res://scenes/drops/nanobot_swarm
 @export_group("Behavior")
 @export var min_distance: float = 250.0
 @export var max_distance: float = 400.0
-@export var model_root_path: NodePath = ^"ModelRoot"
 
 @export_group("Warp In")
 @export var warp_fade_duration_sec: float = 0.35
@@ -66,6 +68,8 @@ var _warp_tween: Tween = null
 var _warp_material_entries: Array[Dictionary] = []
 var _warp_model_root: Node3D = null
 var _warp_original_model_scale: Vector3 = Vector3.ONE
+var _visual_model_root_error_logged: bool = false
+var _visual_muzzle_socket_error_logged: bool = false
 
 func configure_enemy(d: EnemyDef, spawn_context: EnemySpawnContext = null) -> void:
 	if d == null: return
@@ -100,15 +104,18 @@ func configure_enemy(d: EnemyDef, spawn_context: EnemySpawnContext = null) -> vo
 	_refresh_effective_stats()
 	
 	# Visuals
-	var model_root: Node3D = get_node_or_null(model_root_path) as Node3D
+	_reset_visual_contract_warnings()
 	if d.model_scene != null:
-		if model_root != null: model_root.free()
-		var new_root: Node3D = d.model_scene.instantiate() as Node3D
-		new_root.name = "ModelRoot"
-		add_child(new_root)
-		model_root_path = ^"ModelRoot"
-		model_root = new_root
-		call_deferred("_snap_to_socket", ^"Turret/Muzzle", ^"ModelRoot/MuzzleSocket", false, false)
+		var visual_scene: Node3D = get_visual_scene_root()
+		if visual_scene != null:
+			visual_scene.free()
+		var new_visual_scene: Node3D = d.model_scene.instantiate() as Node3D
+		if new_visual_scene == null:
+			push_error(_build_visual_contract_error("failed to instantiate visual scene"))
+		else:
+			new_visual_scene.name = "VisualScene"
+			add_child(new_visual_scene)
+	_validate_visual_contract()
 	
 	var weapon_snapshot: WeaponStatSnapshot = null
 	if _stat_snapshot != null:
@@ -171,13 +178,39 @@ func get_role_display_name() -> String:
 func get_effective_stat_snapshot() -> EnemyStatSnapshot:
 	return _stat_snapshot
 
+func get_visual_scene_root() -> Node3D:
+	return get_node_or_null(VISUAL_SCENE_PATH) as Node3D
+
+func get_visual_model_root(log_missing: bool = true) -> Node3D:
+	var visual_scene: Node3D = get_visual_scene_root()
+	if visual_scene == null:
+		if log_missing and not _visual_model_root_error_logged:
+			_visual_model_root_error_logged = true
+			push_error(_build_visual_contract_error("missing visual root at `VisualScene`"))
+		return null
+	var model_root: Node3D = visual_scene.get_node_or_null(MODEL_ROOT_RELATIVE_PATH) as Node3D
+	if model_root == null and log_missing and not _visual_model_root_error_logged:
+		_visual_model_root_error_logged = true
+		push_error(_build_visual_contract_error("missing required node `VisualScene/ModelRoot`"))
+	return model_root
+
+func get_muzzle_socket(log_missing: bool = true) -> Marker3D:
+	var model_root: Node3D = get_visual_model_root(log_missing)
+	if model_root == null:
+		return null
+	var muzzle_socket: Marker3D = model_root.get_node_or_null(MUZZLE_SOCKET_RELATIVE_PATH) as Marker3D
+	if muzzle_socket == null and log_missing and not _visual_muzzle_socket_error_logged:
+		_visual_muzzle_socket_error_logged = true
+		push_error(_build_visual_contract_error("missing required node `VisualScene/ModelRoot/MuzzleSocket`"))
+	return muzzle_socket
+
 func build_combat_stat_context() -> CombatStatContext:
 	var context: CombatStatContext = CombatStatContext.new()
 	context.set_enemy_identity_from_source(self)
 	return context
 
 func play_warp_in(delay_sec: float = 0.0) -> void:
-	var model_root: Node3D = get_node_or_null(model_root_path) as Node3D
+	var model_root: Node3D = get_visual_model_root()
 	if model_root == null:
 		return
 
@@ -466,32 +499,6 @@ func _finalize_death() -> void:
 	_stop_warp_in()
 	queue_free()
 
-func _snap_to_socket(local_node_path: NodePath, socket_rel_path: NodePath, copy_rot := true, copy_scale := false) -> void:
-	var node := get_node_or_null(local_node_path) as Node3D
-	var model_root := get_node_or_null(model_root_path) as Node3D
-	if node == null or model_root == null:
-		return
-	var socket := model_root.get_node_or_null(socket_rel_path) as Node3D
-	if socket == null:
-		return
-
-	var parent := node.get_parent() as Node3D
-	var xf := socket.global_transform
-
-	# strip socket scale unless you explicitly want it
-	if not copy_scale:
-		xf.basis = xf.basis.orthonormalized()
-
-	if copy_rot:
-		# place node at socket (pos + rot)
-		if parent:
-			node.transform = parent.global_transform.affine_inverse() * xf
-		else:
-			node.global_transform = xf
-	else:
-		# position only; keep your current rotation/scale
-		node.global_position = xf.origin
-
 func _apply_weapon_to_turrets(weapon: WeaponDef, team_id_val: int, snapshot: WeaponStatSnapshot = null) -> void:
 	if weapon == null: return
 	
@@ -510,3 +517,26 @@ func _apply_weapon_to_turrets(weapon: WeaponDef, team_id_val: int, snapshot: Wea
 		if t is EnemyTurret:
 			var detector: Area3D = $Detector
 			(t as EnemyTurret).apply_weapon(weapon, team_id_val, detector, snapshot)
+
+func _reset_visual_contract_warnings() -> void:
+	_visual_model_root_error_logged = false
+	_visual_muzzle_socket_error_logged = false
+
+func _validate_visual_contract() -> void:
+	get_visual_model_root()
+	get_muzzle_socket()
+
+func _build_visual_contract_error(details: String) -> String:
+	var resolved_enemy_id: String = enemy_id
+	if resolved_enemy_id == "":
+		resolved_enemy_id = name
+	var visual_scene_path: String = "<unspecified>"
+	if def != null and def.model_scene != null and def.model_scene.resource_path != "":
+		visual_scene_path = def.model_scene.resource_path
+	else:
+		var visual_scene: Node3D = get_visual_scene_root()
+		if visual_scene != null and visual_scene.scene_file_path != "":
+			visual_scene_path = visual_scene.scene_file_path
+		elif scene_file_path != "":
+			visual_scene_path = scene_file_path
+	return "Enemy visual contract error for `%s` (%s): %s." % [resolved_enemy_id, visual_scene_path, details]
