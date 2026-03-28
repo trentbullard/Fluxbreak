@@ -20,6 +20,7 @@ signal menu_closed
 @onready var btn_close: Button = $Close
 const UPGRADE_COST_VARIANCE: float = 0.05
 const TIER_PROGRESS_WAVE_SPAN: float = 10.0
+const FULL_WEAPON_MOUNTS_TEXT: String = "All weapon mounts occupied"
 
 var _root: Control
 var _dim: ColorRect
@@ -585,11 +586,15 @@ func _update_buttons() -> void:
 			btn.visible = true
 			btn.disabled = offer_cost > nb
 		elif i == _buttons.size() - 1 and _weapon_choice != null:
-			# Weapon button (last button) - uses progressive pricing
-			var weapon_cost: int = RunState.get_weapon_cost(_weapon_choice.cost)
-			btn.text = "+ %s (%d)" % [_weapon_choice.display_name, weapon_cost]
+			# Weapon slot becomes a status message when all mounts are filled.
 			btn.visible = true
-			btn.disabled = weapon_cost > nb
+			if _has_open_weapon_mount():
+				var weapon_cost: int = RunState.get_weapon_cost(_weapon_choice.cost)
+				btn.text = "+ %s (%d)" % [_weapon_choice.display_name, weapon_cost]
+				btn.disabled = weapon_cost > nb
+			else:
+				btn.text = FULL_WEAPON_MOUNTS_TEXT
+				btn.disabled = true
 		else:
 			btn.visible = false
 
@@ -618,6 +623,8 @@ func _on_button_pressed(index: int) -> void:
 		upgrade_selected.emit(upgrade)
 	elif index == _buttons.size() - 1 and _weapon_choice != null:
 		# Weapon selected - uses progressive pricing
+		if not _has_open_weapon_mount():
+			return
 		var weapon_cost: int = RunState.get_weapon_cost(_weapon_choice.cost)
 		if weapon_cost > _current_nanobots:
 			return  # Can't afford
@@ -653,6 +660,18 @@ func _apply_upgrade(upgrade: Upgrade) -> void:
 func _apply_weapon(weapon: WeaponDef) -> void:
 	RunState.record_weapon_purchase()
 	EventBus.add_gun_requested.emit(weapon)
+
+
+func _has_open_weapon_mount() -> bool:
+	var player_ship: Ship = _get_player_ship()
+	if player_ship == null or player_ship.hardpoint_manager == null:
+		return true
+	var hardpoint_manager: TurretHardpointManager = player_ship.hardpoint_manager
+	return hardpoint_manager.get_weapon_count() < hardpoint_manager.max_assemblies
+
+
+func _get_player_ship() -> Ship:
+	return get_tree().get_first_node_in_group("player") as Ship
 
 
 func _close_menu() -> void:
