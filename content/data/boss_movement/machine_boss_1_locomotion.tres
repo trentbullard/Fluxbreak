@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="BossLocomotionProfile" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="BossLocomotionProfile" load_steps=2 format=3 uid="uid://c2w55wterj5ve"]
 
-[ext_resource type="Script" path="res://content/defs/boss_locomotion_profile.gd" id="1_locomotion"]
+[ext_resource type="Script" uid="uid://c14xpv88esllf" path="res://content/defs/boss_locomotion_profile.gd" id="1_locomotion"]
 
 [resource]
 script = ExtResource("1_locomotion")

@@ -5,7 +5,7 @@
 [ext_resource type="Resource" uid="uid://bhqg1b3rxeh3h" path="res://content/data/enemy_roles/bruiser.tres" id="3_role"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/enemy_boss.tscn" id="4_actor_scene"]
 [ext_resource type="PackedScene" uid="uid://ce8s25qh3un6e" path="res://scenes/enemies/machine_boss_1_mk1.tscn" id="5_model_scene"]
-[ext_resource type="Resource" path="res://content/data/boss_movement/machine_boss_1_movement.tres" id="6_movement"]
+[ext_resource type="Resource" uid="uid://dvthmxrbwmjw" path="res://content/data/boss_movement/machine_boss_1_movement.tres" id="6_movement"]
 
 [resource]
 script = ExtResource("1_boss_def")

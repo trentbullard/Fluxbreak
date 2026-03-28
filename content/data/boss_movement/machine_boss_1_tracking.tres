@@ -1,8 +1,7 @@
-[gd_resource type="Resource" script_class="BossTargetTrackingProfile" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="BossTargetTrackingProfile" load_steps=2 format=3 uid="uid://cneqgtgft45nu"]
 
-[ext_resource type="Script" path="res://content/defs/boss_target_tracking_profile.gd" id="1_tracking"]
+[ext_resource type="Script" uid="uid://daxwruo0ejw8k" path="res://content/defs/boss_target_tracking_profile.gd" id="1_tracking"]
 
 [resource]
 script = ExtResource("1_tracking")
 turn_lerp_rate = 3.8
-aim_vertical_offset = 0.0
