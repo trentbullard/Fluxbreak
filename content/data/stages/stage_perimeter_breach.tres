@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="StageDef" load_steps=22 format=3 uid="uid://nwgfpc1w8myu"]
+[gd_resource type="Resource" script_class="StageDef" load_steps=23 format=3 uid="uid://nwgfpc1w8myu"]
 
 [ext_resource type="Script" uid="uid://ccxfqxark46f6" path="res://content/defs/stage_def.gd" id="1_stage_def"]
 [ext_resource type="Script" uid="uid://c0baui7bplv2c" path="res://content/defs/stage_modifier_def.gd" id="1_v303b"]
@@ -11,6 +11,7 @@
 [ext_resource type="Resource" path="res://content/data/stages/modifiers/thruster_corridors.tres" id="6_thruster_corridors"]
 [ext_resource type="Resource" uid="uid://xwx3fdeai4g8" path="res://content/data/stages/modifiers/sensor_static.tres" id="7_sensor_static"]
 [ext_resource type="Script" uid="uid://c7bw4eh6k252" path="res://content/defs/poi_def.gd" id="8_m83hq"]
+[ext_resource type="PackedScene" uid="uid://dwpchtmcivd4y" path="res://scenes/objectives/boss_gateway.tscn" id="9_gateway_scene"]
 [ext_resource type="Script" uid="uid://dwo3qna7vo5nk" path="res://content/defs/wave_card.gd" id="10_2ph3h"]
 [ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="11_8voro"]
 [ext_resource type="Resource" uid="uid://u118lh0nmv2k" path="res://content/data/factions/machines.tres" id="11_faction"]
@@ -79,6 +80,7 @@ stage_id = &"perimeter_breach"
 display_name = "Perimeter Breach"
 description = "Story stage one. The player fights through the station perimeter, clears the local pressure spike, and opens a boss gate into the inner system."
 next_stage_id = &"reactor_graveyard"
+gateway_scene = ExtResource("9_gateway_scene")
 boss_faction = ExtResource("11_faction")
 boss_pool = Array[ExtResource("4_0ff5l")]([ExtResource("5_nd0ai")])
 panorama_options = Array[Texture2D]([ExtResource("2_plain_starfield"), ExtResource("3_refined_plane"), ExtResource("4_blue_nebula")])

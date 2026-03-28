@@ -383,6 +383,12 @@ func spend_nanobots(amount: int) -> void:
 func get_nanobots() -> int:
 	return _nanobots
 
+func reset_for_stage_transition() -> void:
+	linear_velocity = Vector3.ZERO
+	angular_velocity = Vector3.ZERO
+	global_transform = Transform3D.IDENTITY
+	sleeping = false
+
 func get_hull_repair_cost() -> int:
 	return max(hull_repair_cost, 0)
 

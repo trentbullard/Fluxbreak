@@ -5,6 +5,7 @@ enum CompletionFlow {
 	BOSS_GATEWAY,
 	RUN_COMPLETE,
 	ENDLESS,
+	BOSS_FINALE,
 }
 
 @export_group("Identity")
@@ -126,9 +127,15 @@ func get_wave_cards() -> Array[WaveCard]:
 	return resolved
 
 func should_spawn_boss_wave() -> bool:
-	if completion_flow != CompletionFlow.BOSS_GATEWAY:
+	if completion_flow != CompletionFlow.BOSS_GATEWAY and completion_flow != CompletionFlow.BOSS_FINALE:
 		return false
 	return not get_boss_pool().is_empty()
+
+func should_open_gateway_on_boss_defeat() -> bool:
+	return completion_flow == CompletionFlow.BOSS_GATEWAY
+
+func should_end_run_on_boss_defeat() -> bool:
+	return completion_flow == CompletionFlow.BOSS_FINALE
 
 func get_boss_pool() -> Array[EnemyBossDef]:
 	var resolved: Array[EnemyBossDef] = []

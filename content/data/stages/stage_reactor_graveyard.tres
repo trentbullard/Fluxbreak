@@ -8,7 +8,7 @@
 [ext_resource type="Texture2D" uid="uid://coctkbo0joyfm" path="res://assets/spheremaps/volcanic_planet_close.png" id="5_volcanic_planet"]
 [ext_resource type="Resource" uid="uid://bf5ocmvxqio0j" path="res://content/data/stages/modifiers/salvage_tide.tres" id="6_salvage_tide"]
 [ext_resource type="Resource" uid="uid://xwx3fdeai4g8" path="res://content/data/stages/modifiers/sensor_static.tres" id="7_sensor_static"]
-[ext_resource type="Resource" path="res://content/data/stages/modifiers/solar_flare_front.tres" id="8_solar_flare_front"]
+[ext_resource type="Resource" uid="uid://wob4lnnxphp8" path="res://content/data/stages/modifiers/solar_flare_front.tres" id="8_solar_flare_front"]
 [ext_resource type="Script" uid="uid://c7bw4eh6k252" path="res://content/defs/poi_def.gd" id="9_8wxf2"]
 [ext_resource type="Script" uid="uid://dwo3qna7vo5nk" path="res://content/defs/wave_card.gd" id="11_7qahc"]
 [ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="12_afds5"]
@@ -80,7 +80,7 @@ script = ExtResource("1_stage_def")
 stage_id = &"reactor_graveyard"
 display_name = "Reactor Graveyard"
 description = "Story stage two. A hotter, denser battlefield built to finish the run once its final boss encounter is cleared."
-completion_flow = 1
+completion_flow = 3
 boss_faction = ExtResource("12_faction")
 boss_pool = Array[ExtResource("12_boss_def")]([ExtResource("17_boss")])
 panorama_options = Array[Texture2D]([ExtResource("2_asteroid_field"), ExtResource("3_marslike_planet"), ExtResource("4_ringed_dwarf"), ExtResource("5_volcanic_planet")])

@@ -15,7 +15,8 @@ var weapon_price_multiplier: float = 1.5  # Each weapon costs 1.5x more than pre
 var enemy_nanobots_per_bounty_scrap: float = 100.0
 var enemy_nanobot_variance_pct: float = 0.15
 
-var _wave_index: int = 0
+var _stage_wave_index: int = 0
+var _progression_wave_index: int = 0
 var _enemy_budget: int = 0
 var _target_budget: int = 0
 
@@ -25,7 +26,7 @@ var target_nanobot_drop_by_size: Dictionary = {
 	2: 3000, # e.g. medium wrecks
 }
 
-enum State { IN_WAVE, DOWNTIME }
+enum State { IN_WAVE, DOWNTIME, GATEWAY_HOLD }
 
 var run_state: State = State.DOWNTIME
 var run_score: int = 0
@@ -38,6 +39,8 @@ func start_run() -> void:
 	reset_score()
 	reset_weapons_purchased()
 	reset_upgrades_purchased()
+	reset_wave_progression()
+	set_state(State.DOWNTIME)
 	if CombatStats != null:
 		CombatStats.reset_run_metrics()
 
@@ -105,7 +108,13 @@ func get_upgrade_purchase_memory_for_poi_type(poi_type: int) -> Dictionary:
 	}
 
 func get_wave_index() -> int:
-	return _wave_index
+	return _stage_wave_index
+
+func get_stage_wave_index() -> int:
+	return _stage_wave_index
+
+func get_progression_wave_index() -> int:
+	return _progression_wave_index
 
 func set_state(state: State) -> void:
 	run_state = state
@@ -120,10 +129,21 @@ func add_score(amount: int, reason: String = "") -> void:
 	run_score += amount
 	score_changed.emit(run_score, amount, reason)
 
-func set_wave_context(wave_index: int, enemy_point_budget: int, target_point_budget: int) -> void:
-	_wave_index = max(wave_index, 0)
+func set_wave_context(wave_index: int, enemy_point_budget: int, target_point_budget: int, progression_wave_index: int = -1) -> void:
+	_stage_wave_index = max(wave_index, 0)
+	if progression_wave_index >= 0:
+		_progression_wave_index = max(progression_wave_index, 0)
 	_enemy_budget = max(enemy_point_budget, 0)
 	_target_budget = max(target_point_budget, 0)
+
+func reset_stage_wave_context() -> void:
+	set_wave_context(0, 0, 0)
+
+func reset_wave_progression() -> void:
+	_stage_wave_index = 0
+	_progression_wave_index = 0
+	_enemy_budget = 0
+	_target_budget = 0
 
 func calc_enemy_nanobots(def: EnemyDef, combat_scaling: EnemyCombatScalingSnapshot = null) -> int:
 	if def == null:

@@ -108,6 +108,7 @@ func _sync_tracked_objects() -> void:
 	_sync_group("targets", "")  # Will auto-detect enemy vs target via meta
 	_sync_group("drops", "drop")  # Nanobot swarms and other drops
 	_sync_group("poi", "")       # Points of interest - auto-detect type
+	_sync_group("boss_gateways", "boss_gateway")
 
 func _sync_group(group_name: String, forced_kind: String) -> void:
 	var nodes: Array[Node] = get_tree().get_nodes_in_group(group_name)
@@ -144,6 +145,8 @@ func _detect_kind(obj: Node3D) -> String:
 				return "poi_utility"
 			_:
 				return "poi"
+	if obj is BossGateway:
+		return "boss_gateway"
 	if obj.has_meta("kind"):
 		var kind_meta: String = String(obj.get_meta("kind"))
 		if kind_meta != "":

@@ -1080,7 +1080,7 @@ func _finalize_run_stats(count_as_death: bool) -> void:
 	var run_seconds: int = int(round(get_run_elapsed_seconds()))
 
 	var final_score: int = max(RunState.run_score, 0)
-	var final_wave: int = max(RunState.get_wave_index(), 0)
+	var final_wave: int = max(RunState.get_progression_wave_index(), 0)
 	var total_nanobots: int = max(_run_total_nanobots_collected, 0)
 	var peak_nanobots: int = max(_run_peak_nanobots, 0)
 

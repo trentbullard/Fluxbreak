@@ -168,6 +168,10 @@ func _refresh_timer_readouts() -> void:
 		_wave_label.text = "Intermission"
 		return
 
+	if _director.is_gateway_hold_active():
+		_wave_label.text = "Boss Cleared • Dock with Gateway"
+		return
+
 	if _director.get_state() == RunState.State.IN_WAVE:
 		if _director.is_boss_wave_active():
 			var boss_def: EnemyBossDef = _director.get_active_boss_def()

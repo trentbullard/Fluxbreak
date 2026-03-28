@@ -102,6 +102,8 @@ var _first_poi_spawned: bool = false
 var _elapsed_time: float = 0.0
 
 var _last_spawn_used_scene_override: bool = false
+var _default_poi_defs: Array[PoiDef] = []
+var _spawning_paused: bool = false
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Lifecycle
@@ -115,6 +117,7 @@ func _ready() -> void:
 		_rng.randomize()
 
 	_rebuild_definition_cache()
+	_default_poi_defs = poi_defs.duplicate()
 	
 	# Get player ship reference
 	_player_ship = get_node_or_null(ship_path) as Node3D
@@ -124,14 +127,14 @@ func _ready() -> void:
 	_spawn_timer.one_shot = true
 	_spawn_timer.timeout.connect(_on_spawn_timer_timeout)
 	add_child(_spawn_timer)
-	
-	# Start initial spawn delay
-	_spawn_timer.start(initial_spawn_delay)
+	_schedule_next_spawn(true)
 	
 	_log("PoiSpawner initialized. First POI in %.1f seconds." % initial_spawn_delay)
 
 
 func _process(delta: float) -> void:
+	if _spawning_paused:
+		return
 	_elapsed_time += delta
 
 
@@ -162,6 +165,32 @@ func get_active_pois() -> Array[PoiInstance]:
 			active_pois.append(poi)
 	return active_pois
 
+func apply_stage_definition(stage: StageDef) -> void:
+	var next_defs: Array[PoiDef] = []
+	if stage != null and not stage.poi_defs.is_empty():
+		next_defs = stage.poi_defs.duplicate()
+	else:
+		next_defs = _default_poi_defs.duplicate()
+	poi_defs = next_defs
+	_rebuild_definition_cache()
+
+func pause_spawning() -> void:
+	_spawning_paused = true
+	if _spawn_timer != null:
+		_spawn_timer.stop()
+
+func resume_stage_spawning(use_initial_delay: bool = true) -> void:
+	_spawning_paused = false
+	_elapsed_time = 0.0
+	_first_poi_spawned = false
+	_schedule_next_spawn(use_initial_delay)
+
+func clear_runtime_tracking() -> void:
+	_active_pois.clear()
+	for type_val in _configured_types:
+		_type_counts[type_val] = 0
+	_emit_counts_changed()
+
 
 ## Force spawn a POI of a specific type (for testing/debugging)
 func force_spawn(type: PoiDef.PoiType) -> PoiInstance:
@@ -173,6 +202,8 @@ func force_spawn(type: PoiDef.PoiType) -> PoiInstance:
 # ─────────────────────────────────────────────────────────────────────────────
 
 func _on_spawn_timer_timeout() -> void:
+	if _spawning_paused:
+		return
 	# Pick weighted type
 	var chosen_type: PoiDef.PoiType = _pick_weighted_type()
 	
@@ -182,11 +213,7 @@ func _on_spawn_timer_timeout() -> void:
 	if poi != null:
 		_first_poi_spawned = true
 	
-	# Schedule next spawn
-	var next_interval: float = _rng.randf_range(spawn_interval_min, spawn_interval_max)
-	_spawn_timer.start(next_interval)
-	
-	_log("Next POI spawn in %.1f seconds." % next_interval)
+	_schedule_next_spawn(false)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -338,6 +365,16 @@ func _rebuild_definition_cache() -> void:
 
 	if _configured_types.is_empty():
 		push_warning("PoiSpawner: poi_defs is empty. No POIs will spawn.")
+
+func _schedule_next_spawn(use_initial_delay: bool) -> void:
+	if _spawn_timer == null:
+		return
+	_spawn_timer.stop()
+	if _spawning_paused or _configured_types.is_empty():
+		return
+	var next_interval: float = initial_spawn_delay if use_initial_delay else _rng.randf_range(spawn_interval_min, spawn_interval_max)
+	_spawn_timer.start(next_interval)
+	_log("Next POI spawn in %.1f seconds." % next_interval)
 
 
 func _get_defs_for_type(type: PoiDef.PoiType) -> Array[PoiDef]:

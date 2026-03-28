@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_locomotion")
-preferred_distance = 1100.0
+preferred_distance = 500.0
 distance_tolerance = 220.0
 radial_force_scale = 1.1
 strafe_force_scale = 0.75

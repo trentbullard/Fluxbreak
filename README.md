@@ -93,7 +93,6 @@ Fluxbreak is aiming for readable chaos. The guiding rubric for new work is simpl
 
 ## TODO
 - 8 weapon cap
-- configure boss into stages
 
 ## License
 

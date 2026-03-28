@@ -7,6 +7,7 @@ extends Node3D
 @onready var stage_root: Node3D = $StageRoot
 @onready var world_environment_node: WorldEnvironment = $StageRoot/WorldEnvironment
 @onready var star: DirectionalLight3D = $StageRoot/Star
+@onready var poi_spawner: PoiSpawner = $StageRoot/PoiSpawner
 var _ship: Ship
 var _active_stage_scene: Node = null
 var _stage_rng: RandomNumberGenerator = RandomNumberGenerator.new()
@@ -57,6 +58,8 @@ func _set_ship_run_visibility(ship_visible: bool) -> void:
 func _on_stage_changed(stage: StageDef, _stage_index: int) -> void:
 	_swap_stage_scene(stage)
 	_apply_stage_environment(stage)
+	if poi_spawner != null:
+		poi_spawner.apply_stage_definition(stage)
 
 func _ensure_ship_instance() -> Ship:
 	if _ship != null and is_instance_valid(_ship):

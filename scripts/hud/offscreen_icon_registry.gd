@@ -68,6 +68,12 @@ func _register_defaults() -> void:
 	poi_utility.outline_width = 2.5
 	register("poi_utility", poi_utility)
 
+	# Boss gateway - bright cyan diamond to read as a special objective/exit
+	var boss_gateway: IconEntry = IconEntry.new(IconShape.DIAMOND, Color(0.35, 1.0, 0.95, 0.98), 18.0)
+	boss_gateway.outline_color = Color(0.05, 0.22, 0.22, 1.0)
+	boss_gateway.outline_width = 3.0
+	register("boss_gateway", boss_gateway)
+
 func register(kind: String, entry: IconEntry) -> void:
 	_entries[kind] = entry
 

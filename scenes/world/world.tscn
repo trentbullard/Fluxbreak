@@ -1,4 +1,4 @@
-[gd_scene load_steps=76 format=3 uid="uid://ppgr7fveqbrd"]
+[gd_scene load_steps=78 format=3 uid="uid://ppgr7fveqbrd"]
 
 [ext_resource type="Texture2D" uid="uid://d3x23q2en3ng1" path="res://assets/spheremaps/plain_starfield_1.png" id="1_dphjl"]
 [ext_resource type="Script" uid="uid://bksswhha71raw" path="res://scripts/world/world_bootstrap.gd" id="1_ovomx"]
@@ -55,6 +55,8 @@
 [ext_resource type="PackedScene" path="res://scenes/pois/poi_placeholder.tscn" id="poi_scene"]
 [ext_resource type="Script" uid="uid://d1ddx3ctljet4" path="res://systems/spawning/poi_spawner.gd" id="poi_spawner_script"]
 [ext_resource type="PackedScene" uid="uid://vui0na1ujbtt" path="res://scenes/hud/upgrade_menu.tscn" id="upgrade_menu_scene"]
+[ext_resource type="Script" path="res://scripts/objectives/boss_gateway_manager.gd" id="boss_gateway_manager_script"]
+[ext_resource type="Script" path="res://scripts/hud/boss_gateway_hud.gd" id="boss_gateway_hud_script"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_sar2w"]
 panorama = ExtResource("1_dphjl")
@@ -263,6 +265,13 @@ ship_path = NodePath("../../Ship")
 poi_spawner_path = NodePath("../PoiSpawner")
 upgrade_menu_path = NodePath("../../UpgradeMenu")
 
+[node name="BossGatewayManager" type="Node" parent="StageRoot"]
+script = ExtResource("boss_gateway_manager_script")
+ship_path = NodePath("../../Ship")
+wave_director_path = NodePath("../WaveDirector")
+poi_spawner_path = NodePath("../PoiSpawner")
+docking_manager_path = NodePath("../DockingManager")
+
 [node name="MainMenuOverlay" parent="." instance=ExtResource("29_kx0xk")]
 
 [node name="HUD" type="CanvasLayer" parent="."]
@@ -469,6 +478,23 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("docking_hud_script")
 docking_manager_path = NodePath("../../../StageRoot/DockingManager")
+label_settings = ExtResource("10_m114p")
+
+[node name="BossGatewayHud" type="Control" parent="HUD/ScreenRoot"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -146.0
+offset_right = 220.0
+offset_bottom = -86.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("boss_gateway_hud_script")
+boss_gateway_manager_path = NodePath("../../../StageRoot/BossGatewayManager")
 label_settings = ExtResource("10_m114p")
 
 [node name="EffectsLayer" type="Control" parent="HUD/ScreenRoot"]

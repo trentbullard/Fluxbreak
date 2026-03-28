@@ -233,7 +233,9 @@ func _build_upgrade_context(poi: PoiInstance) -> Dictionary:
 			highest_tier_by_family[family] = tier
 
 	var wave_index: int = 1
-	if RunState.has_method("get_wave_index"):
+	if RunState.has_method("get_progression_wave_index"):
+		wave_index = max(1, int(RunState.get_progression_wave_index()))
+	elif RunState.has_method("get_wave_index"):
 		wave_index = max(1, int(RunState.get_wave_index()))
 	var wave_progress: float = clamp(float(wave_index - 1) / TIER_PROGRESS_WAVE_SPAN, 0.0, 1.0)
 	var poi_type: int = _get_poi_type(poi)

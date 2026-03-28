@@ -1,0 +1,43 @@
+[gd_scene load_steps=5 format=3 uid="uid://dwpchtmcivd4y"]
+
+[ext_resource type="Script" uid="uid://5erxv2y84kbh" path="res://scripts/objectives/boss_gateway.gd" id="1_gateway"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gateway"]
+transparency = 1
+cull_mode = 2
+shading_mode = 0
+albedo_color = Color(0.1725, 0.851, 1, 0.75)
+
+[sub_resource type="TorusMesh" id="TorusMesh_gateway"]
+material = SubResource("StandardMaterial3D_gateway")
+inner_radius = 100.0
+outer_radius = 80.0
+rings = 32
+ring_segments = 28
+
+[sub_resource type="SphereMesh" id="SphereMesh_gateway_core"]
+material = SubResource("StandardMaterial3D_gateway")
+radius = 30.0
+height = 60.0
+
+[node name="BossGateway" type="Node3D"]
+script = ExtResource("1_gateway")
+display_name = "Gateway Rift"
+docking_radius = 120.0
+docking_time = 5.0
+
+[node name="Ring" type="MeshInstance3D" parent="."]
+material_override = SubResource("StandardMaterial3D_gateway")
+cast_shadow = 0
+mesh = SubResource("TorusMesh_gateway")
+
+[node name="CrossRing" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0)
+material_override = SubResource("StandardMaterial3D_gateway")
+cast_shadow = 0
+mesh = SubResource("TorusMesh_gateway")
+
+[node name="Core" type="MeshInstance3D" parent="."]
+material_override = SubResource("StandardMaterial3D_gateway")
+cast_shadow = 0
+mesh = SubResource("SphereMesh_gateway_core")

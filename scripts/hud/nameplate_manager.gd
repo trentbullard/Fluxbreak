@@ -9,6 +9,7 @@ class_name NameplateManager
 
 const POI_UNVISITED_COLOR: Color = Color(0.2, 0.95, 1.0, 1.0)
 const POI_VISITED_COLOR: Color = Color(1.0, 0.72, 0.2, 1.0)
+const GATEWAY_COLOR: Color = Color(0.35, 1.0, 0.95, 1.0)
 
 var _camera: Camera3D
 var _ship: Node3D
@@ -32,7 +33,9 @@ func _process(_dt: float) -> void:
 func _sync_targets() -> void:
 	var targets: Array = get_tree().get_nodes_in_group("targets")
 	var pois: Array = get_tree().get_nodes_in_group("pois")
+	var gateways: Array = get_tree().get_nodes_in_group("boss_gateways")
 	targets.append_array(pois)
+	targets.append_array(gateways)
 	
 	for t in targets:
 		var target: Node3D = t
@@ -59,10 +62,14 @@ func _sync_targets() -> void:
 		var pos3: Vector3 = target.global_position
 
 		var ship_pos: Vector3 = _ship.global_transform.origin if (_ship != null) else _camera.global_position
-		var d: float = pos3.distance_to(ship_pos)
-		var visible_now: bool = (d <= float(show_within_meters)) and _camera.is_position_in_frustum(pos3)
+		var distance_sq: float = pos3.distance_squared_to(ship_pos)
+		var visible_now: bool = (
+			distance_sq <= float(show_within_meters * show_within_meters)
+			and _camera.is_position_in_frustum(pos3)
+		)
 
 		if visible_now:
+			var d: float = sqrt(distance_sq)
 			var sp: Vector2 = _camera.unproject_position(pos3)
 			ui.visible = true
 
@@ -91,6 +98,12 @@ func _sync_targets() -> void:
 					label.text = "%s [%s]\n%s" % [
 						target.display_name,
 						type_tag,
+						distance_text
+					]
+				elif kind == "boss_gateway":
+					_apply_gateway_indicator(ui)
+					label.text = "%s\n%s  •  Dock to Advance" % [
+						_gateway_display_name(target),
 						distance_text
 					]
 
@@ -129,6 +142,8 @@ func _kind_of(node: Object) -> String:
 		return "target"
 	if node is PoiInstance:
 		return "poi"
+	if node is BossGateway:
+		return "boss_gateway"
 	if node.has_meta("kind"):
 		var kind_meta: String = String(node.get_meta("kind"))
 		if kind_meta != "":
@@ -172,3 +187,15 @@ func _reset_poi_indicator(ui: Control) -> void:
 		return
 	indicator.visible = false
 	indicator.color = POI_UNVISITED_COLOR
+
+func _apply_gateway_indicator(ui: Control) -> void:
+	var indicator: ColorRect = ui.get_node_or_null("HBox/StateIndicator") as ColorRect
+	if indicator == null:
+		return
+	indicator.visible = true
+	indicator.color = GATEWAY_COLOR
+
+func _gateway_display_name(gateway: Node3D) -> String:
+	if gateway is BossGateway:
+		return (gateway as BossGateway).get_display_name()
+	return gateway.name

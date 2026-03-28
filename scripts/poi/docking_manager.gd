@@ -167,6 +167,13 @@ func get_docking_poi() -> PoiInstance:
 func get_docking_timer() -> float:
 	return _docking_timer
 
+func reset_for_stage() -> void:
+	_docking_poi = null
+	_docking_timer = 0.0
+	_menu_open = false
+	_visited_pois.clear()
+	_completed_pois.clear()
+
 
 ## Initialize with external references
 func init(ship: Node3D, poi_spawner: PoiSpawner) -> void:

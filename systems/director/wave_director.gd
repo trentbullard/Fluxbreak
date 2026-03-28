@@ -9,6 +9,7 @@ signal downtime_ended(next_wave_index: int)
 signal next_wave_eta(seconds: float)
 signal boss_wave_started(boss_def: EnemyBossDef, wave_index: int)
 signal boss_wave_ended(boss_def: EnemyBossDef, wave_index: int, player_won: bool)
+signal gateway_ready(stage: StageDef, position: Vector3)
 
 @export var spawner_path: NodePath
 @export var downtime_sec: float = 30.0
@@ -50,6 +51,7 @@ var _elapsed_sec: float = 0.0
 var _spawner: Spawner
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _wave_index: int = 0
+var _progression_wave_index: int = 0
 var _wave_timer: float = 0.0
 var _state: RunState.State = RunState.State.DOWNTIME
 var _downtime_remaining: float = 0.0
@@ -63,12 +65,16 @@ var _current_enemy_density_reference: float = 6.0
 var _boss_wave_active: bool = false
 var _active_boss_def: EnemyBossDef = null
 var _active_boss_instance: Enemy = null
+var _gateway_hold_active: bool = false
 
 func get_state() -> RunState.State:
 	return _state
 
 func get_wave_index() -> int:
 	return _wave_index
+
+func get_progression_wave_index() -> int:
+	return _progression_wave_index
 
 func get_next_wave_index() -> int:
 	if _state == RunState.State.DOWNTIME:
@@ -86,6 +92,9 @@ func get_debug_snapshot() -> Dictionary:
 
 func is_boss_wave_active() -> bool:
 	return _boss_wave_active
+
+func is_gateway_hold_active() -> bool:
+	return _gateway_hold_active
 
 func get_active_boss_def() -> EnemyBossDef:
 	return _active_boss_def
@@ -111,10 +120,13 @@ func _ready() -> void:
 	if not GameFlow.stage_changed.is_connected(_on_stage_changed):
 		GameFlow.stage_changed.connect(_on_stage_changed)
 	_rng.randomize()
-	_start_downtime(true)
+	_reset_stage_runtime(true, true, true)
 	_start_pressure_loop()
 
 func _process(delta: float) -> void:
+	if _gateway_hold_active:
+		next_wave_eta.emit(0.0)
+		return
 	_elapsed_sec += delta
 	if _intensity_dir != null:
 		_intensity_dir.tick(delta, _state == RunState.State.IN_WAVE)
@@ -136,6 +148,7 @@ func _process(delta: float) -> void:
 		next_wave_eta.emit(eta)
 
 func _start_downtime(first: bool = false) -> void:
+	_gateway_hold_active = false
 	_state = RunState.State.DOWNTIME
 	RunState.set_state(RunState.State.DOWNTIME)
 	_active_card = null
@@ -227,14 +240,16 @@ func _next_wave() -> void:
 	_state = RunState.State.IN_WAVE
 
 	_wave_index += 1
+	_progression_wave_index += 1
 	_wave_timer = 0.0
 	if _intensity_dir != null:
 		_intensity_dir.begin_wave()
 	if _should_start_boss_wave():
 		_active_card = null
-		RunState.set_wave_context(_wave_index, 0, 0)
+		RunState.set_wave_context(_wave_index, 0, 0, _progression_wave_index)
 		_last_debug_snapshot = {
 			"wave_index": _wave_index,
+			"progression_wave_index": _progression_wave_index,
 			"stage_index": max(GameFlow.get_active_stage_index(), 0),
 			"state": "boss_wave",
 		}
@@ -270,7 +285,12 @@ func _next_wave() -> void:
 		)
 	budgets["enemy_points"] = int(opening_adjustment.get("enemy_points", budgets.get("enemy_points", 0)))
 
-	RunState.set_wave_context(_wave_index, int(budgets["enemy_points"]), int(budgets["target_points"]))
+	RunState.set_wave_context(
+		_wave_index,
+		int(budgets["enemy_points"]),
+		int(budgets["target_points"]),
+		_progression_wave_index
+	)
 
 	var max_tier: int = clamp(1 + _wave_index / 3 + stage_index, 1, 5)
 	var reqs: Array[SpawnRequest] = []
@@ -316,6 +336,7 @@ func _build_wave_debug_snapshot(
 ) -> Dictionary:
 	var snapshot: Dictionary = {
 		"wave_index": _wave_index,
+		"progression_wave_index": _progression_wave_index,
 		"stage_index": stage_index,
 		"state": "wave",
 		"card_id": String(card.get_card_id()) if card != null else "",
@@ -790,6 +811,7 @@ func _on_stage_changed(_stage: StageDef, _stage_index: int) -> void:
 	_active_card = null
 	_recent_card_ids.clear()
 	_clear_active_boss_state()
+	_gateway_hold_active = false
 	if _buyer != null:
 		_buyer.clear_history()
 
@@ -802,6 +824,8 @@ func _should_trigger_victory() -> bool:
 func _should_start_boss_wave() -> bool:
 	var current_stage: StageDef = GameFlow.get_current_stage()
 	if current_stage == null:
+		return false
+	if _gateway_hold_active:
 		return false
 	if not current_stage.should_spawn_boss_wave():
 		return false
@@ -862,6 +886,8 @@ func _on_active_boss_about_to_die(target: Enemy) -> void:
 	var boss_def: EnemyBossDef = _active_boss_def
 	var resolved_wave_index: int = _wave_index
 	var current_stage: StageDef = GameFlow.get_current_stage()
+	var gateway_position: Vector3 = target.global_position
+	var carryover_snapshot: EnemyCombatScalingSnapshot = _build_enemy_combat_scaling_snapshot(_wave_index, _elapsed_sec)
 	_clear_active_boss_state()
 	if boss_def != null:
 		GameFlow.complete_boss_encounter(true, false)
@@ -869,13 +895,17 @@ func _on_active_boss_about_to_die(target: Enemy) -> void:
 	emit_signal("wave_cleared", resolved_wave_index, _wave_timer)
 	if (
 		current_stage != null
-		and current_stage.completion_flow == StageDef.CompletionFlow.BOSS_GATEWAY
+		and current_stage.should_open_gateway_on_boss_defeat()
 		and GameFlow.has_next_stage()
 	):
-		if GameFlow.advance_to_next_stage():
-			_start_downtime()
-			return
+		if _enemy_combat_scaling_dir != null:
+			_enemy_combat_scaling_dir.set_carried_baseline_from_snapshot(carryover_snapshot)
+		_enter_gateway_hold(current_stage, gateway_position)
+		return
 	GameFlow.player_won()
+
+func begin_stage_after_gateway_transfer() -> void:
+	_reset_stage_runtime(false, false, true)
 
 func _clear_active_boss_state() -> void:
 	if _active_boss_instance != null and is_instance_valid(_active_boss_instance):
@@ -901,3 +931,42 @@ func _clear_non_boss_hostiles() -> void:
 			continue
 		if entry is TargetObject:
 			(entry as TargetObject).queue_free()
+
+func _enter_gateway_hold(stage: StageDef, position: Vector3) -> void:
+	_gateway_hold_active = true
+	_state = RunState.State.GATEWAY_HOLD
+	RunState.set_state(RunState.State.GATEWAY_HOLD)
+	_active_card = null
+	_pending_card = null
+	_wave_token += 1
+	RunState.set_wave_context(_wave_index, 0, 0, _progression_wave_index)
+	_last_debug_snapshot = {
+		"wave_index": _wave_index,
+		"progression_wave_index": _progression_wave_index,
+		"stage_index": max(GameFlow.get_active_stage_index(), 0),
+		"state": "gateway_hold",
+	}
+	gateway_ready.emit(stage, position)
+
+func _reset_stage_runtime(clear_progression: bool, clear_scaling_baseline: bool, first_downtime: bool) -> void:
+	_wave_token += 1
+	_wave_index = 0
+	_wave_timer = 0.0
+	_elapsed_sec = 0.0
+	_downtime_remaining = 0.0
+	_pending_card = null
+	_active_card = null
+	_recent_card_ids.clear()
+	_last_debug_snapshot = {}
+	_gateway_hold_active = false
+	_clear_active_boss_state()
+	if clear_progression:
+		_progression_wave_index = 0
+		RunState.reset_wave_progression()
+	else:
+		RunState.set_wave_context(0, 0, 0, _progression_wave_index)
+	if clear_scaling_baseline and _enemy_combat_scaling_dir != null:
+		_enemy_combat_scaling_dir.clear_carried_baseline()
+	if _buyer != null:
+		_buyer.clear_history()
+	_start_downtime(first_downtime)

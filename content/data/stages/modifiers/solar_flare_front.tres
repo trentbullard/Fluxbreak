@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="StageModifierDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="StageModifierDef" load_steps=3 format=3 uid="uid://wob4lnnxphp8"]
 
-[ext_resource type="Script" path="res://content/defs/stage_modifier_def.gd" id="1_stage_modifier_def"]
+[ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="1_h0jwy"]
+[ext_resource type="Script" uid="uid://c0baui7bplv2c" path="res://content/defs/stage_modifier_def.gd" id="1_stage_modifier_def"]
 
 [resource]
 script = ExtResource("1_stage_modifier_def")
