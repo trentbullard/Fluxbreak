@@ -1,21 +1,23 @@
-[gd_resource type="Resource" script_class="StageDef" load_steps=20 format=3 uid="uid://nwgfpc1w8myu"]
+[gd_resource type="Resource" script_class="StageDef" load_steps=22 format=3 uid="uid://nwgfpc1w8myu"]
 
 [ext_resource type="Script" uid="uid://ccxfqxark46f6" path="res://content/defs/stage_def.gd" id="1_stage_def"]
-[ext_resource type="Script" path="res://content/defs/stage_modifier_def.gd" id="1_v303b"]
+[ext_resource type="Script" uid="uid://c0baui7bplv2c" path="res://content/defs/stage_modifier_def.gd" id="1_v303b"]
 [ext_resource type="Texture2D" uid="uid://d3x23q2en3ng1" path="res://assets/spheremaps/plain_starfield_1.png" id="2_plain_starfield"]
 [ext_resource type="Texture2D" uid="uid://c47msyh8whoa7" path="res://assets/spheremaps/refined_galactic_plane_and_nebulae_2.png" id="3_refined_plane"]
+[ext_resource type="Script" uid="uid://co4k1ag8uvqgp" path="res://content/defs/enemy_boss_def.gd" id="4_0ff5l"]
 [ext_resource type="Texture2D" uid="uid://smu5ije51mq7" path="res://assets/spheremaps/rich_blue_nebulae_1.png" id="4_blue_nebula"]
+[ext_resource type="Resource" uid="uid://0c4ms8htkafv" path="res://content/data/enemies/machine_boss_1_mk1.tres" id="5_nd0ai"]
 [ext_resource type="Resource" uid="uid://bf5ocmvxqio0j" path="res://content/data/stages/modifiers/salvage_tide.tres" id="5_salvage_tide"]
 [ext_resource type="Resource" path="res://content/data/stages/modifiers/thruster_corridors.tres" id="6_thruster_corridors"]
 [ext_resource type="Resource" uid="uid://xwx3fdeai4g8" path="res://content/data/stages/modifiers/sensor_static.tres" id="7_sensor_static"]
 [ext_resource type="Script" uid="uid://c7bw4eh6k252" path="res://content/defs/poi_def.gd" id="8_m83hq"]
 [ext_resource type="Script" uid="uid://dwo3qna7vo5nk" path="res://content/defs/wave_card.gd" id="10_2ph3h"]
 [ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="11_8voro"]
-[ext_resource type="Resource" path="res://content/data/factions/machines.tres" id="11_faction"]
-[ext_resource type="Resource" path="res://content/data/enemy_roles/scout.tres" id="12_scout_role"]
-[ext_resource type="Resource" path="res://content/data/enemy_roles/suppressor.tres" id="13_suppressor_role"]
-[ext_resource type="Resource" path="res://content/data/enemy_roles/bruiser.tres" id="14_bruiser_role"]
-[ext_resource type="Resource" path="res://content/data/enemy_roles/brawler.tres" id="15_brawler_role"]
+[ext_resource type="Resource" uid="uid://u118lh0nmv2k" path="res://content/data/factions/machines.tres" id="11_faction"]
+[ext_resource type="Resource" uid="uid://gxc0snl6efky" path="res://content/data/enemy_roles/scout.tres" id="12_scout_role"]
+[ext_resource type="Resource" uid="uid://b4wfqd7je5blm" path="res://content/data/enemy_roles/suppressor.tres" id="13_suppressor_role"]
+[ext_resource type="Resource" uid="uid://bhqg1b3rxeh3h" path="res://content/data/enemy_roles/bruiser.tres" id="14_bruiser_role"]
+[ext_resource type="Resource" uid="uid://bajmdg1wdxwtk" path="res://content/data/enemy_roles/brawler.tres" id="15_brawler_role"]
 
 [sub_resource type="Resource" id="Resource_screening_line"]
 script = ExtResource("10_2ph3h")
@@ -77,6 +79,8 @@ stage_id = &"perimeter_breach"
 display_name = "Perimeter Breach"
 description = "Story stage one. The player fights through the station perimeter, clears the local pressure spike, and opens a boss gate into the inner system."
 next_stage_id = &"reactor_graveyard"
+boss_faction = ExtResource("11_faction")
+boss_pool = Array[ExtResource("4_0ff5l")]([ExtResource("5_nd0ai")])
 panorama_options = Array[Texture2D]([ExtResource("2_plain_starfield"), ExtResource("3_refined_plane"), ExtResource("4_blue_nebula")])
 background_energy_multiplier = 1.35
 ambient_light_color = Color(0.0863, 0.2667, 0.4706, 1)

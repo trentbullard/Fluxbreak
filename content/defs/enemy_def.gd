@@ -28,6 +28,7 @@ class_name EnemyDef
 @export var team_id: int = 1              # optional, for IFF/targeting groups
 
 @export_group("Visual")
+@export var actor_scene: PackedScene      # optional actor override
 @export var model_scene: PackedScene      # optional model override
 @export var material: StandardMaterial3D  # optional single material to apply to all meshes
 
@@ -35,6 +36,17 @@ func get_faction_id() -> StringName:
 	if faction == null:
 		return &""
 	return faction.get_faction_id()
+
+func get_display_name_or_default() -> String:
+	var trimmed: String = display_name.strip_edges()
+	if trimmed != "":
+		return trimmed
+	var trimmed_id: String = id.strip_edges()
+	if trimmed_id != "":
+		return trimmed_id.replace("_", " ").capitalize()
+	if resource_path != "":
+		return resource_path.get_file().get_basename().replace("_", " ").capitalize()
+	return "Enemy"
 
 func get_role_id() -> StringName:
 	if role == null:

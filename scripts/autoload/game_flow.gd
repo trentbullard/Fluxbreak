@@ -8,6 +8,8 @@ signal selection_changed(pilot: PilotDef, ship: ShipDef)
 signal stage_changed(stage: StageDef, stage_index: int)
 signal run_completed
 signal run_victory_started(message: String, return_delay_sec: float)
+signal boss_encounter_started(boss_def: EnemyBossDef, wave_index: int)
+signal boss_encounter_ended(boss_def: EnemyBossDef, wave_index: int, player_won: bool, player_died: bool)
 
 const MENU: String = "res://scenes/world/world.tscn"
 const DEFAULT_PILOT_ROSTER: String = "res://content/data/pilots/pilot_roster.tres"
@@ -30,6 +32,8 @@ const PILOT_SHIP_SELECTION_SECTION_PREFIX: String = "pilot_ship_selection."
 const SHIP_WEAPON_SELECTION_SECTION_PREFIX: String = "ship_weapon_selection."
 const META_STATS_GLOBAL_SECTION: String = "meta_stats.global"
 const META_STATS_PILOT_SECTION_PREFIX: String = "meta_stats.pilot."
+const BOSS_STATS_GLOBAL_SECTION_PREFIX: String = "boss_stats.global."
+const BOSS_STATS_PILOT_SECTION_PREFIX: String = "boss_stats.pilot."
 const ARCHIVE_SECTION_PREFIX: String = "archive."
 const CURRENT_SAVE_SCHEMA_VERSION: int = 2
 
@@ -42,6 +46,12 @@ const STAT_HIGHEST_WAVE_REACHED: StringName = &"highest_wave_reached"
 const META_STAT_KILLS: StringName = &"kills"
 const META_STAT_DAMAGE_DEALT: StringName = &"damage_dealt"
 const META_STAT_DAMAGE_TAKEN: StringName = &"damage_taken"
+const BOSS_STAT_ENCOUNTERS: String = "encounters"
+const BOSS_STAT_KILLS: String = "kills"
+const BOSS_STAT_PLAYER_DEATHS: String = "player_deaths"
+const BOSS_STAT_DAMAGE_DEALT: String = "damage_dealt"
+const BOSS_STAT_DAMAGE_TAKEN: String = "damage_taken"
+const BOSS_STAT_ENCOUNTER_TIME_SEC: String = "encounter_time_sec"
 
 const PILOT_STAT_DEFAULTS: Dictionary = {
 	STAT_HIGHEST_SCORE: 0,
@@ -52,6 +62,15 @@ const PILOT_STAT_DEFAULTS: Dictionary = {
 	STAT_HIGHEST_WAVE_REACHED: 0,
 }
 
+const BOSS_STAT_DEFAULTS: Dictionary = {
+	BOSS_STAT_ENCOUNTERS: 0,
+	BOSS_STAT_KILLS: 0,
+	BOSS_STAT_PLAYER_DEATHS: 0,
+	BOSS_STAT_DAMAGE_DEALT: 0,
+	BOSS_STAT_DAMAGE_TAKEN: 0,
+	BOSS_STAT_ENCOUNTER_TIME_SEC: 0,
+}
+
 var high_score: int = 0
 var selected_pilot: PilotDef = null
 var selected_ship: ShipDef = null
@@ -60,6 +79,8 @@ var selected_weapon: WeaponDef = null
 var _pilot_stats_by_id: Dictionary = {}
 var _meta_stats_global: Dictionary = {}
 var _meta_stats_by_pilot_id: Dictionary = {}
+var _boss_stats_global_by_id: Dictionary = {}
+var _boss_stats_by_pilot_id: Dictionary = {}
 var _cached_roster: PilotRoster = null
 var _loaded_selected_pilot_id: StringName = &""
 var _loaded_selected_ship_id: StringName = &""
@@ -75,11 +96,17 @@ var _run_peak_nanobots: int = 0
 var _run_last_nanobots_value: int = 0
 var _run_meta_stats_global: Dictionary = {}
 var _run_meta_stats_by_pilot_id: Dictionary = {}
+var _run_boss_stats_global_by_id: Dictionary = {}
+var _run_boss_stats_by_pilot_id: Dictionary = {}
 var _active_run_definition: RunDefinition = null
 var _active_stage_index: int = -1
 var _stage_modifier_rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _rolled_stage_modifiers_by_stage_key: Dictionary = {}
 var _run_end_in_progress: bool = false
+var _active_boss_encounter: bool = false
+var _active_boss_def: EnemyBossDef = null
+var _active_boss_wave_index: int = 0
+var _active_boss_encounter_time_sec: float = 0.0
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -96,6 +123,8 @@ func _process(delta: float) -> void:
 	if get_tree().paused:
 		return
 	_run_elapsed_sec += max(delta, 0.0)
+	if _active_boss_encounter:
+		_active_boss_encounter_time_sec += max(delta, 0.0)
 
 func start_new_run(run_definition: RunDefinition = null) -> void:
 	RunState.start_run()
@@ -108,7 +137,10 @@ func start_new_run(run_definition: RunDefinition = null) -> void:
 	_run_last_nanobots_value = 0
 	_run_meta_stats_global.clear()
 	_run_meta_stats_by_pilot_id.clear()
+	_run_boss_stats_global_by_id.clear()
+	_run_boss_stats_by_pilot_id.clear()
 	_rolled_stage_modifiers_by_stage_key.clear()
+	_clear_active_boss_encounter_state()
 	_active_run_definition = _resolve_run_definition(run_definition)
 	_active_stage_index = -1
 	var active_pilot: PilotDef = _resolve_selected_or_default_pilot()
@@ -119,12 +151,61 @@ func start_new_run(run_definition: RunDefinition = null) -> void:
 
 func record_damage_dealt(amount: float, combat_stat_context: CombatStatContext) -> void:
 	_record_run_meta_stat(META_STAT_DAMAGE_DEALT, amount, combat_stat_context)
+	_record_active_boss_metric(BOSS_STAT_DAMAGE_DEALT, amount, combat_stat_context)
 
 func record_enemy_kill(combat_stat_context: CombatStatContext) -> void:
 	_record_run_meta_stat(META_STAT_KILLS, 1.0, combat_stat_context)
+	_record_active_boss_metric(BOSS_STAT_KILLS, 1.0, combat_stat_context)
 
 func record_damage_taken(amount: float, combat_stat_context: CombatStatContext) -> void:
 	_record_run_meta_stat(META_STAT_DAMAGE_TAKEN, amount, combat_stat_context)
+	_record_active_boss_metric(BOSS_STAT_DAMAGE_TAKEN, amount, combat_stat_context)
+
+func begin_boss_encounter(boss_def: EnemyBossDef, wave_index: int) -> void:
+	if not _run_active or boss_def == null:
+		return
+	if _active_boss_encounter:
+		complete_boss_encounter(false, false)
+	_active_boss_encounter = true
+	_active_boss_def = boss_def
+	_active_boss_wave_index = max(wave_index, 0)
+	_active_boss_encounter_time_sec = 0.0
+	_add_run_boss_stat(_get_boss_stat_id(boss_def), BOSS_STAT_ENCOUNTERS, 1.0)
+	boss_encounter_started.emit(boss_def, _active_boss_wave_index)
+
+func complete_boss_encounter(player_won: bool, player_died: bool) -> void:
+	if not _active_boss_encounter or _active_boss_def == null:
+		return
+	var boss_def: EnemyBossDef = _active_boss_def
+	var boss_wave_index: int = _active_boss_wave_index
+	var encounter_time_sec: float = _active_boss_encounter_time_sec
+	_add_run_boss_stat(_get_boss_stat_id(boss_def), BOSS_STAT_ENCOUNTER_TIME_SEC, encounter_time_sec)
+	if player_died:
+		_add_run_boss_stat(_get_boss_stat_id(boss_def), BOSS_STAT_PLAYER_DEATHS, 1.0)
+	_clear_active_boss_encounter_state()
+	boss_encounter_ended.emit(boss_def, boss_wave_index, player_won, player_died)
+
+func is_boss_encounter_active() -> bool:
+	return _active_boss_encounter
+
+func get_active_boss_def() -> EnemyBossDef:
+	return _active_boss_def
+
+func get_boss_stats(boss_id: StringName, pilot_id: StringName = &"") -> Dictionary:
+	var boss_key: String = String(boss_id)
+	if boss_key == "":
+		return _make_default_boss_stats()
+	if pilot_id == &"":
+		if not _boss_stats_global_by_id.has(boss_key):
+			return _make_default_boss_stats()
+		return (_boss_stats_global_by_id[boss_key] as Dictionary).duplicate(true)
+	var pilot_key: String = String(pilot_id)
+	if not _boss_stats_by_pilot_id.has(pilot_key):
+		return _make_default_boss_stats()
+	var by_boss: Dictionary = _boss_stats_by_pilot_id[pilot_key] as Dictionary
+	if not by_boss.has(boss_key):
+		return _make_default_boss_stats()
+	return (by_boss[boss_key] as Dictionary).duplicate(true)
 
 func set_selected_pilot(pilot: PilotDef) -> void:
 	if pilot == null:
@@ -255,6 +336,8 @@ func is_weapon_option_unlocked(option: ShipStarterWeaponOptionDef) -> bool:
 	)
 
 func player_died() -> void:
+	if _active_boss_encounter:
+		complete_boss_encounter(false, true)
 	_end_run_and_return_to_menu(true)
 
 func player_won() -> void:
@@ -845,6 +928,9 @@ func _clear_run_progression() -> void:
 	_run_elapsed_sec = 0.0
 	_run_meta_stats_global.clear()
 	_run_meta_stats_by_pilot_id.clear()
+	_run_boss_stats_global_by_id.clear()
+	_run_boss_stats_by_pilot_id.clear()
+	_clear_active_boss_encounter_state()
 	_rolled_stage_modifiers_by_stage_key.clear()
 
 func _on_run_nanobots_updated(amount: int) -> void:
@@ -1008,6 +1094,7 @@ func _finalize_run_stats(count_as_death: bool) -> void:
 
 	_pilot_stats_by_id[String(pilot_id)] = stats
 	_flush_run_meta_stats_to_lifetime()
+	_flush_run_boss_stats_to_lifetime()
 	_save_user_data()
 	pilot_stats_updated.emit(pilot_id, stats.duplicate(true))
 	_emit_new_unlocks(before_unlocks, _build_unlock_state())
@@ -1159,6 +1246,9 @@ func _get_or_create_stats_for_pilot(pilot_id: StringName) -> Dictionary:
 func _make_default_pilot_stats() -> Dictionary:
 	return PILOT_STAT_DEFAULTS.duplicate(true)
 
+func _make_default_boss_stats() -> Dictionary:
+	return BOSS_STAT_DEFAULTS.duplicate(true)
+
 func _get_current_game_version() -> String:
 	var value: String = String(ProjectSettings.get_setting("application/config/version", "")).strip_edges()
 	return value if value != "" else "dev"
@@ -1203,6 +1293,8 @@ func _load_user_data() -> void:
 	_pilot_stats_by_id.clear()
 	_meta_stats_global.clear()
 	_meta_stats_by_pilot_id.clear()
+	_boss_stats_global_by_id.clear()
+	_boss_stats_by_pilot_id.clear()
 	_selected_ship_id_by_pilot_id.clear()
 	_selected_weapon_id_by_ship_id.clear()
 	_loaded_selected_pilot_id = &""
@@ -1251,6 +1343,27 @@ func _load_user_data() -> void:
 				continue
 			_meta_stats_by_pilot_id[meta_pilot_id] = _load_meta_stat_section(cfg, section)
 			continue
+		if section.begins_with(BOSS_STATS_GLOBAL_SECTION_PREFIX):
+			var global_boss_id: String = section.trim_prefix(BOSS_STATS_GLOBAL_SECTION_PREFIX)
+			if global_boss_id == "":
+				continue
+			_boss_stats_global_by_id[global_boss_id] = _load_boss_stat_section(cfg, section)
+			continue
+		if section.begins_with(BOSS_STATS_PILOT_SECTION_PREFIX):
+			var trimmed_boss_section: String = section.trim_prefix(BOSS_STATS_PILOT_SECTION_PREFIX)
+			var split_index: int = trimmed_boss_section.find(".")
+			if split_index <= 0 or split_index >= trimmed_boss_section.length() - 1:
+				continue
+			var boss_pilot_id: String = trimmed_boss_section.substr(0, split_index)
+			var boss_id: String = trimmed_boss_section.substr(split_index + 1)
+			if boss_pilot_id == "" or boss_id == "":
+				continue
+			if not _boss_stats_by_pilot_id.has(boss_pilot_id):
+				_boss_stats_by_pilot_id[boss_pilot_id] = {}
+			var boss_stats_by_id: Dictionary = _boss_stats_by_pilot_id[boss_pilot_id] as Dictionary
+			boss_stats_by_id[boss_id] = _load_boss_stat_section(cfg, section)
+			_boss_stats_by_pilot_id[boss_pilot_id] = boss_stats_by_id
+			continue
 		if section.begins_with(PILOT_SHIP_SELECTION_SECTION_PREFIX):
 			var selection_pilot_id: String = section.trim_prefix(PILOT_SHIP_SELECTION_SECTION_PREFIX)
 			if selection_pilot_id == "":
@@ -1287,6 +1400,12 @@ func _save_user_data() -> void:
 		if section.begins_with(META_STATS_PILOT_SECTION_PREFIX):
 			cfg.erase_section(section)
 			continue
+		if section.begins_with(BOSS_STATS_GLOBAL_SECTION_PREFIX):
+			cfg.erase_section(section)
+			continue
+		if section.begins_with(BOSS_STATS_PILOT_SECTION_PREFIX):
+			cfg.erase_section(section)
+			continue
 		if section.begins_with(PILOT_SHIP_SELECTION_SECTION_PREFIX):
 			cfg.erase_section(section)
 			continue
@@ -1305,6 +1424,25 @@ func _save_user_data() -> void:
 		var meta_section: String = "%s%s" % [META_STATS_PILOT_SECTION_PREFIX, String(pilot_id)]
 		var meta_stats: Dictionary = _meta_stats_by_pilot_id[pilot_id] as Dictionary
 		_save_meta_stat_section(cfg, meta_section, meta_stats)
+
+	for boss_id_variant in _boss_stats_global_by_id.keys():
+		var boss_id: String = String(boss_id_variant)
+		if boss_id == "":
+			continue
+		var global_boss_section: String = "%s%s" % [BOSS_STATS_GLOBAL_SECTION_PREFIX, boss_id]
+		var global_boss_stats: Dictionary = _boss_stats_global_by_id[boss_id] as Dictionary
+		_save_boss_stat_section(cfg, global_boss_section, global_boss_stats)
+
+	for pilot_id_variant in _boss_stats_by_pilot_id.keys():
+		var pilot_key: String = String(pilot_id_variant)
+		var boss_entries: Dictionary = _boss_stats_by_pilot_id[pilot_key] as Dictionary
+		for boss_id_variant in boss_entries.keys():
+			var boss_key: String = String(boss_id_variant)
+			if pilot_key == "" or boss_key == "":
+				continue
+			var pilot_boss_section: String = "%s%s.%s" % [BOSS_STATS_PILOT_SECTION_PREFIX, pilot_key, boss_key]
+			var pilot_boss_stats: Dictionary = boss_entries[boss_key] as Dictionary
+			_save_boss_stat_section(cfg, pilot_boss_section, pilot_boss_stats)
 
 	for pilot_id in _selected_ship_id_by_pilot_id.keys():
 		var ship_section: String = "%s%s" % [PILOT_SHIP_SELECTION_SECTION_PREFIX, String(pilot_id)]
@@ -1337,3 +1475,116 @@ func _save_meta_stat_section(cfg: ConfigFile, section: String, values: Dictionar
 		if amount <= 0:
 			continue
 		cfg.set_value(section, key, amount)
+
+func _record_active_boss_metric(metric_key: String, amount: float, combat_stat_context: CombatStatContext) -> void:
+	if not _active_boss_encounter or _active_boss_def == null:
+		return
+	if combat_stat_context == null or amount <= 0.0:
+		return
+	var effective_context: CombatStatContext = _prepare_combat_stat_context(combat_stat_context)
+	if effective_context.enemy_id != StringName(_get_boss_stat_id(_active_boss_def)):
+		return
+	_add_run_boss_stat(_get_boss_stat_id(_active_boss_def), metric_key, amount)
+
+func _add_run_boss_stat(boss_id: String, metric_key: String, amount: float) -> void:
+	var normalized_boss_id: String = boss_id.strip_edges()
+	var normalized_metric_key: String = metric_key.strip_edges()
+	if normalized_boss_id == "" or normalized_metric_key == "" or amount <= 0.0:
+		return
+	var global_slice: Dictionary = _get_or_create_run_boss_stat_global_slice(normalized_boss_id)
+	_add_run_boss_stat_value(global_slice, normalized_metric_key, amount)
+	if _run_pilot_id != &"":
+		var pilot_slice: Dictionary = _get_or_create_run_boss_stat_pilot_slice(_run_pilot_id, normalized_boss_id)
+		_add_run_boss_stat_value(pilot_slice, normalized_metric_key, amount)
+
+func _add_run_boss_stat_value(target: Dictionary, key: String, amount: float) -> void:
+	target[key] = float(target.get(key, 0.0)) + amount
+
+func _get_or_create_run_boss_stat_global_slice(boss_id: String) -> Dictionary:
+	if not _run_boss_stats_global_by_id.has(boss_id):
+		_run_boss_stats_global_by_id[boss_id] = _make_default_boss_stats()
+	return _run_boss_stats_global_by_id[boss_id] as Dictionary
+
+func _get_or_create_run_boss_stat_pilot_slice(pilot_id: StringName, boss_id: String) -> Dictionary:
+	var pilot_key: String = String(pilot_id)
+	if pilot_key == "":
+		return _make_default_boss_stats()
+	if not _run_boss_stats_by_pilot_id.has(pilot_key):
+		_run_boss_stats_by_pilot_id[pilot_key] = {}
+	var boss_entries: Dictionary = _run_boss_stats_by_pilot_id[pilot_key] as Dictionary
+	if not boss_entries.has(boss_id):
+		boss_entries[boss_id] = _make_default_boss_stats()
+		_run_boss_stats_by_pilot_id[pilot_key] = boss_entries
+	return boss_entries[boss_id] as Dictionary
+
+func _get_or_create_boss_stat_global_slice(boss_id: String) -> Dictionary:
+	if not _boss_stats_global_by_id.has(boss_id):
+		_boss_stats_global_by_id[boss_id] = _make_default_boss_stats()
+	return _boss_stats_global_by_id[boss_id] as Dictionary
+
+func _get_or_create_boss_stat_pilot_slice(pilot_id: StringName, boss_id: String) -> Dictionary:
+	var pilot_key: String = String(pilot_id)
+	if pilot_key == "":
+		return _make_default_boss_stats()
+	if not _boss_stats_by_pilot_id.has(pilot_key):
+		_boss_stats_by_pilot_id[pilot_key] = {}
+	var boss_entries: Dictionary = _boss_stats_by_pilot_id[pilot_key] as Dictionary
+	if not boss_entries.has(boss_id):
+		boss_entries[boss_id] = _make_default_boss_stats()
+		_boss_stats_by_pilot_id[pilot_key] = boss_entries
+	return boss_entries[boss_id] as Dictionary
+
+func _flush_run_boss_stats_to_lifetime() -> void:
+	for boss_id_variant in _run_boss_stats_global_by_id.keys():
+		var boss_id: String = String(boss_id_variant)
+		var target_global: Dictionary = _get_or_create_boss_stat_global_slice(boss_id)
+		var source_global: Dictionary = _run_boss_stats_global_by_id[boss_id] as Dictionary
+		_merge_run_boss_stat_slice(target_global, source_global)
+	for pilot_id_variant in _run_boss_stats_by_pilot_id.keys():
+		var pilot_key: String = String(pilot_id_variant)
+		var boss_entries: Dictionary = _run_boss_stats_by_pilot_id[pilot_key] as Dictionary
+		for boss_id_variant in boss_entries.keys():
+			var boss_id: String = String(boss_id_variant)
+			var target_pilot: Dictionary = _get_or_create_boss_stat_pilot_slice(StringName(pilot_key), boss_id)
+			var source_pilot: Dictionary = boss_entries[boss_id] as Dictionary
+			_merge_run_boss_stat_slice(target_pilot, source_pilot)
+
+func _merge_run_boss_stat_slice(target: Dictionary, source: Dictionary) -> void:
+	for raw_key_variant in source.keys():
+		var raw_key: String = String(raw_key_variant)
+		var amount: float = float(source[raw_key_variant])
+		var rounded_amount: int = int(round(amount))
+		if rounded_amount <= 0:
+			continue
+		target[raw_key] = int(target.get(raw_key, 0)) + rounded_amount
+
+func _load_boss_stat_section(cfg: ConfigFile, section: String) -> Dictionary:
+	var loaded: Dictionary = _make_default_boss_stats()
+	for key_variant in BOSS_STAT_DEFAULTS.keys():
+		var key: String = String(key_variant)
+		loaded[key] = max(0, int(cfg.get_value(section, key, int(BOSS_STAT_DEFAULTS[key]))))
+	return loaded
+
+func _save_boss_stat_section(cfg: ConfigFile, section: String, values: Dictionary) -> void:
+	for key_variant in BOSS_STAT_DEFAULTS.keys():
+		var key: String = String(key_variant)
+		var amount: int = max(0, int(values.get(key, 0)))
+		if amount <= 0:
+			continue
+		cfg.set_value(section, key, amount)
+
+func _clear_active_boss_encounter_state() -> void:
+	_active_boss_encounter = false
+	_active_boss_def = null
+	_active_boss_wave_index = 0
+	_active_boss_encounter_time_sec = 0.0
+
+func _get_boss_stat_id(boss_def: EnemyBossDef) -> String:
+	if boss_def == null:
+		return ""
+	var trimmed: String = boss_def.id.strip_edges()
+	if trimmed != "":
+		return trimmed
+	if boss_def.resource_path != "":
+		return boss_def.resource_path.get_file().get_basename()
+	return ""

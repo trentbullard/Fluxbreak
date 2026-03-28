@@ -1,7 +1,10 @@
-[gd_scene load_steps=3 format=3 uid="uid://ce8s25qh3un6e"]
+[gd_scene load_steps=6 format=3 uid="uid://ce8s25qh3un6e"]
 
 [ext_resource type="Script" uid="uid://dl1ykpbpwp767" path="res://scripts/enemy/machine_boss_1_mk_1_controller.gd" id="1_4bl73"]
 [ext_resource type="PackedScene" uid="uid://1ji5yid7wtgc" path="res://assets/meshes/machine_boss_1.glb" id="1_5dghd"]
+[ext_resource type="Script" path="res://scripts/enemy/boss_weapon_socket.gd" id="3_boss_socket"]
+[ext_resource type="Resource" path="res://content/data/weapons/pulse_mk1.tres" id="4_pulse_weapon"]
+[ext_resource type="Resource" path="res://content/data/weapons/laser_bolt_mk1.tres" id="5_laser_weapon"]
 
 [node name="MachineBoss1" type="Node3D"]
 script = ExtResource("1_4bl73")
@@ -18,5 +21,25 @@ skeleton = NodePath("../..")
 
 [node name="MuzzleSocket" type="Marker3D" parent="ModelRoot"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -148)
+
+[node name="BossSocketFrontLeft" type="Marker3D" parent="ModelRoot"]
+transform = Transform3D(0.92388, 0, 0.382683, 0, 1, 0, -0.382683, 0, 0.92388, -58, 32, -108)
+script = ExtResource("3_boss_socket")
+weapon = ExtResource("4_pulse_weapon")
+
+[node name="BossSocketFrontRight" type="Marker3D" parent="ModelRoot"]
+transform = Transform3D(0.92388, 0, -0.382683, 0, 1, 0, 0.382683, 0, 0.92388, 58, 32, -108)
+script = ExtResource("3_boss_socket")
+weapon = ExtResource("4_pulse_weapon")
+
+[node name="BossSocketSideLeft" type="Marker3D" parent="ModelRoot"]
+transform = Transform3D(0.707107, 0, 0.707107, 0, 1, 0, -0.707107, 0, 0.707107, -128, -6, -12)
+script = ExtResource("3_boss_socket")
+weapon = ExtResource("5_laser_weapon")
+
+[node name="BossSocketSideRight" type="Marker3D" parent="ModelRoot"]
+transform = Transform3D(0.707107, 0, -0.707107, 0, 1, 0, 0.707107, 0, 0.707107, 128, -6, -12)
+script = ExtResource("3_boss_socket")
+weapon = ExtResource("5_laser_weapon")
 
 [editable path="ModelRoot/MachineBoss1Mesh"]

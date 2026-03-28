@@ -19,6 +19,11 @@ enum CompletionFlow {
 @export var gateway_scene: PackedScene
 @export var completion_flow: CompletionFlow = CompletionFlow.BOSS_GATEWAY
 
+@export_group("Boss Encounter")
+@export_range(1, 99, 1) var boss_wave_index: int = 30
+@export var boss_faction: FactionDef
+@export var boss_pool: Array[EnemyBossDef] = []
+
 @export_group("Skybox")
 @export var panorama_options: Array[Texture2D] = []
 
@@ -117,6 +122,36 @@ func get_wave_cards() -> Array[WaveCard]:
 		if path_key != "":
 			seen_paths[path_key] = true
 		if id_key != &"":
+			seen_ids[id_key] = true
+	return resolved
+
+func should_spawn_boss_wave() -> bool:
+	if completion_flow != CompletionFlow.BOSS_GATEWAY:
+		return false
+	return not get_boss_pool().is_empty()
+
+func get_boss_pool() -> Array[EnemyBossDef]:
+	var resolved: Array[EnemyBossDef] = []
+	var seen_paths: Dictionary = {}
+	var seen_ids: Dictionary = {}
+	var wanted_faction_id: StringName = boss_faction.get_faction_id() if boss_faction != null else &""
+	for entry in boss_pool:
+		if entry == null:
+			continue
+		if wanted_faction_id != &"" and entry.get_faction_id() != wanted_faction_id:
+			continue
+		var path_key: String = entry.resource_path
+		if path_key != "" and seen_paths.has(path_key):
+			continue
+		var id_key: String = entry.id.strip_edges()
+		if id_key != "" and seen_ids.has(id_key):
+			if path_key != "":
+				seen_paths[path_key] = true
+			continue
+		resolved.append(entry)
+		if path_key != "":
+			seen_paths[path_key] = true
+		if id_key != "":
 			seen_ids[id_key] = true
 	return resolved
 

@@ -7,6 +7,8 @@ signal wave_forced_next(index: int)
 signal downtime_started(duration: float, next_wave_index: int)
 signal downtime_ended(next_wave_index: int)
 signal next_wave_eta(seconds: float)
+signal boss_wave_started(boss_def: EnemyBossDef, wave_index: int)
+signal boss_wave_ended(boss_def: EnemyBossDef, wave_index: int, player_won: bool)
 
 @export var spawner_path: NodePath
 @export var downtime_sec: float = 30.0
@@ -58,6 +60,9 @@ var _pending_card: WaveCard = null
 var _recent_card_ids: Array[String] = []
 var _last_debug_snapshot: Dictionary = {}
 var _current_enemy_density_reference: float = 6.0
+var _boss_wave_active: bool = false
+var _active_boss_def: EnemyBossDef = null
+var _active_boss_instance: Enemy = null
 
 func get_state() -> RunState.State:
 	return _state
@@ -78,6 +83,12 @@ func get_downtime_remaining() -> float:
 
 func get_debug_snapshot() -> Dictionary:
 	return _last_debug_snapshot.duplicate(true)
+
+func is_boss_wave_active() -> bool:
+	return _boss_wave_active
+
+func get_active_boss_def() -> EnemyBossDef:
+	return _active_boss_def
 
 func _ready() -> void:
 	_threat_dir = get_node_or_null(threat_director_path) as ThreatDirector
@@ -117,6 +128,9 @@ func _process(delta: float) -> void:
 			_next_wave()
 	else:
 		_wave_timer += delta
+		if _boss_wave_active:
+			next_wave_eta.emit(0.0)
+			return
 		var wave_timeout_left: float = max(wave_timeout_sec - _wave_timer, 0.0)
 		var eta: float = wave_timeout_left + downtime_sec
 		next_wave_eta.emit(eta)
@@ -214,10 +228,22 @@ func _next_wave() -> void:
 
 	_wave_index += 1
 	_wave_timer = 0.0
-	_active_card = _consume_pending_card()
-	_remember_card(_active_card)
 	if _intensity_dir != null:
 		_intensity_dir.begin_wave()
+	if _should_start_boss_wave():
+		_active_card = null
+		RunState.set_wave_context(_wave_index, 0, 0)
+		_last_debug_snapshot = {
+			"wave_index": _wave_index,
+			"stage_index": max(GameFlow.get_active_stage_index(), 0),
+			"state": "boss_wave",
+		}
+		emit_signal("wave_started", _wave_index, 0, 0)
+		_start_boss_wave()
+		return
+
+	_active_card = _consume_pending_card()
+	_remember_card(_active_card)
 
 	var pps: float = CombatStats.get_pps()
 	var incoming_damage: float = CombatStats.get_damage_taken_per_sec()
@@ -362,6 +388,8 @@ func _run_pressure_coroutine(token: int) -> void:
 			continue
 
 		if _state != RunState.State.IN_WAVE:
+			continue
+		if _boss_wave_active:
 			continue
 
 		var active_card: WaveCard = _active_card if _active_card != null else WaveCard.new()
@@ -761,8 +789,115 @@ func _on_stage_changed(_stage: StageDef, _stage_index: int) -> void:
 	_pending_card = null
 	_active_card = null
 	_recent_card_ids.clear()
+	_clear_active_boss_state()
 	if _buyer != null:
 		_buyer.clear_history()
 
 func _should_trigger_victory() -> bool:
+	var current_stage: StageDef = GameFlow.get_current_stage()
+	if current_stage != null and current_stage.should_spawn_boss_wave():
+		return false
 	return victory_wave_index > 0 and _wave_index >= victory_wave_index
+
+func _should_start_boss_wave() -> bool:
+	var current_stage: StageDef = GameFlow.get_current_stage()
+	if current_stage == null:
+		return false
+	if not current_stage.should_spawn_boss_wave():
+		return false
+	return _wave_index == current_stage.boss_wave_index
+
+func _start_boss_wave() -> void:
+	if _spawner == null:
+		push_error("WaveDirector: unable to start boss wave without spawner.")
+		return
+	var current_stage: StageDef = GameFlow.get_current_stage()
+	if current_stage == null:
+		push_error("WaveDirector: unable to resolve active stage for boss wave.")
+		return
+	var boss_def: EnemyBossDef = _choose_boss_for_stage(current_stage)
+	if boss_def == null:
+		push_error("WaveDirector: active stage has no valid boss definition for its configured faction.")
+		return
+
+	_clear_non_boss_hostiles()
+	var boss_request: SpawnRequest = SpawnRequest.new()
+	boss_request.kind = "Enemy"
+	boss_request.enemy_def = boss_def
+	boss_request.count = 1
+	boss_request.wave_index = _wave_index
+	boss_request.stage_index = max(GameFlow.get_active_stage_index(), 0)
+	boss_request.elapsed_sec = _elapsed_sec
+	boss_request.enemy_combat_scaling = _build_enemy_combat_scaling_snapshot(_wave_index, _elapsed_sec)
+
+	var spawned_node: Node3D = _spawner.spawn_one_with_def(Spawner.SpawnKind.ENEMY, boss_def, boss_request)
+	var boss_enemy: Enemy = spawned_node as Enemy
+	if boss_enemy == null:
+		push_error("WaveDirector: failed to spawn boss actor for `%s`." % boss_def.id)
+		return
+
+	_clear_active_boss_state()
+	_boss_wave_active = true
+	_active_boss_def = boss_def
+	_active_boss_instance = boss_enemy
+	if not boss_enemy.about_to_die.is_connected(_on_active_boss_about_to_die):
+		boss_enemy.about_to_die.connect(_on_active_boss_about_to_die)
+	GameFlow.begin_boss_encounter(boss_def, _wave_index)
+	boss_wave_started.emit(boss_def, _wave_index)
+
+func _choose_boss_for_stage(stage: StageDef) -> EnemyBossDef:
+	if stage == null:
+		return null
+	var pool: Array[EnemyBossDef] = stage.get_boss_pool()
+	if pool.is_empty():
+		return null
+	if pool.size() == 1:
+		return pool[0]
+	var index: int = _rng.randi_range(0, pool.size() - 1)
+	return pool[index]
+
+func _on_active_boss_about_to_die(target: Enemy) -> void:
+	if target == null or target != _active_boss_instance:
+		return
+	var boss_def: EnemyBossDef = _active_boss_def
+	var resolved_wave_index: int = _wave_index
+	var current_stage: StageDef = GameFlow.get_current_stage()
+	_clear_active_boss_state()
+	if boss_def != null:
+		GameFlow.complete_boss_encounter(true, false)
+		boss_wave_ended.emit(boss_def, resolved_wave_index, true)
+	emit_signal("wave_cleared", resolved_wave_index, _wave_timer)
+	if (
+		current_stage != null
+		and current_stage.completion_flow == StageDef.CompletionFlow.BOSS_GATEWAY
+		and GameFlow.has_next_stage()
+	):
+		if GameFlow.advance_to_next_stage():
+			_start_downtime()
+			return
+	GameFlow.player_won()
+
+func _clear_active_boss_state() -> void:
+	if _active_boss_instance != null and is_instance_valid(_active_boss_instance):
+		if _active_boss_instance.about_to_die.is_connected(_on_active_boss_about_to_die):
+			_active_boss_instance.about_to_die.disconnect(_on_active_boss_about_to_die)
+	_active_boss_instance = null
+	_active_boss_def = null
+	_boss_wave_active = false
+
+func _clear_non_boss_hostiles() -> void:
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return
+	var targets: Array[Node] = tree.get_nodes_in_group("targets")
+	for entry in targets:
+		if entry == null or not is_instance_valid(entry):
+			continue
+		if entry is Enemy:
+			var enemy: Enemy = entry as Enemy
+			if enemy is EnemyBoss:
+				continue
+			enemy.queue_free()
+			continue
+		if entry is TargetObject:
+			(entry as TargetObject).queue_free()

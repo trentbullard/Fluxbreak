@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="BossMovementDef" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://content/defs/boss_movement_def.gd" id="1_movement"]
+[ext_resource type="Resource" path="res://content/data/boss_movement/machine_boss_1_locomotion.tres" id="2_locomotion"]
+[ext_resource type="Resource" path="res://content/data/boss_movement/machine_boss_1_tracking.tres" id="3_tracking"]
+
+[resource]
+script = ExtResource("1_movement")
+locomotion_profile = ExtResource("2_locomotion")
+target_tracking_profile = ExtResource("3_tracking")

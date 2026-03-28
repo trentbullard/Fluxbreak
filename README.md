@@ -91,6 +91,10 @@ Fluxbreak is aiming for readable chaos. The guiding rubric for new work is simpl
 - prefer data-driven content over hard-coded behavior
 - keep the game fast on mid-tier hardware
 
+## TODO
+- 8 weapon cap
+- configure boss into stages
+
 ## License
 
 Fluxbreak is proprietary and `LICENSE.txt` is authoritative. All rights are reserved unless explicit written permission is granted by the copyright holder.

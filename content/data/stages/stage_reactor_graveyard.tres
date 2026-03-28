@@ -13,6 +13,8 @@
 [ext_resource type="Script" uid="uid://dwo3qna7vo5nk" path="res://content/defs/wave_card.gd" id="11_7qahc"]
 [ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="12_afds5"]
 [ext_resource type="Resource" path="res://content/data/factions/machines.tres" id="12_faction"]
+[ext_resource type="Script" path="res://content/defs/enemy_boss_def.gd" id="12_boss_def"]
+[ext_resource type="Resource" path="res://content/data/enemies/machine_boss_1_mk1.tres" id="17_boss"]
 [ext_resource type="Resource" path="res://content/data/enemy_roles/bruiser.tres" id="13_bruiser_role"]
 [ext_resource type="Resource" path="res://content/data/enemy_roles/suppressor.tres" id="14_suppressor_role"]
 [ext_resource type="Resource" path="res://content/data/enemy_roles/support.tres" id="15_support_role"]
@@ -97,4 +99,7 @@ bonus_pool = Array[ExtResource("1_a508n")]([ExtResource("6_salvage_tide")])
 debuff_pool = Array[ExtResource("1_a508n")]([ExtResource("7_sensor_static")])
 random_bonus_count = 1
 random_debuff_count = 1
+boss_wave_index = 30
+boss_faction = ExtResource("12_faction")
+boss_pool = Array[ExtResource("12_boss_def")]([ExtResource("17_boss")])
 wave_cards = Array[ExtResource("11_7qahc")]([SubResource("Resource_reactor_vanguard"), SubResource("Resource_precision_net"), SubResource("Resource_core_escorts")])

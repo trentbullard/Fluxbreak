@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="EnemyBossDef" load_steps=7 format=3 uid="uid://0c4ms8htkafv"]
+
+[ext_resource type="Script" uid="uid://co4k1ag8uvqgp" path="res://content/defs/enemy_boss_def.gd" id="1_boss_def"]
+[ext_resource type="Resource" uid="uid://u118lh0nmv2k" path="res://content/data/factions/machines.tres" id="2_faction"]
+[ext_resource type="Resource" uid="uid://bhqg1b3rxeh3h" path="res://content/data/enemy_roles/bruiser.tres" id="3_role"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/enemy_boss.tscn" id="4_actor_scene"]
+[ext_resource type="PackedScene" uid="uid://ce8s25qh3un6e" path="res://scenes/enemies/machine_boss_1_mk1.tscn" id="5_model_scene"]
+[ext_resource type="Resource" path="res://content/data/boss_movement/machine_boss_1_movement.tres" id="6_movement"]
+
+[resource]
+script = ExtResource("1_boss_def")
+boss_description = "A fortress-grade machine core that holds the line at range and saturates the battlefield from every firing arc."
+movement_def = ExtResource("6_movement")
+id = "machine_boss_1_mk1"
+display_name = "Machine Boss I"
+faction = ExtResource("2_faction")
+role = ExtResource("3_role")
+tier = 5
+threat_cost = 20
+bounty_scrap = 50
+can_be_elite = false
+score_on_kill = 1000
+max_hull = 5000.0
+max_shield = 1800.0
+shield_regen = 18.0
+evasion = 0.03
+thrust = 180.0
+actor_scene = ExtResource("4_actor_scene")
+model_scene = ExtResource("5_model_scene")

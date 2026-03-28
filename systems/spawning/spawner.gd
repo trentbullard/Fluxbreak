@@ -69,12 +69,15 @@ func spawn_one_with_def_at_position(kind: int, def: Resource, position: Vector3,
 	return _spawn_one_with_def_at_position(kind, def, request, true, position)
 
 func _spawn_one_with_def_at_position(kind: int, def: Resource, request: SpawnRequest, use_position_override: bool, position_override: Vector3) -> Node3D:
-	if enemy_scene == null or target_scene == null:
+	var source_scene: PackedScene = _resolve_spawn_scene(kind, def)
+	if source_scene == null:
 		return null
 	if not _can_spawn_now():
 		return null
 	
-	var inst: Node3D = (enemy_scene if kind == SpawnKind.ENEMY else target_scene).instantiate() as Node3D
+	var inst: Node3D = source_scene.instantiate() as Node3D
+	if inst == null:
+		return null
 	_last_kind_was_enemy = (kind == SpawnKind.ENEMY)
 	_have_last = true
 	
@@ -116,17 +119,18 @@ func _spawn_one_with_def_at_position(kind: int, def: Resource, request: SpawnReq
 	return inst
 
 func spawn_one(kind: int) -> Node3D:
-	if enemy_scene == null or target_scene == null:
+	var source_scene: PackedScene = enemy_scene if kind == SpawnKind.ENEMY else target_scene
+	if source_scene == null:
 		return null
 	if not _can_spawn_now():
 		return null
 	
-	var inst: Node3D = null
+	var inst: Node3D = source_scene.instantiate() as Node3D
+	if inst == null:
+		return null
 	if kind == SpawnKind.ENEMY:
-		inst = enemy_scene.instantiate() as Node3D
 		_last_kind_was_enemy = true
 	else:
-		inst = target_scene.instantiate() as Node3D
 		_last_kind_was_enemy = false
 	_have_last = true
 	
@@ -355,3 +359,12 @@ func _can_spawn_now() -> bool:
 		return false
 	var tree: SceneTree = get_tree()
 	return tree != null and tree.current_scene != null
+
+func _resolve_spawn_scene(kind: int, def: Resource) -> PackedScene:
+	if kind == SpawnKind.TARGET:
+		return target_scene
+	if def is EnemyDef:
+		var enemy_def: EnemyDef = def as EnemyDef
+		if enemy_def != null and enemy_def.actor_scene != null:
+			return enemy_def.actor_scene
+	return enemy_scene

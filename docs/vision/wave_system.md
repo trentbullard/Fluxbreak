@@ -124,6 +124,9 @@ This allows:
 
 A strong build should feel capable of overcoming late pressure if the player makes smart decisions, but it should not become trivialized by low-risk stat accumulation.
 
+Run-complete stages should culminate in a stage-authored boss encounter rather than ending automatically when a timer expires.
+The final pressure handoff into that boss should feel deliberate and readable, with normal wave spawns yielding to the boss encounter rather than overlapping with it.
+
 ### Endless Mode Scaling
 
 In endless mode, wave pressure should eventually scale faster than any realistic player build can sustain indefinitely.

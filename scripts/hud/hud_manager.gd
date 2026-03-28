@@ -169,6 +169,11 @@ func _refresh_timer_readouts() -> void:
 		return
 
 	if _director.get_state() == RunState.State.IN_WAVE:
+		if _director.is_boss_wave_active():
+			var boss_def: EnemyBossDef = _director.get_active_boss_def()
+			var boss_name: String = boss_def.get_display_name_or_default() if boss_def != null else "Boss"
+			_wave_label.text = "Boss Wave • %s" % boss_name
+			return
 		_wave_label.text = "Wave %d • %s left" % [
 			_director.get_wave_index(),
 			_fmt_mm_ss(_director.get_wave_time_remaining()),

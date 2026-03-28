@@ -1,9 +1,9 @@
 [gd_resource type="Resource" script_class="RunDefinition" load_steps=5 format=3 uid="uid://ekisi3hlmamj"]
 
-[ext_resource type="Script" path="res://content/defs/run_definition.gd" id="1_run_definition"]
-[ext_resource type="Resource" path="res://content/data/stages/perimeter_breach.tres" id="2_stage_one"]
-[ext_resource type="Script" path="res://content/defs/stage_def.gd" id="2_wpxb4"]
-[ext_resource type="Resource" path="res://content/data/stages/reactor_graveyard.tres" id="3_stage_two"]
+[ext_resource type="Script" uid="uid://7p0wdcd60jxe" path="res://content/defs/run_definition.gd" id="1_run_definition"]
+[ext_resource type="Resource" uid="uid://nwgfpc1w8myu" path="res://content/data/stages/stage_perimeter_breach.tres" id="2_stage_one"]
+[ext_resource type="Script" uid="uid://ccxfqxark46f6" path="res://content/defs/stage_def.gd" id="2_wpxb4"]
+[ext_resource type="Resource" uid="uid://bk2rjcsc0jiqs" path="res://content/data/stages/stage_reactor_graveyard.tres" id="3_stage_two"]
 
 [resource]
 script = ExtResource("1_run_definition")
