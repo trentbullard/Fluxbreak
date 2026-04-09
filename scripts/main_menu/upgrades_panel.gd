@@ -14,6 +14,8 @@ signal closed
 @export_group("Display")
 ## Font used for all panel UI text.
 @export var menu_font: FontFile = preload("res://assets/fonts/Oxanium/Oxanium-Regular.ttf")
+## Font used for upgrade description sub-text.
+@export var desc_font: FontFile = preload("res://assets/fonts/Chakra_Petch/ChakraPetch-Light.ttf")
 
 @onready var btn_close: Button = $Close
 
@@ -140,12 +142,23 @@ func _build_ui() -> void:
 		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		scroll_vbox.add_child(row)
 
+		var name_col: VBoxContainer = VBoxContainer.new()
+		name_col.add_theme_constant_override("separation", 1)
+		name_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(name_col)
+
 		var name_label: Label = Label.new()
 		name_label.text = upgrade.display_name
 		name_label.add_theme_font_size_override("font_size", 16)
-		name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		name_label.tooltip_text = upgrade.description
-		row.add_child(name_label)
+		name_col.add_child(name_label)
+
+		var desc_label: Label = Label.new()
+		desc_label.text = upgrade.description
+		desc_label.add_theme_font_override("font", desc_font)
+		desc_label.add_theme_font_size_override("font_size", 11)
+		desc_label.modulate = Color(0.65, 0.75, 0.85, 1.0)
+		desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		name_col.add_child(desc_label)
 
 		var tier_label: Label = Label.new()
 		tier_label.text = "[0/%d]" % [upgrade.max_tiers]
