@@ -17,6 +17,11 @@ signal selection_changed
 @onready var version_label: Label = $VersionContainer/VersionLabel
 @onready var music: AudioStreamPlayer = $MenuMusic
 @onready var _upgrades_panel: UpgradesPanel = $UpgradesPanel
+@onready var _center_container: CenterContainer = $CenterContainer
+@onready var _high_score_container: Control = $HighScoreContainer
+@onready var _flux_anchors_container: Control = $FluxAnchorsContainer
+@onready var _roadmap_panel: PanelContainer = $RoadmapPanel
+@onready var _version_container: PanelContainer = $VersionContainer
 
 var _available_pilots: Array[PilotDef] = []
 var _available_ship_options: Array[PilotStarterShipOptionDef] = []
@@ -95,10 +100,19 @@ func _on_settings_pressed() -> void:
 	print("Settings clicked — not implemented yet.")
 
 func _on_upgrades_pressed() -> void:
+	_set_main_menu_content_visible(false)
 	_upgrades_panel.show_panel()
 
 func _on_upgrades_panel_closed() -> void:
+	_set_main_menu_content_visible(true)
 	_focus_default_control()
+
+func _set_main_menu_content_visible(p_visible: bool) -> void:
+	_center_container.visible = p_visible
+	_high_score_container.visible = p_visible
+	_flux_anchors_container.visible = p_visible
+	_roadmap_panel.visible = p_visible
+	_version_container.visible = p_visible
 
 func _on_exit_pressed() -> void:
 	get_tree().quit()

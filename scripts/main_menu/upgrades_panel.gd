@@ -47,10 +47,10 @@ func _build_ui() -> void:
 	_apply_menu_font_theme()
 	add_child(_root)
 
-	var dim: ColorRect = ColorRect.new()
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0.0, 0.0, 0.0, 0.7)
-	_root.add_child(dim)
+	var bg: ColorRect = ColorRect.new()
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.color = Color(0.04, 0.04, 0.08, 0.0)
+	_root.add_child(bg)
 
 	var center: CenterContainer = CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
