@@ -18,6 +18,16 @@ class_name MetaUpgradeDef
 ## Each successive tier costs base_cost * multiplier^(tier-1).
 @export var cost_multiplier: float = 1.5
 
+@export_group("Stat Modifiers")
+## Stat modifiers applied per purchased tier.
+## Each modifier's value represents the per-tier amount. At apply time the
+## aggregator must scale by tier_count using whichever scaling contract applies:
+##   ADD ops  → applied_value = modifier.value * tier_count
+##   MULT ops → applied_value = 1.0 + (modifier.value - 1.0) * tier_count
+##              (additive-stacking percentages, NOT compound multiplication)
+## Set StatModifier.source_id = this upgrade's id to enable clean removal.
+@export var modifiers_per_tier: Array[StatModifier] = []
+
 
 ## Returns the Flux Anchor cost to purchase a specific tier (1-indexed).
 func get_tier_cost(tier: int) -> int:

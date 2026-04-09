@@ -109,6 +109,12 @@ enum Stat {
 	WEAPON_RAMP_STACKS_LOST_ON_GRAZE,
 	WEAPON_RAMP_STACKS_LOST_ON_MISS,
 	ENEMY_THRUST,
+
+	# Economy / Interaction
+	HULL_REPAIR_MULT,   		# multiplier applied to all hull repair amounts
+	HULL_REPAIR_COST_MULT,	# multiplier applied to all hull repair costs
+	POI_COST_MULT,      		# multiplier applied to POI upgrade and weapon purchase costs
+	DOCKING_TIME_MULT,  		# multiplier applied to docking duration
 }
 
 ## Types of damage
