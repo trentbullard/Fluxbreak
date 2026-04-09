@@ -1,12 +1,10 @@
-[gd_resource type="Resource" script_class="MetaUpgradeDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="MetaUpgradeDef" load_steps=2 format=3 uid="uid://ddx0dyu3hngix"]
 
-[ext_resource type="Script" path="res://content/defs/meta_upgrade_def.gd" id="1_mupg"]
+[ext_resource type="Script" uid="uid://bs83khy1we154" path="res://content/defs/meta_upgrade_def.gd" id="1_mupg"]
 
 [resource]
 script = ExtResource("1_mupg")
 id = "adaptive_shield_matrix"
 display_name = "Adaptive Shield Matrix"
 description = "+10% max shield per tier."
-max_tiers = 5
 base_cost = 50
-cost_multiplier = 1.5

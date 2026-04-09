@@ -1,12 +1,9 @@
-[gd_resource type="Resource" script_class="MetaUpgradeDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="MetaUpgradeDef" load_steps=2 format=3 uid="uid://bh11gy17m48fh"]
 
-[ext_resource type="Script" path="res://content/defs/meta_upgrade_def.gd" id="1_mupg"]
+[ext_resource type="Script" uid="uid://bs83khy1we154" path="res://content/defs/meta_upgrade_def.gd" id="1_mupg"]
 
 [resource]
 script = ExtResource("1_mupg")
 id = "flux_condenser"
 display_name = "Flux Condenser"
 description = "+15% Flux Anchor yield from runs per tier."
-max_tiers = 5
-base_cost = 100
-cost_multiplier = 1.5

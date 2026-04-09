@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="MetaUpgradeDef" load_steps=2 format=3 uid="uid://cwn7ck6hgo5oy"]
+
+[ext_resource type="Script" uid="uid://bs83khy1we154" path="res://content/defs/meta_upgrade_def.gd" id="1_mupg"]
+
+[resource]
+script = ExtResource("1_mupg")
+id = "nanobot_pickup_range"
+display_name = "Nanobot Pickup Range"
+description = "+20% nanobot pickup radius per tier."
+base_cost = 50

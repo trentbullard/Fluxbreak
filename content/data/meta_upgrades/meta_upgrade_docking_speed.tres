@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="MetaUpgradeDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://content/defs/meta_upgrade_def.gd" id="1_mupg"]
+
+[resource]
+script = ExtResource("1_mupg")
+id = "docking_speed"
+display_name = "Docking Speed"
+description = "-25% docking time per tier."
+max_tiers = 3
+base_cost = 50
+cost_multiplier = 1.5

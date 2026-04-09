@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="MetaUpgradeDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://content/defs/meta_upgrade_def.gd" id="1_mupg"]
+
+[resource]
+script = ExtResource("1_mupg")
+id = "max_velocity"
+display_name = "Max Velocity"
+description = "+8% ship max speed per tier."
+max_tiers = 5
+base_cost = 75
+cost_multiplier = 1.5

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="MetaUpgradeDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://content/defs/meta_upgrade_def.gd" id="1_mupg"]
+
+[resource]
+script = ExtResource("1_mupg")
+id = "shield_regen"
+display_name = "Shield Regeneration"
+description = "+15% shield regeneration rate per tier."
+max_tiers = 5
+base_cost = 75
+cost_multiplier = 1.5
