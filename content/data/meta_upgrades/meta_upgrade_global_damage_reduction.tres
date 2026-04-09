@@ -1,12 +1,10 @@
-[gd_resource type="Resource" script_class="MetaUpgradeDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="MetaUpgradeDef" load_steps=2 format=3 uid="uid://l1aq4wtd6r7j"]
 
-[ext_resource type="Script" path="res://content/defs/meta_upgrade_def.gd" id="1_mupg"]
+[ext_resource type="Script" uid="uid://bs83khy1we154" path="res://content/defs/meta_upgrade_def.gd" id="1_mupg"]
 
 [resource]
 script = ExtResource("1_mupg")
 id = "global_damage_reduction"
 display_name = "Global Damage Reduction"
 description = "-5% damage taken from all sources per tier."
-max_tiers = 5
 base_cost = 150
-cost_multiplier = 1.5
