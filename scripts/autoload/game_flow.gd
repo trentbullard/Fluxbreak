@@ -10,6 +10,8 @@ signal run_completed
 signal run_victory_started(message: String, return_delay_sec: float)
 signal boss_encounter_started(boss_def: EnemyBossDef, wave_index: int)
 signal boss_encounter_ended(boss_def: EnemyBossDef, wave_index: int, player_won: bool, player_died: bool)
+signal flux_anchors_updated(new_value: int, old_value: int)
+signal meta_upgrades_applied(levels: Dictionary)
 
 const MENU: String = "res://scenes/world/world.tscn"
 const DEFAULT_PILOT_ROSTER: String = "res://content/data/pilots/pilot_roster.tres"
@@ -35,6 +37,8 @@ const META_STATS_PILOT_SECTION_PREFIX: String = "meta_stats.pilot."
 const BOSS_STATS_GLOBAL_SECTION_PREFIX: String = "boss_stats.global."
 const BOSS_STATS_PILOT_SECTION_PREFIX: String = "boss_stats.pilot."
 const ARCHIVE_SECTION_PREFIX: String = "archive."
+const META_UPGRADES_SECTION: String = "meta_upgrades"
+const META_KEY_FLUX_ANCHORS: String = "flux_anchors"
 const CURRENT_SAVE_SCHEMA_VERSION: int = 2
 
 const STAT_HIGHEST_SCORE: StringName = &"highest_score"
@@ -72,6 +76,7 @@ const BOSS_STAT_DEFAULTS: Dictionary = {
 }
 
 var high_score: int = 0
+var flux_anchors: int = 0
 var selected_pilot: PilotDef = null
 var selected_ship: ShipDef = null
 var selected_weapon: WeaponDef = null
@@ -86,6 +91,7 @@ var _loaded_selected_pilot_id: StringName = &""
 var _loaded_selected_ship_id: StringName = &""
 var _selected_ship_id_by_pilot_id: Dictionary = {}
 var _selected_weapon_id_by_ship_id: Dictionary = {}
+var _meta_upgrade_levels: Dictionary = {}
 
 var _run_active: bool = false
 var _run_started_msec: int = 0
@@ -376,6 +382,32 @@ func check_and_update_high_score(final_run_score: int) -> void:
 		high_score = final_run_score
 		_save_user_data()
 		high_score_updated.emit(high_score, old)
+
+func get_meta_upgrade_level(upgrade_id: String) -> int:
+	return max(0, int(_meta_upgrade_levels.get(upgrade_id, 0)))
+
+func get_current_meta_upgrade_levels() -> Dictionary:
+	return _meta_upgrade_levels.duplicate(true)
+
+func add_flux_anchors(amount: int) -> void:
+	if amount <= 0:
+		return
+	var old: int = flux_anchors
+	flux_anchors = max(0, flux_anchors + amount)
+	_save_user_data()
+	flux_anchors_updated.emit(flux_anchors, old)
+
+func apply_meta_upgrades(new_levels: Dictionary, cost: int) -> bool:
+	if cost > flux_anchors:
+		return false
+	var old_anchors: int = flux_anchors
+	flux_anchors = max(0, flux_anchors - cost)
+	_meta_upgrade_levels = new_levels.duplicate(true)
+	_save_user_data()
+	if flux_anchors != old_anchors:
+		flux_anchors_updated.emit(flux_anchors, old_anchors)
+	meta_upgrades_applied.emit(_meta_upgrade_levels.duplicate(true))
+	return true
 
 func get_pilot_stats(pilot_id: StringName) -> Dictionary:
 	var key: String = String(pilot_id)
@@ -1297,9 +1329,11 @@ func _load_user_data() -> void:
 	_boss_stats_by_pilot_id.clear()
 	_selected_ship_id_by_pilot_id.clear()
 	_selected_weapon_id_by_ship_id.clear()
+	_meta_upgrade_levels.clear()
 	_loaded_selected_pilot_id = &""
 	_loaded_selected_ship_id = &""
 	high_score = 0
+	flux_anchors = 0
 
 	var cfg: ConfigFile = ConfigFile.new()
 	var err: int = cfg.load(SAVE_PATH)
@@ -1321,6 +1355,7 @@ func _load_user_data() -> void:
 	high_score = int(cfg.get_value(SCORE_SECTION, SCORE_KEY_HIGH_SCORE, 0))
 	_loaded_selected_pilot_id = StringName(String(cfg.get_value(META_SECTION, META_KEY_SELECTED_PILOT, "")))
 	_loaded_selected_ship_id = StringName(String(cfg.get_value(META_SECTION, META_KEY_SELECTED_SHIP_ID, "")))
+	flux_anchors = max(0, int(cfg.get_value(META_SECTION, META_KEY_FLUX_ANCHORS, 0)))
 
 	for section in cfg.get_sections():
 		if section.begins_with(PILOT_STATS_SECTION_PREFIX):
@@ -1336,6 +1371,10 @@ func _load_user_data() -> void:
 			continue
 		if section == META_STATS_GLOBAL_SECTION:
 			_meta_stats_global = _load_meta_stat_section(cfg, section)
+			continue
+		if section == META_UPGRADES_SECTION:
+			for key in cfg.get_section_keys(section):
+				_meta_upgrade_levels[String(key)] = max(0, int(cfg.get_value(section, key, 0)))
 			continue
 		if section.begins_with(META_STATS_PILOT_SECTION_PREFIX):
 			var meta_pilot_id: String = section.trim_prefix(META_STATS_PILOT_SECTION_PREFIX)
@@ -1389,6 +1428,7 @@ func _save_user_data() -> void:
 	cfg.set_value(META_SECTION, META_KEY_SELECTED_SHIP_ID, String(selected_ship.get_ship_id()) if selected_ship != null else "")
 	cfg.set_value(META_SECTION, META_KEY_SAVE_SCHEMA_VERSION, CURRENT_SAVE_SCHEMA_VERSION)
 	cfg.set_value(META_SECTION, META_KEY_GAME_VERSION, _get_current_game_version())
+	cfg.set_value(META_SECTION, META_KEY_FLUX_ANCHORS, max(0, flux_anchors))
 
 	for section in cfg.get_sections():
 		if section.begins_with(PILOT_STATS_SECTION_PREFIX):
@@ -1404,6 +1444,9 @@ func _save_user_data() -> void:
 			cfg.erase_section(section)
 			continue
 		if section.begins_with(BOSS_STATS_PILOT_SECTION_PREFIX):
+			cfg.erase_section(section)
+			continue
+		if section == META_UPGRADES_SECTION:
 			cfg.erase_section(section)
 			continue
 		if section.begins_with(PILOT_SHIP_SELECTION_SECTION_PREFIX):
@@ -1457,6 +1500,11 @@ func _save_user_data() -> void:
 		if weapon_id == "":
 			continue
 		cfg.set_value(weapon_section, SELECTION_KEY_SELECTED_WEAPON_ID, weapon_id)
+
+	for upgrade_id in _meta_upgrade_levels.keys():
+		var level: int = max(0, int(_meta_upgrade_levels[upgrade_id]))
+		if level > 0:
+			cfg.set_value(META_UPGRADES_SECTION, String(upgrade_id), level)
 
 	var err: int = cfg.save(SAVE_PATH)
 	if err != OK:

@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://drrnshnyy4682"]
+[gd_scene load_steps=22 format=3 uid="uid://drrnshnyy4682"]
 
 [ext_resource type="Script" uid="uid://ctypdxlxrxqme" path="res://scripts/main_menu/main_menu.gd" id="1_0ebjn"]
 [ext_resource type="Script" uid="uid://bp86upa6vqbpe" path="res://scripts/main_menu/high_score_container.gd" id="3_ob46e"]
@@ -7,6 +7,8 @@
 [ext_resource type="FontFile" uid="uid://bajq4o7ypmdmu" path="res://assets/fonts/Chakra_Petch/ChakraPetch-Light.ttf" id="4_wem23"]
 [ext_resource type="FontFile" uid="uid://dtkmmkanjxyxd" path="res://assets/fonts/Orbitron/Orbitron-Regular.ttf" id="5_3ovsr"]
 [ext_resource type="AudioStream" uid="uid://letca81rhxc1" path="res://assets/sounds/fluxbreak_menu.mp3" id="7_5seab"]
+[ext_resource type="Script" path="res://scripts/main_menu/flux_anchors_container.gd" id="10_fac"]
+[ext_resource type="PackedScene" path="res://scenes/main_menu/upgrades_panel.tscn" id="11_upgpanel"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_ob46e"]
 line_spacing = 0.0
@@ -164,20 +166,32 @@ label_settings = SubResource("LabelSettings_5seab")
 [node name="WeaponPicker" type="OptionButton" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/WeaponContainer/Row"]
 layout_mode = 2
 focus_neighbor_top = NodePath("../../../ShipContainer/Row/ShipPicker")
-focus_neighbor_bottom = NodePath("../../../PracticeContainer/Practice")
-focus_next = NodePath("../../../PracticeContainer/Practice")
+focus_neighbor_bottom = NodePath("../../../UpgradesContainer/Upgrades")
+focus_next = NodePath("../../../UpgradesContainer/Upgrades")
 focus_previous = NodePath("../../../ShipContainer/Row/ShipPicker")
 theme = SubResource("Theme_4xg86")
+
+[node name="UpgradesContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer"]
+layout_mode = 2
+
+[node name="Upgrades" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/UpgradesContainer"]
+layout_mode = 2
+focus_neighbor_top = NodePath("../../WeaponContainer/Row/WeaponPicker")
+focus_neighbor_bottom = NodePath("../../PracticeContainer/Practice")
+focus_next = NodePath("../../PracticeContainer/Practice")
+focus_previous = NodePath("../../WeaponContainer/Row/WeaponPicker")
+theme = SubResource("Theme_wem23")
+text = "Upgrades"
 
 [node name="PracticeContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer"]
 layout_mode = 2
 
 [node name="Practice" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PracticeContainer"]
 layout_mode = 2
-focus_neighbor_top = NodePath("../../WeaponContainer/Row/WeaponPicker")
+focus_neighbor_top = NodePath("../../UpgradesContainer/Upgrades")
 focus_neighbor_bottom = NodePath("../../SettingsContainer/Settings")
 focus_next = NodePath("../../SettingsContainer/Settings")
-focus_previous = NodePath("../../WeaponContainer/Row/WeaponPicker")
+focus_previous = NodePath("../../UpgradesContainer/Upgrades")
 theme = SubResource("Theme_wem23")
 text = "Practice"
 
@@ -236,6 +250,28 @@ offset_right = 83.0
 offset_bottom = 23.0
 text = "High Score: 0"
 label_settings = SubResource("LabelSettings_3ovsr")
+
+[node name="FluxAnchorsContainer" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -230.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = 35.0
+grow_horizontal = 0
+script = ExtResource("10_fac")
+
+[node name="Label" type="Label" parent="FluxAnchorsContainer"]
+layout_mode = 0
+offset_right = 220.0
+offset_bottom = 25.0
+text = "Flux Anchors: 0"
+label_settings = SubResource("LabelSettings_3ovsr")
+horizontal_alignment = 2
+
+[node name="UpgradesPanel" parent="." instance=ExtResource("11_upgpanel")]
 
 [node name="RoadmapPanel" type="PanelContainer" parent="."]
 layout_mode = 1

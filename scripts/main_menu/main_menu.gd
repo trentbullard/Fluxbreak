@@ -8,6 +8,7 @@ signal selection_changed
 @export var default_pilot_index: int = 0
 
 @onready var btn_practice: Button = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PracticeContainer/Practice
+@onready var btn_upgrades: Button = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/UpgradesContainer/Upgrades
 @onready var btn_settings: Button = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/SettingsContainer/Settings
 @onready var btn_exit: Button = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/ExitContainer/Exit
 @onready var pilot_picker: OptionButton = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PilotContainer/Row/PilotPicker
@@ -15,6 +16,7 @@ signal selection_changed
 @onready var weapon_picker: OptionButton = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/WeaponContainer/Row/WeaponPicker
 @onready var version_label: Label = $VersionContainer/VersionLabel
 @onready var music: AudioStreamPlayer = $MenuMusic
+@onready var _upgrades_panel: UpgradesPanel = $UpgradesPanel
 
 var _available_pilots: Array[PilotDef] = []
 var _available_ship_options: Array[PilotStarterShipOptionDef] = []
@@ -26,6 +28,7 @@ func _ready() -> void:
 	visibility_changed.connect(_on_visibility_changed)
 	_on_visibility_changed()
 	btn_practice.pressed.connect(_on_practice_pressed)
+	btn_upgrades.pressed.connect(_on_upgrades_pressed)
 	btn_settings.pressed.connect(_on_settings_pressed)
 	btn_exit.pressed.connect(_on_exit_pressed)
 	pilot_picker.item_selected.connect(_on_pilot_selected)
@@ -37,6 +40,7 @@ func _ready() -> void:
 	_apply_current_pilot_selection(false)
 	if visible and _has_connected_controller():
 		call_deferred("_focus_default_control")
+	_upgrades_panel.closed.connect(_on_upgrades_panel_closed)
 
 func _set_version_label() -> void:
 	var configured_version: String = str(ProjectSettings.get_setting("application/config/version", ""))
@@ -89,6 +93,12 @@ func _on_practice_pressed() -> void:
 
 func _on_settings_pressed() -> void:
 	print("Settings clicked — not implemented yet.")
+
+func _on_upgrades_pressed() -> void:
+	_upgrades_panel.show_panel()
+
+func _on_upgrades_panel_closed() -> void:
+	_focus_default_control()
 
 func _on_exit_pressed() -> void:
 	get_tree().quit()
@@ -372,6 +382,7 @@ func _set_focus_modes() -> void:
 	pilot_picker.focus_mode = Control.FOCUS_ALL
 	ship_picker.focus_mode = Control.FOCUS_ALL
 	weapon_picker.focus_mode = Control.FOCUS_ALL
+	btn_upgrades.focus_mode = Control.FOCUS_ALL
 	btn_practice.focus_mode = Control.FOCUS_ALL
 	btn_settings.focus_mode = Control.FOCUS_ALL
 	btn_exit.focus_mode = Control.FOCUS_ALL
@@ -381,6 +392,9 @@ func _focus_default_control() -> void:
 		return
 	if not btn_practice.disabled:
 		btn_practice.grab_focus()
+		return
+	if not btn_upgrades.disabled:
+		btn_upgrades.grab_focus()
 		return
 	if not pilot_picker.disabled:
 		pilot_picker.grab_focus()

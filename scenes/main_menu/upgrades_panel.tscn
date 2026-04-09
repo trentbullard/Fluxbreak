@@ -1,0 +1,25 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/main_menu/upgrades_panel.gd" id="1_upanel"]
+[ext_resource type="Script" path="res://content/defs/meta_upgrade_def.gd" id="2_mdef"]
+[ext_resource type="Resource" path="res://content/data/meta_upgrades/meta_upgrade_reinforced_bulkheads.tres" id="3_mx1"]
+[ext_resource type="Resource" path="res://content/data/meta_upgrades/meta_upgrade_adaptive_shield_matrix.tres" id="4_mx2"]
+[ext_resource type="Resource" path="res://content/data/meta_upgrades/meta_upgrade_nanobot_amplifier.tres" id="5_mx3"]
+[ext_resource type="Resource" path="res://content/data/meta_upgrades/meta_upgrade_flux_condenser.tres" id="6_mx4"]
+[ext_resource type="Resource" path="res://content/data/meta_upgrades/meta_upgrade_overcharged_capacitors.tres" id="7_mx5"]
+[ext_resource type="Resource" path="res://content/data/meta_upgrades/meta_upgrade_emergency_reserves.tres" id="8_mx6"]
+
+[node name="UpgradesPanel" type="CanvasLayer"]
+layer = 4
+script = ExtResource("1_upanel")
+meta_upgrades = Array[ExtResource("2_mdef")]([ExtResource("3_mx1"), ExtResource("4_mx2"), ExtResource("5_mx3"), ExtResource("6_mx4"), ExtResource("7_mx5"), ExtResource("8_mx6")])
+
+[node name="Close" type="Button" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -75.0
+offset_bottom = 75.0
+grow_horizontal = 0
+text = "×"
+flat = true
