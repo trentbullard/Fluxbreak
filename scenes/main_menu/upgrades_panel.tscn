@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://cx03u4eql62kw"]
+[gd_scene load_steps=19 format=3 uid="uid://cx03u4eql62kw"]
 
 [ext_resource type="Script" uid="uid://dcfp5bfb3l8b0" path="res://scripts/main_menu/upgrades_panel.gd" id="1_upanel"]
 [ext_resource type="Script" uid="uid://bs83khy1we154" path="res://content/defs/meta_upgrade_def.gd" id="2_mdef"]
@@ -17,11 +17,12 @@
 [ext_resource type="Resource" uid="uid://bsaqr8ipf8nc3" path="res://content/data/meta_upgrades/meta_upgrade_maintenance_swarm_calibration.tres" id="16_mx14"]
 [ext_resource type="Resource" uid="uid://ds2i7l7o6dq4k" path="res://content/data/meta_upgrades/meta_upgrade_galactic_trade_certificate.tres" id="17_mx15"]
 [ext_resource type="Resource" uid="uid://ccjdftjhivrwg" path="res://content/data/meta_upgrades/meta_upgrade_asynchronous_docking_coprocessor.tres" id="18_mx16"]
+[ext_resource type="Resource" uid="uid://c7payll5rxpn3" path="res://content/data/meta_upgrades/meta_upgrade_quantum_targeting_computer.tres" id="18_wci0x"]
 
 [node name="UpgradesPanel" type="CanvasLayer"]
 layer = 4
 script = ExtResource("1_upanel")
-meta_upgrades = Array[ExtResource("2_mdef")]([ExtResource("10_mx8"), ExtResource("14_mx12"), ExtResource("17_mx15"), ExtResource("15_mx13"), ExtResource("18_mx16"), ExtResource("6_mx4"), ExtResource("11_mx9"), ExtResource("5_mx3"), ExtResource("16_mx14"), ExtResource("9_mx7"), ExtResource("3_mx1"), ExtResource("4_mx2"), ExtResource("7_mx5"), ExtResource("12_mx10"), ExtResource("13_mx11")])
+meta_upgrades = Array[ExtResource("2_mdef")]([ExtResource("10_mx8"), ExtResource("14_mx12"), ExtResource("17_mx15"), ExtResource("15_mx13"), ExtResource("18_mx16"), ExtResource("6_mx4"), ExtResource("11_mx9"), ExtResource("5_mx3"), ExtResource("16_mx14"), ExtResource("9_mx7"), ExtResource("3_mx1"), ExtResource("4_mx2"), ExtResource("7_mx5"), ExtResource("12_mx10"), ExtResource("13_mx11"), ExtResource("18_wci0x")])
 
 [node name="Close" type="Button" parent="."]
 anchors_preset = 1
