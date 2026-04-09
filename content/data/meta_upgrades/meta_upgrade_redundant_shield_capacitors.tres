@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="MetaUpgradeDef" load_steps=4 format=3 uid="uid://cemh5xg24se2p"]
+
+[ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="1_4jxnv"]
+[ext_resource type="Script" uid="uid://bs83khy1we154" path="res://content/defs/meta_upgrade_def.gd" id="2_ks0m5"]
+
+[sub_resource type="Resource" id="Resource_3nrjx"]
+script = ExtResource("1_4jxnv")
+stat = 14
+phase = 0
+op = 1
+value = 1.15
+source_id = "redundant_shield_capacitors"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[resource]
+script = ExtResource("2_ks0m5")
+id = "redundant_shield_capacitors"
+display_name = "Redundant Shield Capacitors"
+description = "+15% shield regeneration rate per tier."
+base_cost = 75
+modifiers_per_tier = Array[ExtResource("1_4jxnv")]([SubResource("Resource_3nrjx")])

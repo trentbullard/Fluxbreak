@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="MetaUpgradeDef" load_steps=4 format=3 uid="uid://ccjdftjhivrwg"]
+
+[ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="1_rqj8v"]
+[ext_resource type="Script" uid="uid://bs83khy1we154" path="res://content/defs/meta_upgrade_def.gd" id="2_4tlsu"]
+
+[sub_resource type="Resource" id="Resource_rgbki"]
+script = ExtResource("1_rqj8v")
+stat = 85
+phase = 0
+op = 1
+value = 0.75
+source_id = "asynchronous_docking_coprocessor"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[resource]
+script = ExtResource("2_4tlsu")
+id = "asynchronous_docking_coprocessor"
+display_name = "Asynchronous Docking Coprocessor"
+description = "-25% docking time per tier."
+max_tiers = 3
+base_cost = 50
+modifiers_per_tier = Array[ExtResource("1_rqj8v")]([SubResource("Resource_rgbki")])

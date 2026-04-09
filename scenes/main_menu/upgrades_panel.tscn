@@ -1,28 +1,27 @@
-[gd_scene load_steps=19 format=3]
+[gd_scene load_steps=18 format=3 uid="uid://cx03u4eql62kw"]
 
-[ext_resource type="Script" path="res://scripts/main_menu/upgrades_panel.gd" id="1_upanel"]
-[ext_resource type="Script" path="res://content/defs/meta_upgrade_def.gd" id="2_mdef"]
-[ext_resource type="Resource" path="res://content/data/meta_upgrades/meta_upgrade_reinforced_bulkheads.tres" id="3_mx1"]
-[ext_resource type="Resource" path="res://content/data/meta_upgrades/meta_upgrade_adaptive_shield_matrix.tres" id="4_mx2"]
-[ext_resource type="Resource" path="res://content/data/meta_upgrades/meta_upgrade_nanobot_amplifier.tres" id="5_mx3"]
-[ext_resource type="Resource" path="res://content/data/meta_upgrades/meta_upgrade_flux_condenser.tres" id="6_mx4"]
-[ext_resource type="Resource" path="res://content/data/meta_upgrades/meta_upgrade_overcharged_capacitors.tres" id="7_mx5"]
-[ext_resource type="Resource" path="res://content/data/meta_upgrades/meta_upgrade_emergency_reserves.tres" id="8_mx6"]
-[ext_resource type="Resource" path="res://content/data/meta_upgrades/meta_upgrade_nanobot_pickup_range.tres" id="9_mx7"]
-[ext_resource type="Resource" path="res://content/data/meta_upgrades/meta_upgrade_max_velocity.tres" id="10_mx8"]
-[ext_resource type="Resource" path="res://content/data/meta_upgrades/meta_upgrade_gforce_tolerance.tres" id="11_mx9"]
-[ext_resource type="Resource" path="res://content/data/meta_upgrades/meta_upgrade_weapon_effective_range.tres" id="12_mx10"]
-[ext_resource type="Resource" path="res://content/data/meta_upgrades/meta_upgrade_global_damage_reduction.tres" id="13_mx11"]
-[ext_resource type="Resource" path="res://content/data/meta_upgrades/meta_upgrade_minion_count.tres" id="14_mx12"]
-[ext_resource type="Resource" path="res://content/data/meta_upgrades/meta_upgrade_shield_regen.tres" id="15_mx13"]
-[ext_resource type="Resource" path="res://content/data/meta_upgrades/meta_upgrade_hull_repair_amount.tres" id="16_mx14"]
-[ext_resource type="Resource" path="res://content/data/meta_upgrades/meta_upgrade_poi_discount.tres" id="17_mx15"]
-[ext_resource type="Resource" path="res://content/data/meta_upgrades/meta_upgrade_docking_speed.tres" id="18_mx16"]
+[ext_resource type="Script" uid="uid://dcfp5bfb3l8b0" path="res://scripts/main_menu/upgrades_panel.gd" id="1_upanel"]
+[ext_resource type="Script" uid="uid://bs83khy1we154" path="res://content/defs/meta_upgrade_def.gd" id="2_mdef"]
+[ext_resource type="Resource" uid="uid://bgaqq8eeu5wum" path="res://content/data/meta_upgrades/meta_upgrade_composite_hull_materials.tres" id="3_mx1"]
+[ext_resource type="Resource" uid="uid://ddx0dyu3hngix" path="res://content/data/meta_upgrades/meta_upgrade_energy_field_calibration.tres" id="4_mx2"]
+[ext_resource type="Resource" uid="uid://dfs1r5237kv3q" path="res://content/data/meta_upgrades/meta_upgrade_xray_amplifier.tres" id="5_mx3"]
+[ext_resource type="Resource" uid="uid://bh11gy17m48fh" path="res://content/data/meta_upgrades/meta_upgrade_flux_condenser.tres" id="6_mx4"]
+[ext_resource type="Resource" uid="uid://doly3jo8ewn0y" path="res://content/data/meta_upgrades/meta_upgrade_combat_ai_optimization.tres" id="7_mx5"]
+[ext_resource type="Resource" uid="uid://cwn7ck6hgo5oy" path="res://content/data/meta_upgrades/meta_upgrade_trawl_field_projector.tres" id="9_mx7"]
+[ext_resource type="Resource" uid="uid://c5x43f4s4dn5i" path="res://content/data/meta_upgrades/meta_upgrade_flux_infused_fuel_chemistry.tres" id="10_mx8"]
+[ext_resource type="Resource" uid="uid://coke22k5f6sl3" path="res://content/data/meta_upgrades/meta_upgrade_neuroadaptive_stabilizers.tres" id="11_mx9"]
+[ext_resource type="Resource" uid="uid://b5qt83wes71jl" path="res://content/data/meta_upgrades/meta_upgrade_deep_space_sensor_array.tres" id="12_mx10"]
+[ext_resource type="Resource" uid="uid://l1aq4wtd6r7j" path="res://content/data/meta_upgrades/meta_upgrade_ablative_response_network.tres" id="13_mx11"]
+[ext_resource type="Resource" uid="uid://b08occ0wm3jxc" path="res://content/data/meta_upgrades/meta_upgrade_auxiliary_bay_compartment.tres" id="14_mx12"]
+[ext_resource type="Resource" uid="uid://cemh5xg24se2p" path="res://content/data/meta_upgrades/meta_upgrade_redundant_shield_capacitors.tres" id="15_mx13"]
+[ext_resource type="Resource" uid="uid://bsaqr8ipf8nc3" path="res://content/data/meta_upgrades/meta_upgrade_maintenance_swarm_calibration.tres" id="16_mx14"]
+[ext_resource type="Resource" uid="uid://ds2i7l7o6dq4k" path="res://content/data/meta_upgrades/meta_upgrade_galactic_trade_certificate.tres" id="17_mx15"]
+[ext_resource type="Resource" uid="uid://ccjdftjhivrwg" path="res://content/data/meta_upgrades/meta_upgrade_asynchronous_docking_coprocessor.tres" id="18_mx16"]
 
 [node name="UpgradesPanel" type="CanvasLayer"]
 layer = 4
 script = ExtResource("1_upanel")
-meta_upgrades = Array[ExtResource("2_mdef")]([ExtResource("3_mx1"), ExtResource("4_mx2"), ExtResource("5_mx3"), ExtResource("6_mx4"), ExtResource("7_mx5"), ExtResource("8_mx6"), ExtResource("9_mx7"), ExtResource("10_mx8"), ExtResource("11_mx9"), ExtResource("12_mx10"), ExtResource("13_mx11"), ExtResource("14_mx12"), ExtResource("15_mx13"), ExtResource("16_mx14"), ExtResource("17_mx15"), ExtResource("18_mx16")])
+meta_upgrades = Array[ExtResource("2_mdef")]([ExtResource("10_mx8"), ExtResource("14_mx12"), ExtResource("17_mx15"), ExtResource("15_mx13"), ExtResource("18_mx16"), ExtResource("6_mx4"), ExtResource("11_mx9"), ExtResource("5_mx3"), ExtResource("16_mx14"), ExtResource("9_mx7"), ExtResource("3_mx1"), ExtResource("4_mx2"), ExtResource("7_mx5"), ExtResource("12_mx10"), ExtResource("13_mx11")])
 
 [node name="Close" type="Button" parent="."]
 anchors_preset = 1

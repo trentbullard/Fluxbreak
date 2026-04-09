@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="MetaUpgradeDef" load_steps=4 format=3 uid="uid://dfs1r5237kv3q"]
+
+[ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="1_drqe5"]
+[ext_resource type="Script" uid="uid://bs83khy1we154" path="res://content/defs/meta_upgrade_def.gd" id="2_8bwl8"]
+
+[sub_resource type="Resource" id="Resource_rdua0"]
+script = ExtResource("1_drqe5")
+stat = 47
+phase = 0
+op = 1
+value = 1.1
+source_id = "xray_amplifier"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[resource]
+script = ExtResource("2_8bwl8")
+id = "xray_amplifier"
+display_name = "X-Ray Amplifier"
+description = "+10% nanobot drop rate per tier."
+max_tiers = 3
+base_cost = 75
+modifiers_per_tier = Array[ExtResource("1_drqe5")]([SubResource("Resource_rdua0")])

@@ -6,7 +6,7 @@
 [sub_resource type="Resource" id="Resource_swfr7"]
 script = ExtResource("1_swfr7")
 stat = 20
-value = 5.0
+value = 2.0
 source_id = "precision_targeting_suite_1"
 metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
 
@@ -28,7 +28,7 @@ metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
 script = ExtResource("2_h4aac")
 id = "precision_targeting_suite_1"
 display_name = "Precision Targeting Suite I"
-descripton = "+5 Accuracy, +.05 Crit Chance, -.05 Range Falloff"
+descripton = "+2 Accuracy, +.05 Crit Chance, -.05 Range Falloff"
 cost = 880
 tags = Array[String](["offense", "weapons", "damage"])
 family_id = "precision_targeting_suite"

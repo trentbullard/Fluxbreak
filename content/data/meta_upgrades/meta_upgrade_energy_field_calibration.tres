@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="MetaUpgradeDef" load_steps=4 format=3 uid="uid://ddx0dyu3hngix"]
+
+[ext_resource type="Script" uid="uid://bs83khy1we154" path="res://content/defs/meta_upgrade_def.gd" id="1_mupg"]
+[ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="1_v0fy5"]
+
+[sub_resource type="Resource" id="Resource_14ry3"]
+script = ExtResource("1_v0fy5")
+stat = 13
+phase = 0
+op = 1
+value = 1.1
+source_id = "energy_field_calibration"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[resource]
+script = ExtResource("1_mupg")
+id = "energy_field_calibration"
+display_name = "Energy Field Calibration"
+description = "+10% max shield per tier."
+base_cost = 50
+modifiers_per_tier = Array[ExtResource("1_v0fy5")]([SubResource("Resource_14ry3")])

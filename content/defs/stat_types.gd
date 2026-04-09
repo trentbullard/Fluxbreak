@@ -115,6 +115,8 @@ enum Stat {
 	HULL_REPAIR_COST_MULT,	# multiplier applied to all hull repair costs
 	POI_COST_MULT,      		# multiplier applied to POI upgrade and weapon purchase costs
 	DOCKING_TIME_MULT,  		# multiplier applied to docking duration
+	FLUX_ACCUMULATION_MULT,
+	STARTING_NANOBOTS_AMOUNT,
 }
 
 ## Types of damage

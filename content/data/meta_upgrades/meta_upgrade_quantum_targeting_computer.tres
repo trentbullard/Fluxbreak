@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="MetaUpgradeDef" load_steps=4 format=3 uid="uid://c7payll5rxpn3"]
+
+[ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="1_pv5fa"]
+[ext_resource type="Script" uid="uid://bs83khy1we154" path="res://content/defs/meta_upgrade_def.gd" id="2_podgf"]
+
+[sub_resource type="Resource" id="Resource_pv5fa"]
+script = ExtResource("1_pv5fa")
+stat = 23
+phase = 0
+op = 1
+value = 1.05
+source_id = "quantum_targeting_computer"
+metadata/_custom_type_script = "uid://c7mxb2uqowqsm"
+
+[resource]
+script = ExtResource("2_podgf")
+id = "quantum_targeting_computer"
+display_name = "Quantum Targeting Computer"
+description = "+5% Crit Chance"
+modifiers_per_tier = Array[ExtResource("1_pv5fa")]([SubResource("Resource_pv5fa")])
+metadata/_custom_type_script = "uid://bs83khy1we154"
