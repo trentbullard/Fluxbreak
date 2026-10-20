@@ -7,6 +7,8 @@
 radius = 19.0
 
 [node name="GreyEnemy" instance=ExtResource("1_base")]
+collision_layer = 8
+collision_mask = 0
 script = ExtResource("2_grey")
 label_height = 36.0
 
