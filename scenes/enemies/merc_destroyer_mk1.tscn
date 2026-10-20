@@ -1,0 +1,132 @@
+[gd_scene format=3]
+
+[sub_resource type="StandardMaterial3D" id="Hull"]
+albedo_color = Color(0.12, 0.17, 0.23, 1)
+metallic = 0.55
+roughness = 0.7
+
+[sub_resource type="StandardMaterial3D" id="Armor"]
+albedo_color = Color(0.32, 0.38, 0.43, 1)
+metallic = 0.65
+roughness = 0.5
+
+[sub_resource type="StandardMaterial3D" id="Warning"]
+albedo_color = Color(1, 0.6, 0.12, 1)
+emission_enabled = true
+emission = Color(1, 0.35, 0.035, 1)
+emission_energy_multiplier = 1.4
+
+[sub_resource type="StandardMaterial3D" id="Shield"]
+albedo_color = Color(0.1, 0.75, 0.95, 1)
+emission_enabled = true
+emission = Color(0.05, 0.65, 1, 1)
+emission_energy_multiplier = 1.8
+
+[sub_resource type="StandardMaterial3D" id="Engine"]
+albedo_color = Color(0.5, 0.7, 1, 1)
+emission_enabled = true
+emission = Color(0.2, 0.5, 1, 1)
+emission_energy_multiplier = 2.2
+
+[sub_resource type="BoxMesh" id="Shape0"]
+material = SubResource("Hull")
+size = Vector3(18, 12, 69)
+
+[sub_resource type="BoxMesh" id="Shape1"]
+material = SubResource("Armor")
+size = Vector3(11, 16, 42)
+
+[sub_resource type="BoxMesh" id="Shape2"]
+material = SubResource("Armor")
+size = Vector3(11, 16, 42)
+
+[sub_resource type="BoxMesh" id="Shape3"]
+material = SubResource("Hull")
+size = Vector3(5, 5, 62)
+
+[sub_resource type="BoxMesh" id="Shape4"]
+material = SubResource("Hull")
+size = Vector3(5, 5, 62)
+
+[sub_resource type="BoxMesh" id="Shape5"]
+material = SubResource("Warning")
+size = Vector3(1.5, 2, 49)
+
+[sub_resource type="BoxMesh" id="Shape6"]
+material = SubResource("Warning")
+size = Vector3(1.5, 2, 49)
+
+[sub_resource type="BoxMesh" id="Shape7"]
+material = SubResource("Armor")
+size = Vector3(11, 5, 13)
+
+[sub_resource type="BoxMesh" id="Shape8"]
+material = SubResource("Warning")
+size = Vector3(7, 2, 3)
+
+[sub_resource type="BoxMesh" id="Shape9"]
+material = SubResource("Engine")
+size = Vector3(10, 9, 3)
+
+[sub_resource type="BoxMesh" id="Shape10"]
+material = SubResource("Engine")
+size = Vector3(10, 9, 3)
+
+[sub_resource type="BoxMesh" id="Shape11"]
+material = SubResource("Armor")
+size = Vector3(42, 3, 9)
+
+[node name="MercDestroyer" type="Node3D"]
+
+[node name="ModelRoot" type="Node3D" parent="."]
+
+[node name="Spine" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 0, 0)
+mesh = SubResource("Shape0")
+
+[node name="PortArmor" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-13, 0, 11)
+mesh = SubResource("Shape1")
+
+[node name="StarboardArmor" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(13, 0, 11)
+mesh = SubResource("Shape2")
+
+[node name="PortRail" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-8, 4, -19)
+mesh = SubResource("Shape3")
+
+[node name="StarboardRail" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(8, 4, -19)
+mesh = SubResource("Shape4")
+
+[node name="PortChargeStrip" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-8, 7, -20)
+mesh = SubResource("Shape5")
+
+[node name="StarboardChargeStrip" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(8, 7, -20)
+mesh = SubResource("Shape6")
+
+[node name="Bridge" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 9, 18)
+mesh = SubResource("Shape7")
+
+[node name="Sight" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 12, 13)
+mesh = SubResource("Shape8")
+
+[node name="PortEngine" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-12, 0, 34)
+mesh = SubResource("Shape9")
+
+[node name="StarboardEngine" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(12, 0, 34)
+mesh = SubResource("Shape10")
+
+[node name="RearStabilizer" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 0, 26)
+mesh = SubResource("Shape11")
+
+[node name="MuzzleSocket" type="Marker3D" parent="ModelRoot"]
+position = Vector3(0, 4, -52)

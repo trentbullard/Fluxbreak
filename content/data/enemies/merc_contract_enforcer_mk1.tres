@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="MercBossDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/merc_boss_def.gd" id="1_def"]
+[ext_resource type="Resource" path="res://content/data/factions/mercs.tres" id="2_faction"]
+[ext_resource type="Resource" path="res://content/data/enemy_roles/bruiser.tres" id="3_role"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/merc_enforcer.tscn" id="4_actor"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/merc_contract_enforcer_mk1.tscn" id="5_model"]
+[ext_resource type="Resource" path="res://content/data/boss_movement/merc_enforcer_movement.tres" id="6_movement"]
+[ext_resource type="Resource" path="res://content/data/enemies/merc_frigate_mk1.tres" id="7_escort"]
+[ext_resource type="Resource" path="res://content/data/weapons/merc_enforcer_cannon.tres" id="8_weapon"]
+
+[resource]
+script = ExtResource("1_def")
+boss_description = "A Merc command ship that marks broadside lanes and mortar salvos before committing. At half hull, its emergency contract calls in one shield Frigate."
+movement_def = ExtResource("6_movement")
+initial_delay_sec = 2.8
+broadside_windup_sec = 1.8
+salvo_windup_sec = 1.5
+broadside_radius = 65.0
+salvo_radius = 85.0
+recovery_sec = 2.0
+cadence_sec = 1.5
+phase_hull_threshold = 0.55
+phase_cadence_multiplier = 0.72
+escort_def = ExtResource("7_escort")
+escort_offset = 180.0
+id = "merc_contract_enforcer_mk1"
+display_name = "Contract Enforcer"
+faction = ExtResource("2_faction")
+role = ExtResource("3_role")
+tier = 4
+threat_cost = 15
+bounty_scrap = 25
+can_be_elite = false
+score_on_kill = 500
+max_hull = 650.0
+max_shield = 120.0
+shield_regen = 1.0
+evasion = 0.02
+thrust = 90.0
+weapon = ExtResource("8_weapon")
+actor_scene = ExtResource("4_actor")
+model_scene = ExtResource("5_model")

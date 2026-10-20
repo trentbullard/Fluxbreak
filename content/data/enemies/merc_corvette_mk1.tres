@@ -1,24 +1,30 @@
-[gd_resource type="Resource" script_class="EnemyDef" format=3 uid="uid://bfqfno3bqn0wg"]
+[gd_resource type="Resource" script_class="MercEnemyDef" format=3 uid="uid://bfqfno3bqn0wg"]
 
-[ext_resource type="Script" uid="uid://bx6wive40u6f" path="res://content/defs/enemy_def.gd" id="1_21rtp"]
-[ext_resource type="Resource" uid="uid://crx8i23qr1hoi" path="res://content/data/factions/mercs.tres" id="2_faction"]
-[ext_resource type="Resource" uid="uid://bajmdg1wdxwtk" path="res://content/data/enemy_roles/brawler.tres" id="3_role"]
-[ext_resource type="Resource" path="res://content/data/weapons/merc_brawler_mk1_turret.tres" id="4_weapon"]
+[ext_resource type="Script" path="res://content/defs/merc_enemy_def.gd" id="1_def"]
+[ext_resource type="Resource" path="res://content/data/factions/mercs.tres" id="2_faction"]
+[ext_resource type="Resource" path="res://content/data/enemy_roles/brawler.tres" id="3_role"]
+[ext_resource type="Resource" path="res://content/data/weapons/merc_corvette_autocannon.tres" id="4_weapon"]
+[ext_resource type="Resource" path="res://content/data/merc_behaviors/corvette.tres" id="5_behavior"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/merc_enemy.tscn" id="6_actor"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/merc_corvette_mk1.tscn" id="7_model"]
 
 [resource]
-script = ExtResource("1_21rtp")
+script = ExtResource("1_def")
+behavior = ExtResource("5_behavior")
 id = "merc_corvette_mk1"
 display_name = "Corvette Mk I"
 faction = ExtResource("2_faction")
 role = ExtResource("3_role")
-threat_cost = 3
+tier = 1
+threat_cost = 1
 bounty_scrap = 2
-affixes = Array[String](["Veteran", "Apex", "Vanguard"])
-score_on_kill = 20
-max_hull = 80.0
-max_shield = 25.0
-shield_regen = 2.0
-evasion = 0.09
-thrust = 60.0
+can_be_elite = false
+score_on_kill = 15
+max_hull = 40
+max_shield = 10
+shield_regen = 0.5
+evasion = 0.1
+thrust = 65
 weapon = ExtResource("4_weapon")
-metadata/_custom_type_script = "uid://bx6wive40u6f"
+actor_scene = ExtResource("6_actor")
+model_scene = ExtResource("7_model")

@@ -1,7 +1,7 @@
 # high_score_container.gd (godot 4.6.3)
 extends Control
 
-@onready var label: Label = $Label as Label
+@onready var label: Label = $HighScoreLabel as Label
 
 func _ready() -> void:
 	_update_label(GameFlow.high_score)

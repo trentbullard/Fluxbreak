@@ -119,6 +119,12 @@ Their fleets resemble recognizable military doctrine.
 ### Home System Identity
 A militarized industrial war-zone with patrol structures, weapons platforms, debris corridors, and heavy sensor traffic. Environmental modifiers may increase missile saturation, turret pressure, or shield interactions.
 
+### Merc Practice Seed
+
+The first playable Merc encounter is available from **Merc Practice** in the main menu. Three short authored waves introduce Corvette burst-and-retreat attacks, Frigate shield support, and the Destroyer's locked charged corridor. Contract Enforcer then alternates marked corridor and spherical salvo attacks, calling one Frigate escort at 55% hull. Defeating the boss completes the practice run.
+
+Amber volumes and a screen-space countdown show when a special attack will resolve. Leaving the marked volume avoids that special; ordinary gunfire retains the game's hit/miss calculations. Cyan support links show bounded allied shield restoration. The current ships use readable placeholder models; the remaining Merc classes and variants remain future progression.
+
 # Bugs (Swarm Hive)
 
 Bugs are biological swarm organisms driven by overwhelming pressure, breeding momentum, and predatory adaptation.

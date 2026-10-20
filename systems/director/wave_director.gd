@@ -82,7 +82,26 @@ func get_next_wave_index() -> int:
 	return max(_wave_index, 1)
 
 func get_wave_time_remaining() -> float:
-	return max(wave_timeout_sec - _wave_timer, 0.0)
+	return max(_get_wave_timeout_sec() - _wave_timer, 0.0)
+
+func _get_wave_timeout_sec() -> float:
+	var stage: StageDef = GameFlow.get_current_stage()
+	if stage != null and stage.wave_timeout_override_sec > 0.0:
+		return stage.wave_timeout_override_sec
+	return wave_timeout_sec
+
+func _get_downtime_sec() -> float:
+	var stage: StageDef = GameFlow.get_current_stage()
+	if stage != null and stage.downtime_override_sec >= 0.0:
+		return stage.downtime_override_sec
+	return downtime_sec
+
+func _get_max_enemy_tier() -> int:
+	var stage: StageDef = GameFlow.get_current_stage()
+	var wave_offset: int = max(_wave_index - 1, 0)
+	if stage != null and wave_offset < stage.authored_tier_caps.size():
+		return clampi(stage.authored_tier_caps[wave_offset], 1, 5)
+	return clampi(1 + int(_wave_index / 3) + max(GameFlow.get_active_stage_index(), 0), 1, 5)
 
 func get_downtime_remaining() -> float:
 	return max(_downtime_remaining, 0.0)
@@ -143,8 +162,8 @@ func _process(delta: float) -> void:
 		if _boss_wave_active:
 			next_wave_eta.emit(0.0)
 			return
-		var wave_timeout_left: float = max(wave_timeout_sec - _wave_timer, 0.0)
-		var eta: float = wave_timeout_left + downtime_sec
+		var wave_timeout_left: float = max(_get_wave_timeout_sec() - _wave_timer, 0.0)
+		var eta: float = wave_timeout_left + _get_downtime_sec()
 		next_wave_eta.emit(eta)
 
 func _start_downtime(first: bool = false) -> void:
@@ -152,7 +171,7 @@ func _start_downtime(first: bool = false) -> void:
 	_state = RunState.State.DOWNTIME
 	RunState.set_state(RunState.State.DOWNTIME)
 	_active_card = null
-	_downtime_remaining = 5.0 if first else downtime_sec
+	_downtime_remaining = 5.0 if first else _get_downtime_sec()
 	_ensure_pending_card()
 	downtime_started.emit(_downtime_remaining, _wave_index + 1)
 
@@ -168,6 +187,10 @@ func _choose_card() -> WaveCard:
 	var deck: Array[WaveCard] = _get_wave_card_deck()
 	if deck.is_empty():
 		return WaveCard.new()
+	var stage: StageDef = GameFlow.get_current_stage()
+	if stage != null and stage.ordered_wave_cards:
+		var next_index: int = _wave_index + 1 if _state == RunState.State.DOWNTIME else _wave_index
+		return deck[clampi(next_index - 1, 0, deck.size() - 1)]
 
 	var candidates: Array[WaveCard] = []
 	for entry in deck:
@@ -271,11 +294,6 @@ func _next_wave() -> void:
 	var budgets: Dictionary = {"enemy_points": 0, "target_points": 0}
 	if _wave_budgeter != null:
 		budgets = _wave_budgeter.to_budgets(threat, _elapsed_sec, _wave_index, _active_card)
-	_current_enemy_density_reference = max(
-		soft_enemy_density_base + float(max(_wave_index - 1, 0)) * soft_enemy_density_per_wave,
-		float(int(budgets.get("enemy_points", 0))) * 0.65
-	)
-
 	var opening_adjustment: Dictionary = {"enemy_points": int(budgets.get("enemy_points", 0)), "scale": 1.0}
 	if _intensity_dir != null:
 		opening_adjustment = _intensity_dir.get_opening_adjustment(
@@ -284,6 +302,16 @@ func _next_wave() -> void:
 			incoming_damage
 		)
 	budgets["enemy_points"] = int(opening_adjustment.get("enemy_points", budgets.get("enemy_points", 0)))
+	var stage: StageDef = GameFlow.get_current_stage()
+	var wave_offset: int = max(_wave_index - 1, 0)
+	if stage != null and wave_offset < stage.authored_enemy_budgets.size():
+		budgets["enemy_points"] = max(stage.authored_enemy_budgets[wave_offset], 0)
+		opening_adjustment["enemy_points"] = budgets["enemy_points"]
+		opening_adjustment["scale"] = 1.0
+	_current_enemy_density_reference = max(
+		soft_enemy_density_base + float(max(_wave_index - 1, 0)) * soft_enemy_density_per_wave,
+		float(int(budgets.get("enemy_points", 0))) * 0.65
+	)
 
 	RunState.set_wave_context(
 		_wave_index,
@@ -292,10 +320,14 @@ func _next_wave() -> void:
 		_progression_wave_index
 	)
 
-	var max_tier: int = clamp(1 + _wave_index / 3 + stage_index, 1, 5)
+	var max_tier: int = _get_max_enemy_tier()
 	var reqs: Array[SpawnRequest] = []
 	var combat_scaling: EnemyCombatScalingSnapshot = _build_enemy_combat_scaling_snapshot(_wave_index, _elapsed_sec)
 	if _buyer != null:
+		# Authored lessons may deliberately repeat a primary role. Procedural
+		# anti-repetition must not replace that lesson with a different role.
+		if stage != null and stage.ordered_wave_cards:
+			_buyer.clear_history()
 		reqs = _buyer.buy_wave(
 			int(budgets["enemy_points"]),
 			int(budgets["target_points"]),
@@ -369,16 +401,37 @@ func _start_pressure_loop() -> void:
 	_pressure_token += 1
 	_run_pressure_coroutine(_pressure_token)
 
-func _create_pausable_timer(seconds: float) -> SceneTreeTimer:
-	return get_tree().create_timer(seconds, false)
+func _exit_tree() -> void:
+	_wave_token += 1
+	_pressure_token += 1
+	# Resume suspended requests through their cancellation guards before the
+	# timers disappear, so their stage and enemy resources can be released.
+	for child: Node in get_children():
+		if child is Timer:
+			(child as Timer).timeout.emit()
+
+func _create_pausable_timer(seconds: float) -> Timer:
+	# Owning these timers releases suspended wave requests when the encounter
+	# exits, even if the menu pauses the tree before their timeout can run.
+	var timer: Timer = Timer.new()
+	timer.one_shot = true
+	timer.wait_time = maxf(seconds, 0.001)
+	timer.process_mode = Node.PROCESS_MODE_PAUSABLE
+	add_child(timer)
+	timer.timeout.connect(timer.queue_free, CONNECT_ONE_SHOT)
+	timer.start()
+	return timer
 
 func _run_pressure_coroutine(token: int) -> void:
 	while true:
-		var t: SceneTreeTimer = _create_pausable_timer(pressure_interval_sec)
+		var t: Timer = _create_pausable_timer(pressure_interval_sec)
 		await t.timeout
 		if token != _pressure_token:
 			return
 		if _buyer == null or _spawner == null:
+			continue
+		var stage: StageDef = GameFlow.get_current_stage()
+		if stage != null and not stage.pressure_reinforcements_enabled:
 			continue
 
 		if _state == RunState.State.DOWNTIME:
@@ -434,7 +487,7 @@ func _run_pressure_coroutine(token: int) -> void:
 		if pressure_enemy_budget <= 0 and pressure_target_budget <= 0:
 			continue
 
-		var max_tier: int = clamp(1 + _wave_index / 3 + max(GameFlow.get_active_stage_index(), 0), 1, 5)
+		var max_tier: int = _get_max_enemy_tier()
 		var pressure_combat_scaling: EnemyCombatScalingSnapshot = _build_enemy_combat_scaling_snapshot(_wave_index, _elapsed_sec)
 		var pressure_reqs: Array[SpawnRequest] = _buyer.buy_wave(
 			pressure_enemy_budget,
@@ -721,7 +774,7 @@ func _run_requests_coroutine(
 				opening_remaining = max(opening_remaining - opening_spawned, 0)
 				package_spawned_any = true
 			if package_stalled:
-				var opening_retry: SceneTreeTimer = _create_pausable_timer(0.35)
+				var opening_retry: Timer = _create_pausable_timer(0.35)
 				await opening_retry.timeout
 				if token != _wave_token:
 					return
@@ -763,18 +816,18 @@ func _run_requests_coroutine(
 			spawned = _spawner.spawn_target_burst(req.target_def, batch_size)
 
 		if spawned == 0:
-			var wait_cap: SceneTreeTimer = _create_pausable_timer(0.35)
+			var wait_cap: Timer = _create_pausable_timer(0.35)
 			await wait_cap.timeout
 			if token != _wave_token:
 				return
 		else:
 			remaining[req_index] = max(remaining[req_index] - spawned, 0)
-			var wait: SceneTreeTimer = _create_pausable_timer(req.inter_batch_sec)
+			var wait: Timer = _create_pausable_timer(req.inter_batch_sec)
 			await wait.timeout
 			if token != _wave_token:
 				return
 
-		if _wave_timer >= wave_timeout_sec:
+		if _wave_timer >= _get_wave_timeout_sec():
 			emit_signal("wave_forced_next", _wave_index)
 			if _should_trigger_victory():
 				GameFlow.player_won()
@@ -785,7 +838,10 @@ func _run_requests_coroutine(
 	await _clear_or_timeout_then_downtime(token)
 
 func _clear_or_timeout_then_downtime(token: int) -> void:
-	var end_deadline: float = _wave_timer + wave_timeout_sec
+	var end_deadline: float = _wave_timer + _get_wave_timeout_sec()
+	var stage: StageDef = GameFlow.get_current_stage()
+	if stage != null and stage.wave_timeout_override_sec > 0.0:
+		end_deadline = stage.wave_timeout_override_sec
 	while _wave_timer < end_deadline:
 		if token != _wave_token:
 			return
@@ -797,8 +853,10 @@ func _clear_or_timeout_then_downtime(token: int) -> void:
 				return
 			_start_downtime()
 			return
-		var t: SceneTreeTimer = _create_pausable_timer(0.5)
+		var t: Timer = _create_pausable_timer(0.5)
 		await t.timeout
+		if token != _wave_token:
+			return
 
 	emit_signal("wave_forced_next", _wave_index)
 	if _should_trigger_victory():

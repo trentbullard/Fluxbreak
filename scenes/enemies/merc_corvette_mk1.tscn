@@ -1,0 +1,114 @@
+[gd_scene format=3]
+
+[sub_resource type="StandardMaterial3D" id="Hull"]
+albedo_color = Color(0.12, 0.17, 0.23, 1)
+metallic = 0.55
+roughness = 0.7
+
+[sub_resource type="StandardMaterial3D" id="Armor"]
+albedo_color = Color(0.32, 0.38, 0.43, 1)
+metallic = 0.65
+roughness = 0.5
+
+[sub_resource type="StandardMaterial3D" id="Warning"]
+albedo_color = Color(1, 0.6, 0.12, 1)
+emission_enabled = true
+emission = Color(1, 0.35, 0.035, 1)
+emission_energy_multiplier = 1.4
+
+[sub_resource type="StandardMaterial3D" id="Shield"]
+albedo_color = Color(0.1, 0.75, 0.95, 1)
+emission_enabled = true
+emission = Color(0.05, 0.65, 1, 1)
+emission_energy_multiplier = 1.8
+
+[sub_resource type="StandardMaterial3D" id="Engine"]
+albedo_color = Color(0.5, 0.7, 1, 1)
+emission_enabled = true
+emission = Color(0.2, 0.5, 1, 1)
+emission_energy_multiplier = 2.2
+
+[sub_resource type="BoxMesh" id="Shape0"]
+material = SubResource("Hull")
+size = Vector3(12, 8, 30)
+
+[sub_resource type="CylinderMesh" id="Shape1"]
+material = SubResource("Armor")
+top_radius = 0.2
+bottom_radius = 7
+height = 18
+radial_segments = 8
+
+[sub_resource type="BoxMesh" id="Shape2"]
+material = SubResource("Armor")
+size = Vector3(19, 3, 13)
+
+[sub_resource type="BoxMesh" id="Shape3"]
+material = SubResource("Armor")
+size = Vector3(19, 3, 13)
+
+[sub_resource type="BoxMesh" id="Shape4"]
+material = SubResource("Warning")
+size = Vector3(7, 2, 8)
+
+[sub_resource type="BoxMesh" id="Shape5"]
+material = SubResource("Hull")
+size = Vector3(2, 2, 18)
+
+[sub_resource type="BoxMesh" id="Shape6"]
+material = SubResource("Hull")
+size = Vector3(2, 2, 18)
+
+[sub_resource type="BoxMesh" id="Shape7"]
+material = SubResource("Engine")
+size = Vector3(5, 5, 2)
+
+[sub_resource type="BoxMesh" id="Shape8"]
+material = SubResource("Engine")
+size = Vector3(5, 5, 2)
+
+[node name="MercCorvette" type="Node3D"]
+
+[node name="ModelRoot" type="Node3D" parent="."]
+
+[node name="Fuselage" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 0, 0)
+mesh = SubResource("Shape0")
+
+[node name="Prow" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 0, -20)
+rotation = Vector3(-1.5707963, 0, 0)
+mesh = SubResource("Shape1")
+
+[node name="PortWing" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-14, -1, 7)
+rotation = Vector3(0, -0.35, 0)
+mesh = SubResource("Shape2")
+
+[node name="StarboardWing" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(14, -1, 7)
+rotation = Vector3(0, 0.35, 0)
+mesh = SubResource("Shape3")
+
+[node name="Canopy" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 5, -3)
+mesh = SubResource("Shape4")
+
+[node name="PortBarrel" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-8, 1, -13)
+mesh = SubResource("Shape5")
+
+[node name="StarboardBarrel" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(8, 1, -13)
+mesh = SubResource("Shape6")
+
+[node name="PortEngine" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-5, 0, 16)
+mesh = SubResource("Shape7")
+
+[node name="StarboardEngine" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(5, 0, 16)
+mesh = SubResource("Shape8")
+
+[node name="MuzzleSocket" type="Marker3D" parent="ModelRoot"]
+position = Vector3(0, 1, -30)

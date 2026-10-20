@@ -1,0 +1,22 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/projectile/projectile.gd" id="1_projectile"]
+
+[sub_resource type="StandardMaterial3D" id="Tracer"]
+shading_mode = 0
+albedo_color = Color(1, 0.75, 0.2, 1)
+emission_enabled = true
+emission = Color(1, 0.45, 0.06, 1)
+emission_energy_multiplier = 2.0
+
+[sub_resource type="BoxMesh" id="Round"]
+material = SubResource("Tracer")
+size = Vector3(0.8, 0.8, 12)
+
+[node name="MercRound" type="Node3D"]
+script = ExtResource("1_projectile")
+speed = 1500.0
+max_lifetime = 1.5
+
+[node name="Tracer" type="MeshInstance3D" parent="."]
+mesh = SubResource("Round")

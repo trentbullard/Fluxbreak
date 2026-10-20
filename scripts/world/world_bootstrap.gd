@@ -23,6 +23,7 @@ func _ready() -> void:
 	get_tree().paused = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	menu.practice_requested.connect(_on_start_pressed)
+	menu.merc_practice_requested.connect(_start_run)
 	if not GameFlow.stage_changed.is_connected(_on_stage_changed):
 		GameFlow.stage_changed.connect(_on_stage_changed)
 	if not GameFlow.meta_upgrades_applied.is_connected(_on_meta_upgrades_applied):
@@ -33,7 +34,10 @@ func _ready() -> void:
 	_set_ship_run_visibility(false)
 
 func _on_start_pressed() -> void:
-	GameFlow.start_new_run()
+	_start_run()
+
+func _start_run(run_definition: RunDefinition = null) -> void:
+	GameFlow.start_new_run(run_definition)
 	_set_ship_run_visibility(true)
 	menu.visible = false
 	hud.visible = true

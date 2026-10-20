@@ -38,6 +38,13 @@ var _weapon_stats: WeaponStatSnapshot = null
 func configure_socket(owner_enemy: EnemyBoss) -> void:
 	_owner_enemy = owner_enemy
 	_weapon_stats = WeaponStatResolver.resolve_snapshot(weapon)
+	if owner_enemy != null and owner_enemy.def != null:
+		# Socket weapons can differ from the boss's default weapon. Resolve the
+		# actual socket through the same spawn, wave and stage scaling layers.
+		var socket_def: EnemyDef = owner_enemy.def.duplicate(false) as EnemyDef
+		socket_def.weapon = weapon
+		var enemy_stats: EnemyStatSnapshot = EnemyStatResolver.resolve(socket_def, owner_enemy._spawn_context)
+		_weapon_stats = enemy_stats.weapon_stats
 	WeaponStatResolver.apply_snapshot_to_turret(self, _weapon_stats)
 	cooldown_remaining = 0.0
 	_rebuild_visual()

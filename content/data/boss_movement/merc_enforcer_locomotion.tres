@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BossLocomotionProfile" format=3]
+
+[ext_resource type="Script" path="res://content/defs/boss_locomotion_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+preferred_distance = 340.0
+distance_tolerance = 60.0
+radial_force_scale = 1.0
+strafe_force_scale = 0.24
+vertical_force_scale = 0.04
+strafe_retarget_sec = 3.5
+vertical_retarget_sec = 4.5

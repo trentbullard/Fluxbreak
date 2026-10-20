@@ -57,6 +57,9 @@
 [ext_resource type="PackedScene" uid="uid://cbb0gw1l5yeu3" path="res://scenes/pois/poi_placeholder.tscn" id="poi_scene"]
 [ext_resource type="Script" uid="uid://d1ddx3ctljet4" path="res://systems/spawning/poi_spawner.gd" id="poi_spawner_script"]
 [ext_resource type="PackedScene" uid="uid://vui0na1ujbtt" path="res://scenes/hud/upgrade_menu.tscn" id="upgrade_menu_scene"]
+[ext_resource type="Resource" path="res://content/data/enemies/merc_corvette_mk1.tres" id="merc_corvette"]
+[ext_resource type="Resource" path="res://content/data/enemies/merc_frigate_mk1.tres" id="merc_frigate"]
+[ext_resource type="Resource" path="res://content/data/enemies/merc_destroyer_mk1.tres" id="merc_destroyer"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_sar2w"]
 panorama = ExtResource("1_dphjl")
@@ -238,7 +241,7 @@ scaling_def = ExtResource("56_scalingres")
 
 [node name="EnemyCatalog" type="Node" parent="StageRoot" unique_id=2145914352]
 script = ExtResource("10_6hctx")
-enemies = Array[ExtResource("13_jyr8v")]([ExtResource("14_5o5dd"), ExtResource("15_d0ajt"), ExtResource("16_jyr8v"), ExtResource("18_4jq4u"), ExtResource("19_sar2w")])
+enemies = Array[ExtResource("13_jyr8v")]([ExtResource("14_5o5dd"), ExtResource("15_d0ajt"), ExtResource("16_jyr8v"), ExtResource("18_4jq4u"), ExtResource("19_sar2w"), ExtResource("merc_corvette"), ExtResource("merc_frigate"), ExtResource("merc_destroyer")])
 
 [node name="TargetCatalog" type="Node" parent="StageRoot" unique_id=1303860640]
 script = ExtResource("11_ues17")
@@ -284,6 +287,8 @@ countdown_label_path = NodePath("ScreenRoot/TopDock/TimerWaveLayer/VBoxContainer
 alive_label_path = NodePath("ScreenRoot/TopDock/ScoreLayer/VBoxContainer/Alive")
 run_details_label_path = NodePath("ScreenRoot/TopDock/TopRightDock/RunStageDetailsContainer/RunDetails")
 stage_details_label_path = NodePath("ScreenRoot/TopDock/TopRightDock/RunStageDetailsContainer/StageDetails")
+stage_hint_label_path = NodePath("ScreenRoot/StageCombatHint")
+attack_warning_label_path = NodePath("ScreenRoot/LockedAttackWarning")
 stage_modifiers_label_path = NodePath("ScreenRoot/TopDock/TopRightDock/RunStageDetailsContainer/StageModifiers")
 victory_label_path = NodePath("ScreenRoot/VictoryLabel")
 
@@ -295,6 +300,41 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+
+[node name="StageCombatHint" type="Label" parent="HUD/ScreenRoot"]
+visible = false
+layout_mode = 0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -380.0
+offset_top = 86.0
+offset_right = 380.0
+offset_bottom = 142.0
+grow_horizontal = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.82, 0.54, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="LockedAttackWarning" type="Label" parent="HUD/ScreenRoot"]
+visible = false
+layout_mode = 0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -350.0
+offset_top = 146.0
+offset_right = 350.0
+offset_bottom = 180.0
+grow_horizontal = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.62, 0.15, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 22
+horizontal_alignment = 1
 
 [node name="TopDock" type="MarginContainer" parent="HUD/ScreenRoot" unique_id=1107672702]
 layout_mode = 1

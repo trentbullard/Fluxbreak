@@ -10,6 +10,10 @@ extends CanvasLayer
 @export var alive_label_path: NodePath
 @export var run_details_label_path: NodePath
 @export var stage_details_label_path: NodePath
+## Optional stage combat instructions; hidden for stages without a hint.
+@export var stage_hint_label_path: NodePath
+## Screen-space countdown for enemy warnings targeting the player's ship.
+@export var attack_warning_label_path: NodePath
 @export var stage_modifiers_label_path: NodePath
 @export var victory_label_path: NodePath
 
@@ -27,6 +31,8 @@ var _countdown_label: Label = null
 var _alive_label: Label = null
 var _run_details_label: Label = null
 var _stage_details_label: Label = null
+var _stage_hint_label: Label = null
+var _attack_warning_label: Label = null
 var _stage_modifiers_label: Label = null
 var _victory_label: Label = null
 
@@ -59,6 +65,10 @@ func _ready() -> void:
 		_run_details_label = get_node_or_null(run_details_label_path) as Label
 	if stage_details_label_path != NodePath(""):
 		_stage_details_label = get_node_or_null(stage_details_label_path) as Label
+	if stage_hint_label_path != NodePath(""):
+		_stage_hint_label = get_node_or_null(stage_hint_label_path) as Label
+	if attack_warning_label_path != NodePath(""):
+		_attack_warning_label = get_node_or_null(attack_warning_label_path) as Label
 	if stage_modifiers_label_path != NodePath(""):
 		_stage_modifiers_label = get_node_or_null(stage_modifiers_label_path) as Label
 	if victory_label_path != NodePath(""):
@@ -92,6 +102,25 @@ func _process(_dt: float) -> void:
 	if camera == null or not is_instance_valid(camera) or not camera.current:
 		_refresh_camera()
 	_refresh_timer_readouts()
+	_refresh_attack_warning()
+
+func _refresh_attack_warning() -> void:
+	if _attack_warning_label == null:
+		return
+	var soonest: EnemyAttackTelegraph = null
+	var warning_count: int = 0
+	for node: Node in get_tree().get_nodes_in_group("enemy_attack_telegraphs"):
+		var warning: EnemyAttackTelegraph = node as EnemyAttackTelegraph
+		if warning == null or not warning.is_warning_for(ship):
+			continue
+		warning_count += 1
+		if soonest == null or warning.get_time_remaining() < soonest.get_time_remaining():
+			soonest = warning
+	_attack_warning_label.visible = soonest != null
+	if soonest != null:
+		_attack_warning_label.text = "%s  %.1fs  —  MOVE CLEAR" % [soonest.get_attack_label(), soonest.get_time_remaining()]
+		if warning_count > 1:
+			_attack_warning_label.text += "  (+%d)" % [warning_count - 1]
 
 func _refresh_camera() -> void:
 	if camera_path != NodePath(""):
@@ -136,10 +165,13 @@ func _refresh_run_details() -> void:
 	]
 
 func _refresh_stage_details() -> void:
+	var stage: StageDef = GameFlow.get_current_stage()
+	if _stage_hint_label != null:
+		_stage_hint_label.text = stage.combat_hint if stage != null else ""
+		_stage_hint_label.visible = not _stage_hint_label.text.is_empty()
 	if _stage_details_label == null:
 		return
 
-	var stage: StageDef = GameFlow.get_current_stage()
 	if stage == null:
 		_stage_details_label.text = "Stage: Inactive"
 		return

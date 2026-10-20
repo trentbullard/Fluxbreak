@@ -2,12 +2,16 @@
 extends Control
 
 signal practice_requested
+signal merc_practice_requested(run_definition: RunDefinition)
 signal selection_changed
 
 @export var pilot_roster: PilotRoster
 @export var default_pilot_index: int = 0
+## Short Merc training run launched by the Merc Practice button.
+@export var merc_practice_run: RunDefinition
 
 @onready var btn_practice: Button = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PracticeContainer/Practice
+@onready var btn_merc_practice: Button = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/MercPracticeContainer/MercPractice
 @onready var btn_upgrades: Button = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/UpgradesContainer/Upgrades
 @onready var btn_settings: Button = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/SettingsContainer/Settings
 @onready var btn_exit: Button = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/ExitContainer/Exit
@@ -33,6 +37,7 @@ func _ready() -> void:
 	visibility_changed.connect(_on_visibility_changed)
 	_on_visibility_changed()
 	btn_practice.pressed.connect(_on_practice_pressed)
+	btn_merc_practice.pressed.connect(_on_merc_practice_pressed)
 	btn_upgrades.pressed.connect(_on_upgrades_pressed)
 	btn_settings.pressed.connect(_on_settings_pressed)
 	btn_exit.pressed.connect(_on_exit_pressed)
@@ -95,6 +100,12 @@ func _on_practice_pressed() -> void:
 	if GameFlow.get_selected_ship() == null or GameFlow.get_selected_weapon() == null:
 		return
 	practice_requested.emit()
+
+func _on_merc_practice_pressed() -> void:
+	_apply_current_pilot_selection(false)
+	if merc_practice_run == null or btn_practice.disabled:
+		return
+	merc_practice_requested.emit(merc_practice_run)
 
 func _on_settings_pressed() -> void:
 	print("Settings clicked — not implemented yet.")
@@ -391,6 +402,7 @@ func _update_practice_enabled() -> void:
 		or GameFlow.get_selected_ship() == null
 		or GameFlow.get_selected_weapon() == null
 	)
+	btn_merc_practice.disabled = btn_practice.disabled or merc_practice_run == null
 
 func _set_focus_modes() -> void:
 	pilot_picker.focus_mode = Control.FOCUS_ALL
@@ -398,6 +410,7 @@ func _set_focus_modes() -> void:
 	weapon_picker.focus_mode = Control.FOCUS_ALL
 	btn_upgrades.focus_mode = Control.FOCUS_ALL
 	btn_practice.focus_mode = Control.FOCUS_ALL
+	btn_merc_practice.focus_mode = Control.FOCUS_ALL
 	btn_settings.focus_mode = Control.FOCUS_ALL
 	btn_exit.focus_mode = Control.FOCUS_ALL
 

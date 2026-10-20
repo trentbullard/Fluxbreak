@@ -12,6 +12,8 @@ enum CompletionFlow {
 @export var stage_id: StringName = &""
 @export var display_name: String = "Stage"
 @export_multiline var description: String = ""
+## Optional combat instructions displayed below the run timer.
+@export_multiline var combat_hint: String = ""
 @export var next_stage_id: StringName = &""
 
 @export_group("Scene Prep")
@@ -24,6 +26,20 @@ enum CompletionFlow {
 @export_range(1, 99, 1) var boss_wave_index: int = 30
 @export var boss_faction: FactionDef
 @export var boss_pool: Array[EnemyBossDef] = []
+
+@export_group("Encounter Pacing")
+## Positive values override the director's normal wave timeout for this stage.
+@export var wave_timeout_override_sec: float = 0.0
+## Nonnegative values override downtime between waves; -1 retains normal pacing.
+@export var downtime_override_sec: float = -1.0
+## Play the stage's wave cards in listed order instead of choosing by weight.
+@export var ordered_wave_cards: bool = false
+## Optional fixed enemy point budgets for successive authored waves.
+@export var authored_enemy_budgets: PackedInt32Array = PackedInt32Array()
+## Optional maximum enemy tiers for successive authored waves.
+@export var authored_tier_caps: PackedInt32Array = PackedInt32Array()
+## Allow the director to add pressure spawns between opening wave packages.
+@export var pressure_reinforcements_enabled: bool = true
 
 @export_group("Skybox")
 @export var panorama_options: Array[Texture2D] = []

@@ -2,7 +2,7 @@
 # Displays the player's persistent Flux Anchor balance in the main menu.
 extends Control
 
-@onready var label: Label = $Label as Label
+@onready var label: Label = $FluxAnchorsLabel as Label
 
 func _ready() -> void:
 	_update_label(GameFlow.flux_anchors)

@@ -1,0 +1,211 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/enemy/boss_weapon_socket.gd" id="1_socket"]
+[ext_resource type="Resource" path="res://content/data/weapons/merc_enforcer_cannon.tres" id="2_weapon"]
+
+[sub_resource type="StandardMaterial3D" id="Hull"]
+albedo_color = Color(0.12, 0.17, 0.23, 1)
+metallic = 0.55
+roughness = 0.7
+
+[sub_resource type="StandardMaterial3D" id="Armor"]
+albedo_color = Color(0.32, 0.38, 0.43, 1)
+metallic = 0.65
+roughness = 0.5
+
+[sub_resource type="StandardMaterial3D" id="Warning"]
+albedo_color = Color(1, 0.6, 0.12, 1)
+emission_enabled = true
+emission = Color(1, 0.35, 0.035, 1)
+emission_energy_multiplier = 1.4
+
+[sub_resource type="StandardMaterial3D" id="Shield"]
+albedo_color = Color(0.1, 0.75, 0.95, 1)
+emission_enabled = true
+emission = Color(0.05, 0.65, 1, 1)
+emission_energy_multiplier = 1.8
+
+[sub_resource type="StandardMaterial3D" id="Engine"]
+albedo_color = Color(0.5, 0.7, 1, 1)
+emission_enabled = true
+emission = Color(0.2, 0.5, 1, 1)
+emission_energy_multiplier = 2.2
+
+[sub_resource type="BoxMesh" id="Shape0"]
+material = SubResource("Hull")
+size = Vector3(44, 26, 72)
+
+[sub_resource type="BoxMesh" id="Shape1"]
+material = SubResource("Armor")
+size = Vector3(36, 19, 21)
+
+[sub_resource type="BoxMesh" id="Shape2"]
+material = SubResource("Armor")
+size = Vector3(38, 17, 57)
+
+[sub_resource type="BoxMesh" id="Shape3"]
+material = SubResource("Armor")
+size = Vector3(38, 17, 57)
+
+[sub_resource type="BoxMesh" id="Shape4"]
+material = SubResource("Hull")
+size = Vector3(20, 17, 32)
+
+[sub_resource type="BoxMesh" id="Shape5"]
+material = SubResource("Hull")
+size = Vector3(20, 17, 32)
+
+[sub_resource type="CylinderMesh" id="Shape6"]
+material = SubResource("Armor")
+top_radius = 5
+bottom_radius = 5
+height = 31
+radial_segments = 8
+
+[sub_resource type="CylinderMesh" id="Shape7"]
+material = SubResource("Armor")
+top_radius = 5
+bottom_radius = 5
+height = 31
+radial_segments = 8
+
+[sub_resource type="CylinderMesh" id="Shape8"]
+material = SubResource("Warning")
+top_radius = 5.5
+bottom_radius = 5.5
+height = 4
+radial_segments = 8
+
+[sub_resource type="CylinderMesh" id="Shape9"]
+material = SubResource("Warning")
+top_radius = 5.5
+bottom_radius = 5.5
+height = 4
+radial_segments = 8
+
+[sub_resource type="BoxMesh" id="Shape10"]
+material = SubResource("Hull")
+size = Vector3(27, 9, 21)
+
+[sub_resource type="BoxMesh" id="Shape11"]
+material = SubResource("Warning")
+size = Vector3(23, 5, 2)
+
+[sub_resource type="BoxMesh" id="Shape12"]
+material = SubResource("Shield")
+size = Vector3(3, 11, 25)
+
+[sub_resource type="BoxMesh" id="Shape13"]
+material = SubResource("Shield")
+size = Vector3(3, 11, 25)
+
+[sub_resource type="BoxMesh" id="Shape14"]
+material = SubResource("Engine")
+size = Vector3(23, 14, 4)
+
+[sub_resource type="BoxMesh" id="Shape15"]
+material = SubResource("Engine")
+size = Vector3(23, 14, 4)
+
+[sub_resource type="BoxMesh" id="Shape16"]
+material = SubResource("Armor")
+size = Vector3(3, 17, 3)
+
+[sub_resource type="BoxMesh" id="Shape17"]
+material = SubResource("Warning")
+size = Vector3(5, 3, 5)
+
+[node name="MercContractEnforcer" type="Node3D"]
+
+[node name="ModelRoot" type="Node3D" parent="."]
+
+[node name="CommandHull" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 0, 0)
+mesh = SubResource("Shape0")
+
+[node name="ProwBastion" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, -1, -43)
+mesh = SubResource("Shape1")
+
+[node name="PortArmorWing" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-39, 0, 6)
+rotation = Vector3(0, -0.18, 0)
+mesh = SubResource("Shape2")
+
+[node name="StarboardArmorWing" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(39, 0, 6)
+rotation = Vector3(0, 0.18, 0)
+mesh = SubResource("Shape3")
+
+[node name="PortCannonHousing" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-36, 3, -27)
+mesh = SubResource("Shape4")
+
+[node name="StarboardCannonHousing" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(36, 3, -27)
+mesh = SubResource("Shape5")
+
+[node name="PortCannon" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-36, 0, -49)
+rotation = Vector3(1.5707963, 0, 0)
+mesh = SubResource("Shape6")
+
+[node name="StarboardCannon" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(36, 0, -49)
+rotation = Vector3(1.5707963, 0, 0)
+mesh = SubResource("Shape7")
+
+[node name="PortMuzzle" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-36, 0, -64)
+rotation = Vector3(1.5707963, 0, 0)
+mesh = SubResource("Shape8")
+
+[node name="StarboardMuzzle" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(36, 0, -64)
+rotation = Vector3(1.5707963, 0, 0)
+mesh = SubResource("Shape9")
+
+[node name="Bridge" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 17, 8)
+mesh = SubResource("Shape10")
+
+[node name="CommandWindow" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 18, -3)
+mesh = SubResource("Shape11")
+
+[node name="PortShieldBank" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-57, 0, 14)
+mesh = SubResource("Shape12")
+
+[node name="StarboardShieldBank" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(57, 0, 14)
+mesh = SubResource("Shape13")
+
+[node name="PortEngine" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-34, 0, 36)
+mesh = SubResource("Shape14")
+
+[node name="StarboardEngine" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(34, 0, 36)
+mesh = SubResource("Shape15")
+
+[node name="CommandAntenna" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 28, 17)
+mesh = SubResource("Shape16")
+
+[node name="CommandBeacon" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 37, 17)
+mesh = SubResource("Shape17")
+
+[node name="MuzzleSocket" type="Marker3D" parent="ModelRoot"]
+position = Vector3(0, 0, -68)
+
+[node name="BossWeaponPort" type="Marker3D" parent="ModelRoot"]
+position = Vector3(-36, 0, -68)
+script = ExtResource("1_socket")
+weapon = ExtResource("2_weapon")
+
+[node name="BossWeaponStarboard" type="Marker3D" parent="ModelRoot"]
+position = Vector3(36, 0, -68)
+script = ExtResource("1_socket")
+weapon = ExtResource("2_weapon")

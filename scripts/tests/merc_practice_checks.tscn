@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/tests/merc_practice_checks.gd" id="1"]
+
+[node name="MercPracticeChecks" type="Node"]
+script = ExtResource("1")

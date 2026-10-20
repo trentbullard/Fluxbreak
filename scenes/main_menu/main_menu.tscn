@@ -9,6 +9,7 @@
 [ext_resource type="AudioStream" uid="uid://letca81rhxc1" path="res://assets/sounds/fluxbreak_menu.mp3" id="7_5seab"]
 [ext_resource type="Script" uid="uid://2kewa2vhj44v" path="res://scripts/main_menu/flux_anchors_container.gd" id="10_fac"]
 [ext_resource type="PackedScene" uid="uid://cx03u4eql62kw" path="res://scenes/main_menu/upgrades_panel.tscn" id="11_upgpanel"]
+[ext_resource type="Resource" path="res://content/data/runs/merc_practice.tres" id="12_merc_practice"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_ob46e"]
 line_spacing = 0.0
@@ -71,6 +72,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_0ebjn")
 pilot_roster = ExtResource("4_pilot_roster")
+merc_practice_run = ExtResource("12_merc_practice")
 
 [node name="CenterContainer" type="CenterContainer" parent="." unique_id=1275361430]
 layout_mode = 1
@@ -111,7 +113,7 @@ theme_override_constants/margin_bottom = 20
 
 [node name="ButtonsContainer" type="VBoxContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins" unique_id=1387951927]
 layout_mode = 2
-theme_override_constants/separation = 20
+theme_override_constants/separation = 10
 
 [node name="PilotContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=52075162]
 layout_mode = 2
@@ -189,21 +191,34 @@ layout_mode = 2
 [node name="Practice" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PracticeContainer" unique_id=1368523961]
 layout_mode = 2
 focus_neighbor_top = NodePath("../../UpgradesContainer/Upgrades")
-focus_neighbor_bottom = NodePath("../../SettingsContainer/Settings")
-focus_next = NodePath("../../SettingsContainer/Settings")
+focus_neighbor_bottom = NodePath("../../MercPracticeContainer/MercPractice")
+focus_next = NodePath("../../MercPracticeContainer/MercPractice")
 focus_previous = NodePath("../../UpgradesContainer/Upgrades")
 theme = SubResource("Theme_wem23")
 text = "Practice"
+
+[node name="MercPracticeContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer"]
+layout_mode = 2
+
+[node name="MercPractice" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/MercPracticeContainer"]
+layout_mode = 2
+tooltip_text = "Three short Merc waves, then Contract Enforcer. Move out of amber attack warnings and approach the cyan shield-support Frigates."
+focus_neighbor_top = NodePath("../../PracticeContainer/Practice")
+focus_neighbor_bottom = NodePath("../../SettingsContainer/Settings")
+focus_next = NodePath("../../SettingsContainer/Settings")
+focus_previous = NodePath("../../PracticeContainer/Practice")
+theme = SubResource("Theme_wem23")
+text = "Merc Practice"
 
 [node name="SettingsContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=967670781]
 layout_mode = 2
 
 [node name="Settings" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/SettingsContainer" unique_id=567390409]
 layout_mode = 2
-focus_neighbor_top = NodePath("../../PracticeContainer/Practice")
+focus_neighbor_top = NodePath("../../MercPracticeContainer/MercPractice")
 focus_neighbor_bottom = NodePath("../../ExitContainer/Exit")
 focus_next = NodePath("../../ExitContainer/Exit")
-focus_previous = NodePath("../../PracticeContainer/Practice")
+focus_previous = NodePath("../../MercPracticeContainer/MercPractice")
 theme = SubResource("Theme_5seab")
 disabled = true
 text = "Settings"

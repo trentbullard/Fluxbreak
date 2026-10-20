@@ -20,6 +20,15 @@ var _map: Dictionary[Node3D, Control] = {}
 func _ready() -> void:
 	_resolve_docking_manager()
 
+func _exit_tree() -> void:
+	# Pooled labels are detached from the tree and need explicit ownership
+	# cleanup when a practice run returns to the menu.
+	_map.clear()
+	for ui: Control in _pool:
+		if is_instance_valid(ui):
+			ui.free()
+	_pool.clear()
+
 func init(cam: Camera3D, ship: Node3D) -> void:
 	_camera = cam
 	_ship = ship

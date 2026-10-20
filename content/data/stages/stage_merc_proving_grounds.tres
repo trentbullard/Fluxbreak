@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="StageDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/stage_def.gd" id="1"]
+[ext_resource type="Script" path="res://content/defs/enemy_boss_def.gd" id="2"]
+[ext_resource type="Script" path="res://content/defs/wave_card.gd" id="3"]
+[ext_resource type="Resource" path="res://content/data/factions/mercs.tres" id="4"]
+[ext_resource type="Resource" path="res://content/data/enemies/merc_contract_enforcer_mk1.tres" id="5"]
+[ext_resource type="Resource" path="res://content/data/cards/merc_patrol_screen.tres" id="6"]
+[ext_resource type="Resource" path="res://content/data/cards/merc_shield_escort.tres" id="7"]
+[ext_resource type="Resource" path="res://content/data/cards/merc_firing_line.tres" id="8"]
+
+[resource]
+script = ExtResource("1")
+stage_id = &"merc_proving_grounds"
+display_name = "Merc Proving Grounds"
+description = "Corvette patrol, shield escort, firing line, then Contract Enforcer. Leave amber attack warnings before they resolve; cyan Frigates restore nearby allied shields."
+combat_hint = "Three waves, then Contract Enforcer. Leave amber warnings before FIRE.\nCyan Frigates restore allied shields. Approach them to bring them into weapon range."
+completion_flow = 3
+boss_wave_index = 4
+boss_faction = ExtResource("4")
+boss_pool = Array[ExtResource("2")]([ExtResource("5")])
+wave_timeout_override_sec = 22.0
+downtime_override_sec = 5.0
+ordered_wave_cards = true
+authored_enemy_budgets = PackedInt32Array(3, 7, 10)
+authored_tier_caps = PackedInt32Array(1, 2, 3)
+pressure_reinforcements_enabled = false
+wave_cards = Array[ExtResource("3")]([ExtResource("6"), ExtResource("7"), ExtResource("8")])
+ambient_light_color = Color(0.24, 0.2, 0.14, 1)
+ambient_light_energy = 5.5
+star_light_color = Color(1, 0.87, 0.7, 1)
+volumetric_fog_density = 0.005
