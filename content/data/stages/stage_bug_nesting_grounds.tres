@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="StageDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/stage_def.gd" id="1"]
+[ext_resource type="Script" path="res://content/defs/enemy_boss_def.gd" id="2"]
+[ext_resource type="Script" path="res://content/defs/wave_card.gd" id="3"]
+[ext_resource type="Resource" path="res://content/data/factions/bugs.tres" id="4"]
+[ext_resource type="Resource" path="res://content/data/enemies/bug_nestbreaker_matron_mk1.tres" id="5"]
+[ext_resource type="Resource" path="res://content/data/cards/bug_swarm_front.tres" id="6"]
+[ext_resource type="Resource" path="res://content/data/cards/bug_carapace_screen.tres" id="7"]
+[ext_resource type="Resource" path="res://content/data/cards/bug_brood_nest.tres" id="8"]
+
+[resource]
+script = ExtResource("1")
+stage_id = &"bug_nesting_grounds"
+display_name = "Bug Nesting Grounds"
+description = "Sporeling swarm, Carapace screen, Broodmother nest, then Nestbreaker Matron. Kill mothers to clear their broods and leave locked attack volumes before they resolve."
+combat_hint = "Three waves, then Nestbreaker Matron. Keep space and leave marked attacks.\nDestroy Broodmothers to clear their broods. A swelling body warns of the next release."
+completion_flow = 3
+boss_wave_index = 4
+boss_faction = ExtResource("4")
+boss_pool = Array[ExtResource("2")]([ExtResource("5")])
+wave_timeout_override_sec = 22.0
+downtime_override_sec = 5.0
+ordered_wave_cards = true
+authored_enemy_budgets = PackedInt32Array(4, 8, 12)
+authored_tier_caps = PackedInt32Array(1, 2, 3)
+pressure_reinforcements_enabled = false
+wave_cards = Array[ExtResource("3")]([ExtResource("6"), ExtResource("7"), ExtResource("8")])
+ambient_light_color = Color(0.15, 0.2, 0.12, 1)
+ambient_light_energy = 4.6
+star_light_color = Color(0.85, 0.94, 0.68, 1)
+volumetric_fog_density = 0.005

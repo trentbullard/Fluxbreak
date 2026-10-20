@@ -121,7 +121,7 @@ A militarized industrial war-zone with patrol structures, weapons platforms, deb
 
 ### Merc Practice Seed
 
-The first playable Merc encounter is available from **Merc Practice** in the main menu. Three short authored waves introduce Corvette burst-and-retreat attacks, Frigate shield support, and the Destroyer's locked charged corridor. Contract Enforcer then alternates marked corridor and spherical salvo attacks, calling one Frigate escort at 55% hull. Defeating the boss completes the practice run.
+The first playable Merc encounter is preserved in `content/data/runs/merc_practice.tres`. Three short authored waves introduce Corvette burst-and-retreat attacks, Frigate shield support, and the Destroyer's locked charged corridor. Contract Enforcer then alternates marked corridor and spherical salvo attacks, calling one Frigate escort at 55% hull. Defeating the boss completes the practice run. The main menu's faction practice button currently opens the newer Bug encounter.
 
 Amber volumes and a screen-space countdown show when a special attack will resolve. Leaving the marked volume avoids that special; ordinary gunfire retains the game's hit/miss calculations. Cyan support links show bounded allied shield restoration. The current ships use readable placeholder models; the remaining Merc classes and variants remain future progression.
 
@@ -171,6 +171,12 @@ Their threat often comes from volume rather than precision.
 
 ### Home System Identity
 An overgrown living battlefield full of organic structures, drifting biomass, spores, and unstable biological hazards. Environmental modifiers may increase spawn pressure, healing behavior, or movement interference.
+
+### Bug Practice Seed
+
+**Bugs Practice** in the main menu opens three short waves followed by Nestbreaker Matron. Sporelings pursue at close range, Carapaces bring durable frontal pressure, and Broodmothers keep their distance while releasing small broods. Their bodies contract before marked attacks; leaving the marked volume avoids the hit.
+
+Nestbreaker Matron alternates a locked charge lane with a swelling brood release, leaving a recovery window after each attack. At 55% hull she releases larger broods and shortens her cadence. Broods have living and lifetime limits, cannot reproduce, and disappear when their mother dies. Summoned children grant no kill rewards or adaptive kill-pressure credit. The current ships use distinct organic placeholder models; later Bug classes and biological variants remain future progression.
 
 # Greys (Ethereal / Psionic Aliens)
 

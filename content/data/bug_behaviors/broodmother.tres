@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="BugBehaviorDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/bug_behavior_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+mode = 2
+approach_range = 300
+retreat_range = 420
+max_speed = 85
+steering_response = 1.6
+orbit_strength = 0.15
+attack_cooldown_sec = 4.8
+attack_windup_sec = 1.1
+attack_radius = 30
+attack_recovery_sec = 0.8
+brood_interval_sec = 8
+brood_windup_sec = 1.4
+brood_burst_count = 2
+brood_alive_cap = 4
+brood_total_cap = 8
+brood_global_cap = 12
+brood_enemy_cap = 50
+brood_release_radius = 70

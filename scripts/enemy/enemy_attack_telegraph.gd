@@ -42,6 +42,13 @@ var _progress_mesh: ImmediateMesh = null
 var _wire_material: StandardMaterial3D = null
 var _progress_material: StandardMaterial3D = null
 var _label: Label3D = null
+var _warning_label: String = ""
+var _warning_tint: Color = Color(1.0, 0.62, 0.12, 0.85)
+
+## Set a faction-specific attack name and warning tint before starting it.
+func set_warning_style(label: String, tint: Color) -> void:
+	_warning_label = label.strip_edges()
+	_warning_tint = tint
 
 func start_attack(source: Enemy, target: Node3D, weapon_host: Object, windup_sec: float, radius: float, corridor: bool = false) -> void:
 	if _active or _has_resolved:
@@ -78,7 +85,7 @@ func get_time_remaining() -> float:
 	return maxf(_windup_sec - _elapsed_sec, 0.0)
 
 func get_attack_label() -> String:
-	return "CORRIDOR" if _corridor else "SALVO"
+	return _warning_label if not _warning_label.is_empty() else ("CORRIDOR" if _corridor else "SALVO")
 
 func cancel() -> void:
 	_active = false
@@ -165,7 +172,7 @@ func _on_source_died(_enemy: Enemy) -> void:
 	cancel()
 
 func _build_visuals() -> void:
-	_wire_material = _make_material(Color(1.0, 0.62, 0.12, 0.85))
+	_wire_material = _make_material(_warning_tint)
 	_progress_material = _make_material(Color(1.0, 0.2, 0.1, 1.0))
 	_wire_mesh = ImmediateMesh.new()
 	_progress_mesh = ImmediateMesh.new()
@@ -231,8 +238,8 @@ func _add_ring(mesh: ImmediateMesh, center: Vector3, axis_a: Vector3, axis_b: Ve
 		mesh.surface_add_vertex(center + (axis_a * cos(angle_b) + axis_b * sin(angle_b)) * radius)
 
 func _update_visuals(progress: float) -> void:
-	_wire_material.albedo_color = Color(1.0, lerpf(0.65, 0.12, progress), 0.1, 0.85)
-	_label.text = "%s  %.1f" % ["CORRIDOR" if _corridor else "SALVO", maxf(_windup_sec - _elapsed_sec, 0.0)]
+	_wire_material.albedo_color = _warning_tint.lerp(Color(1.0, 0.12, 0.1, 0.9), progress)
+	_label.text = "%s  %.1f" % [get_attack_label(), maxf(_windup_sec - _elapsed_sec, 0.0)]
 	_progress_mesh.clear_surfaces()
 	if progress <= 0.0:
 		return

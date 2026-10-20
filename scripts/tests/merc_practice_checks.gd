@@ -62,6 +62,9 @@ func _run_checks() -> void:
 	_director.wave_started.connect(_on_wave_started)
 	GameFlow.run_completed.connect(_on_completed)
 	var menu: Control = _world.get_node("MainMenuOverlay") as Control
+	# The shared faction button now defaults to Bugs; exercise the retained Merc
+	# run explicitly while keeping the current menu's default intact.
+	menu.set("merc_practice_run", run)
 	var button: Button = menu.get_node("CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/MercPracticeContainer/MercPractice") as Button
 	_check(not button.disabled, "Merc Practice must launch with the default unlocked loadout.")
 	button.pressed.emit()
@@ -112,6 +115,7 @@ func _run_checks() -> void:
 	_check(returned_world != null and returned_world != _world, "Victory did not return to a fresh menu.")
 	if returned_world != null and returned_world.has_node("MainMenuOverlay"):
 		var returned_menu: Control = returned_world.get_node("MainMenuOverlay") as Control
+		returned_menu.set("merc_practice_run", run)
 		var restart_button: Button = returned_menu.get_node("CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/MercPracticeContainer/MercPractice") as Button
 		restart_button.pressed.emit()
 		_check(GameFlow.get_current_stage() == stage, "Merc Practice could not restart from the returned menu.")

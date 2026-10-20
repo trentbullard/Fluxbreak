@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="BugBehaviorDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/bug_behavior_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+mode = 1
+approach_range = 180
+retreat_range = 225
+max_speed = 95
+steering_response = 1.8
+orbit_strength = 0.08
+attack_cooldown_sec = 4.2
+attack_windup_sec = 1.35
+attack_radius = 36
+attack_recovery_sec = 1.3

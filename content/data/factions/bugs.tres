@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="FactionDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/faction_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+faction_id = &"bugs"
+display_name = "Bugs"
+description = "Living voidcraft that hunt in packs, carry layered chitin, and reproduce in finite broods. Break the mothers before the swarm closes."
+tags = PackedStringArray("organic", "swarm", "close_pressure")

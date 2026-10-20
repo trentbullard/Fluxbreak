@@ -1,0 +1,185 @@
+[gd_scene format=3]
+
+[sub_resource type="StandardMaterial3D" id="Chitin"]
+albedo_color = Color(0.19, 0.105, 0.23, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Plate"]
+albedo_color = Color(0.39, 0.235, 0.3, 1)
+roughness = 0.78
+
+[sub_resource type="StandardMaterial3D" id="Flesh"]
+albedo_color = Color(0.63, 0.275, 0.39, 1)
+roughness = 0.72
+
+[sub_resource type="StandardMaterial3D" id="Bone"]
+albedo_color = Color(0.72, 0.64, 0.4, 1)
+roughness = 0.85
+
+[sub_resource type="StandardMaterial3D" id="Spore"]
+albedo_color = Color(0.58, 0.92, 0.12, 1)
+roughness = 0.5
+emission_enabled = true
+emission = Color(0.32, 0.72, 0.035, 1)
+emission_energy_multiplier = 0.6
+
+[sub_resource type="StandardMaterial3D" id="Vein"]
+albedo_color = Color(0.3, 0.48, 0.075, 1)
+roughness = 0.66
+
+[sub_resource type="SphereMesh" id="Ovoid_Chitin"]
+material = SubResource("Chitin")
+radius = 1.0
+height = 2.0
+radial_segments = 16
+rings = 8
+
+[sub_resource type="CylinderMesh" id="Thorn_Chitin"]
+material = SubResource("Chitin")
+top_radius = 0.0
+bottom_radius = 1.0
+height = 1.0
+radial_segments = 8
+
+[sub_resource type="SphereMesh" id="Ovoid_Plate"]
+material = SubResource("Plate")
+radius = 1.0
+height = 2.0
+radial_segments = 16
+rings = 8
+
+[sub_resource type="CylinderMesh" id="Thorn_Plate"]
+material = SubResource("Plate")
+top_radius = 0.0
+bottom_radius = 1.0
+height = 1.0
+radial_segments = 8
+
+[sub_resource type="SphereMesh" id="Ovoid_Flesh"]
+material = SubResource("Flesh")
+radius = 1.0
+height = 2.0
+radial_segments = 16
+rings = 8
+
+[sub_resource type="CylinderMesh" id="Thorn_Flesh"]
+material = SubResource("Flesh")
+top_radius = 0.0
+bottom_radius = 1.0
+height = 1.0
+radial_segments = 8
+
+[sub_resource type="SphereMesh" id="Ovoid_Bone"]
+material = SubResource("Bone")
+radius = 1.0
+height = 2.0
+radial_segments = 16
+rings = 8
+
+[sub_resource type="CylinderMesh" id="Thorn_Bone"]
+material = SubResource("Bone")
+top_radius = 0.0
+bottom_radius = 1.0
+height = 1.0
+radial_segments = 8
+
+[sub_resource type="SphereMesh" id="Ovoid_Spore"]
+material = SubResource("Spore")
+radius = 1.0
+height = 2.0
+radial_segments = 16
+rings = 8
+
+[sub_resource type="CylinderMesh" id="Thorn_Spore"]
+material = SubResource("Spore")
+top_radius = 0.0
+bottom_radius = 1.0
+height = 1.0
+radial_segments = 8
+
+[sub_resource type="SphereMesh" id="Ovoid_Vein"]
+material = SubResource("Vein")
+radius = 1.0
+height = 2.0
+radial_segments = 16
+rings = 8
+
+[sub_resource type="CylinderMesh" id="Thorn_Vein"]
+material = SubResource("Vein")
+top_radius = 0.0
+bottom_radius = 1.0
+height = 1.0
+radial_segments = 8
+
+[node name="BugSporeling" type="Node3D"]
+
+[node name="ModelRoot" type="Node3D" parent="."]
+
+[node name="SporeCore" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 0, 1)
+scale = Vector3(5.5, 4, 12)
+mesh = SubResource("Ovoid_Chitin")
+
+[node name="DorsalHusk" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 2, 2)
+scale = Vector3(5.6, 3.6, 9)
+mesh = SubResource("Ovoid_Plate")
+
+[node name="NeedleProw" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 0, -13)
+scale = Vector3(3.5, 14, 3.5)
+rotation = Vector3(-1.5708, 0, 0)
+mesh = SubResource("Thorn_Bone")
+
+[node name="SporeHeart" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 3.6, -3)
+scale = Vector3(2.3, 1.1, 4.5)
+mesh = SubResource("Ovoid_Spore")
+
+[node name="ThroatFlesh" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, -1, -7)
+scale = Vector3(3.8, 2.8, 4)
+mesh = SubResource("Ovoid_Flesh")
+
+[node name="PortSail" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-6, 0, 5)
+scale = Vector3(7.5, 1.4, 7)
+rotation = Vector3(0, -0.45, -0.16)
+mesh = SubResource("Ovoid_Chitin")
+
+[node name="StarboardSail" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(6, 0, 5)
+scale = Vector3(7.5, 1.4, 7)
+rotation = Vector3(0, 0.45, 0.16)
+mesh = SubResource("Ovoid_Chitin")
+
+[node name="TailStinger" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 0, 17)
+scale = Vector3(2.8, 12, 2.8)
+rotation = Vector3(1.5708, 0, 0)
+mesh = SubResource("Thorn_Plate")
+
+[node name="PortHook" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-10, 0, 0)
+scale = Vector3(1.5, 10, 1.5)
+rotation = Vector3(-1.4, 0, 0.65)
+mesh = SubResource("Thorn_Bone")
+
+[node name="PortSporeNode" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-3.5, 2, 7)
+scale = Vector3(1.8, 1.3, 2.5)
+mesh = SubResource("Ovoid_Spore")
+
+[node name="StarboardHook" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(10, 0, 0)
+scale = Vector3(1.5, 10, 1.5)
+rotation = Vector3(-1.4, 0, -0.65)
+mesh = SubResource("Thorn_Bone")
+
+[node name="StarboardSporeNode" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(3.5, 2, 7)
+scale = Vector3(1.8, 1.3, 2.5)
+mesh = SubResource("Ovoid_Spore")
+
+[node name="MuzzleSocket" type="Marker3D" parent="ModelRoot"]
+position = Vector3(0, 0, -21)

@@ -9,7 +9,7 @@
 [ext_resource type="AudioStream" uid="uid://letca81rhxc1" path="res://assets/sounds/fluxbreak_menu.mp3" id="7_5seab"]
 [ext_resource type="Script" uid="uid://2kewa2vhj44v" path="res://scripts/main_menu/flux_anchors_container.gd" id="10_fac"]
 [ext_resource type="PackedScene" uid="uid://cx03u4eql62kw" path="res://scenes/main_menu/upgrades_panel.tscn" id="11_upgpanel"]
-[ext_resource type="Resource" path="res://content/data/runs/merc_practice.tres" id="12_merc_practice"]
+[ext_resource type="Resource" path="res://content/data/runs/bugs_practice.tres" id="12_merc_practice"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_ob46e"]
 line_spacing = 0.0
@@ -202,13 +202,13 @@ layout_mode = 2
 
 [node name="MercPractice" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/MercPracticeContainer"]
 layout_mode = 2
-tooltip_text = "Three short Merc waves, then Contract Enforcer. Move out of amber attack warnings and approach the cyan shield-support Frigates."
+tooltip_text = "Three short Bug waves, then Nestbreaker Matron. Keep space from the swarm, destroy Broodmothers, and move out of marked attacks."
 focus_neighbor_top = NodePath("../../PracticeContainer/Practice")
 focus_neighbor_bottom = NodePath("../../SettingsContainer/Settings")
 focus_next = NodePath("../../SettingsContainer/Settings")
 focus_previous = NodePath("../../PracticeContainer/Practice")
 theme = SubResource("Theme_wem23")
-text = "Merc Practice"
+text = "Bugs Practice"
 
 [node name="SettingsContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=967670781]
 layout_mode = 2

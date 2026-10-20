@@ -11,6 +11,12 @@ var enemy_combat_scaling: EnemyCombatScalingSnapshot = null
 var is_elite: bool = false
 var affix_ids: PackedStringArray = PackedStringArray()
 var source_tags: PackedStringArray = PackedStringArray()
+## Spawned brood never creates another generation of summoners.
+var is_summoned: bool = false
+## Whether death grants nanobots, score, and progression kill credit.
+var grants_kill_rewards: bool = true
+## Whether a kill contributes to adaptive wave pressure measurements.
+var contributes_to_pressure: bool = true
 
 static func from_enemy_def(def: EnemyDef) -> EnemySpawnContext:
 	var context: EnemySpawnContext = EnemySpawnContext.new()
@@ -32,4 +38,7 @@ func duplicate_context() -> EnemySpawnContext:
 	context.is_elite = is_elite
 	context.affix_ids = PackedStringArray(affix_ids)
 	context.source_tags = PackedStringArray(source_tags)
+	context.is_summoned = is_summoned
+	context.grants_kill_rewards = grants_kill_rewards
+	context.contributes_to_pressure = contributes_to_pressure
 	return context

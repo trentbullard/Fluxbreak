@@ -145,7 +145,7 @@ func apply_damage(amount: float, combat_stat_context: CombatStatContext = null) 
 		var effective_context: CombatStatContext = combat_stat_context.duplicate_context()
 		effective_context.set_enemy_identity_from_source(self)
 		GameFlow.record_damage_dealt(total_damage_applied, effective_context)
-		if dealt_killing_blow:
+		if dealt_killing_blow and _grants_kill_rewards():
 			GameFlow.record_enemy_kill(effective_context)
 	if hull <= 0.0:
 		_die()
@@ -282,11 +282,11 @@ func _die() -> void:
 	_dead = true
 	
 	about_to_die.emit(self)
-	if def != null:
+	if def != null and (_spawn_context == null or _spawn_context.contributes_to_pressure):
 		CombatStats.report_enemy_kill(def.threat_cost)
 
 	# spawn a visual nanobot swarm at the enemy location to represent dropped resources
-	if NanobotSwarmScene != null:
+	if NanobotSwarmScene != null and _grants_kill_rewards():
 		var swarm_node: NanobotSwarm = NanobotSwarmScene.instantiate() as NanobotSwarm
 		if swarm_node != null:
 			swarm_node.global_transform = global_transform
@@ -303,8 +303,9 @@ func _die() -> void:
 	collision_mask  = 0
 	set_physics_process(false)
 	
-	var mult: float = player_ship.get_effective_score_gain_mult()
-	RunState.add_score(int(round(score_on_kill * mult)), "enemy")
+	if _grants_kill_rewards():
+		var mult: float = player_ship.get_effective_score_gain_mult()
+		RunState.add_score(int(round(score_on_kill * mult)), "enemy")
 	if explosion_scene != null:
 		var fx := explosion_scene.instantiate() as Node3D
 		fx.global_transform = global_transform
@@ -312,6 +313,9 @@ func _die() -> void:
 	
 	hide()
 	call_deferred("_finalize_death")
+
+func _grants_kill_rewards() -> bool:
+	return _spawn_context == null or _spawn_context.grants_kill_rewards
 
 func _face_target(target: Vector3) -> void:
 	var desired: Vector3 = (target - global_position).normalized()

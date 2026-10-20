@@ -7,7 +7,7 @@ signal selection_changed
 
 @export var pilot_roster: PilotRoster
 @export var default_pilot_index: int = 0
-## Short Merc training run launched by the Merc Practice button.
+## Current faction training run. The legacy export name preserves scene bindings.
 @export var merc_practice_run: RunDefinition
 
 @onready var btn_practice: Button = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PracticeContainer/Practice

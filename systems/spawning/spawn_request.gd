@@ -19,6 +19,12 @@ class_name SpawnRequest
 @export var is_elite: bool = false
 @export var affix_ids: PackedStringArray = PackedStringArray()
 var enemy_combat_scaling: EnemyCombatScalingSnapshot = null
+## Mark spawned children so summoners cannot create recursive broods.
+@export var is_summoned: bool = false
+## Grant normal kill rewards and progression only for purchased enemies.
+@export var grants_kill_rewards: bool = true
+## Include normal purchased enemies in adaptive kill-pressure measurements.
+@export var contributes_to_pressure: bool = true
 
 func build_enemy_spawn_context(def_override: EnemyDef = null) -> EnemySpawnContext:
 	var resolved_def: EnemyDef = def_override if def_override != null else enemy_def
@@ -30,6 +36,9 @@ func build_enemy_spawn_context(def_override: EnemyDef = null) -> EnemySpawnConte
 	context.enemy_combat_scaling = enemy_combat_scaling
 	context.is_elite = is_elite
 	context.affix_ids = PackedStringArray(affix_ids)
+	context.is_summoned = is_summoned
+	context.grants_kill_rewards = grants_kill_rewards
+	context.contributes_to_pressure = contributes_to_pressure
 	if wave_card != null:
 		context.source_tags = PackedStringArray(wave_card.tags)
 	return context

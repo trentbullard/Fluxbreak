@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="BugEnemyDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/bug_enemy_def.gd" id="1_def"]
+[ext_resource type="Resource" path="res://content/data/factions/bugs.tres" id="2_faction"]
+[ext_resource type="Resource" path="res://content/data/enemy_roles/brawler.tres" id="3_role"]
+[ext_resource type="Resource" path="res://content/data/weapons/bug_sporeling.tres" id="4_weapon"]
+[ext_resource type="Resource" path="res://content/data/bug_behaviors/sporeling.tres" id="5_behavior"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/bug_sporeling_actor.tscn" id="6_actor"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/bug_sporeling_mk1.tscn" id="7_model"]
+
+[resource]
+script = ExtResource("1_def")
+behavior = ExtResource("5_behavior")
+id = "bug_sporeling_mk1"
+display_name = "Sporeling"
+faction = ExtResource("2_faction")
+role = ExtResource("3_role")
+tier = 1
+threat_cost = 1
+bounty_scrap = 2
+can_be_elite = false
+score_on_kill = 15
+max_hull = 18
+max_shield = 0
+shield_regen = 0
+evasion = 0.08
+thrust = 78
+weapon = ExtResource("4_weapon")
+actor_scene = ExtResource("6_actor")
+model_scene = ExtResource("7_model")

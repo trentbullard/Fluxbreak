@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RunDefinition" format=3]
+
+[ext_resource type="Script" path="res://content/defs/run_definition.gd" id="1"]
+[ext_resource type="Script" path="res://content/defs/stage_def.gd" id="2"]
+[ext_resource type="Resource" path="res://content/data/stages/stage_bug_nesting_grounds.tres" id="3"]
+
+[resource]
+script = ExtResource("1")
+run_id = &"bugs_practice"
+display_name = "Bugs Practice"
+description = "Three short waves teach swarm pressure, durable Carapaces, and bounded brood spawning before Nestbreaker Matron."
+run_mode = 1
+stages = Array[ExtResource("2")]([ExtResource("3")])
