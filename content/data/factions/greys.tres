@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="FactionDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/faction_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+faction_id = &"greys"
+display_name = "Greys"
+description = "Silent suspended vessels that mark where reality will fold. Read the warning, leave the rupture, and stretch a tether until it breaks."
+tags = PackedStringArray("psionic", "displacement", "delayed_pressure")

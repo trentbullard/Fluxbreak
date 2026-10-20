@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="EnemyRoleDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/enemy_role_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+role_id = &"harpooner"
+display_name = "Harpooner"
+tags = PackedStringArray("tether", "priority_target")

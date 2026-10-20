@@ -1,0 +1,172 @@
+[gd_scene format=3]
+
+[sub_resource type="StandardMaterial3D" id="Silver"]
+albedo_color = Color(0.64, 0.72, 0.82, 1)
+metallic = 0.55
+roughness = 0.34
+
+[sub_resource type="StandardMaterial3D" id="Pearl"]
+albedo_color = Color(0.82, 0.79, 0.94, 1)
+metallic = 0.3
+roughness = 0.4
+
+[sub_resource type="StandardMaterial3D" id="Shadow"]
+albedo_color = Color(0.09, 0.13, 0.23, 1)
+metallic = 0.45
+roughness = 0.45
+
+[sub_resource type="StandardMaterial3D" id="Blue"]
+albedo_color = Color(0.3, 0.68, 0.96, 1)
+roughness = 0.3
+emission_enabled = true
+emission = Color(0.12, 0.42, 0.9, 1)
+emission_energy_multiplier = 0.65
+
+[sub_resource type="StandardMaterial3D" id="Lavender"]
+albedo_color = Color(0.66, 0.46, 0.98, 1)
+roughness = 0.35
+emission_enabled = true
+emission = Color(0.4, 0.18, 0.8, 1)
+emission_energy_multiplier = 0.6
+
+[sub_resource type="SphereMesh" id="Ovoid_Silver"]
+material = SubResource("Silver")
+radius = 1.0
+height = 2.0
+radial_segments = 20
+rings = 10
+
+[sub_resource type="SphereMesh" id="Ovoid_Pearl"]
+material = SubResource("Pearl")
+radius = 1.0
+height = 2.0
+radial_segments = 20
+rings = 10
+
+[sub_resource type="SphereMesh" id="Ovoid_Shadow"]
+material = SubResource("Shadow")
+radius = 1.0
+height = 2.0
+radial_segments = 20
+rings = 10
+
+[sub_resource type="SphereMesh" id="Ovoid_Blue"]
+material = SubResource("Blue")
+radius = 1.0
+height = 2.0
+radial_segments = 20
+rings = 10
+
+[sub_resource type="SphereMesh" id="Ovoid_Lavender"]
+material = SubResource("Lavender")
+radius = 1.0
+height = 2.0
+radial_segments = 20
+rings = 10
+
+[node name="GreyProbe" type="Node3D"]
+
+[node name="ModelRoot" type="Node3D" parent="."]
+
+[node name="SuspendedSeed" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 0, 0)
+rotation = Vector3(0, 0, 0)
+scale = Vector3(6, 4, 9)
+mesh = SubResource("Ovoid_Silver")
+
+[node name="DarkLens" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 0, -7)
+rotation = Vector3(0, 0, 0)
+scale = Vector3(4.2, 3, 2.5)
+mesh = SubResource("Ovoid_Shadow")
+
+[node name="ThoughtEye" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 0, -9)
+rotation = Vector3(0, 0, 0)
+scale = Vector3(2.5, 1.8, 1.6)
+mesh = SubResource("Ovoid_Blue")
+
+[node name="RearPearl" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 1, 7)
+rotation = Vector3(0, 0, 0)
+scale = Vector3(2.8, 2.2, 5)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="FloatingSatellite" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(7, 4, -3)
+rotation = Vector3(0, 0, 0)
+scale = Vector3(1.7, 1.7, 1.7)
+mesh = SubResource("Ovoid_Lavender")
+
+[node name="Crescent" type="Node3D" parent="ModelRoot"]
+position = Vector3(0, 0, 0)
+rotation = Vector3(0.15, 0, 0.1)
+
+[node name="CrescentSegment0" type="MeshInstance3D" parent="ModelRoot/Crescent"]
+position = Vector3(11.954, 0, 1.0459)
+rotation = Vector3(0, -0.087266, 0)
+scale = Vector3(1.6, 1.6, 2.8316)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="CrescentSegment1" type="MeshInstance3D" parent="ModelRoot/Crescent"]
+position = Vector3(10.286, 0, 6.1805)
+rotation = Vector3(0, -0.54105, 0)
+scale = Vector3(1.6, 1.6, 2.8316)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="CrescentSegment2" type="MeshInstance3D" parent="ModelRoot/Crescent"]
+position = Vector3(6.5357, 0, 10.064)
+rotation = Vector3(0, -0.99484, 0)
+scale = Vector3(1.6, 1.6, 2.8316)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="CrescentSegment3" type="MeshInstance3D" parent="ModelRoot/Crescent"]
+position = Vector3(1.4624, 0, 11.911)
+rotation = Vector3(0, -1.4486, 0)
+scale = Vector3(1.6, 1.6, 2.8316)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="CrescentSegment4" type="MeshInstance3D" parent="ModelRoot/Crescent"]
+position = Vector3(-3.9068, 0, 11.346)
+rotation = Vector3(0, -1.9024, 0)
+scale = Vector3(1.6, 1.6, 2.8316)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="CrescentSegment5" type="MeshInstance3D" parent="ModelRoot/Crescent"]
+position = Vector3(-8.4853, 0, 8.4853)
+rotation = Vector3(0, -2.3562, 0)
+scale = Vector3(1.6, 1.6, 2.8316)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="CrescentSegment6" type="MeshInstance3D" parent="ModelRoot/Crescent"]
+position = Vector3(-11.346, 0, 3.9068)
+rotation = Vector3(0, -2.81, 0)
+scale = Vector3(1.6, 1.6, 2.8316)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="CrescentSegment7" type="MeshInstance3D" parent="ModelRoot/Crescent"]
+position = Vector3(-11.911, 0, -1.4624)
+rotation = Vector3(0, -3.2638, 0)
+scale = Vector3(1.6, 1.6, 2.8316)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="CrescentSegment8" type="MeshInstance3D" parent="ModelRoot/Crescent"]
+position = Vector3(-10.064, 0, -6.5357)
+rotation = Vector3(0, -3.7176, 0)
+scale = Vector3(1.6, 1.6, 2.8316)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="CrescentSegment9" type="MeshInstance3D" parent="ModelRoot/Crescent"]
+position = Vector3(-6.1805, 0, -10.286)
+rotation = Vector3(0, -4.1713, 0)
+scale = Vector3(1.6, 1.6, 2.8316)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="CrescentSegment10" type="MeshInstance3D" parent="ModelRoot/Crescent"]
+position = Vector3(-1.0459, 0, -11.954)
+rotation = Vector3(0, -4.6251, 0)
+scale = Vector3(1.6, 1.6, 2.8316)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="MuzzleSocket" type="Marker3D" parent="ModelRoot"]
+position = Vector3(0, 0, -11)

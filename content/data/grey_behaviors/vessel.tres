@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="GreyBehaviorDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/grey_behavior_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+mode = 2
+approach_range = 235
+retreat_range = 310
+max_speed = 72
+steering_response = 1.8
+orbit_strength = 0.15
+attack_cooldown_sec = 5.2
+attack_windup_sec = 1.6
+attack_radius = 48
+attack_recovery_sec = 1.5
+tether_windup_sec = 1.4
+tether_duration_sec = 3.0
+tether_slow_multiplier = 0.75
+tether_break_distance = 420
+tether_radius = 42

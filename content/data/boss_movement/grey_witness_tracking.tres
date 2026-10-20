@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="BossTargetTrackingProfile" format=3]
+
+[ext_resource type="Script" path="res://content/defs/boss_target_tracking_profile.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+turn_lerp_rate = 1.8
+aim_vertical_offset = 0

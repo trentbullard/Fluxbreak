@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="GreyBehaviorDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/grey_behavior_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+mode = 0
+approach_range = 145
+retreat_range = 215
+max_speed = 105
+steering_response = 2.5
+orbit_strength = 0.4
+attack_cooldown_sec = 3.6
+attack_windup_sec = 1.25
+attack_radius = 31
+attack_recovery_sec = 0.9

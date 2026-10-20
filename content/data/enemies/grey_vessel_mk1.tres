@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="GreyEnemyDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/grey_enemy_def.gd" id="1_def"]
+
+[ext_resource type="Resource" path="res://content/data/factions/greys.tres" id="2_faction"]
+[ext_resource type="Resource" path="res://content/data/enemy_roles/harpooner.tres" id="3_role"]
+[ext_resource type="Resource" path="res://content/data/weapons/grey_vessel.tres" id="4_weapon"]
+[ext_resource type="Resource" path="res://content/data/grey_behaviors/vessel.tres" id="5_behavior"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/grey_vessel_actor.tscn" id="6_actor"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/grey_vessel_mk1.tscn" id="7_model"]
+
+[resource]
+script = ExtResource("1_def")
+behavior = ExtResource("5_behavior")
+id = "grey_vessel_mk1"
+display_name = "Vessel"
+faction = ExtResource("2_faction")
+role = ExtResource("3_role")
+tier = 3
+threat_cost = 4
+bounty_scrap = 6
+can_be_elite = false
+score_on_kill = 55
+max_hull = 90
+max_shield = 20
+shield_regen = 0
+evasion = 0.06
+thrust = 55
+weapon = ExtResource("4_weapon")
+actor_scene = ExtResource("6_actor")
+model_scene = ExtResource("7_model")

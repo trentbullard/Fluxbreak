@@ -118,7 +118,7 @@ func _refresh_attack_warning() -> void:
 			soonest = warning
 	_attack_warning_label.visible = soonest != null
 	if soonest != null:
-		_attack_warning_label.text = "%s  %.1fs  —  MOVE CLEAR" % [soonest.get_attack_label(), soonest.get_time_remaining()]
+		_attack_warning_label.text = "%s  %.1fs  —  %s" % [soonest.get_attack_label(), soonest.get_time_remaining(), soonest.get_response_hint()]
 		if warning_count > 1:
 			_attack_warning_label.text += "  (+%d)" % [warning_count - 1]
 

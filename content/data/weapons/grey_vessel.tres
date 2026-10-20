@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="WeaponDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/weapon_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+weapon_id = "grey_vessel"
+display_name = "Vessel Delayed Pulse"
+fire_rate = 1
+base_accuracy = 1
+base_range = 500
+accuracy_range_falloff = 0
+crit_chance = 0
+graze_on_hit = 0
+graze_on_miss = 0
+damage_min = 6
+damage_max = 9

@@ -61,9 +61,9 @@ func _run_checks() -> void:
 	_director.wave_started.connect(_on_wave_started)
 	GameFlow.run_completed.connect(_on_completed)
 	var menu: Control = _world.get_node("MainMenuOverlay") as Control
-	# Preserve the established scene path; its visible label and resource changed.
+	# The faction button now defaults to Greys; validate the retained Bug run explicitly.
+	menu.set("merc_practice_run", run)
 	var button: Button = menu.get_node("CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/MercPracticeContainer/MercPractice") as Button
-	_check(button.text == "Bugs Practice", "The menu must replace Merc Practice with Bugs Practice.")
 	_check(not button.disabled, "Bugs Practice must work with the default unlocked loadout.")
 	button.pressed.emit()
 	_check(GameFlow.get_active_run_definition() == run, "The default faction button did not launch Bugs Practice.")
@@ -117,8 +117,8 @@ func _run_checks() -> void:
 	_check(returned_world != null and returned_world != _world, "Victory did not return to a fresh menu.")
 	if returned_world != null and returned_world.has_node("MainMenuOverlay"):
 		var returned_menu: Control = returned_world.get_node("MainMenuOverlay") as Control
+		returned_menu.set("merc_practice_run", run)
 		var restart_button: Button = returned_menu.get_node("CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/MercPracticeContainer/MercPractice") as Button
-		_check(restart_button.text == "Bugs Practice", "The returned menu lost the Bugs Practice entry.")
 		restart_button.pressed.emit()
 		_check(GameFlow.get_current_stage() == stage, "Bugs Practice could not restart.")
 		var restarted_director: WaveDirector = returned_world.get_node("StageRoot/WaveDirector") as WaveDirector

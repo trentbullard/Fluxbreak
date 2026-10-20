@@ -87,6 +87,9 @@ func get_time_remaining() -> float:
 func get_attack_label() -> String:
 	return _warning_label if not _warning_label.is_empty() else ("CORRIDOR" if _corridor else "SALVO")
 
+func get_response_hint() -> String:
+	return "MOVE CLEAR"
+
 func cancel() -> void:
 	_active = false
 	queue_free()

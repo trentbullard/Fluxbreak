@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="StageDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/stage_def.gd" id="1"]
+[ext_resource type="Script" path="res://content/defs/enemy_boss_def.gd" id="2"]
+[ext_resource type="Script" path="res://content/defs/wave_card.gd" id="3"]
+[ext_resource type="Resource" path="res://content/data/factions/greys.tres" id="4"]
+[ext_resource type="Resource" path="res://content/data/enemies/grey_witness_mk1.tres" id="5"]
+[ext_resource type="Resource" path="res://content/data/cards/grey_observation.tres" id="6"]
+[ext_resource type="Resource" path="res://content/data/cards/grey_pursuit.tres" id="7"]
+[ext_resource type="Resource" path="res://content/data/cards/grey_binding_pattern.tres" id="8"]
+
+[resource]
+script = ExtResource("1")
+stage_id = &"grey_observatory"
+display_name = "Silent Observatory"
+description = "Probe pulses, Seeker shifts, and a Vessel tether, then The Witness. Read the marked destination and leave locked attack volumes."
+combat_hint = "Three waves, then The Witness. Leave pulse and tether capture spheres.\nBlue rings mark harmless shifts. Break tethers by moving away or destroying the source."
+completion_flow = 3
+boss_wave_index = 4
+boss_faction = ExtResource("4")
+boss_pool = Array[ExtResource("2")]([ExtResource("5")])
+wave_timeout_override_sec = 22.0
+downtime_override_sec = 5.0
+ordered_wave_cards = true
+authored_enemy_budgets = PackedInt32Array(4, 8, 12)
+authored_tier_caps = PackedInt32Array(1, 2, 3)
+pressure_reinforcements_enabled = false
+wave_cards = Array[ExtResource("3")]([ExtResource("6"), ExtResource("7"), ExtResource("8")])
+ambient_light_color = Color(0.12, 0.15, 0.24, 1)
+ambient_light_energy = 4.6
+star_light_color = Color(0.75, 0.8, 1.0, 1)
+volumetric_fog_density = 0.003

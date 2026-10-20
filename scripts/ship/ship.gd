@@ -140,6 +140,12 @@ var _runtime_thruster_nodes: Array[Node3D] = []
 var _runtime_thruster_materials: Array[BaseMaterial3D] = []
 var _runtime_thruster_particles: Array[GPUParticles3D] = []
 var _active_ship_id: StringName = &""
+var _tether_source_ref: WeakRef = null
+var _tether_source_id: int = 0
+var _tether_remaining_sec: float = 0.0
+var _tether_immunity_sec: float = 0.0
+var _tether_speed_multiplier: float = 1.0
+var _tether_break_distance: float = 0.0
 
 func _ready() -> void:
 	add_to_group("player")
@@ -397,6 +403,8 @@ func get_nanobots() -> int:
 	return _nanobots
 
 func reset_for_stage_transition() -> void:
+	clear_tether_slow(null, false)
+	_tether_immunity_sec = 0.0
 	linear_velocity = Vector3.ZERO
 	angular_velocity = Vector3.ZERO
 	global_transform = Transform3D.IDENTITY
@@ -419,6 +427,7 @@ func _refresh() -> void:
 	hardpoint_manager.rebuild_anchor_cache()
 
 func _physics_process(delta: float) -> void:
+	_tick_tether_status(delta)
 	if _hull_repair_cooldown_remaining > 0.0:
 		_hull_repair_cooldown_remaining = max(_hull_repair_cooldown_remaining - delta, 0.0)
 	if Input.is_action_just_pressed("hull_repair"):
@@ -478,26 +487,28 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	var desired_forward: float = 0.0
 	var forward_rate: float = max(coast_brake_accel * assist_scale, 0.0)
 	var boost: float = eff_boost_mult if _boosting else 1.0
-	var g_limited_forward_cap: float = eff_max_speed_forward
+	var movement_scale: float = get_movement_slow_multiplier()
+	var reverse_cap: float = eff_max_speed_reverse * movement_scale
+	var g_limited_forward_cap: float = eff_max_speed_forward * movement_scale
 	var g_limited_accel_scale: float = 1.0
 
 	if _throttle_input > 0.0:
 		var current_forward_g: float = _compute_forward_g_load(w_local, ang_accel_local, dt)
 		g_limited_accel_scale = _compute_g_limiter_scale(current_forward_g, eff_pilot_forward_accel_min_scale)
 		var g_limited_speed_scale: float = _compute_g_limiter_scale(current_forward_g, eff_pilot_forward_speed_min_scale)
-		g_limited_forward_cap = eff_max_speed_forward * g_limited_speed_scale
+		g_limited_forward_cap = eff_max_speed_forward * g_limited_speed_scale * movement_scale
 		desired_forward = g_limited_forward_cap
-		forward_rate = max(eff_accel_forward * boost * g_limited_accel_scale, 0.0)
+		forward_rate = max(eff_accel_forward * boost * g_limited_accel_scale * movement_scale, 0.0)
 	elif _throttle_input < 0.0:
-		desired_forward = -eff_max_speed_reverse
-		forward_rate = max(eff_accel_reverse * boost, 0.0)
+		desired_forward = -reverse_cap
+		forward_rate = max(eff_accel_reverse * boost * movement_scale, 0.0)
 
 	var forward_speed: float = -lv_local.z
 	if desired_forward != 0.0 and signf(desired_forward) != signf(forward_speed):
 		forward_rate *= max(counter_thrust_brake_mult, 0.0)
 
 	forward_speed = move_toward(forward_speed, desired_forward, forward_rate * dt)
-	forward_speed = clamp(forward_speed, -eff_max_speed_reverse, g_limited_forward_cap)
+	forward_speed = clamp(forward_speed, -reverse_cap, g_limited_forward_cap)
 	lv_local.z = -forward_speed
 
 	var yaw_norm: float = absf(w_local.y) / max(eff_max_ang_rate.y, 0.0001)
@@ -525,7 +536,67 @@ func get_evasion() -> float:
 	return eff_evasion
 
 func get_speed_caps() -> Vector2:
-	return Vector2(eff_max_speed_reverse, eff_max_speed_forward)
+	return Vector2(eff_max_speed_reverse, eff_max_speed_forward) * get_movement_slow_multiplier()
+
+## A single source may slow translation briefly. Turning and boost remain usable.
+## Additional tethers cannot stack or refresh the active duration.
+func try_apply_tether_slow(source: Node3D, multiplier: float, duration_sec: float, break_distance: float) -> bool:
+	if _dead or not visible or not is_instance_valid(source) or not source.is_inside_tree() or source.is_queued_for_deletion():
+		return false
+	if source is Enemy and (source as Enemy)._dead:
+		return false
+	if _tether_remaining_sec > 0.0 or is_tether_immune():
+		return false
+	var distance_limit: float = clampf(break_distance, 100.0, 600.0)
+	if global_position.distance_squared_to(source.global_position) > distance_limit * distance_limit:
+		return false
+	_tether_source_ref = weakref(source)
+	_tether_source_id = source.get_instance_id()
+	_tether_speed_multiplier = clampf(multiplier, 0.65, 1.0)
+	_tether_remaining_sec = clampf(duration_sec, 0.05, 3.0)
+	_tether_break_distance = distance_limit
+	return true
+
+## Only the owning source may release an active tether; null clears all state.
+func clear_tether_slow(source: Node3D = null, grant_immunity: bool = true) -> void:
+	if source != null and source.get_instance_id() != _tether_source_id:
+		return
+	if _tether_remaining_sec > 0.0 and grant_immunity:
+		_tether_immunity_sec = 3.0
+	_tether_source_ref = null
+	_tether_source_id = 0
+	_tether_remaining_sec = 0.0
+	_tether_speed_multiplier = 1.0
+	_tether_break_distance = 0.0
+
+func get_tether_source() -> Node3D:
+	return _tether_source_ref.get_ref() as Node3D if _tether_source_ref != null else null
+
+func get_tether_time_remaining() -> float:
+	return maxf(_tether_remaining_sec, 0.0)
+
+func is_tether_immune() -> bool:
+	return _tether_immunity_sec > 0.0
+
+func get_movement_slow_multiplier() -> float:
+	return _tether_speed_multiplier if _tether_remaining_sec > 0.0 else 1.0
+
+func _tick_tether_status(delta: float) -> void:
+	_tether_immunity_sec = maxf(_tether_immunity_sec - delta, 0.0)
+	if _tether_remaining_sec <= 0.0:
+		return
+	var source: Node3D = get_tether_source()
+	if _dead or not visible or not is_instance_valid(source) or not source.is_inside_tree() or source.is_queued_for_deletion():
+		clear_tether_slow()
+		return
+	if (source is Enemy and (source as Enemy)._dead) or global_position.distance_squared_to(source.global_position) > _tether_break_distance * _tether_break_distance:
+		clear_tether_slow()
+		return
+	# Clear while the timer is still positive so timeout also grants immunity.
+	if delta >= _tether_remaining_sec:
+		clear_tether_slow()
+	else:
+		_tether_remaining_sec -= delta
 
 func get_effective_accel_forward() -> float:
 	return eff_accel_forward
@@ -1230,6 +1301,7 @@ func _die() -> void:
 	if _dead:
 		return
 	_dead = true
+	clear_tether_slow(null, false)
 	_switch_alarm(null)
 	if shield_low_alarm_audio != null and shield_low_alarm_audio.playing:
 		shield_low_alarm_audio.stop()

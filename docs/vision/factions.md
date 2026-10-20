@@ -121,7 +121,7 @@ A militarized industrial war-zone with patrol structures, weapons platforms, deb
 
 ### Merc Practice Seed
 
-The first playable Merc encounter is preserved in `content/data/runs/merc_practice.tres`. Three short authored waves introduce Corvette burst-and-retreat attacks, Frigate shield support, and the Destroyer's locked charged corridor. Contract Enforcer then alternates marked corridor and spherical salvo attacks, calling one Frigate escort at 55% hull. Defeating the boss completes the practice run. The main menu's faction practice button currently opens the newer Bug encounter.
+The first playable Merc encounter is preserved in `content/data/runs/merc_practice.tres`. Three short authored waves introduce Corvette burst-and-retreat attacks, Frigate shield support, and the Destroyer's locked charged corridor. Contract Enforcer then alternates marked corridor and spherical salvo attacks, calling one Frigate escort at 55% hull. Defeating the boss completes the practice run. The main menu's faction practice button opens the latest faction milestone.
 
 Amber volumes and a screen-space countdown show when a special attack will resolve. Leaving the marked volume avoids that special; ordinary gunfire retains the game's hit/miss calculations. Cyan support links show bounded allied shield restoration. The current ships use readable placeholder models; the remaining Merc classes and variants remain future progression.
 
@@ -174,7 +174,7 @@ An overgrown living battlefield full of organic structures, drifting biomass, sp
 
 ### Bug Practice Seed
 
-**Bugs Practice** in the main menu opens three short waves followed by Nestbreaker Matron. Sporelings pursue at close range, Carapaces bring durable frontal pressure, and Broodmothers keep their distance while releasing small broods. Their bodies contract before marked attacks; leaving the marked volume avoids the hit.
+The Bug encounter is preserved in `content/data/runs/bugs_practice.tres`: three short waves followed by Nestbreaker Matron. Sporelings pursue at close range, Carapaces bring durable frontal pressure, and Broodmothers keep their distance while releasing small broods. Their bodies contract before marked attacks; leaving the marked volume avoids the hit.
 
 Nestbreaker Matron alternates a locked charge lane with a swelling brood release, leaving a recovery window after each attack. At 55% hull she releases larger broods and shortens her cadence. Broods have living and lifetime limits, cannot reproduce, and disappear when their mother dies. Summoned children grant no kill rewards or adaptive kill-pressure credit. The current ships use distinct organic placeholder models; later Bug classes and biological variants remain future progression.
 
@@ -223,6 +223,14 @@ Their presence should create uncertainty.
 
 ### Home System Identity
 A silent distorted system where visibility, distance, and spatial expectation become unreliable. Environmental modifiers may alter radar clarity, distort movement perception, or delay projectile interpretation.
+
+### Grey Practice Seed
+
+**Greys Practice** in the main menu opens three short waves followed by The Witness. Probes drift and mark delayed pulse spheres. Seekers show both ends of a harmless shift, then begin a separate pulse warning. Vessels alternate delayed pulses with a locked tether capture; moving out of the capture sphere prevents attachment. All ships remain visible, damageable, and available to automatic targeting.
+
+An attached tether has a visible link and countdown. It slows forward and reverse speed and acceleration by at most 35%, lasts at most three seconds, and breaks on distance, source death, or source exit. Turning and boost remain usable. Only one tether may affect the player, it cannot refresh itself, and every break grants three seconds of tether immunity.
+
+The Witness cycles through marked relocation, rupture, and tether as separate actions with full recovery between them. At 55% hull only the cadence shortens. Relocations stay within the starting gun's reach so automatic weapons can reacquire the boss. Blue arrival markers are harmless; purple pulse and capture spheres warn of an effect that resolves after their countdown. Defeating the boss completes the practice run. The current smooth, suspended ship forms are placeholder models; later Grey classes and evolution variants remain future progression.
 
 # Fifth Faction (Reserved)
 

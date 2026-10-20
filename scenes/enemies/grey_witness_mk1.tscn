@@ -1,0 +1,322 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/enemy/boss_weapon_socket.gd" id="1_socket"]
+[ext_resource type="Resource" path="res://content/data/weapons/grey_witness.tres" id="2_weapon"]
+
+[sub_resource type="StandardMaterial3D" id="Silver"]
+albedo_color = Color(0.64, 0.72, 0.82, 1)
+metallic = 0.55
+roughness = 0.34
+
+[sub_resource type="StandardMaterial3D" id="Pearl"]
+albedo_color = Color(0.82, 0.79, 0.94, 1)
+metallic = 0.3
+roughness = 0.4
+
+[sub_resource type="StandardMaterial3D" id="Shadow"]
+albedo_color = Color(0.09, 0.13, 0.23, 1)
+metallic = 0.45
+roughness = 0.45
+
+[sub_resource type="StandardMaterial3D" id="Blue"]
+albedo_color = Color(0.3, 0.68, 0.96, 1)
+roughness = 0.3
+emission_enabled = true
+emission = Color(0.12, 0.42, 0.9, 1)
+emission_energy_multiplier = 0.65
+
+[sub_resource type="StandardMaterial3D" id="Lavender"]
+albedo_color = Color(0.66, 0.46, 0.98, 1)
+roughness = 0.35
+emission_enabled = true
+emission = Color(0.4, 0.18, 0.8, 1)
+emission_energy_multiplier = 0.6
+
+[sub_resource type="SphereMesh" id="Ovoid_Silver"]
+material = SubResource("Silver")
+radius = 1.0
+height = 2.0
+radial_segments = 20
+rings = 10
+
+[sub_resource type="SphereMesh" id="Ovoid_Pearl"]
+material = SubResource("Pearl")
+radius = 1.0
+height = 2.0
+radial_segments = 20
+rings = 10
+
+[sub_resource type="SphereMesh" id="Ovoid_Shadow"]
+material = SubResource("Shadow")
+radius = 1.0
+height = 2.0
+radial_segments = 20
+rings = 10
+
+[sub_resource type="SphereMesh" id="Ovoid_Blue"]
+material = SubResource("Blue")
+radius = 1.0
+height = 2.0
+radial_segments = 20
+rings = 10
+
+[sub_resource type="SphereMesh" id="Ovoid_Lavender"]
+material = SubResource("Lavender")
+radius = 1.0
+height = 2.0
+radial_segments = 20
+rings = 10
+
+[node name="TheWitness" type="Node3D"]
+
+[node name="ModelRoot" type="Node3D" parent="."]
+
+[node name="WitnessEye" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 0, 0)
+rotation = Vector3(0, 0, 0)
+scale = Vector3(28, 22, 20)
+mesh = SubResource("Ovoid_Silver")
+
+[node name="ObsidianPupil" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 0, -16)
+rotation = Vector3(0, 0, 0)
+scale = Vector3(20, 15, 8)
+mesh = SubResource("Ovoid_Shadow")
+
+[node name="PsionicPupil" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 0, -23)
+rotation = Vector3(0, 0, 0)
+scale = Vector3(10, 11, 4)
+mesh = SubResource("Ovoid_Lavender")
+
+[node name="PupilCore" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 0, -26)
+rotation = Vector3(0, 0, 0)
+scale = Vector3(4.5, 7, 2)
+mesh = SubResource("Ovoid_Blue")
+
+[node name="CrownPearl" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 22, 7)
+rotation = Vector3(0, 0, 0)
+scale = Vector3(15, 9, 19)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="LowerTear" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, -27, 12)
+rotation = Vector3(0, 0, 0)
+scale = Vector3(10, 27, 12)
+mesh = SubResource("Ovoid_Silver")
+
+[node name="PortTear" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-46, -8, 14)
+rotation = Vector3(0, 0.3, -0.28)
+scale = Vector3(8, 24, 12)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="StarboardTear" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(43, 9, 20)
+rotation = Vector3(0, -0.3, 0.28)
+scale = Vector3(9, 23, 13)
+mesh = SubResource("Ovoid_Silver")
+
+[node name="PortThought" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-43, 6, -13)
+rotation = Vector3(0, 0, 0)
+scale = Vector3(5, 6, 5)
+mesh = SubResource("Ovoid_Blue")
+
+[node name="StarboardThought" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(38, 18, -9)
+rotation = Vector3(0, 0, 0)
+scale = Vector3(5, 6, 5)
+mesh = SubResource("Ovoid_Lavender")
+
+[node name="WitnessHalo" type="Node3D" parent="ModelRoot"]
+position = Vector3(0, 0, 7)
+rotation = Vector3(1.15, 0, 0)
+
+[node name="WitnessHaloSegment0" type="MeshInstance3D" parent="ModelRoot/WitnessHalo"]
+position = Vector3(45.899, 0, -26.5)
+rotation = Vector3(0, 0.5236, 0)
+scale = Vector3(4.1, 4.1, 9.4485)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="WitnessHaloSegment1" type="MeshInstance3D" parent="ModelRoot/WitnessHalo"]
+position = Vector3(52.136, 0, -9.5285)
+rotation = Vector3(0, 0.18077, 0)
+scale = Vector3(4.1, 4.1, 9.4485)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="WitnessHaloSegment2" type="MeshInstance3D" parent="ModelRoot/WitnessHalo"]
+position = Vector3(52.305, 0, 8.552)
+rotation = Vector3(0, -0.16207, 0)
+scale = Vector3(4.1, 4.1, 9.4485)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="WitnessHaloSegment3" type="MeshInstance3D" parent="ModelRoot/WitnessHalo"]
+position = Vector3(46.387, 0, 25.637)
+rotation = Vector3(0, -0.5049, 0)
+scale = Vector3(4.1, 4.1, 9.4485)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="WitnessHaloSegment4" type="MeshInstance3D" parent="ModelRoot/WitnessHalo"]
+position = Vector3(35.069, 0, 39.738)
+rotation = Vector3(0, -0.84773, 0)
+scale = Vector3(4.1, 4.1, 9.4485)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="WitnessHaloSegment5" type="MeshInstance3D" parent="ModelRoot/WitnessHalo"]
+position = Vector3(19.67, 0, 49.215)
+rotation = Vector3(0, -1.1906, 0)
+scale = Vector3(4.1, 4.1, 9.4485)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="WitnessHaloSegment6" type="MeshInstance3D" parent="ModelRoot/WitnessHalo"]
+position = Vector3(1.9817, 0, 52.963)
+rotation = Vector3(0, -1.5334, 0)
+scale = Vector3(4.1, 4.1, 9.4485)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="WitnessHaloSegment7" type="MeshInstance3D" parent="ModelRoot/WitnessHalo"]
+position = Vector3(-15.937, 0, 50.547)
+rotation = Vector3(0, -1.8762, 0)
+scale = Vector3(4.1, 4.1, 9.4485)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="WitnessHaloSegment8" type="MeshInstance3D" parent="ModelRoot/WitnessHalo"]
+position = Vector3(-32.002, 0, 42.248)
+rotation = Vector3(0, -2.2191, 0)
+scale = Vector3(4.1, 4.1, 9.4485)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="WitnessHaloSegment9" type="MeshInstance3D" parent="ModelRoot/WitnessHalo"]
+position = Vector3(-44.341, 0, 29.032)
+rotation = Vector3(0, -2.5619, 0)
+scale = Vector3(4.1, 4.1, 9.4485)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="WitnessHaloSegment10" type="MeshInstance3D" parent="ModelRoot/WitnessHalo"]
+position = Vector3(-51.52, 0, 12.437)
+rotation = Vector3(0, -2.9047, 0)
+scale = Vector3(4.1, 4.1, 9.4485)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="WitnessHaloSegment11" type="MeshInstance3D" parent="ModelRoot/WitnessHalo"]
+position = Vector3(-52.703, 0, -5.6057)
+rotation = Vector3(0, -3.2476, 0)
+scale = Vector3(4.1, 4.1, 9.4485)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="WitnessHaloSegment12" type="MeshInstance3D" parent="ModelRoot/WitnessHalo"]
+position = Vector3(-47.751, 0, -22.996)
+rotation = Vector3(0, -3.5904, 0)
+scale = Vector3(4.1, 4.1, 9.4485)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="WitnessHaloSegment13" type="MeshInstance3D" parent="ModelRoot/WitnessHalo"]
+position = Vector3(-37.242, 0, -37.71)
+rotation = Vector3(0, -3.9332, 0)
+scale = Vector3(4.1, 4.1, 9.4485)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="WitnessHaloSegment14" type="MeshInstance3D" parent="ModelRoot/WitnessHalo"]
+position = Vector3(-22.399, 0, -48.034)
+rotation = Vector3(0, -4.2761, 0)
+scale = Vector3(4.1, 4.1, 9.4485)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="OrbitingHalo" type="Node3D" parent="ModelRoot"]
+position = Vector3(0, 0, 7)
+rotation = Vector3(0.1, 0.1, -0.35)
+
+[node name="OrbitingHaloSegment0" type="MeshInstance3D" parent="ModelRoot/OrbitingHalo"]
+position = Vector3(59.887, 0, 16.047)
+rotation = Vector3(0, -0.2618, 0)
+scale = Vector3(3.2, 3.2, 11.254)
+mesh = SubResource("Ovoid_Silver")
+
+[node name="OrbitingHaloSegment1" type="MeshInstance3D" parent="ModelRoot/OrbitingHalo"]
+position = Vector3(50.787, 0, 35.562)
+rotation = Vector3(0, -0.61087, 0)
+scale = Vector3(3.2, 3.2, 11.254)
+mesh = SubResource("Ovoid_Silver")
+
+[node name="OrbitingHaloSegment2" type="MeshInstance3D" parent="ModelRoot/OrbitingHalo"]
+position = Vector3(35.562, 0, 50.787)
+rotation = Vector3(0, -0.95993, 0)
+scale = Vector3(3.2, 3.2, 11.254)
+mesh = SubResource("Ovoid_Silver")
+
+[node name="OrbitingHaloSegment3" type="MeshInstance3D" parent="ModelRoot/OrbitingHalo"]
+position = Vector3(16.047, 0, 59.887)
+rotation = Vector3(0, -1.309, 0)
+scale = Vector3(3.2, 3.2, 11.254)
+mesh = SubResource("Ovoid_Silver")
+
+[node name="OrbitingHaloSegment4" type="MeshInstance3D" parent="ModelRoot/OrbitingHalo"]
+position = Vector3(-5.4037, 0, 61.764)
+rotation = Vector3(0, -1.6581, 0)
+scale = Vector3(3.2, 3.2, 11.254)
+mesh = SubResource("Ovoid_Silver")
+
+[node name="OrbitingHaloSegment5" type="MeshInstance3D" parent="ModelRoot/OrbitingHalo"]
+position = Vector3(-26.202, 0, 56.191)
+rotation = Vector3(0, -2.0071, 0)
+scale = Vector3(3.2, 3.2, 11.254)
+mesh = SubResource("Ovoid_Silver")
+
+[node name="OrbitingHaloSegment6" type="MeshInstance3D" parent="ModelRoot/OrbitingHalo"]
+position = Vector3(-43.841, 0, 43.841)
+rotation = Vector3(0, -2.3562, 0)
+scale = Vector3(3.2, 3.2, 11.254)
+mesh = SubResource("Ovoid_Silver")
+
+[node name="OrbitingHaloSegment7" type="MeshInstance3D" parent="ModelRoot/OrbitingHalo"]
+position = Vector3(-56.191, 0, 26.202)
+rotation = Vector3(0, -2.7053, 0)
+scale = Vector3(3.2, 3.2, 11.254)
+mesh = SubResource("Ovoid_Silver")
+
+[node name="OrbitingHaloSegment8" type="MeshInstance3D" parent="ModelRoot/OrbitingHalo"]
+position = Vector3(-61.764, 0, 5.4037)
+rotation = Vector3(0, -3.0543, 0)
+scale = Vector3(3.2, 3.2, 11.254)
+mesh = SubResource("Ovoid_Silver")
+
+[node name="OrbitingHaloSegment9" type="MeshInstance3D" parent="ModelRoot/OrbitingHalo"]
+position = Vector3(-59.887, 0, -16.047)
+rotation = Vector3(0, -3.4034, 0)
+scale = Vector3(3.2, 3.2, 11.254)
+mesh = SubResource("Ovoid_Silver")
+
+[node name="OrbitingHaloSegment10" type="MeshInstance3D" parent="ModelRoot/OrbitingHalo"]
+position = Vector3(-50.787, 0, -35.562)
+rotation = Vector3(0, -3.7525, 0)
+scale = Vector3(3.2, 3.2, 11.254)
+mesh = SubResource("Ovoid_Silver")
+
+[node name="OrbitingHaloSegment11" type="MeshInstance3D" parent="ModelRoot/OrbitingHalo"]
+position = Vector3(-35.562, 0, -50.787)
+rotation = Vector3(0, -4.1015, 0)
+scale = Vector3(3.2, 3.2, 11.254)
+mesh = SubResource("Ovoid_Silver")
+
+[node name="OrbitingHaloSegment12" type="MeshInstance3D" parent="ModelRoot/OrbitingHalo"]
+position = Vector3(-16.047, 0, -59.887)
+rotation = Vector3(0, -4.4506, 0)
+scale = Vector3(3.2, 3.2, 11.254)
+mesh = SubResource("Ovoid_Silver")
+
+[node name="OrbitingHaloSegment13" type="MeshInstance3D" parent="ModelRoot/OrbitingHalo"]
+position = Vector3(5.4037, 0, -61.764)
+rotation = Vector3(0, -4.7997, 0)
+scale = Vector3(3.2, 3.2, 11.254)
+mesh = SubResource("Ovoid_Silver")
+
+[node name="MuzzleSocket" type="Marker3D" parent="ModelRoot"]
+position = Vector3(0, 0, -31)
+
+[node name="RuptureWeapon" type="Marker3D" parent="ModelRoot"]
+position = Vector3(0, 0, -31)
+script = ExtResource("1_socket")
+weapon = ExtResource("2_weapon")
