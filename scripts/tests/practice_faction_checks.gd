@@ -59,7 +59,7 @@ func _check_factory_runs() -> void:
 		known_ids[faction_id] = true
 		var seed_stage: StageDef = faction_def.short_run.get_stage(0)
 		var lesson_tiers: PackedInt32Array = seed_stage.authored_tier_caps
-		_check(lesson_tiers.size() == (5 if faction_id == &"mercs" or faction_id == &"bugs" else 3), "Practice must teach each available faction archetype.")
+		_check(lesson_tiers.size() == (3 if faction_id == &"machines" else 5), "Practice must teach each available faction archetype.")
 		_check(faction_def.wave_cards.size() == lesson_tiers.size() * 2, "%s must expose two wave cards per lesson tier." % faction_id)
 		var tier_counts: Dictionary = {}
 		for card: WaveCard in faction_def.wave_cards:
@@ -118,6 +118,9 @@ func _check_factory_runs() -> void:
 		if faction_id == &"bugs":
 			_check(first_stage.get_boss_pool().size() == 1 and first_stage.get_boss_pool()[0].id == "bug_nestbreaker_matron_mk1", "Bug Campaign must use Nestbreaker Matron at its gateway.")
 			_check(final_stage.get_boss_pool().size() == 1 and final_stage.get_boss_pool()[0].id == "bug_first_queen_mk1", "Bug Campaign must finish with The First Queen.")
+		if faction_id == &"greys":
+			_check(first_stage.get_boss_pool().size() == 1 and first_stage.get_boss_pool()[0].id == "grey_witness_mk1", "Grey Campaign must use The Witness at its gateway.")
+			_check(final_stage.get_boss_pool().size() == 1 and final_stage.get_boss_pool()[0].id == "grey_veiled_mind_mk1", "Grey Campaign must finish with The Veiled Mind.")
 		_check(first_stage.should_open_gateway_on_boss_defeat() and first_stage.next_stage_id == final_stage.get_stage_id(), "Main Practice must connect its first boss gateway to the selected final stage.")
 		_check(final_stage.should_end_run_on_boss_defeat(), "Main Practice must finish after its final boss.")
 		for stage: StageDef in main_run.get_stages():
@@ -279,26 +282,29 @@ func _check_deck_budgets(faction_def: PracticeFactionDef, buyer: BudgetBuyer, ca
 			_check(primary_found, "A wave omitted its affordable named primary role.")
 			if card.min_primary_enemy_tier > 1:
 				var anchor_id: String = str(buyer.get_last_wave_plan().get("primary_enemy_id", ""))
-				var expected_anchor: String = "bug_devourer_mk1" if lesson_tier == 4 else "bug_hive_queen_mk1"
-				_check(anchor_id == expected_anchor, "A higher-tier Bug card replaced its affordable teaching anchor with an earlier hull.")
+				var valid_anchor: bool = false
+				for candidate: EnemyDef in primaries:
+					if candidate.id == anchor_id and candidate.tier >= card.min_primary_enemy_tier:
+						valid_anchor = true
+				_check(valid_anchor, "A higher-tier card replaced its affordable teaching anchor with an earlier hull.")
 			_check(cost > 0 and cost <= budget, "A deck purchase exceeded the authored wave budget or bought no enemies.")
 		if card.primary_count_max > 0:
 			for sample_index: int in range(20):
 				buyer.clear_history()
 				var requests: Array[SpawnRequest] = buyer.buy_wave(100, 0, card, faction_def.max_enemy_tier)
-				var queens: int = 0
+				var anchor_count: int = 0
 				var primary_count: int = 0
 				var cost: int = 0
+				var anchor_id: String = str(buyer.get_last_wave_plan().get("primary_enemy_id", ""))
 				for request: SpawnRequest in requests:
 					if request.enemy_def != null:
 						cost += request.count * request.enemy_def.threat_cost
-						if request.enemy_def.id == "bug_hive_queen_mk1":
-							queens += request.count
+						if request.enemy_def.id == anchor_id:
+							anchor_count += request.count
 						if request.package_label == "primary":
 							primary_count += request.count
-				var expected_queens: int = 1 if card.min_primary_enemy_tier == 5 else 0
-				_check(queens == expected_queens and primary_count <= card.primary_count_max, "A late Campaign package violated its primary cap or Queen composition.")
-				_check(cost <= 100, "A large-budget queen package exceeded its allocation.")
+				_check(anchor_count > 0 and anchor_count <= card.primary_count_max and primary_count <= card.primary_count_max, "A late Campaign package violated its primary anchor cap.")
+				_check(cost <= 100, "A large-budget capital package exceeded its allocation.")
 		if card.min_primary_enemy_tier > 1:
 			buyer.clear_history()
 			_check(not buyer.buy_wave(3, 0, card, lesson_tier).is_empty(), "A temporarily unaffordable capital card produced an empty adaptive wave.")
@@ -333,8 +339,7 @@ func _check_card_selection(director: WaveDirector) -> void:
 	_check(director._choose_card() == early_card, "Director ignored the last card's repeat cooldown.")
 	for wave_index in range(1, stage.boss_wave_index):
 		director._wave_index = wave_index
-		var faction_id: StringName = GameFlow.get_run_faction().get_faction_id()
-		_check(director._get_max_enemy_tier() <= (3 if faction_id == &"greys" else 5), "Campaign can request unimplemented enemy tiers.")
+		_check(director._get_max_enemy_tier() <= 5, "Campaign can request unimplemented enemy tiers.")
 	stage.wave_cards.assign(original_cards)
 	director._wave_index = 0
 	director._pending_card = null

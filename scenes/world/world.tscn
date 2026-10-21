@@ -70,6 +70,8 @@
 [ext_resource type="Resource" path="res://content/data/enemies/grey_probe_mk1.tres" id="grey_probe"]
 [ext_resource type="Resource" path="res://content/data/enemies/grey_seeker_mk1.tres" id="grey_seeker"]
 [ext_resource type="Resource" path="res://content/data/enemies/grey_vessel_mk1.tres" id="grey_vessel"]
+[ext_resource type="Resource" path="res://content/data/enemies/grey_harbinger_mk1.tres" id="grey_harbinger"]
+[ext_resource type="Resource" path="res://content/data/enemies/grey_mothership_mk1.tres" id="grey_mothership"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_sar2w"]
 panorama = ExtResource("1_dphjl")
@@ -251,7 +253,7 @@ scaling_def = ExtResource("56_scalingres")
 
 [node name="EnemyCatalog" type="Node" parent="StageRoot" unique_id=2145914352]
 script = ExtResource("10_6hctx")
-enemies = Array[ExtResource("13_jyr8v")]([ExtResource("14_5o5dd"), ExtResource("15_d0ajt"), ExtResource("16_jyr8v"), ExtResource("18_4jq4u"), ExtResource("19_sar2w"), ExtResource("merc_corvette"), ExtResource("merc_frigate"), ExtResource("merc_destroyer"), ExtResource("merc_cruiser"), ExtResource("merc_carrier"), ExtResource("bug_sporeling"), ExtResource("bug_carapace"), ExtResource("bug_broodmother"), ExtResource("bug_devourer"), ExtResource("bug_hive_queen"), ExtResource("grey_probe"), ExtResource("grey_seeker"), ExtResource("grey_vessel")])
+enemies = Array[ExtResource("13_jyr8v")]([ExtResource("14_5o5dd"), ExtResource("15_d0ajt"), ExtResource("16_jyr8v"), ExtResource("18_4jq4u"), ExtResource("19_sar2w"), ExtResource("merc_corvette"), ExtResource("merc_frigate"), ExtResource("merc_destroyer"), ExtResource("merc_cruiser"), ExtResource("merc_carrier"), ExtResource("bug_sporeling"), ExtResource("bug_carapace"), ExtResource("bug_broodmother"), ExtResource("bug_devourer"), ExtResource("bug_hive_queen"), ExtResource("grey_probe"), ExtResource("grey_seeker"), ExtResource("grey_vessel"), ExtResource("grey_harbinger"), ExtResource("grey_mothership")])
 
 [node name="TargetCatalog" type="Node" parent="StageRoot" unique_id=1303860640]
 script = ExtResource("11_ues17")

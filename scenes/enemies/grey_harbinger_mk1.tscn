@@ -1,0 +1,204 @@
+[gd_scene format=3]
+
+[sub_resource type="StandardMaterial3D" id="Silver"]
+albedo_color = Color(0.64, 0.72, 0.82, 1)
+metallic = 0.55
+roughness = 0.34
+
+[sub_resource type="SphereMesh" id="Ovoid_Silver"]
+material = SubResource("Silver")
+radius = 1.0
+height = 2.0
+radial_segments = 20
+rings = 10
+
+[sub_resource type="StandardMaterial3D" id="Pearl"]
+albedo_color = Color(0.82, 0.79, 0.94, 1)
+metallic = 0.3
+roughness = 0.4
+
+[sub_resource type="SphereMesh" id="Ovoid_Pearl"]
+material = SubResource("Pearl")
+radius = 1.0
+height = 2.0
+radial_segments = 20
+rings = 10
+
+[sub_resource type="StandardMaterial3D" id="Shadow"]
+albedo_color = Color(0.075, 0.105, 0.19, 1)
+metallic = 0.45
+roughness = 0.45
+
+[sub_resource type="SphereMesh" id="Ovoid_Shadow"]
+material = SubResource("Shadow")
+radius = 1.0
+height = 2.0
+radial_segments = 20
+rings = 10
+
+[sub_resource type="StandardMaterial3D" id="Blue"]
+albedo_color = Color(0.3, 0.68, 0.96, 1)
+metallic = 0.2
+roughness = 0.3
+emission_enabled = true
+emission = Color(0.12, 0.42, 0.9, 1)
+emission_energy_multiplier = 0.7
+
+[sub_resource type="SphereMesh" id="Ovoid_Blue"]
+material = SubResource("Blue")
+radius = 1.0
+height = 2.0
+radial_segments = 20
+rings = 10
+
+[sub_resource type="StandardMaterial3D" id="Lavender"]
+albedo_color = Color(0.66, 0.46, 0.98, 1)
+metallic = 0.25
+roughness = 0.35
+emission_enabled = true
+emission = Color(0.4, 0.18, 0.8, 1)
+emission_energy_multiplier = 0.7
+
+[sub_resource type="SphereMesh" id="Ovoid_Lavender"]
+material = SubResource("Lavender")
+radius = 1.0
+height = 2.0
+radial_segments = 20
+rings = 10
+
+[node name="GreyHarbinger" type="Node3D"]
+
+[node name="ModelRoot" type="Node3D" parent="."]
+
+[node name="CentralSpindle" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 0, 1)
+rotation = Vector3(0, 0, 0)
+scale = Vector3(13, 9, 33)
+mesh = SubResource("Ovoid_Silver")
+
+[node name="SuspendedCrown" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 8, -2)
+rotation = Vector3(0, 0, 0)
+scale = Vector3(10, 8, 21)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="RuptureEye" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 0, -31)
+rotation = Vector3(0, 0, 0)
+scale = Vector3(8, 4, 4)
+mesh = SubResource("Ovoid_Shadow")
+
+[node name="EyeCore" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 0, -34)
+rotation = Vector3(0, 0, 0)
+scale = Vector3(5, 2.5, 2)
+mesh = SubResource("Ovoid_Lavender")
+
+[node name="PortLance" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-23, 1, -12)
+rotation = Vector3(0, -0.18, -0.08)
+scale = Vector3(5, 5, 31)
+mesh = SubResource("Ovoid_Silver")
+
+[node name="StarboardLance" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(23, 1, -12)
+rotation = Vector3(0, 0.18, 0.08)
+scale = Vector3(5, 5, 31)
+mesh = SubResource("Ovoid_Silver")
+
+[node name="PortSensor" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-27, 1, -40)
+rotation = Vector3(0, 0, 0)
+scale = Vector3(3, 2.5, 4)
+mesh = SubResource("Ovoid_Blue")
+
+[node name="StarboardSensor" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(27, 1, -40)
+rotation = Vector3(0, 0, 0)
+scale = Vector3(3, 2.5, 4)
+mesh = SubResource("Ovoid_Blue")
+
+[node name="AftReactor" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, -1, 34)
+rotation = Vector3(0, 0, 0)
+scale = Vector3(7, 4, 6)
+mesh = SubResource("Ovoid_Blue")
+
+[node name="BrokenHalo" type="Node3D" parent="ModelRoot"]
+position = Vector3(0, -3, 8)
+rotation = Vector3(0.08, 0, 0.15)
+
+[node name="BrokenHaloSegment0" type="MeshInstance3D" parent="ModelRoot/BrokenHalo"]
+position = Vector3(32.737, 0, -14.977)
+rotation = Vector3(0, 0.42906, 0)
+scale = Vector3(2.8, 2.8, 7.3304)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="BrokenHaloSegment1" type="MeshInstance3D" parent="ModelRoot/BrokenHalo"]
+position = Vector3(35.923, 0, -2.3545)
+rotation = Vector3(0, 0.06545, 0)
+scale = Vector3(2.8, 2.8, 7.3304)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="BrokenHaloSegment2" type="MeshInstance3D" parent="ModelRoot/BrokenHalo"]
+position = Vector3(34.412, 0, 10.575)
+rotation = Vector3(0, -0.29816, 0)
+scale = Vector3(2.8, 2.8, 7.3304)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="BrokenHaloSegment3" type="MeshInstance3D" parent="ModelRoot/BrokenHalo"]
+position = Vector3(28.401, 0, 22.123)
+rotation = Vector3(0, -0.66177, 0)
+scale = Vector3(2.8, 2.8, 7.3304)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="BrokenHaloSegment4" type="MeshInstance3D" parent="ModelRoot/BrokenHalo"]
+position = Vector3(18.676, 0, 30.777)
+rotation = Vector3(0, -1.0254, 0)
+scale = Vector3(2.8, 2.8, 7.3304)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="BrokenHaloSegment5" type="MeshInstance3D" parent="ModelRoot/BrokenHalo"]
+position = Vector3(6.509, 0, 35.407)
+rotation = Vector3(0, -1.389, 0)
+scale = Vector3(2.8, 2.8, 7.3304)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="BrokenHaloSegment6" type="MeshInstance3D" parent="ModelRoot/BrokenHalo"]
+position = Vector3(-6.509, 0, 35.407)
+rotation = Vector3(0, -1.7526, 0)
+scale = Vector3(2.8, 2.8, 7.3304)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="BrokenHaloSegment7" type="MeshInstance3D" parent="ModelRoot/BrokenHalo"]
+position = Vector3(-18.676, 0, 30.777)
+rotation = Vector3(0, -2.1162, 0)
+scale = Vector3(2.8, 2.8, 7.3304)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="BrokenHaloSegment8" type="MeshInstance3D" parent="ModelRoot/BrokenHalo"]
+position = Vector3(-28.401, 0, 22.123)
+rotation = Vector3(0, -2.4798, 0)
+scale = Vector3(2.8, 2.8, 7.3304)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="BrokenHaloSegment9" type="MeshInstance3D" parent="ModelRoot/BrokenHalo"]
+position = Vector3(-34.412, 0, 10.575)
+rotation = Vector3(0, -2.8434, 0)
+scale = Vector3(2.8, 2.8, 7.3304)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="BrokenHaloSegment10" type="MeshInstance3D" parent="ModelRoot/BrokenHalo"]
+position = Vector3(-35.923, 0, -2.3545)
+rotation = Vector3(0, -3.207, 0)
+scale = Vector3(2.8, 2.8, 7.3304)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="BrokenHaloSegment11" type="MeshInstance3D" parent="ModelRoot/BrokenHalo"]
+position = Vector3(-32.737, 0, -14.977)
+rotation = Vector3(0, -3.5707, 0)
+scale = Vector3(2.8, 2.8, 7.3304)
+mesh = SubResource("Ovoid_Pearl")
+
+[node name="MuzzleSocket" type="Marker3D" parent="ModelRoot"]
+position = Vector3(0, 0, -38)

@@ -10,11 +10,20 @@
 [ext_resource type="Resource" path="res://content/data/cards/grey_shift_screen.tres" id="8"]
 [ext_resource type="Resource" path="res://content/data/cards/grey_binding_pattern.tres" id="9"]
 [ext_resource type="Resource" path="res://content/data/cards/grey_capture_net.tres" id="10"]
+[ext_resource type="Resource" path="res://content/data/cards/grey_rupture_line.tres" id="11"]
+[ext_resource type="Resource" path="res://content/data/cards/grey_echo_barrage.tres" id="12"]
+[ext_resource type="Resource" path="res://content/data/cards/grey_command_veil.tres" id="13"]
+[ext_resource type="Resource" path="res://content/data/cards/grey_psionic_convergence.tres" id="14"]
+[ext_resource type="Script" path="res://content/defs/enemy_boss_def.gd" id="15"]
+[ext_resource type="Resource" path="res://content/data/enemies/grey_witness_mk1.tres" id="16"]
+[ext_resource type="Resource" path="res://content/data/enemies/grey_veiled_mind_mk1.tres" id="17"]
 
 [resource]
 script = ExtResource("1")
 faction = ExtResource("3")
 short_run = ExtResource("4")
-wave_cards = Array[ExtResource("2")]([ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10")])
-max_enemy_tier = 3
-combat_hint = "Leave pulse and tether capture spheres. Blue rings mark harmless shifts before the next attack.\nBreak tethers by moving away or destroying the source."
+wave_cards = Array[ExtResource("2")]([ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10"), ExtResource("11"), ExtResource("12"), ExtResource("13"), ExtResource("14")])
+max_enemy_tier = 5
+main_boss_pool = Array[ExtResource("15")]([ExtResource("16")])
+final_boss_pool = Array[ExtResource("15")]([ExtResource("17")])
+combat_hint = "Harbingers warn twice: leave each locked rupture sphere. Blue shift markers are harmless; the next attack has its own warning.\nMotherships and The Veiled Mind alternate rupture, relocation and tether intervals. Break tethers by distance or source death, then use the immunity window to reposition."

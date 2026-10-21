@@ -1,6 +1,6 @@
 FLUXBREAK - PLAYER README
 
-Version: 0.2.2
+Version: 0.2.3
 Support: p4ndepravity@gmail.com
 
 INSTALLATION

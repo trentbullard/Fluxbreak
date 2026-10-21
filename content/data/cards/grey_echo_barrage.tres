@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="WaveCard" format=3]
+
+[ext_resource type="Script" path="res://content/defs/wave_card.gd" id="1"]
+[ext_resource type="Resource" path="res://content/data/factions/greys.tres" id="2"]
+[ext_resource type="Resource" path="res://content/data/enemy_roles/siege.tres" id="3"]
+[ext_resource type="Resource" path="res://content/data/enemy_roles/displacer.tres" id="4"]
+[ext_resource type="Resource" path="res://content/data/enemy_roles/harpooner.tres" id="5"]
+
+[resource]
+script = ExtResource("1")
+card_id = "grey_echo_barrage"
+display_name = "Echo Barrage"
+min_enemy_tier = 4
+min_primary_enemy_tier = 4
+primary_count_max = 1
+weight = 0.85
+faction_bias = ExtResource("2")
+primary_role_bias = ExtResource("3")
+secondary_role_bias = ExtResource("4")
+support_role_bias = ExtResource("5")
+primary_budget_share = 0.42
+secondary_budget_share = 0.33
+support_budget_share = 0.25
+max_primary_budget_share = 0.45
+allow_swarm_primary = false
+allow_pressure_spikes = false
+pressure_enemy_point_budget = 0
+downtime_target_point_budget = 0
+in_wave_target_budget_scale = 0.0
+package_count_min = 3
+package_count_max = 3
+batch_size_min = 1
+batch_size_max = 2
+inter_batch_sec = 1.05
+tags = Array[String](["greys", "harbinger", "echo"])

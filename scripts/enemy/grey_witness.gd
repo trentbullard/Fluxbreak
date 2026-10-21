@@ -41,6 +41,17 @@ func get_attack_state() -> StringName:
 func is_in_second_phase() -> bool:
 	return _phase_two
 
+func _physics_process(delta: float) -> void:
+	if _dead:
+		return
+	if not is_instance_valid(player_ship) or not player_ship.visible or not player_ship.is_alive():
+		_clear_encounter_runtime()
+		_attack_state = &"cadence"
+		if _grey_def != null:
+			_state_remaining_sec = _grey_def.initial_delay_sec
+		return
+	super._physics_process(delta)
+
 func _update_movement(target_position: Vector3, delta: float) -> void:
 	if _attack_state != &"cadence":
 		# A fixed source makes each destination, rupture, and tether easy to read.
@@ -115,6 +126,9 @@ func _begin_displacement(target: Node3D) -> void:
 		_begin_recovery()
 
 func _begin_rupture(target: Node3D) -> void:
+	if not GreyThreatLimiter.can_start_pulse(self):
+		_state_remaining_sec = 0.25
+		return
 	if _weapon_sockets.is_empty():
 		return
 	var socket: BossWeaponSocket = _weapon_sockets[_socket_index % _weapon_sockets.size()]
@@ -132,6 +146,9 @@ func _begin_rupture(target: Node3D) -> void:
 
 func _begin_tether(target: Ship) -> void:
 	if target == null:
+		return
+	if not GreyThreatLimiter.can_start_tether(self):
+		_state_remaining_sec = 0.25
 		return
 	_tether = GreyTether.new()
 	_tether.name = "WitnessTether"

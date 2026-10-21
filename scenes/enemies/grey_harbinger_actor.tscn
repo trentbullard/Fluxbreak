@@ -1,0 +1,14 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/enemies/grey_enemy.tscn" id="1_base"]
+
+[sub_resource type="SphereShape3D" id="GreyHull"]
+radius = 36.0
+
+[node name="GreyHarbingerActor" instance=ExtResource("1_base")]
+collision_layer = 8
+collision_mask = 0
+label_height = 55.0
+
+[node name="CollisionShape3D" parent="." index="0"]
+shape = SubResource("GreyHull")

@@ -8,6 +8,6 @@
 script = ExtResource("1")
 run_id = &"greys_practice"
 display_name = "Greys Practice"
-description = "Three short waves introduce delayed pulses, marked shifts, and breakable tethers before The Witness."
+description = "Five lessons introduce the complete Grey fleet, followed by The Witness or The Veiled Mind."
 run_mode = 1
 stages = Array[ExtResource("2")]([ExtResource("3")])

@@ -1,7 +1,7 @@
 extends Resource
 class_name GreyBehaviorDef
 
-enum Mode { PROBE, SEEKER, VESSEL }
+enum Mode { PROBE, SEEKER, VESSEL, HARBINGER, MOTHERSHIP }
 
 ## Psionic role used by the shared Grey actor.
 @export var mode: Mode = Mode.PROBE
@@ -27,6 +27,12 @@ enum Mode { PROBE, SEEKER, VESSEL }
 @export_range(1.0, 200.0, 1.0) var attack_radius: float = 34.0
 ## Exposed pause after the pulse or completed tether.
 @export_range(0.1, 8.0, 0.05) var attack_recovery_sec: float = 0.6
+
+@export_group("Advanced Coordination")
+## Quiet interval before the Harbinger locks its second separately warned rupture.
+@export_range(0.3, 4.0, 0.05) var rupture_second_gap_sec: float = 0.6
+## Minimum exposed pause between the Mothership's different coordinated actions.
+@export_range(0.5, 8.0, 0.05) var mothership_action_gap_sec: float = 1.0
 
 @export_group("Seeker Displacement")
 ## Time between Seeker displacements after the previous one completes.

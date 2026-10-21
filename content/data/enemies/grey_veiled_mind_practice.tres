@@ -1,0 +1,49 @@
+[gd_resource type="Resource" script_class="GreyMindDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/grey_mind_def.gd" id="1_def"]
+[ext_resource type="Resource" path="res://content/data/factions/greys.tres" id="2_faction"]
+[ext_resource type="Resource" path="res://content/data/enemy_roles/siege.tres" id="3_role"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/grey_veiled_mind.tscn" id="4_actor"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/grey_veiled_mind_mk1.tscn" id="5_model"]
+[ext_resource type="Resource" path="res://content/data/boss_movement/grey_veiled_mind_movement.tres" id="6_movement"]
+[ext_resource type="Resource" path="res://content/data/weapons/grey_veiled_mind.tres" id="7_weapon"]
+
+[resource]
+script = ExtResource("1_def")
+boss_description = "The Veiled Mind opens with locked delayed reality ruptures. Below 70% hull, harmless marked displacements join the sequence; below 35%, tether attempts alternate with its ruptures and relocations. Keep moving beyond each locked volume, break tether range, and punish the full recovery after every action."
+movement_def = ExtResource("6_movement")
+initial_delay_sec = 2.8
+displacement_windup_sec = 1.2
+displacement_distance = 190
+rupture_windup_sec = 1.8
+rupture_radius = 68
+tether_windup_sec = 1.4
+tether_duration_sec = 3.0
+tether_break_distance = 420
+tether_movement_factor = 0.7
+tether_radius = 36
+recovery_sec = 2.2
+cadence_sec = 1.4
+phase_hull_threshold = 0.7
+phase_cadence_multiplier = 0.85
+phase_two_hull_threshold = 0.7
+phase_three_hull_threshold = 0.35
+phase_two_cadence_multiplier = 0.85
+phase_three_cadence_multiplier = 0.65
+id = "grey_veiled_mind_mk1"
+display_name = "The Veiled Mind"
+faction = ExtResource("2_faction")
+role = ExtResource("3_role")
+tier = 5
+threat_cost = 25
+bounty_scrap = 25
+can_be_elite = false
+score_on_kill = 500
+max_hull = 1000
+max_shield = 100
+shield_regen = 0
+evasion = 0.01
+thrust = 65
+weapon = ExtResource("7_weapon")
+actor_scene = ExtResource("4_actor")
+model_scene = ExtResource("5_model")

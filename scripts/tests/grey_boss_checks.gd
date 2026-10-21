@@ -50,6 +50,8 @@ func _run_checks() -> void:
 	await _clear_bosses()
 	await _check_death_and_exit_cleanup()
 	await _clear_bosses()
+	await _check_player_loss_cleanup()
+	await _clear_bosses()
 	print("GREY_BOSS_CHECKS: %d checks, %d failures" % [_checks, _failures])
 	get_tree().quit(0 if _failures == 0 else 1)
 
@@ -249,6 +251,28 @@ func _check_death_and_exit_cleanup() -> void:
 	await _wait(0.1)
 	_expect(is_equal_approx(_ship.get_movement_slow_multiplier(), 1.0), "Boss scene exit immediately restores the target's movement")
 	_expect(get_tree().get_nodes_in_group("grey_tethers").is_empty() and int(_spawner.get_alive_counts()["enemies"]) == 0, "Boss scene exit cleans linked warnings and Spawner accounting")
+
+func _check_player_loss_cleanup() -> void:
+	for hidden_target: bool in [false, true]:
+		for action_index: int in range(4):
+			var boss: GreyWitness = _spawn_boss()
+			if boss == null:
+				return
+			var major: int = mini(action_index, GreyWitness.Major.TETHER)
+			boss._next_major = major
+			boss._begin_attack(_ship)
+			await _wait(0.4 if action_index == 3 else 0.1)
+			var health_before: float = _ship.hull + _ship.shield
+			_ship.visible = not hidden_target
+			_ship._dead = not hidden_target
+			boss._physics_process(0.01)
+			_expect(not is_instance_valid(boss._attack) and not is_instance_valid(boss._displacement) and not is_instance_valid(boss._tether), "Player loss cancels pending or attached Witness action %d" % action_index)
+			await _wait(0.4)
+			_expect(is_equal_approx(health_before, _ship.hull + _ship.shield), "Cancelled Witness action cannot damage a lost player")
+			_expect(is_equal_approx(_ship.get_movement_slow_multiplier(), 1.0), "Player loss clears an attached Witness slow")
+			_ship._dead = false
+			_ship.visible = true
+			await _clear_bosses()
 
 func _make_socket_deterministic(boss: GreyWitness) -> void:
 	for socket: BossWeaponSocket in boss._weapon_sockets:
