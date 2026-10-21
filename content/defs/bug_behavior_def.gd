@@ -1,7 +1,7 @@
 extends Resource
 class_name BugBehaviorDef
 
-enum Mode { SPORELING, CARAPACE, BROODMOTHER }
+enum Mode { SPORELING, CARAPACE, BROODMOTHER, DEVOURER, HIVE_QUEEN }
 
 ## Biological role used by the shared Bug actor.
 @export var mode: Mode = Mode.SPORELING
@@ -45,3 +45,25 @@ enum Mode { SPORELING, CARAPACE, BROODMOTHER }
 @export_range(1, 100, 1) var brood_enemy_cap: int = 50
 ## Radius around the parent at which brood children emerge.
 @export_range(10.0, 300.0, 1.0) var brood_release_radius: float = 70.0
+
+@export_group("Devourer Charge")
+## Speed of the committed, non-contact charge after its corridor resolves.
+@export_range(50.0, 500.0, 1.0) var charge_speed: float = 220.0
+## Distance beyond the snapshotted target included in the visible corridor.
+@export_range(0.0, 300.0, 1.0) var charge_overshoot_distance: float = 110.0
+## Hard upper limit on committed travel before an exposed recovery.
+@export_range(0.3, 6.0, 0.1) var charge_travel_sec: float = 2.6
+
+@export_group("Hive Spore Zones")
+## Full visible warning before each pulse in the fixed spore sphere.
+@export_range(0.5, 5.0, 0.1) var zone_windup_sec: float = 1.6
+## Radius of the static, three-dimensional spore warning volume.
+@export_range(10.0, 150.0, 1.0) var zone_radius: float = 65.0
+## Finite pulses in one zone; each pulse receives a fresh full warning.
+@export_range(1, 2, 1) var zone_pulse_count: int = 1
+## Quiet interval between zone releases, in addition to brood turns.
+@export_range(1.0, 30.0, 0.1) var zone_interval_sec: float = 6.0
+## Lifetime zone budget; expiration does not refund a spent zone.
+@export_range(1, 12, 1) var zone_total_cap: int = 4
+## Shared active zone ceiling across regular Bugs and their boss.
+@export_range(1, 8, 1) var zone_global_cap: int = 8

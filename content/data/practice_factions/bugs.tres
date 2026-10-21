@@ -10,11 +10,20 @@
 [ext_resource type="Resource" path="res://content/data/cards/bug_armored_push.tres" id="8"]
 [ext_resource type="Resource" path="res://content/data/cards/bug_brood_nest.tres" id="9"]
 [ext_resource type="Resource" path="res://content/data/cards/bug_hatching_ground.tres" id="10"]
+[ext_resource type="Resource" path="res://content/data/cards/bug_devourer_pack.tres" id="11"]
+[ext_resource type="Resource" path="res://content/data/cards/bug_ravenous_front.tres" id="12"]
+[ext_resource type="Resource" path="res://content/data/cards/bug_queen_guard.tres" id="13"]
+[ext_resource type="Resource" path="res://content/data/cards/bug_royal_swarm.tres" id="14"]
+[ext_resource type="Script" path="res://content/defs/enemy_boss_def.gd" id="15"]
+[ext_resource type="Resource" path="res://content/data/enemies/bug_nestbreaker_matron_mk1.tres" id="16"]
+[ext_resource type="Resource" path="res://content/data/enemies/bug_first_queen_mk1.tres" id="17"]
 
 [resource]
 script = ExtResource("1")
 faction = ExtResource("3")
 short_run = ExtResource("4")
-wave_cards = Array[ExtResource("2")]([ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10")])
-max_enemy_tier = 3
-combat_hint = "Keep space and leave marked attacks. Carapaces commit to the corridor they mark.\nDestroy Broodmothers to clear their broods. A swelling body warns of the next release."
+wave_cards = Array[ExtResource("2")]([ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10"), ExtResource("11"), ExtResource("12"), ExtResource("13"), ExtResource("14")])
+max_enemy_tier = 5
+main_boss_pool = Array[ExtResource("15")]([ExtResource("16")])
+final_boss_pool = Array[ExtResource("15")]([ExtResource("17")])
+combat_hint = "Leave marked corridors before Devourers commit, then attack during their recovery.\nDestroy Broodmothers and Hive Queens to clear their broods. Spore zones stay fixed: leave the sphere before each pulse. The First Queen combines these attacks in separate phases."

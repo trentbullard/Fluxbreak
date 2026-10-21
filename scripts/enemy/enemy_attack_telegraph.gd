@@ -50,7 +50,7 @@ func set_warning_style(label: String, tint: Color) -> void:
 	_warning_label = label.strip_edges()
 	_warning_tint = tint
 
-func start_attack(source: Enemy, target: Node3D, weapon_host: Object, windup_sec: float, radius: float, corridor: bool = false) -> void:
+func start_attack(source: Enemy, target: Node3D, weapon_host: Object, windup_sec: float, radius: float, corridor: bool = false, locked_position: Vector3 = Vector3.INF) -> void:
 	if _active or _has_resolved:
 		return
 	if not is_instance_valid(source) or not is_instance_valid(target) or not is_instance_valid(weapon_host):
@@ -60,7 +60,7 @@ func start_attack(source: Enemy, target: Node3D, weapon_host: Object, windup_sec
 	_target = target
 	_weapon_host = weapon_host
 	_locked_origin = WeaponCombatResolver.get_shot_origin(weapon_host)
-	_locked_position = target.global_position
+	_locked_position = locked_position if locked_position.is_finite() else target.global_position
 	_radius = maxf(radius, 1.0)
 	_corridor = corridor
 	_windup_sec = maxf(windup_sec, 0.05)

@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="BugEnemyDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/bug_enemy_def.gd" id="1_def"]
+[ext_resource type="Resource" path="res://content/data/factions/bugs.tres" id="2_faction"]
+[ext_resource type="Resource" path="res://content/data/enemy_roles/brawler.tres" id="3_role"]
+[ext_resource type="Resource" path="res://content/data/weapons/bug_devourer.tres" id="4_weapon"]
+[ext_resource type="Resource" path="res://content/data/bug_behaviors/devourer.tres" id="5_behavior"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/bug_devourer_actor.tscn" id="6_actor"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/bug_devourer_mk1.tscn" id="7_model"]
+
+[resource]
+script = ExtResource("1_def")
+behavior = ExtResource("5_behavior")
+id = "bug_devourer_mk1"
+display_name = "Devourer"
+faction = ExtResource("2_faction")
+role = ExtResource("3_role")
+tier = 4
+threat_cost = 6
+bounty_scrap = 8
+can_be_elite = false
+score_on_kill = 70
+max_hull = 240
+max_shield = 0
+shield_regen = 0
+evasion = 0.01
+thrust = 90
+weapon = ExtResource("4_weapon")
+actor_scene = ExtResource("6_actor")
+model_scene = ExtResource("7_model")

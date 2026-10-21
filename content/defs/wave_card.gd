@@ -7,6 +7,10 @@ class_name WaveCard
 @export_range(0.0, 10.0, 0.05) var weight: float = 1.0
 ## Minimum unlocked enemy tier before this composition enters a random deck.
 @export_range(1, 5, 1) var min_enemy_tier: int = 1
+## Preferred minimum anchor tier when affordable; escorts keep lower tiers.
+@export_range(1, 5, 1) var min_primary_enemy_tier: int = 1
+## Maximum purchased units in the primary package; zero keeps normal limits.
+@export_range(0, 8, 1) var primary_count_max: int = 0
 @export var faction_bias: FactionDef
 @export var primary_role_bias: EnemyRoleDef
 @export var secondary_role_bias: EnemyRoleDef

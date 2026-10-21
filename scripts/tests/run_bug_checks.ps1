@@ -22,7 +22,7 @@ foreach ($folder in @('assets','content','scenes','scripts','systems','.godot'))
 }
 Write-Output "Isolated validation project: $validationRoot"
 
-foreach ($scene in @('bug_regular_checks','bug_boss_checks','bug_practice_checks')) {
+foreach ($scene in @('bug_regular_checks','bug_boss_checks','bug_advanced_checks','bug_queen_checks','bug_practice_checks')) {
     & $GodotExe --headless --path $validationRoot --fixed-fps 60 --scene "res://scripts/tests/$scene.tscn"
     if ($LASTEXITCODE -ne 0) { throw "Bug check failed: $scene" }
 }

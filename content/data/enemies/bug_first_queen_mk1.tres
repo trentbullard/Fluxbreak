@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="BugQueenDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/bug_queen_def.gd" id="1_def"]
+[ext_resource type="Resource" path="res://content/data/factions/bugs.tres" id="2_faction"]
+[ext_resource type="Resource" path="res://content/data/enemy_roles/support.tres" id="3_role"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/bug_first_queen.tscn" id="4_actor"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/bug_first_queen_mk1.tscn" id="5_model"]
+[ext_resource type="Resource" path="res://content/data/boss_movement/bug_first_queen_movement.tres" id="6_movement"]
+[ext_resource type="Resource" path="res://content/data/enemies/bug_sporeling_mk1.tres" id="7_child"]
+[ext_resource type="Resource" path="res://content/data/weapons/bug_first_queen.tres" id="8_weapon"]
+
+[resource]
+script = ExtResource("1_def")
+boss_description = "The ancient hive sovereign alternates finite brood releases with fixed royal spore blooms. Below 70% hull, marked charge lanes join the sequence; below 35%, a faster cadence brings the familiar attacks closer together. Escape each warned pulse, punish her recovery, and destroy the Queen to collapse her brood."
+movement_def = ExtResource("6_movement")
+initial_delay_sec = 2.8
+charge_windup_sec = 1.8
+charge_radius = 66
+charge_move_sec = 0.9
+charge_overshoot = 115
+brood_windup_sec = 1.9
+recovery_sec = 2.4
+cadence_sec = 1.5
+phase_hull_threshold = 0.7
+phase_cadence_multiplier = 0.85
+second_phase_hull_threshold = 0.7
+final_phase_hull_threshold = 0.35
+final_phase_cadence_multiplier = 0.72
+spore_windup_sec = 1.8
+spore_radius = 95
+spore_pulse_count = 2
+brood_child_def = ExtResource("7_child")
+brood_alive_cap = 8
+brood_total_cap = 16
+brood_release_count = 3
+phase_brood_release_count = 4
+brood_spawn_radius = 115
+id = "bug_first_queen_mk1"
+display_name = "The First Queen"
+faction = ExtResource("2_faction")
+role = ExtResource("3_role")
+tier = 5
+threat_cost = 25
+bounty_scrap = 45
+can_be_elite = false
+score_on_kill = 1200
+max_hull = 2400
+max_shield = 0
+shield_regen = 0
+evasion = 0.01
+thrust = 65
+weapon = ExtResource("8_weapon")
+actor_scene = ExtResource("4_actor")
+model_scene = ExtResource("5_model")

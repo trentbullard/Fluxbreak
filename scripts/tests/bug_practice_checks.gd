@@ -43,11 +43,10 @@ func _run_checks() -> void:
 	var buyer: BudgetBuyer = _world.get_node("StageRoot/BudgetBuyer") as BudgetBuyer
 	var run: RunDefinition = load("res://content/data/runs/bugs_practice.tres") as RunDefinition
 	var stage: StageDef = run.get_stage(0)
-	_check(stage.get_boss_pool().size() == 1, "Practice needs one valid Bug boss.")
-	_check(stage.get_boss_pool()[0].id == "bug_nestbreaker_matron_mk1", "Practice must use Nestbreaker Matron.")
+	_check(stage.get_boss_pool().size() == 2, "Practice must offer both Bug bosses.")
 	_check(stage.completion_flow == StageDef.CompletionFlow.BOSS_FINALE, "Practice must complete on boss defeat.")
-	var expected_ids: Array[String] = ["bug_sporeling_mk1", "bug_carapace_mk1", "bug_broodmother_mk1"]
-	for wave_offset in range(3):
+	var expected_ids: Array[String] = ["bug_sporeling_mk1", "bug_carapace_mk1", "bug_broodmother_mk1", "bug_devourer_mk1", "bug_hive_queen_mk1"]
+	for wave_offset in range(expected_ids.size()):
 		for sample in range(12):
 			buyer.clear_history()
 			var requests: Array[SpawnRequest] = buyer.buy_wave(stage.authored_enemy_budgets[wave_offset], 0, stage.wave_cards[wave_offset], stage.authored_tier_caps[wave_offset])
@@ -75,47 +74,54 @@ func _run_checks() -> void:
 	var hint: Label = _world.get_node("HUD/ScreenRoot/StageCombatHint") as Label
 	_check(hint.visible and hint.text.contains("Broodmother"), "Bug counterplay instructions must be visible in the HUD.")
 	var elapsed: float = 0.0
-	while not _director.is_boss_wave_active() and elapsed < 125.0:
+	while not _director.is_boss_wave_active() and elapsed < 190.0:
 		await get_tree().process_frame
 		elapsed += get_process_delta_time()
 	_check(_director.is_boss_wave_active(), "Bugs Practice did not reach its boss within the short encounter window.")
-	_check(_observed_waves == [1, 2, 3, 4], "All three teaching waves must precede the boss.")
+	_check(_observed_waves == [1, 2, 3, 4, 5, 6], "All five teaching waves must precede the boss.")
 	await get_tree().process_frame
 	await get_tree().process_frame
-	var boss: NestbreakerMatron = _director._active_boss_instance as NestbreakerMatron
+	var boss: Enemy = _director._active_boss_instance
 	if boss != null:
 		for target: Node in get_tree().get_nodes_in_group("targets"):
 			if target is Enemy:
-				_check(target == boss, "The boss handoff left normal enemies or brood alive.")
+				var current_brood: bool = target.is_in_group("bug_brood") and int(target.get_meta("brood_parent_id", 0)) == boss.get_instance_id()
+				_check(target == boss or current_brood, "The boss handoff left normal enemies or stale brood alive.")
 		boss.global_position = _ship.global_position + Vector3(0, 0, -300)
 		boss.explosion_scene = null
 		boss.hull = boss.eff_max_hull * 0.5
+		var brood: BugBroodSpawner = boss.call("get_brood_spawner") as BugBroodSpawner
 		var saw_warning: bool = false
 		var saw_brood: bool = false
 		for frame in range(1500):
 			await get_tree().process_frame
 			if not get_tree().get_nodes_in_group("enemy_attack_telegraphs").is_empty():
 				saw_warning = true
-			if boss.get_brood_spawner().get_living_count() > 0:
+			if brood.get_living_count() > 0:
 				saw_brood = true
 			if saw_warning and saw_brood:
 				break
-		_check(boss.is_in_second_phase(), "Matron did not enter its second phase below 55% hull.")
-		_check(saw_warning, "Matron never produced a locked charge warning.")
-		_check(saw_brood, "Matron never released its finite brood during combat.")
-		_check(boss.get_brood_spawner().get_living_count() <= 8, "Matron exceeded eight living children.")
-		_check(boss.get_brood_spawner().get_total_spawned() <= 16, "Matron exceeded its lifetime budget.")
+		_check(int(boss.get_meta("bug_phase", 0)) == 2, "Bug boss did not enter its second phase at half hull.")
+		_check(saw_warning, "Bug boss never produced a visible locked attack warning.")
+		_check(saw_brood, "Bug boss never released its finite brood during combat.")
+		_check(brood.get_living_count() <= 8, "Bug boss exceeded eight living children.")
+		_check(brood.get_total_spawned() <= 16, "Bug boss exceeded its lifetime budget.")
 		boss.apply_damage(boss.hull + boss.shield + 100.0)
 		await get_tree().process_frame
 		await get_tree().process_frame
-		_check(_completed_count == 1, "Matron defeat must complete the run exactly once.")
+		_check(_completed_count == 1, "Boss defeat must complete the run exactly once.")
 		_check(int(_spawner.get_alive_counts().get("enemies", -1)) == 0, "Victory left Bug enemies alive.")
 		_check(get_tree().get_nodes_in_group("bug_brood").is_empty(), "Victory left summoned brood alive.")
 		_check(get_tree().get_nodes_in_group("enemy_attack_telegraphs").is_empty(), "Victory left attack warnings alive.")
+		_check(get_tree().get_nodes_in_group("bug_spore_zones").is_empty(), "Victory left spore zones alive.")
 	else:
-		_check(false, "The stage did not spawn the Nestbreaker Matron actor.")
+		_check(false, "The stage did not spawn a Bug boss actor.")
 	_check(_peak_brood_count <= 12, "Practice exceeded the global brood cap.")
-	await get_tree().create_timer(GameFlow.VICTORY_RETURN_DELAY_SEC + 0.25, true).timeout
+	for frame_index: int in range(int(ceil((GameFlow.VICTORY_RETURN_DELAY_SEC + 1.0) * 60.0))):
+		await get_tree().process_frame
+		if get_tree().current_scene != null and get_tree().current_scene != _world:
+			break
+	await get_tree().process_frame
 	var returned_world: Node = get_tree().current_scene
 	_check(returned_world != null and returned_world != _world, "Victory did not return to a fresh menu.")
 	if returned_world != null and returned_world.has_node("MainMenuOverlay"):
@@ -136,10 +142,10 @@ func _run_checks() -> void:
 
 func _on_wave_started(index: int, _enemy_budget: int, _target_budget: int) -> void:
 	_observed_waves.append(index)
-	if index <= 3:
+	if index <= 5:
 		var stage: StageDef = GameFlow.get_current_stage()
 		_check(_director._active_card == stage.wave_cards[index - 1], "Bug teaching cards played out of order.")
-		var expected_primary: Array[String] = ["bug_sporeling_mk1", "bug_carapace_mk1", "bug_broodmother_mk1"]
+		var expected_primary: Array[String] = ["bug_sporeling_mk1", "bug_carapace_mk1", "bug_broodmother_mk1", "bug_devourer_mk1", "bug_hive_queen_mk1"]
 		var plan: Dictionary = _director.get_debug_snapshot().get("wave_plan", {})
 		_check(str(plan.get("primary_enemy_id", "")) == expected_primary[index - 1], "A live wave chose the wrong primary role.")
 

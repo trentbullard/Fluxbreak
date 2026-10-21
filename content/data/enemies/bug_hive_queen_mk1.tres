@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="BugEnemyDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/bug_enemy_def.gd" id="1_def"]
+[ext_resource type="Resource" path="res://content/data/factions/bugs.tres" id="2_faction"]
+[ext_resource type="Resource" path="res://content/data/enemy_roles/support.tres" id="3_role"]
+[ext_resource type="Resource" path="res://content/data/weapons/bug_hive_queen.tres" id="4_weapon"]
+[ext_resource type="Resource" path="res://content/data/bug_behaviors/hive_queen.tres" id="5_behavior"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/bug_hive_queen_actor.tscn" id="6_actor"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/bug_hive_queen_mk1.tscn" id="7_model"]
+[ext_resource type="Resource" path="res://content/data/enemies/bug_sporeling_mk1.tres" id="8_child"]
+
+[resource]
+script = ExtResource("1_def")
+behavior = ExtResource("5_behavior")
+brood_child_def = ExtResource("8_child")
+id = "bug_hive_queen_mk1"
+display_name = "Hive Queen"
+faction = ExtResource("2_faction")
+role = ExtResource("3_role")
+tier = 5
+threat_cost = 10
+bounty_scrap = 10
+can_be_elite = false
+score_on_kill = 90
+max_hull = 340
+max_shield = 0
+shield_regen = 0
+evasion = 0.01
+thrust = 45
+weapon = ExtResource("4_weapon")
+actor_scene = ExtResource("6_actor")
+model_scene = ExtResource("7_model")

@@ -1,0 +1,355 @@
+[gd_scene format=3]
+
+[sub_resource type="StandardMaterial3D" id="Chitin"]
+albedo_color = Color(0.19, 0.105, 0.23, 1)
+roughness = 0.9
+
+[sub_resource type="SphereMesh" id="Ovoid_Chitin"]
+material = SubResource("Chitin")
+radius = 1.0
+height = 2.0
+radial_segments = 16
+rings = 8
+
+[sub_resource type="CylinderMesh" id="Thorn_Chitin"]
+material = SubResource("Chitin")
+top_radius = 0.0
+bottom_radius = 1.0
+height = 1.0
+radial_segments = 8
+
+[sub_resource type="StandardMaterial3D" id="Plate"]
+albedo_color = Color(0.39, 0.235, 0.3, 1)
+roughness = 0.78
+
+[sub_resource type="SphereMesh" id="Ovoid_Plate"]
+material = SubResource("Plate")
+radius = 1.0
+height = 2.0
+radial_segments = 16
+rings = 8
+
+[sub_resource type="CylinderMesh" id="Thorn_Plate"]
+material = SubResource("Plate")
+top_radius = 0.0
+bottom_radius = 1.0
+height = 1.0
+radial_segments = 8
+
+[sub_resource type="StandardMaterial3D" id="Flesh"]
+albedo_color = Color(0.63, 0.275, 0.39, 1)
+roughness = 0.72
+
+[sub_resource type="SphereMesh" id="Ovoid_Flesh"]
+material = SubResource("Flesh")
+radius = 1.0
+height = 2.0
+radial_segments = 16
+rings = 8
+
+[sub_resource type="CylinderMesh" id="Thorn_Flesh"]
+material = SubResource("Flesh")
+top_radius = 0.0
+bottom_radius = 1.0
+height = 1.0
+radial_segments = 8
+
+[sub_resource type="StandardMaterial3D" id="Bone"]
+albedo_color = Color(0.72, 0.64, 0.4, 1)
+roughness = 0.85
+
+[sub_resource type="SphereMesh" id="Ovoid_Bone"]
+material = SubResource("Bone")
+radius = 1.0
+height = 2.0
+radial_segments = 16
+rings = 8
+
+[sub_resource type="CylinderMesh" id="Thorn_Bone"]
+material = SubResource("Bone")
+top_radius = 0.0
+bottom_radius = 1.0
+height = 1.0
+radial_segments = 8
+
+[sub_resource type="StandardMaterial3D" id="Spore"]
+albedo_color = Color(0.58, 0.92, 0.12, 1)
+roughness = 0.5
+
+emission_enabled = true
+emission = Color(0.32, 0.72, 0.035, 1)
+emission_energy_multiplier = 0.6
+
+[sub_resource type="SphereMesh" id="Ovoid_Spore"]
+material = SubResource("Spore")
+radius = 1.0
+height = 2.0
+radial_segments = 16
+rings = 8
+
+[sub_resource type="CylinderMesh" id="Thorn_Spore"]
+material = SubResource("Spore")
+top_radius = 0.0
+bottom_radius = 1.0
+height = 1.0
+radial_segments = 8
+
+[sub_resource type="StandardMaterial3D" id="Vein"]
+albedo_color = Color(0.3, 0.48, 0.075, 1)
+roughness = 0.66
+
+[sub_resource type="SphereMesh" id="Ovoid_Vein"]
+material = SubResource("Vein")
+radius = 1.0
+height = 2.0
+radial_segments = 16
+rings = 8
+
+[sub_resource type="CylinderMesh" id="Thorn_Vein"]
+material = SubResource("Vein")
+top_radius = 0.0
+bottom_radius = 1.0
+height = 1.0
+radial_segments = 8
+
+[sub_resource type="StandardMaterial3D" id="Maw"]
+albedo_color = Color(0.055, 0.025, 0.055, 1)
+roughness = 0.94
+
+[sub_resource type="SphereMesh" id="Ovoid_Maw"]
+material = SubResource("Maw")
+radius = 1.0
+height = 2.0
+radial_segments = 16
+rings = 8
+
+[sub_resource type="CylinderMesh" id="Thorn_Maw"]
+material = SubResource("Maw")
+top_radius = 0.0
+bottom_radius = 1.0
+height = 1.0
+radial_segments = 8
+
+[sub_resource type="TorusMesh" id="Mouth_Ring"]
+material = SubResource("Flesh")
+inner_radius = 0.58
+outer_radius = 1.0
+rings = 20
+ring_segments = 10
+
+[node name="BugDevourer" type="Node3D"]
+
+[node name="ModelRoot" type="Node3D" parent="."]
+
+[node name="RavenousBody" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 0, 4)
+scale = Vector3(17, 13, 31)
+rotation = Vector3(0, 0, 0)
+mesh = SubResource("Ovoid_Chitin")
+
+[node name="ForearmoredSkull" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 1, -25)
+scale = Vector3(20, 15, 19)
+rotation = Vector3(0, 0, 0)
+mesh = SubResource("Ovoid_Plate")
+
+[node name="VentralGullet" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, -7, -22)
+scale = Vector3(12, 10, 20)
+rotation = Vector3(0, 0, 0)
+mesh = SubResource("Ovoid_Flesh")
+
+[node name="MawInterior" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, -3, -42)
+scale = Vector3(13, 11, 3)
+rotation = Vector3(0, 0, 0)
+mesh = SubResource("Ovoid_Maw")
+
+[node name="OpenMaw" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, -3, -45)
+scale = Vector3(17, 4, 14)
+rotation = Vector3(1.5708, 0, 0)
+mesh = SubResource("Mouth_Ring")
+
+[node name="DigestiveAbdomen" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, -1, 28)
+scale = Vector3(13, 10, 16)
+rotation = Vector3(0, 0, 0)
+mesh = SubResource("Ovoid_Flesh")
+
+[node name="DorsalRidge" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 11, 5)
+scale = Vector3(11, 5, 26)
+rotation = Vector3(0, 0, 0)
+mesh = SubResource("Ovoid_Plate")
+
+[node name="PortJawHinge" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-17, -3, -26)
+scale = Vector3(8, 9, 11)
+rotation = Vector3(0, 0, 0)
+mesh = SubResource("Ovoid_Flesh")
+
+[node name="PortRendingMandible" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-18, -3, -45)
+scale = Vector3(5, 34, 5)
+rotation = Vector3(-1.5708, 0, -0.21)
+mesh = SubResource("Thorn_Bone")
+
+[node name="PortFeedingTusk" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-9, -10, -39)
+scale = Vector3(2.4, 22, 2.4)
+rotation = Vector3(-1.35, 0, 0.12)
+mesh = SubResource("Thorn_Bone")
+
+[node name="PortLegRoot0" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-18, 0, -13)
+scale = Vector3(10, 5, 8)
+rotation = Vector3(0, -0.2, 0)
+mesh = SubResource("Ovoid_Plate")
+
+[node name="PortScythe0" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-30, -1, -17)
+scale = Vector3(4, 29, 3)
+rotation = Vector3(-0.9, 0, 1)
+mesh = SubResource("Thorn_Bone")
+
+[node name="PortLegRoot1" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-18, 0, 5)
+scale = Vector3(10, 5, 8)
+rotation = Vector3(0, -0.2, 0)
+mesh = SubResource("Ovoid_Plate")
+
+[node name="PortScythe1" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-28, -1, 1)
+scale = Vector3(4, 29, 3)
+rotation = Vector3(-0.9, 0, 1)
+mesh = SubResource("Thorn_Bone")
+
+[node name="PortLegRoot2" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-18, 0, 22)
+scale = Vector3(10, 5, 8)
+rotation = Vector3(0, -0.2, 0)
+mesh = SubResource("Ovoid_Plate")
+
+[node name="PortScythe2" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-26, -1, 18)
+scale = Vector3(4, 29, 3)
+rotation = Vector3(-0.9, 0, 1)
+mesh = SubResource("Thorn_Bone")
+
+[node name="PortSensingEye" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-11, 10, -35)
+scale = Vector3(3, 3, 4)
+rotation = Vector3(0, 0, 0)
+mesh = SubResource("Ovoid_Spore")
+
+[node name="PortTailSpike" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(-8, 1, 35)
+scale = Vector3(2.7, 22, 2.7)
+rotation = Vector3(1.2, 0, 0.3)
+mesh = SubResource("Thorn_Bone")
+
+[node name="StarboardJawHinge" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(17, -3, -26)
+scale = Vector3(8, 9, 11)
+rotation = Vector3(0, 0, 0)
+mesh = SubResource("Ovoid_Flesh")
+
+[node name="StarboardRendingMandible" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(18, -3, -45)
+scale = Vector3(5, 34, 5)
+rotation = Vector3(-1.5708, 0, 0.21)
+mesh = SubResource("Thorn_Bone")
+
+[node name="StarboardFeedingTusk" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(9, -10, -39)
+scale = Vector3(2.4, 22, 2.4)
+rotation = Vector3(-1.35, 0, -0.12)
+mesh = SubResource("Thorn_Bone")
+
+[node name="StarboardLegRoot0" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(18, 0, -13)
+scale = Vector3(10, 5, 8)
+rotation = Vector3(0, 0.2, 0)
+mesh = SubResource("Ovoid_Plate")
+
+[node name="StarboardScythe0" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(30, -1, -17)
+scale = Vector3(4, 29, 3)
+rotation = Vector3(-0.9, 0, -1)
+mesh = SubResource("Thorn_Bone")
+
+[node name="StarboardLegRoot1" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(18, 0, 5)
+scale = Vector3(10, 5, 8)
+rotation = Vector3(0, 0.2, 0)
+mesh = SubResource("Ovoid_Plate")
+
+[node name="StarboardScythe1" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(28, -1, 1)
+scale = Vector3(4, 29, 3)
+rotation = Vector3(-0.9, 0, -1)
+mesh = SubResource("Thorn_Bone")
+
+[node name="StarboardLegRoot2" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(18, 0, 22)
+scale = Vector3(10, 5, 8)
+rotation = Vector3(0, 0.2, 0)
+mesh = SubResource("Ovoid_Plate")
+
+[node name="StarboardScythe2" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(26, -1, 18)
+scale = Vector3(4, 29, 3)
+rotation = Vector3(-0.9, 0, -1)
+mesh = SubResource("Thorn_Bone")
+
+[node name="StarboardSensingEye" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(11, 10, -35)
+scale = Vector3(3, 3, 4)
+rotation = Vector3(0, 0, 0)
+mesh = SubResource("Ovoid_Spore")
+
+[node name="StarboardTailSpike" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(8, 1, 35)
+scale = Vector3(2.7, 22, 2.7)
+rotation = Vector3(1.2, 0, -0.3)
+mesh = SubResource("Thorn_Bone")
+
+[node name="DorsalPlate0" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 14, -13)
+scale = Vector3(14, 4, 8)
+rotation = Vector3(-0.15, 0, 0)
+mesh = SubResource("Ovoid_Plate")
+
+[node name="DorsalThorn0" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 19, -10)
+scale = Vector3(2.5, 12, 2.5)
+rotation = Vector3(0.35, 0, 0)
+mesh = SubResource("Thorn_Bone")
+
+[node name="DorsalPlate1" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 14, 1)
+scale = Vector3(14, 4, 8)
+rotation = Vector3(-0.15, 0, 0)
+mesh = SubResource("Ovoid_Plate")
+
+[node name="DorsalThorn1" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 19, 4)
+scale = Vector3(2.5, 12, 2.5)
+rotation = Vector3(0.35, 0, 0)
+mesh = SubResource("Thorn_Bone")
+
+[node name="DorsalPlate2" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 14, 15)
+scale = Vector3(14, 4, 8)
+rotation = Vector3(-0.15, 0, 0)
+mesh = SubResource("Ovoid_Plate")
+
+[node name="DorsalThorn2" type="MeshInstance3D" parent="ModelRoot"]
+position = Vector3(0, 19, 18)
+scale = Vector3(2.5, 12, 2.5)
+rotation = Vector3(0.35, 0, 0)
+mesh = SubResource("Thorn_Bone")
+
+[node name="MuzzleSocket" type="Marker3D" parent="ModelRoot"]
+position = Vector3(0, -3, -62)

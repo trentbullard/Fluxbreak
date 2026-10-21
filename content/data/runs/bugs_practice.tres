@@ -8,6 +8,6 @@
 script = ExtResource("1")
 run_id = &"bugs_practice"
 display_name = "Bugs Practice"
-description = "Three short waves teach swarm pressure, durable Carapaces, and bounded brood spawning before Nestbreaker Matron."
+description = "Five lessons teach the complete Bug hive, followed by Nestbreaker Matron or The First Queen."
 run_mode = 1
 stages = Array[ExtResource("2")]([ExtResource("3")])

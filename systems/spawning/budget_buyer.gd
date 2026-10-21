@@ -75,7 +75,11 @@ func _build_enemy_requests(
 	var secondary_role: EnemyRoleDef = role_biases[1] if role_biases.size() > 1 else null
 	var support_role: EnemyRoleDef = role_biases[2] if role_biases.size() > 2 else null
 
-	var primary_pool: Array[EnemyDef] = _resolve_role_pool(e_pool, primary_role)
+	var anchor_pool: Array[EnemyDef] = []
+	for candidate: EnemyDef in e_pool:
+		if candidate.tier >= card.min_primary_enemy_tier:
+			anchor_pool.append(candidate)
+	var primary_pool: Array[EnemyDef] = _resolve_role_pool(anchor_pool, primary_role)
 	var primary_pick: EnemyDef = _pick_enemy_for_package(
 		primary_pool,
 		enemy_points,
@@ -86,6 +90,10 @@ func _build_enemy_requests(
 		true
 	)
 	if primary_pick == null:
+		primary_pick = _pick_enemy_for_package(anchor_pool, enemy_points, enemy_points, card, {}, [], true)
+	if primary_pick == null and card.min_primary_enemy_tier > 1:
+		# Adaptive budgets may briefly lag behind tier unlocks. Keep a playable
+		# lower-tier screen until the authored capital anchor becomes affordable.
 		primary_pick = _pick_enemy_for_package(e_pool, enemy_points, enemy_points, card, {}, [], true)
 	if primary_pick == null:
 		return
@@ -159,6 +167,8 @@ func _build_enemy_requests(
 		var package_pool: Array[EnemyDef] = _resolve_role_pool(e_pool, package_role)
 		var points_left: int = package_budget
 		var max_picks: int = 1 if package_label == "support" else 2
+		var package_count_limit: int = card.primary_count_max if package_label == "primary" else 0
+		var purchased_count: int = 0
 
 		if leader != null:
 			var leader_copies: int = _determine_copies_for_pick(
@@ -169,6 +179,8 @@ func _build_enemy_requests(
 				card,
 				package_label == "primary"
 			)
+			if package_count_limit > 0:
+				leader_copies = mini(leader_copies, package_count_limit)
 			if leader_copies > 0:
 				_append_enemy_request(
 					reqs,
@@ -183,6 +195,7 @@ func _build_enemy_requests(
 					package_budget
 				)
 				var leader_points: int = leader_copies * leader.threat_cost
+				purchased_count += leader_copies
 				points_left = max(points_left - leader_points, 0)
 				spent_by_id[leader.id] = int(spent_by_id.get(leader.id, 0)) + leader_points
 				var units: Array = package_debug.get("units", [])
@@ -194,7 +207,7 @@ func _build_enemy_requests(
 		if leader != null and not card.allow_swarm_primary:
 			blocked_ids[leader.id] = true
 
-		while points_left > 0 and max_picks > 0:
+		while points_left > 0 and max_picks > 0 and (package_count_limit == 0 or purchased_count < package_count_limit):
 			var pick: EnemyDef = _pick_enemy_for_package(
 				package_pool,
 				points_left,
@@ -214,6 +227,8 @@ func _build_enemy_requests(
 				card,
 				package_label == "primary"
 			)
+			if package_count_limit > 0:
+				copies = mini(copies, package_count_limit - purchased_count)
 			if copies <= 0:
 				blocked_ids[pick.id] = true
 				max_picks -= 1
@@ -231,6 +246,7 @@ func _build_enemy_requests(
 				package_budget
 			)
 			var spent_points: int = copies * pick.threat_cost
+			purchased_count += copies
 			points_left = max(points_left - spent_points, 0)
 			spent_by_id[pick.id] = int(spent_by_id.get(pick.id, 0)) + spent_points
 			var package_units: Array = package_debug.get("units", [])

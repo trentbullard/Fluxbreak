@@ -30,6 +30,7 @@ The game is built around auto-combat rather than manual aiming. Your job is to s
 - Upgrade families cover hull, shields, targeting, systems, salvage, and thrusters
 - Enemy content includes Machines, Mercs, Bugs, and Greys, with faction wave decks, bosses, and wave-directed scaling
 - Mercs have five regular ship classes, ten wave cards, Contract Enforcer, and Vanguard Flagship. Merc Practice teaches all five classes and draws one boss; Campaign uses Enforcer at the gateway and Flagship at the finale.
+- Bugs have five regular organisms and ten wave cards. Bug Practice teaches the full hive and draws one boss; Campaign uses Nestbreaker Matron at the gateway and The First Queen at the finale.
 
 ## Controls
 
@@ -58,7 +59,7 @@ Combat targeting and firing are handled automatically by the ship's weapon syste
 
 - Engine: Godot 4.6.3
 - Language: typed GDScript
-- Project version: `0.2.1`
+- Project version: `0.2.2`
 
 ## Running The Project
 
@@ -96,9 +97,8 @@ Fluxbreak is aiming for readable chaos. The guiding rubric for new work is simpl
 
 - music
 - ammo/damage types
-- Implement the remaining Bug ships: Devourer and Hive Queen.
 - Implement the remaining Grey ships: Harbinger and Mothership.
-- Add later bosses for Bugs and Greys, plus progression variants for Mercs, Bugs, and Greys.
+- Add the Grey finale boss, plus progression variants for Mercs, Bugs, and Greys.
 - Define and implement the fifth faction, including its ships, bosses, and wave deck, once the first four factions' combat identities are stable.
 
 ## License

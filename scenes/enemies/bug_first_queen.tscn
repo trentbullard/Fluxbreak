@@ -1,0 +1,16 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/enemies/enemy_boss.tscn" id="1_base"]
+[ext_resource type="Script" path="res://scripts/enemy/bug_first_queen.gd" id="2_queen"]
+
+[sub_resource type="SphereShape3D" id="QueenHull"]
+radius = 74.0
+
+[node name="TheFirstQueen" instance=ExtResource("1_base")]
+collision_layer = 8
+collision_mask = 0
+script = ExtResource("2_queen")
+label_height = 95.0
+
+[node name="CollisionShape3D" parent="." index="0"]
+shape = SubResource("QueenHull")

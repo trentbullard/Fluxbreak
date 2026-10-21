@@ -25,9 +25,9 @@ Faction home systems are always consistent and should reinforce faction identity
 
 The main menu's Faction selector offers Random, Machines, Mercs, Bugs, and Greys. Both run buttons use it. Random chooses once when a run starts; every wave, reinforcement, boss, and later stage keeps that faction. The HUD shows the resolved faction. An explicit selection remains selected when returning to the menu, while Random draws again for the next run.
 
-Practice contains introduction waves and a boss. Mercs have five lessons and ten cards; Machines, Bugs, and Greys currently have three lessons and six cards each. Each lesson tier has two card variants, and one variant per tier is drawn at launch. A Practice boss is also chosen once at launch. Campaign retains the two-stage run with a boss gateway followed by a final boss; its full faction deck unlocks compositions as enemy tiers become available and avoids immediate card repeats. Campaign salvage and pressure tuning remain distinct from the shorter lessons.
+Practice contains introduction waves and a boss. Mercs and Bugs have five lessons and ten cards each; Machines and Greys currently have three lessons and six cards each. Each lesson tier has two card variants, and one variant per tier is drawn at launch. A Practice boss is also chosen once at launch. Campaign retains the two-stage run with a boss gateway followed by a final boss; its full faction deck unlocks compositions as enemy tiers become available and avoids immediate card repeats. Campaign salvage and pressure tuning remain distinct from the shorter lessons.
 
-Merc Campaign uses Contract Enforcer at its gateway and Vanguard Flagship at its finale. The first Bug and Grey bosses currently serve both encounters in their Campaign runs; their additional classes and final bosses remain future roster work. Machines Practice uses a locally tuned version of the existing Machine Boss I; its full encounter remains in Campaign.
+Merc Campaign uses Contract Enforcer at its gateway and Vanguard Flagship at its finale. Bug Campaign uses Nestbreaker Matron at its gateway and The First Queen at its finale. The first Grey boss currently serves both Campaign encounters; its additional classes and finale boss remain future roster work. Machines Practice uses a locally tuned version of the existing Machine Boss I; its full encounter remains in Campaign.
 
 # Machines (AI Collective)
 
@@ -186,9 +186,13 @@ An overgrown living battlefield full of organic structures, drifting biomass, sp
 
 ### Bug Practice Seed
 
-Choose Bugs and Practice to play three waves followed by Nestbreaker Matron, using `content/data/runs/bugs_practice.tres` as the template. Sporelings pursue at close range, Carapaces bring durable frontal pressure, and Broodmothers keep their distance while releasing small broods. Their bodies contract before marked attacks; leaving the marked volume avoids the hit.
+Choose Bugs and Practice for five lessons using `content/data/runs/bugs_practice.tres` as the template: Sporeling pursuit, Carapace pressure, Broodmother releases, Devourer charges, and Hive Queen area control. One of two card variants is drawn for each class, followed by either Nestbreaker Matron or a shorter First Queen encounter. Their bodies contract before marked attacks; leaving the marked volume avoids the hit.
 
-Nestbreaker Matron alternates a locked charge lane with a swelling brood release, leaving a recovery window after each attack. At 55% hull she releases larger broods and shortens her cadence. Broods have living and lifetime limits, cannot reproduce, and disappear when their mother dies. Summoned children grant no kill rewards or adaptive kill-pressure credit. The current ships use distinct organic placeholder models; later Bug classes and biological variants remain future progression.
+Devourers lock a corridor through their overshoot destination, then travel along that committed line and recover without dealing contact damage. Hive Queens alternate finite brood releases and expiring, fixed spore spheres. Each spore pulse has a full warning and checks the player's current position. Zones have owner and encounter caps; Hive Queen cards buy at most one queen in the primary package, including at late Campaign budgets. Higher-tier cards prefer their named anchor when affordable and retain a lower-tier screen if the adaptive budget temporarily lags its tier unlock.
+
+Nestbreaker Matron alternates a locked charge lane with a swelling brood release, leaving a recovery window after each attack. At 55% hull she releases larger broods and shortens her cadence. The First Queen begins with brood and spore attacks, adds committed charges at 70% hull, and changes the familiar sequence at 35%. Her full warnings and recovery remain intact throughout, and she remains damageable. Practice uses reduced Queen hull with the same mechanics; Campaign uses her full encounter at its finale.
+
+Broods have living and lifetime limits, cannot reproduce, and disappear when their mother dies. Summoned children grant no kill rewards or adaptive kill-pressure credit. All Bug parents share the existing twelve-brood and fifty-enemy summon ceilings. Death and stage exit clear owned brood and spore zones. The five base classes and both bosses use distinct organic placeholder models and retain targeting volumes without physical body collision; later biological variants remain future work.
 
 # Greys (Ethereal / Psionic Aliens)
 
