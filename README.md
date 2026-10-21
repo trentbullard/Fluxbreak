@@ -15,7 +15,7 @@ The game is built around auto-combat rather than manual aiming. Your job is to s
 
 ## What You Do In A Run
 
-1. Pick a pilot from the main menu and launch a practice run.
+1. Pick a pilot and faction from the main menu, then launch Campaign for a two-stage run or Practice for three short waves and a boss. Random chooses one faction for the entire run.
 2. Fly through a 3D combat space while your turrets auto-acquire and fire on targets in range.
 3. Survive enemy waves, destroy hostile ships, and collect nanobots.
 4. Dock with points of interest such as the Weapons Platform, Shield Array, and Repair Depot.
@@ -28,7 +28,7 @@ The game is built around auto-combat rather than manual aiming. Your job is to s
 - Ships include `Fighter Mk1` and `Heavy Bruiser`
 - Weapons currently include pulse, laser, and drone-based loadout pieces
 - Upgrade families cover hull, shields, targeting, systems, salvage, and thrusters
-- Enemy content includes machine and merc units, with wave-directed spawning and scaling
+- Enemy content includes Machines, Mercs, Bugs, and Greys, with faction wave decks, bosses, and wave-directed scaling
 
 ## Controls
 
@@ -57,7 +57,7 @@ Combat targeting and firing are handled automatically by the ship's weapon syste
 
 - Engine: Godot 4.6.3
 - Language: typed GDScript
-- Project version: `0.1.9.1`
+- Project version: `0.2.0`
 
 ## Running The Project
 
@@ -92,8 +92,14 @@ Fluxbreak is aiming for readable chaos. The guiding rubric for new work is simpl
 - keep the game fast on mid-tier hardware
 
 ## TODO
+
 - music
 - ammo/damage types
+- Implement the remaining Merc ships: Cruiser and the final heavy class (Battleship / Carrier / Dreadnought, still open to design).
+- Implement the remaining Bug ships: Devourer and Hive Queen.
+- Implement the remaining Grey ships: Harbinger and Mothership.
+- Add later bosses and progression variants for Mercs, Bugs, and Greys.
+- Define and implement the fifth faction, including its ships, bosses, and wave deck, once the first four factions' combat identities are stable.
 
 ## License
 

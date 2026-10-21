@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="PracticeFactionDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/practice_faction_def.gd" id="1"]
+[ext_resource type="Script" path="res://content/defs/wave_card.gd" id="2"]
+[ext_resource type="Resource" path="res://content/data/factions/greys.tres" id="3"]
+[ext_resource type="Resource" path="res://content/data/runs/greys_practice.tres" id="4"]
+[ext_resource type="Resource" path="res://content/data/cards/grey_observation.tres" id="5"]
+[ext_resource type="Resource" path="res://content/data/cards/grey_probe_arc.tres" id="6"]
+[ext_resource type="Resource" path="res://content/data/cards/grey_pursuit.tres" id="7"]
+[ext_resource type="Resource" path="res://content/data/cards/grey_shift_screen.tres" id="8"]
+[ext_resource type="Resource" path="res://content/data/cards/grey_binding_pattern.tres" id="9"]
+[ext_resource type="Resource" path="res://content/data/cards/grey_capture_net.tres" id="10"]
+
+[resource]
+script = ExtResource("1")
+faction = ExtResource("3")
+short_run = ExtResource("4")
+wave_cards = Array[ExtResource("2")]([ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10")])
+max_enemy_tier = 3
+combat_hint = "Leave pulse and tether capture spheres. Blue rings mark harmless shifts before the next attack.\nBreak tethers by moving away or destroying the source."

@@ -163,6 +163,9 @@ func _refresh_run_details() -> void:
 		current_stage_number,
 		stage_count,
 	]
+	var run_faction: FactionDef = GameFlow.get_run_faction()
+	if run_faction != null:
+		_run_details_label.text = "%s · %s\nStage %d/%d" % [_get_run_mode_text(run_definition), run_faction.get_display_name_or_default(), current_stage_number, stage_count]
 
 func _refresh_stage_details() -> void:
 	var stage: StageDef = GameFlow.get_current_stage()
@@ -227,7 +230,7 @@ func _get_run_mode_text(run_definition: RunDefinition) -> String:
 
 	match run_definition.run_mode:
 		RunDefinition.RunMode.STORY:
-			return "Story Mode"
+			return "Campaign"
 		RunDefinition.RunMode.PRACTICE:
 			return "Practice"
 		RunDefinition.RunMode.ENDLESS:

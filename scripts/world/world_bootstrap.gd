@@ -34,9 +34,14 @@ func _ready() -> void:
 	_set_ship_run_visibility(false)
 
 func _on_start_pressed() -> void:
-	_start_run()
+	var run_definition: RunDefinition = menu.build_practice_run(false)
+	if run_definition == null:
+		return
+	_start_run(run_definition)
 
 func _start_run(run_definition: RunDefinition = null) -> void:
+	if run_definition == null:
+		return
 	GameFlow.start_new_run(run_definition)
 	_set_ship_run_visibility(true)
 	menu.visible = false

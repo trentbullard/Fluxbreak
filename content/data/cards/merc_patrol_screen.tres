@@ -7,6 +7,7 @@
 [resource]
 script = ExtResource("1")
 card_id = "merc_patrol_screen"
+min_enemy_tier = 1
 display_name = "Patrol Screen"
 faction_bias = ExtResource("2")
 primary_role_bias = ExtResource("3")

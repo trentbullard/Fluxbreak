@@ -622,6 +622,14 @@ func build_selected_starting_loadout(base_loadout: ShipLoadoutDef) -> ShipLoadou
 func get_active_run_definition() -> RunDefinition:
 	return _active_run_definition
 
+func get_run_faction() -> FactionDef:
+	if _active_run_definition == null:
+		return null
+	if _active_run_definition.enemy_faction != null:
+		return _active_run_definition.enemy_faction
+	var stage: StageDef = _active_run_definition.get_stage(0)
+	return stage.boss_faction if stage != null else null
+
 func get_active_stage_index() -> int:
 	return _active_stage_index
 
@@ -1021,7 +1029,7 @@ func _emit_selection_changed() -> void:
 func _resolve_run_definition(run_definition: RunDefinition) -> RunDefinition:
 	if run_definition != null:
 		return run_definition
-	return load(DEFAULT_RUN_DEFINITION) as RunDefinition
+	return PracticeRunFactory.create_run()
 
 func _emit_stage_changed(stage_index: int) -> void:
 	if _active_run_definition == null:

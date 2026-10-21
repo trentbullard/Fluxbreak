@@ -97,11 +97,14 @@ func _get_downtime_sec() -> float:
 	return downtime_sec
 
 func _get_max_enemy_tier() -> int:
+	return _get_max_enemy_tier_for_wave(_wave_index)
+
+func _get_max_enemy_tier_for_wave(wave_index: int) -> int:
 	var stage: StageDef = GameFlow.get_current_stage()
-	var wave_offset: int = max(_wave_index - 1, 0)
+	var wave_offset: int = max(wave_index - 1, 0)
 	if stage != null and wave_offset < stage.authored_tier_caps.size():
 		return clampi(stage.authored_tier_caps[wave_offset], 1, 5)
-	return clampi(1 + int(_wave_index / 3) + max(GameFlow.get_active_stage_index(), 0), 1, 5)
+	return clampi(1 + int(wave_index / 3) + max(GameFlow.get_active_stage_index(), 0), 1, 5)
 
 func get_downtime_remaining() -> float:
 	return max(_downtime_remaining, 0.0)
@@ -185,25 +188,34 @@ func _get_wave_card_deck() -> Array[WaveCard]:
 
 func _choose_card() -> WaveCard:
 	var deck: Array[WaveCard] = _get_wave_card_deck()
-	if deck.is_empty():
-		return WaveCard.new()
 	var stage: StageDef = GameFlow.get_current_stage()
-	if stage != null and stage.ordered_wave_cards:
-		var next_index: int = _wave_index + 1 if _state == RunState.State.DOWNTIME else _wave_index
-		return deck[clampi(next_index - 1, 0, deck.size() - 1)]
+	var run: RunDefinition = GameFlow.get_active_run_definition()
+	var locked_faction: FactionDef = run.enemy_faction if run != null else null
+	var next_index: int = _wave_index + 1 if _state == RunState.State.DOWNTIME else _wave_index
+	if stage != null and stage.ordered_wave_cards and not deck.is_empty():
+		var authored_card: WaveCard = deck[clampi(next_index - 1, 0, deck.size() - 1)]
+		if locked_faction == null or authored_card.get_faction_bias_id() == locked_faction.get_faction_id():
+			return authored_card
+	var unlocked_tier: int = _get_max_enemy_tier_for_wave(next_index)
+	var eligible: Array[WaveCard] = []
+	for entry: WaveCard in deck:
+		if entry == null or entry.min_enemy_tier > unlocked_tier or entry.weight <= 0.0:
+			continue
+		if locked_faction != null and entry.get_faction_bias_id() != locked_faction.get_faction_id():
+			continue
+		eligible.append(entry)
 
 	var candidates: Array[WaveCard] = []
-	for entry in deck:
-		if entry == null:
-			continue
+	for entry: WaveCard in eligible:
 		if not _is_card_on_cooldown(entry):
 			candidates.append(entry)
 	if candidates.is_empty():
-		for entry in deck:
-			if entry != null:
-				candidates.append(entry)
+		candidates = eligible
 	if candidates.is_empty():
-		return WaveCard.new()
+		# Even a malformed deck must not fall back to another faction's enemies.
+		var fallback: WaveCard = WaveCard.new()
+		fallback.faction_bias = locked_faction if locked_faction != null else (stage.boss_faction if stage != null else null)
+		return fallback
 
 	var total_weight: float = 0.0
 	var weights: Array[float] = []

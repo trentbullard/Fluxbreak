@@ -9,6 +9,7 @@
 [resource]
 script = ExtResource("1")
 card_id = "bug_brood_nest"
+min_enemy_tier = 3
 display_name = "Brood Nest"
 faction_bias = ExtResource("2")
 primary_role_bias = ExtResource("3")

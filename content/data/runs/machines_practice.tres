@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RunDefinition" format=3]
+
+[ext_resource type="Script" path="res://content/defs/run_definition.gd" id="1"]
+[ext_resource type="Script" path="res://content/defs/stage_def.gd" id="2"]
+[ext_resource type="Resource" path="res://content/data/stages/stage_machine_proving_grounds.tres" id="3"]
+
+[resource]
+script = ExtResource("1")
+run_id = &"machines_practice"
+display_name = "Machines Practice"
+description = "Three short Machine waves followed by a smaller Machine Boss I, using its normal movement and firing sockets."
+run_mode = 1
+stages = Array[ExtResource("2")]([ExtResource("3")])

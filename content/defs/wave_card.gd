@@ -5,6 +5,8 @@ class_name WaveCard
 @export var card_id: String = ""
 @export var display_name: String = "Wave"
 @export_range(0.0, 10.0, 0.05) var weight: float = 1.0
+## Minimum unlocked enemy tier before this composition enters a random deck.
+@export_range(1, 5, 1) var min_enemy_tier: int = 1
 @export var faction_bias: FactionDef
 @export var primary_role_bias: EnemyRoleDef
 @export var secondary_role_bias: EnemyRoleDef

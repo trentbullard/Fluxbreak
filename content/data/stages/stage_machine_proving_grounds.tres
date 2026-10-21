@@ -1,0 +1,56 @@
+[gd_resource type="Resource" script_class="StageDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/stage_def.gd" id="1"]
+[ext_resource type="Script" path="res://content/defs/enemy_boss_def.gd" id="2"]
+[ext_resource type="Script" path="res://content/defs/wave_card.gd" id="3"]
+[ext_resource type="Resource" path="res://content/data/factions/machines.tres" id="4"]
+[ext_resource type="Resource" path="res://content/data/enemy_roles/bruiser.tres" id="5"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/enemy_boss.tscn" id="6"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/machine_boss_1_mk1.tscn" id="7"]
+[ext_resource type="Resource" path="res://content/data/boss_movement/machine_boss_1_movement.tres" id="8"]
+[ext_resource type="Resource" path="res://content/data/cards/machine_drone_screen.tres" id="9"]
+[ext_resource type="Resource" path="res://content/data/cards/machine_suppression_line.tres" id="10"]
+[ext_resource type="Resource" path="res://content/data/cards/machine_core_guard.tres" id="11"]
+
+[sub_resource type="Resource" id="Resource_practice_boss"]
+script = ExtResource("2")
+boss_description = "A smaller Machine core used for short practice, with the same movement and firing sockets as the full encounter."
+movement_def = ExtResource("8")
+id = "machine_boss_1_mk1"
+display_name = "Machine Boss I"
+faction = ExtResource("4")
+role = ExtResource("5")
+tier = 5
+threat_cost = 15
+bounty_scrap = 25
+can_be_elite = false
+score_on_kill = 500
+max_hull = 650.0
+max_shield = 120.0
+shield_regen = 0.0
+evasion = 0.03
+thrust = 100.0
+actor_scene = ExtResource("6")
+model_scene = ExtResource("7")
+
+[resource]
+script = ExtResource("1")
+stage_id = &"machine_proving_grounds"
+display_name = "Machine Proving Grounds"
+description = "Drone screen, suppression line, and core guard, followed by a smaller Machine Boss I."
+combat_hint = "Keep moving through Machine firing arcs. Clear the smaller escorts before committing to armored ships.\nMachine Boss I fires from several sockets; attack from gaps between its firing arcs."
+completion_flow = 3
+boss_wave_index = 4
+boss_faction = ExtResource("4")
+boss_pool = Array[ExtResource("2")]([SubResource("Resource_practice_boss")])
+wave_timeout_override_sec = 22.0
+downtime_override_sec = 5.0
+ordered_wave_cards = true
+authored_enemy_budgets = PackedInt32Array(4, 8, 12)
+authored_tier_caps = PackedInt32Array(1, 2, 3)
+pressure_reinforcements_enabled = false
+wave_cards = Array[ExtResource("3")]([ExtResource("9"), ExtResource("10"), ExtResource("11")])
+ambient_light_color = Color(0.0863, 0.2667, 0.4706, 1)
+ambient_light_energy = 5.4
+star_light_color = Color(0.7882, 0.8824, 1, 1)
+volumetric_fog_density = 0.005

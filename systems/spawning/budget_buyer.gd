@@ -98,13 +98,17 @@ func _build_enemy_requests(
 	var secondary_budget: int = int(round(float(enemy_points) * shares[1]))
 	var support_budget: int = int(round(float(enemy_points) * shares[2]))
 
-	if secondary_role == null:
+	if secondary_role == null and shares[1] > 0.0:
 		secondary_budget = int(round(float(enemy_points) * secondary_share_fallback))
-	if support_role == null:
+	if support_role == null and shares[2] > 0.0:
 		support_budget = int(round(float(enemy_points) * support_share_fallback))
 
 	if primary_pick.threat_cost >= max(card.anchor_support_cost_threshold, 1):
 		support_budget = max(support_budget, min(primary_pick.threat_cost / 2, enemy_points))
+	# Rounding, a costly leader, or anchor escorts may not create extra points.
+	primary_budget = clampi(primary_budget, 0, enemy_points)
+	secondary_budget = clampi(secondary_budget, 0, enemy_points - primary_budget)
+	support_budget = clampi(support_budget, 0, enemy_points - primary_budget - secondary_budget)
 
 	var reserved_budget: int = primary_budget + secondary_budget + support_budget
 	var flex_budget: int = max(enemy_points - reserved_budget, 0)

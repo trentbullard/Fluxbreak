@@ -21,6 +21,14 @@ Each faction has:
 
 Faction home systems are always consistent and should reinforce faction identity through modifiers, atmosphere, and encounter pressure.
 
+### Current Campaign and Practice Runs
+
+The main menu's Faction selector offers Random, Machines, Mercs, Bugs, and Greys. Both run buttons use it. Random chooses once when a run starts; every wave, reinforcement, boss, and later stage keeps that faction. The HUD shows the resolved faction. An explicit selection remains selected when returning to the menu, while Random draws again for the next run.
+
+Practice contains three introduction waves and a boss. Each faction has two card variants for each introduction tier, and one variant per tier is drawn at launch. Campaign retains the two-stage run with a boss gateway followed by a final boss; its six-card faction deck unlocks compositions as enemy tiers become available and avoids immediate card repeats. Campaign salvage and pressure tuning remain distinct from the shorter lessons.
+
+The first Merc, Bug, and Grey bosses currently serve both boss encounters in their Campaign runs. Additional classes and dedicated final bosses remain future roster work. Machines Practice uses a locally tuned version of the existing Machine Boss I; its full encounter remains in Campaign.
+
 # Machines (AI Collective)
 
 Machines are highly ordered synthetic warforms built around precision, pressure consistency, and escalating mechanical superiority. They are clean, sterile, symmetrical, and increasingly intimidating as tier rises.
@@ -121,7 +129,7 @@ A militarized industrial war-zone with patrol structures, weapons platforms, deb
 
 ### Merc Practice Seed
 
-The first playable Merc encounter is preserved in `content/data/runs/merc_practice.tres`. Three short authored waves introduce Corvette burst-and-retreat attacks, Frigate shield support, and the Destroyer's locked charged corridor. Contract Enforcer then alternates marked corridor and spherical salvo attacks, calling one Frigate escort at 55% hull. Defeating the boss completes the practice run. The main menu's faction practice button opens the latest faction milestone.
+The Merc short encounter uses `content/data/runs/merc_practice.tres` as its template. Choose Mercs and Practice to introduce Corvette burst-and-retreat attacks, Frigate shield support, and the Destroyer's locked charged corridor. Contract Enforcer then alternates marked corridor and spherical salvo attacks, calling one Frigate escort at 55% hull. Defeating the boss completes the short run.
 
 Amber volumes and a screen-space countdown show when a special attack will resolve. Leaving the marked volume avoids that special; ordinary gunfire retains the game's hit/miss calculations. Cyan support links show bounded allied shield restoration. The current ships use readable placeholder models; the remaining Merc classes and variants remain future progression.
 
@@ -174,7 +182,7 @@ An overgrown living battlefield full of organic structures, drifting biomass, sp
 
 ### Bug Practice Seed
 
-The Bug encounter is preserved in `content/data/runs/bugs_practice.tres`: three short waves followed by Nestbreaker Matron. Sporelings pursue at close range, Carapaces bring durable frontal pressure, and Broodmothers keep their distance while releasing small broods. Their bodies contract before marked attacks; leaving the marked volume avoids the hit.
+Choose Bugs and Practice to play three waves followed by Nestbreaker Matron, using `content/data/runs/bugs_practice.tres` as the template. Sporelings pursue at close range, Carapaces bring durable frontal pressure, and Broodmothers keep their distance while releasing small broods. Their bodies contract before marked attacks; leaving the marked volume avoids the hit.
 
 Nestbreaker Matron alternates a locked charge lane with a swelling brood release, leaving a recovery window after each attack. At 55% hull she releases larger broods and shortens her cadence. Broods have living and lifetime limits, cannot reproduce, and disappear when their mother dies. Summoned children grant no kill rewards or adaptive kill-pressure credit. The current ships use distinct organic placeholder models; later Bug classes and biological variants remain future progression.
 
@@ -226,7 +234,7 @@ A silent distorted system where visibility, distance, and spatial expectation be
 
 ### Grey Practice Seed
 
-**Greys Practice** in the main menu opens three short waves followed by The Witness. Probes drift and mark delayed pulse spheres. Seekers show both ends of a harmless shift, then begin a separate pulse warning. Vessels alternate delayed pulses with a locked tether capture; moving out of the capture sphere prevents attachment. All ships remain visible, damageable, and available to automatic targeting.
+Choose Greys and Practice to play three waves followed by The Witness. Probes drift and mark delayed pulse spheres. Seekers show both ends of a harmless shift, then begin a separate pulse warning. Vessels alternate delayed pulses with a locked tether capture; moving out of the capture sphere prevents attachment. All ships remain visible, damageable, and available to automatic targeting.
 
 An attached tether has a visible link and countdown. It slows forward and reverse speed and acceleration by at most 35%, lasts at most three seconds, and breaks on distance, source death, or source exit. Turning and boost remain usable. Only one tether may affect the player, it cannot refresh itself, and every break grants three seconds of tether immunity.
 

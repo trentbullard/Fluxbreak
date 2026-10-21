@@ -9,6 +9,7 @@
 [resource]
 script = ExtResource("1")
 card_id = "merc_firing_line"
+min_enemy_tier = 3
 display_name = "Firing Line"
 faction_bias = ExtResource("2")
 primary_role_bias = ExtResource("3")

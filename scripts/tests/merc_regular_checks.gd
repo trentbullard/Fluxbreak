@@ -30,6 +30,8 @@ func _run_checks() -> void:
 	await _clear_enemies()
 	_test_shield_support_contract()
 	await _clear_enemies()
+	await _test_support_target_exit()
+	await _clear_enemies()
 	await _test_tactical_movement()
 	await _clear_enemies()
 	print("MERC_REGULAR_CHECKS: %s (%d assertions, %d failures)" % ["PASS" if _failures == 0 else "FAIL", _assertions, _failures])
@@ -110,6 +112,17 @@ func _test_shield_support_contract() -> void:
 	_check(is_equal_approx(destroyer.shield, capacity_after_second), "Support cannot repeatedly fill a shield beyond its support cap")
 	_check(frigate._pick_escort() == destroyer, "Frigate escorts the heavier attack hull")
 	print("MERC_REGULAR_CHECKS: shield limits, faction identity, escort, and stacking checked")
+
+func _test_support_target_exit() -> void:
+	var frigate: MercEnemy = _spawn_enemy(FRIGATE, Vector3.ZERO)
+	var ally: MercEnemy = _spawn_enemy(CORVETTE, Vector3(50.0, 0.0, 0.0))
+	frigate._show_support_link(ally, 1.0)
+	_check(frigate._support_links.size() == 1, "A support-link cleanup check begins with a visible link")
+	_enemies.erase(ally)
+	ally.queue_free()
+	await get_tree().process_frame
+	frigate._update_support_links(0.01)
+	_check(frigate._support_links.is_empty(), "A recipient leaving during a shield pulse removes its link safely")
 
 func _test_tactical_movement() -> void:
 	var corvette: MercEnemy = _spawn_enemy(CORVETTE, Vector3(0.0, 0.0, 600.0))

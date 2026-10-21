@@ -90,7 +90,7 @@ layout_mode = 2
 
 [node name="Logo" type="Sprite2D" parent="CenterContainer/MainMenuContainer/TitleContainer" unique_id=1373381031]
 position = Vector2(36, 86.000015)
-scale = Vector2(0.28857422, 0.28857422)
+scale = Vector2(0.264, 0.264)
 texture = ExtResource("3_uqeha")
 
 [node name="Title" type="Label" parent="CenterContainer/MainMenuContainer/TitleContainer" unique_id=1225919921]
@@ -113,7 +113,7 @@ theme_override_constants/margin_bottom = 20
 
 [node name="ButtonsContainer" type="VBoxContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins" unique_id=1387951927]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 8
 
 [node name="PilotContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=52075162]
 layout_mode = 2
@@ -168,20 +168,49 @@ label_settings = SubResource("LabelSettings_5seab")
 [node name="WeaponPicker" type="OptionButton" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/WeaponContainer/Row" unique_id=1582726976]
 layout_mode = 2
 focus_neighbor_top = NodePath("../../../ShipContainer/Row/ShipPicker")
-focus_neighbor_bottom = NodePath("../../../UpgradesContainer/Upgrades")
-focus_next = NodePath("../../../UpgradesContainer/Upgrades")
+focus_neighbor_bottom = NodePath("../../../FactionContainer/Row/FactionPicker")
+focus_next = NodePath("../../../FactionContainer/Row/FactionPicker")
 focus_previous = NodePath("../../../ShipContainer/Row/ShipPicker")
 theme = SubResource("Theme_4xg86")
+
+[node name="FactionContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer"]
+layout_mode = 2
+
+[node name="Row" type="HBoxContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/FactionContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="FactionLabel" type="Label" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/FactionContainer/Row"]
+layout_mode = 2
+text = "Faction:"
+label_settings = SubResource("LabelSettings_5seab")
+
+[node name="FactionPicker" type="OptionButton" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/FactionContainer/Row"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+tooltip_text = "Choose a faction for Campaign and Practice. Random chooses one faction for the entire run."
+focus_neighbor_top = NodePath("../../../WeaponContainer/Row/WeaponPicker")
+focus_neighbor_bottom = NodePath("../../../UpgradesContainer/Upgrades")
+focus_next = NodePath("../../../UpgradesContainer/Upgrades")
+focus_previous = NodePath("../../../WeaponContainer/Row/WeaponPicker")
+theme = SubResource("Theme_4xg86")
+
+[node name="FactionSummary" type="Label" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer"]
+layout_mode = 2
+theme = SubResource("Theme_4xg86")
+theme_override_font_sizes/font_size = 16
+text = "Random chooses one faction for the entire run."
+horizontal_alignment = 1
 
 [node name="UpgradesContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=943631027]
 layout_mode = 2
 
 [node name="Upgrades" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/UpgradesContainer" unique_id=383352009]
 layout_mode = 2
-focus_neighbor_top = NodePath("../../WeaponContainer/Row/WeaponPicker")
+focus_neighbor_top = NodePath("../../FactionContainer/Row/FactionPicker")
 focus_neighbor_bottom = NodePath("../../PracticeContainer/Practice")
 focus_next = NodePath("../../PracticeContainer/Practice")
-focus_previous = NodePath("../../WeaponContainer/Row/WeaponPicker")
+focus_previous = NodePath("../../FactionContainer/Row/FactionPicker")
 theme = SubResource("Theme_wem23")
 text = "Upgrades"
 
@@ -190,25 +219,26 @@ layout_mode = 2
 
 [node name="Practice" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PracticeContainer" unique_id=1368523961]
 layout_mode = 2
+tooltip_text = "Two-stage campaign. The selected faction stays for the entire run."
 focus_neighbor_top = NodePath("../../UpgradesContainer/Upgrades")
 focus_neighbor_bottom = NodePath("../../MercPracticeContainer/MercPractice")
 focus_next = NodePath("../../MercPracticeContainer/MercPractice")
 focus_previous = NodePath("../../UpgradesContainer/Upgrades")
 theme = SubResource("Theme_wem23")
-text = "Practice"
+text = "Campaign"
 
 [node name="MercPracticeContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer"]
 layout_mode = 2
 
 [node name="MercPractice" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/MercPracticeContainer"]
 layout_mode = 2
-tooltip_text = "Three short Grey waves, then The Witness. Leave marked pulses and tether captures; move away to break an active tether. Blue arrival markers are harmless."
+tooltip_text = "Three short waves, then a boss. Uses the selected faction for the entire run."
 focus_neighbor_top = NodePath("../../PracticeContainer/Practice")
 focus_neighbor_bottom = NodePath("../../SettingsContainer/Settings")
 focus_next = NodePath("../../SettingsContainer/Settings")
 focus_previous = NodePath("../../PracticeContainer/Practice")
 theme = SubResource("Theme_wem23")
-text = "Greys Practice"
+text = "Practice"
 
 [node name="SettingsContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=967670781]
 layout_mode = 2

@@ -30,6 +30,8 @@ func _run_checks() -> void:
 		push_error("Run Bug checks in the isolated Fluxbreak Bug Validation project.")
 		get_tree().quit(2)
 		return
+	# Accelerated flow checks do not exercise menu audio playback.
+	get_tree().node_added.connect(_mute_test_menu_music)
 	var world_scene: PackedScene = load("res://scenes/world/world.tscn") as PackedScene
 	_world = world_scene.instantiate() as Node3D
 	get_tree().root.add_child(_world)
@@ -61,12 +63,13 @@ func _run_checks() -> void:
 	_director.wave_started.connect(_on_wave_started)
 	GameFlow.run_completed.connect(_on_completed)
 	var menu: Control = _world.get_node("MainMenuOverlay") as Control
-	# The faction button now defaults to Greys; validate the retained Bug run explicitly.
-	menu.set("merc_practice_run", run)
+	menu.call("set_practice_faction_id", &"bugs")
 	var button: Button = menu.get_node("CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/MercPracticeContainer/MercPractice") as Button
 	_check(not button.disabled, "Bugs Practice must work with the default unlocked loadout.")
 	button.pressed.emit()
-	_check(GameFlow.get_active_run_definition() == run, "The default faction button did not launch Bugs Practice.")
+	run = GameFlow.get_active_run_definition()
+	stage = run.get_stage(0)
+	_check(run.enemy_faction != null and run.enemy_faction.get_faction_id() == &"bugs", "The default faction button did not launch Bugs Practice.")
 	_check(is_equal_approx(_director._get_wave_timeout_sec(), 22.0), "Practice must use short wave timing.")
 	_check(is_equal_approx(_director._get_downtime_sec(), 5.0), "Practice must use short downtime.")
 	var hint: Label = _world.get_node("HUD/ScreenRoot/StageCombatHint") as Label
@@ -117,10 +120,10 @@ func _run_checks() -> void:
 	_check(returned_world != null and returned_world != _world, "Victory did not return to a fresh menu.")
 	if returned_world != null and returned_world.has_node("MainMenuOverlay"):
 		var returned_menu: Control = returned_world.get_node("MainMenuOverlay") as Control
-		returned_menu.set("merc_practice_run", run)
+		returned_menu.call("set_practice_faction_id", &"bugs")
 		var restart_button: Button = returned_menu.get_node("CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/MercPracticeContainer/MercPractice") as Button
 		restart_button.pressed.emit()
-		_check(GameFlow.get_current_stage() == stage, "Bugs Practice could not restart.")
+		_check(GameFlow.get_current_stage().get_stage_id() == stage.get_stage_id() and GameFlow.get_run_faction().get_faction_id() == &"bugs", "Bugs Practice could not restart.")
 		var restarted_director: WaveDirector = returned_world.get_node("StageRoot/WaveDirector") as WaveDirector
 		_check(restarted_director.get_wave_index() == 0, "Restart retained the previous wave index.")
 		GameFlow._run_active = false
@@ -145,3 +148,7 @@ func _on_completed() -> void:
 
 func _finish_checks() -> void:
 	get_tree().quit(0 if _failures.is_empty() else 1)
+
+func _mute_test_menu_music(node: Node) -> void:
+	if node is AudioStreamPlayer and node.name == &"MenuMusic":
+		(node as AudioStreamPlayer).stream = null

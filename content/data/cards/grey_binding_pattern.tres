@@ -9,6 +9,7 @@
 [resource]
 script = ExtResource("1")
 card_id = "grey_binding_pattern"
+min_enemy_tier = 3
 display_name = "Binding Pattern"
 faction_bias = ExtResource("2")
 primary_role_bias = ExtResource("3")

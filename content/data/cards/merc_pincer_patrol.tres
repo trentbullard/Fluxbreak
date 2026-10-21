@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="WaveCard" format=3]
+
+[ext_resource type="Script" path="res://content/defs/wave_card.gd" id="1"]
+[ext_resource type="Resource" path="res://content/data/factions/mercs.tres" id="2"]
+[ext_resource type="Resource" path="res://content/data/enemy_roles/brawler.tres" id="3"]
+
+[resource]
+script = ExtResource("1")
+card_id = "merc_pincer_patrol"
+display_name = "Pincer Patrol"
+min_enemy_tier = 1
+weight = 0.9
+faction_bias = ExtResource("2")
+primary_role_bias = ExtResource("3")
+primary_budget_share = 1.00
+secondary_budget_share = 0.00
+support_budget_share = 0.00
+max_primary_budget_share = 1.00
+allow_swarm_primary = true
+allow_pressure_spikes = false
+pressure_enemy_point_budget = 0
+downtime_target_point_budget = 0
+in_wave_target_budget_scale = 0.0
+package_count_min = 2
+package_count_max = 2
+batch_size_min = 1
+batch_size_max = 1
+inter_batch_sec = 0.70

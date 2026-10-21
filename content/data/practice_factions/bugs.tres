@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="PracticeFactionDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/practice_faction_def.gd" id="1"]
+[ext_resource type="Script" path="res://content/defs/wave_card.gd" id="2"]
+[ext_resource type="Resource" path="res://content/data/factions/bugs.tres" id="3"]
+[ext_resource type="Resource" path="res://content/data/runs/bugs_practice.tres" id="4"]
+[ext_resource type="Resource" path="res://content/data/cards/bug_swarm_front.tres" id="5"]
+[ext_resource type="Resource" path="res://content/data/cards/bug_spore_cloud.tres" id="6"]
+[ext_resource type="Resource" path="res://content/data/cards/bug_carapace_screen.tres" id="7"]
+[ext_resource type="Resource" path="res://content/data/cards/bug_armored_push.tres" id="8"]
+[ext_resource type="Resource" path="res://content/data/cards/bug_brood_nest.tres" id="9"]
+[ext_resource type="Resource" path="res://content/data/cards/bug_hatching_ground.tres" id="10"]
+
+[resource]
+script = ExtResource("1")
+faction = ExtResource("3")
+short_run = ExtResource("4")
+wave_cards = Array[ExtResource("2")]([ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10")])
+max_enemy_tier = 3
+combat_hint = "Keep space and leave marked attacks. Carapaces commit to the corridor they mark.\nDestroy Broodmothers to clear their broods. A swelling body warns of the next release."

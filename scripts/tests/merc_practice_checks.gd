@@ -30,6 +30,8 @@ func _run_checks() -> void:
 		push_error("Run Merc checks in an isolated project named Fluxbreak Merc Validation.")
 		get_tree().quit(2)
 		return
+	# Accelerated flow checks do not exercise menu audio playback.
+	get_tree().node_added.connect(_mute_test_menu_music)
 	var world_scene: PackedScene = load("res://scenes/world/world.tscn") as PackedScene
 	_world = world_scene.instantiate() as Node3D
 	get_tree().root.add_child(_world)
@@ -62,13 +64,13 @@ func _run_checks() -> void:
 	_director.wave_started.connect(_on_wave_started)
 	GameFlow.run_completed.connect(_on_completed)
 	var menu: Control = _world.get_node("MainMenuOverlay") as Control
-	# The shared faction button now defaults to Bugs; exercise the retained Merc
-	# run explicitly while keeping the current menu's default intact.
-	menu.set("merc_practice_run", run)
+	menu.call("set_practice_faction_id", &"mercs")
 	var button: Button = menu.get_node("CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/MercPracticeContainer/MercPractice") as Button
 	_check(not button.disabled, "Merc Practice must launch with the default unlocked loadout.")
 	button.pressed.emit()
-	_check(GameFlow.get_active_run_definition() == run, "Merc Practice button did not route to the authored run.")
+	run = GameFlow.get_active_run_definition()
+	stage = run.get_stage(0)
+	_check(run.enemy_faction != null and run.enemy_faction.get_faction_id() == &"mercs", "Merc Practice button did not route to the authored run.")
 	_check(is_equal_approx(_director._get_wave_timeout_sec(), 22.0), "Practice pacing did not override wave timeout.")
 	_check(is_equal_approx(_director._get_downtime_sec(), 5.0), "Practice pacing did not override downtime.")
 	var elapsed: float = 0.0
@@ -115,10 +117,10 @@ func _run_checks() -> void:
 	_check(returned_world != null and returned_world != _world, "Victory did not return to a fresh menu.")
 	if returned_world != null and returned_world.has_node("MainMenuOverlay"):
 		var returned_menu: Control = returned_world.get_node("MainMenuOverlay") as Control
-		returned_menu.set("merc_practice_run", run)
+		returned_menu.call("set_practice_faction_id", &"mercs")
 		var restart_button: Button = returned_menu.get_node("CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/MercPracticeContainer/MercPractice") as Button
 		restart_button.pressed.emit()
-		_check(GameFlow.get_current_stage() == stage, "Merc Practice could not restart from the returned menu.")
+		_check(GameFlow.get_current_stage().get_stage_id() == stage.get_stage_id() and GameFlow.get_run_faction().get_faction_id() == &"mercs", "Merc Practice could not restart from the returned menu.")
 		var restarted_director: WaveDirector = returned_world.get_node("StageRoot/WaveDirector") as WaveDirector
 		_check(restarted_director.get_wave_index() == 0, "Restart retained an old wave index.")
 		GameFlow._run_active = false
@@ -133,12 +135,16 @@ func _run_checks() -> void:
 func _finish_checks() -> void:
 	get_tree().quit(0 if _failures.is_empty() else 1)
 
+func _mute_test_menu_music(node: Node) -> void:
+	if node is AudioStreamPlayer and node.name == &"MenuMusic":
+		(node as AudioStreamPlayer).stream = null
+
 func _on_wave_started(index: int, _enemy_budget: int, _target_budget: int) -> void:
 	_observed_waves.append(index)
 	if index <= 3:
 		var stage: StageDef = GameFlow.get_current_stage()
 		_check(_director._active_card == stage.wave_cards[index - 1], "Teaching cards played out of order.")
-		var expected_primary: Array[String] = ["merc_corvette_mk1", "merc_corvette_mk1", "merc_destroyer_mk1"]
+		var expected_primary: Array[String] = ["merc_corvette_mk1", "merc_frigate_mk1", "merc_destroyer_mk1"]
 		var plan: Dictionary = _director.get_debug_snapshot().get("wave_plan", {})
 		_check(str(plan.get("primary_enemy_id", "")) == expected_primary[index - 1], "Live wave did not choose its authored primary role.")
 

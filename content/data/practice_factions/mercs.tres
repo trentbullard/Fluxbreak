@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="PracticeFactionDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/practice_faction_def.gd" id="1"]
+[ext_resource type="Script" path="res://content/defs/wave_card.gd" id="2"]
+[ext_resource type="Resource" path="res://content/data/factions/mercs.tres" id="3"]
+[ext_resource type="Resource" path="res://content/data/runs/merc_practice.tres" id="4"]
+[ext_resource type="Resource" path="res://content/data/cards/merc_patrol_screen.tres" id="5"]
+[ext_resource type="Resource" path="res://content/data/cards/merc_pincer_patrol.tres" id="6"]
+[ext_resource type="Resource" path="res://content/data/cards/merc_shield_escort.tres" id="7"]
+[ext_resource type="Resource" path="res://content/data/cards/merc_shield_convoy.tres" id="8"]
+[ext_resource type="Resource" path="res://content/data/cards/merc_firing_line.tres" id="9"]
+[ext_resource type="Resource" path="res://content/data/cards/merc_rail_ambush.tres" id="10"]
+
+[resource]
+script = ExtResource("1")
+faction = ExtResource("3")
+short_run = ExtResource("4")
+wave_cards = Array[ExtResource("2")]([ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10")])
+max_enemy_tier = 3
+combat_hint = "Leave amber warnings before FIRE. Cyan Frigates restore nearby allied shields; approach to bring them into weapon range.\nDestroyers hold a firing line. Change direction after their corridor attack locks."

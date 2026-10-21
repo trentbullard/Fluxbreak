@@ -7,7 +7,7 @@ signal selection_changed
 
 @export var pilot_roster: PilotRoster
 @export var default_pilot_index: int = 0
-## Current faction training run. The legacy export name preserves scene bindings.
+## Deprecated fallback for older scenes; new practice runs use the faction selector.
 @export var merc_practice_run: RunDefinition
 
 @onready var btn_practice: Button = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PracticeContainer/Practice
@@ -18,6 +18,8 @@ signal selection_changed
 @onready var pilot_picker: OptionButton = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PilotContainer/Row/PilotPicker
 @onready var ship_picker: OptionButton = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/ShipContainer/Row/ShipPicker
 @onready var weapon_picker: OptionButton = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/WeaponContainer/Row/WeaponPicker
+@onready var faction_picker: OptionButton = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/FactionContainer/Row/FactionPicker
+@onready var faction_summary: Label = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/FactionSummary
 @onready var version_label: Label = $VersionContainer/VersionLabel
 @onready var music: AudioStreamPlayer = $MenuMusic
 @onready var _upgrades_panel: UpgradesPanel = $UpgradesPanel
@@ -32,6 +34,7 @@ var _available_ship_options: Array[PilotStarterShipOptionDef] = []
 var _available_weapon_options: Array[ShipStarterWeaponOptionDef] = []
 var _music_tween: Tween
 var _suppress_picker_callbacks: bool = false
+static var _remembered_practice_faction_id: StringName = &"random"
 
 func _ready() -> void:
 	visibility_changed.connect(_on_visibility_changed)
@@ -44,8 +47,10 @@ func _ready() -> void:
 	pilot_picker.item_selected.connect(_on_pilot_selected)
 	ship_picker.item_selected.connect(_on_ship_selected)
 	weapon_picker.item_selected.connect(_on_weapon_selected)
+	faction_picker.item_selected.connect(_on_faction_selected)
 	_set_version_label()
 	_set_focus_modes()
+	_refresh_practice_faction_picker()
 	_refresh_pilot_picker()
 	_apply_current_pilot_selection(false)
 	if visible and _has_connected_controller():
@@ -103,9 +108,67 @@ func _on_practice_pressed() -> void:
 
 func _on_merc_practice_pressed() -> void:
 	_apply_current_pilot_selection(false)
-	if merc_practice_run == null or btn_practice.disabled:
+	if btn_practice.disabled:
 		return
-	merc_practice_requested.emit(merc_practice_run)
+	var run_definition: RunDefinition = build_practice_run(true)
+	if run_definition == null:
+		return
+	merc_practice_requested.emit(run_definition)
+
+func set_practice_faction_id(faction_id: StringName) -> void:
+	var selected_id: StringName = &"random"
+	for definition: PracticeFactionDef in PracticeRunFactory.get_factions():
+		if definition != null and definition.faction != null and definition.faction.get_faction_id() == faction_id:
+			selected_id = faction_id
+			break
+	_remembered_practice_faction_id = selected_id
+	if is_node_ready():
+		_select_practice_faction_item()
+		_update_practice_faction_summary()
+
+func get_practice_faction_id() -> StringName:
+	return _remembered_practice_faction_id
+
+func build_practice_run(short_practice: bool = false) -> RunDefinition:
+	# Build once when launching, so Random cannot change between stages.
+	var run_definition: RunDefinition = PracticeRunFactory.create_run(get_practice_faction_id(), short_practice)
+	if run_definition == null and short_practice:
+		return merc_practice_run
+	return run_definition
+
+func _refresh_practice_faction_picker() -> void:
+	faction_picker.clear()
+	faction_picker.add_item("Random")
+	faction_picker.set_item_metadata(0, &"random")
+	for definition: PracticeFactionDef in PracticeRunFactory.get_factions():
+		if definition == null or definition.faction == null:
+			continue
+		var faction: FactionDef = definition.faction
+		faction_picker.add_item(faction.get_display_name_or_default())
+		faction_picker.set_item_metadata(faction_picker.item_count - 1, faction.get_faction_id())
+	_select_practice_faction_item()
+	_update_practice_faction_summary()
+
+func _select_practice_faction_item() -> void:
+	var selected_index: int = 0
+	for index: int in faction_picker.item_count:
+		if StringName(faction_picker.get_item_metadata(index)) == _remembered_practice_faction_id:
+			selected_index = index
+			break
+	_remembered_practice_faction_id = StringName(faction_picker.get_item_metadata(selected_index))
+	_select_picker_index(faction_picker, selected_index)
+
+func _on_faction_selected(index: int) -> void:
+	if _suppress_picker_callbacks or index < 0 or index >= faction_picker.item_count:
+		return
+	_remembered_practice_faction_id = StringName(faction_picker.get_item_metadata(index))
+	_update_practice_faction_summary()
+
+func _update_practice_faction_summary() -> void:
+	if get_practice_faction_id() == &"random":
+		faction_summary.text = "Random chooses one faction for the entire run."
+	else:
+		faction_summary.text = "%s for the entire run." % faction_picker.get_item_text(faction_picker.get_selected())
 
 func _on_settings_pressed() -> void:
 	print("Settings clicked — not implemented yet.")
@@ -402,12 +465,13 @@ func _update_practice_enabled() -> void:
 		or GameFlow.get_selected_ship() == null
 		or GameFlow.get_selected_weapon() == null
 	)
-	btn_merc_practice.disabled = btn_practice.disabled or merc_practice_run == null
+	btn_merc_practice.disabled = btn_practice.disabled
 
 func _set_focus_modes() -> void:
 	pilot_picker.focus_mode = Control.FOCUS_ALL
 	ship_picker.focus_mode = Control.FOCUS_ALL
 	weapon_picker.focus_mode = Control.FOCUS_ALL
+	faction_picker.focus_mode = Control.FOCUS_ALL
 	btn_upgrades.focus_mode = Control.FOCUS_ALL
 	btn_practice.focus_mode = Control.FOCUS_ALL
 	btn_merc_practice.focus_mode = Control.FOCUS_ALL
@@ -431,6 +495,9 @@ func _focus_default_control() -> void:
 		return
 	if not weapon_picker.disabled:
 		weapon_picker.grab_focus()
+		return
+	if not faction_picker.disabled:
+		faction_picker.grab_focus()
 		return
 	if not btn_settings.disabled:
 		btn_settings.grab_focus()

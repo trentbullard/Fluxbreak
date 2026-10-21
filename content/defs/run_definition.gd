@@ -12,6 +12,8 @@ enum RunMode {
 @export var display_name: String = "Run"
 @export_multiline var description: String = ""
 @export var run_mode: RunMode = RunMode.STORY
+## Enemy faction chosen once for every stage of a generated practice run.
+@export var enemy_faction: FactionDef
 
 @export_group("Progression")
 @export var stages: Array[StageDef] = []

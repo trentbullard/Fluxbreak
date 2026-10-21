@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="WaveCard" format=3]
+
+[ext_resource type="Script" path="res://content/defs/wave_card.gd" id="1"]
+[ext_resource type="Resource" path="res://content/data/factions/machines.tres" id="2"]
+[ext_resource type="Resource" path="res://content/data/enemy_roles/suppressor.tres" id="3"]
+[ext_resource type="Resource" path="res://content/data/enemy_roles/brawler.tres" id="4"]
+
+[resource]
+script = ExtResource("1")
+card_id = "machine_crossfire"
+display_name = "Crossfire"
+min_enemy_tier = 2
+weight = 0.9
+faction_bias = ExtResource("2")
+primary_role_bias = ExtResource("3")
+secondary_role_bias = ExtResource("4")
+primary_budget_share = 0.50
+secondary_budget_share = 0.50
+support_budget_share = 0.00
+max_primary_budget_share = 0.60
+allow_swarm_primary = false
+allow_pressure_spikes = false
+pressure_enemy_point_budget = 0
+downtime_target_point_budget = 0
+in_wave_target_budget_scale = 0.0
+package_count_min = 2
+package_count_max = 2
+batch_size_min = 1
+batch_size_max = 1
+inter_batch_sec = 0.55

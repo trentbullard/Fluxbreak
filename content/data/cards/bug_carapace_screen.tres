@@ -8,6 +8,7 @@
 [resource]
 script = ExtResource("1")
 card_id = "bug_carapace_screen"
+min_enemy_tier = 2
 display_name = "Carapace Screen"
 faction_bias = ExtResource("2")
 primary_role_bias = ExtResource("3")

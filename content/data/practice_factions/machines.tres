@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="PracticeFactionDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/practice_faction_def.gd" id="1"]
+[ext_resource type="Script" path="res://content/defs/wave_card.gd" id="2"]
+[ext_resource type="Resource" path="res://content/data/factions/machines.tres" id="3"]
+[ext_resource type="Resource" path="res://content/data/runs/machines_practice.tres" id="4"]
+[ext_resource type="Resource" path="res://content/data/cards/machine_drone_screen.tres" id="5"]
+[ext_resource type="Resource" path="res://content/data/cards/machine_drone_fan.tres" id="6"]
+[ext_resource type="Resource" path="res://content/data/cards/machine_suppression_line.tres" id="7"]
+[ext_resource type="Resource" path="res://content/data/cards/machine_crossfire.tres" id="8"]
+[ext_resource type="Resource" path="res://content/data/cards/machine_warden_push.tres" id="9"]
+[ext_resource type="Resource" path="res://content/data/cards/machine_core_guard.tres" id="10"]
+[ext_resource type="Script" path="res://content/defs/enemy_boss_def.gd" id="11"]
+[ext_resource type="Resource" path="res://content/data/enemies/machine_boss_1_mk1.tres" id="12"]
+
+[resource]
+script = ExtResource("1")
+faction = ExtResource("3")
+short_run = ExtResource("4")
+wave_cards = Array[ExtResource("2")]([ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10")])
+max_enemy_tier = 5
+combat_hint = "Keep moving through Machine firing arcs. Clear the smaller escorts before committing to armored ships.\nMachine Boss I fires from several sockets; attack from gaps between its firing arcs."
+main_boss_pool = Array[ExtResource("11")]([ExtResource("12")])

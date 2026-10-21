@@ -269,8 +269,10 @@ func _show_support_link(ally: Enemy, restored: float) -> void:
 func _update_support_links(delta: float) -> void:
 	for index: int in range(_support_links.size() - 1, -1, -1):
 		var entry: Dictionary = _support_links[index]
-		var target: Enemy = entry.get("target") as Enemy
-		var link: MeshInstance3D = entry.get("node") as MeshInstance3D
+		var target_value: Variant = entry.get("target")
+		var link_value: Variant = entry.get("node")
+		var target: Enemy = target_value as Enemy if is_instance_valid(target_value) else null
+		var link: MeshInstance3D = link_value as MeshInstance3D if is_instance_valid(link_value) else null
 		var remaining: float = float(entry.get("remaining", 0.0)) - delta
 		if remaining <= 0.0 or not is_instance_valid(target) or target.hull <= 0.0 or not is_instance_valid(link):
 			if is_instance_valid(link):
@@ -317,7 +319,8 @@ func _on_merc_about_to_die(_enemy: Enemy) -> void:
 
 func _clear_support_links() -> void:
 	for entry: Dictionary in _support_links:
-		var link: MeshInstance3D = entry.get("node") as MeshInstance3D
+		var link_value: Variant = entry.get("node")
+		var link: MeshInstance3D = link_value as MeshInstance3D if is_instance_valid(link_value) else null
 		if is_instance_valid(link):
 			link.queue_free()
 	_support_links.clear()
