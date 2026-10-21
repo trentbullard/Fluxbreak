@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="MercBehaviorDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/merc_behavior_def.gd" id="1_behavior"]
+[ext_resource type="Resource" path="res://content/data/enemies/merc_corvette_mk1.tres" id="2_escort"]
+
+[resource]
+script = ExtResource("1_behavior")
+mode = 4
+approach_range = 210.0
+retreat_range = 270.0
+max_speed = 65.0
+steering_response = 1.2
+orbit_strength = 0.12
+attack_cooldown_sec = 2.8
+escort_child_def = ExtResource("2_escort")
+escort_interval_sec = 9.0
+escort_windup_sec = 1.4
+escort_burst_count = 2
+escort_alive_cap = 3
+escort_total_cap = 6
+escort_global_cap = 10
+escort_enemy_cap = 50
+escort_release_radius = 75.0

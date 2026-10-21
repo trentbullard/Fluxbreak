@@ -8,6 +8,6 @@
 script = ExtResource("1")
 run_id = &"merc_practice"
 display_name = "Merc Practice"
-description = "Three short authored waves teach Merc fleet roles, followed by the Contract Enforcer boss."
+description = "Five teaching waves introduce the complete Merc fleet, followed by Contract Enforcer or Vanguard Flagship."
 run_mode = 1
 stages = Array[ExtResource("2")]([ExtResource("3")])

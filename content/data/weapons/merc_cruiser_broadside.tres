@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="WeaponDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/weapon_def.gd" id="1_def"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/merc_round.tscn" id="2_round"]
+[ext_resource type="AudioStream" path="res://assets/sounds/plasma_shot.wav" id="3_sound"]
+
+[resource]
+script = ExtResource("1_def")
+weapon_id = "merc_cruiser_broadside"
+display_name = "Cruiser Locked Broadside"
+fire_rate = 4.8
+base_accuracy = 0.7
+base_range = 650
+accuracy_range_falloff = 0.2
+crit_chance = 0.0
+graze_on_hit = 0.0
+graze_on_miss = 0.0
+damage_min = 10
+damage_max = 14
+projectile_scene = ExtResource("2_round")
+shot_sound = ExtResource("3_sound")

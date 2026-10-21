@@ -55,8 +55,11 @@ static func _create_short_run(definition: PracticeFactionDef, deck: Array[WaveCa
 		return null
 	var stage: StageDef = seed_stage.duplicate(false) as StageDef
 	stage.wave_cards = []
-	# The three lessons remain ordered while their compositions vary each run.
-	for tier: int in range(1, 4):
+	# Each faction's authored lessons remain ordered while compositions vary.
+	var lesson_tiers: PackedInt32Array = seed_stage.authored_tier_caps
+	if lesson_tiers.is_empty() or lesson_tiers.size() != seed_stage.boss_wave_index - 1:
+		return null
+	for tier: int in lesson_tiers:
 		var choices: Array[WaveCard] = []
 		for card: WaveCard in deck:
 			if card.min_enemy_tier == tier:
@@ -71,6 +74,9 @@ static func _create_short_run(definition: PracticeFactionDef, deck: Array[WaveCa
 	stage.boss_pool = _copy_bosses(seed_stage.get_boss_pool(), definition.faction)
 	if stage.boss_pool.is_empty():
 		return null
+	# Choose once at launch, including seeded runs; the Director receives one
+	# boss rather than re-rolling a shared cached pool during an encounter.
+	stage.boss_pool = [stage.boss_pool[rng.randi_range(0, stage.boss_pool.size() - 1)]]
 	var run: RunDefinition = definition.short_run.duplicate(false) as RunDefinition
 	run.run_id = StringName("short_practice_%s" % definition.faction.get_faction_id())
 	run.display_name = "%s Practice" % definition.faction.get_display_name_or_default()
@@ -105,7 +111,8 @@ static func _create_main_run(definition: PracticeFactionDef, deck: Array[WaveCar
 		stage.description = "Campaign stage %d against %s." % [index + 1, faction_name]
 		stage.combat_hint = definition.combat_hint
 		stage.boss_faction = definition.faction
-		stage.boss_pool = _copy_bosses(boss_pool, definition.faction)
+		var stage_bosses: Array[EnemyBossDef] = definition.final_boss_pool if index == template.get_stage_count() - 1 and not definition.final_boss_pool.is_empty() else boss_pool
+		stage.boss_pool = _copy_bosses(stage_bosses, definition.faction)
 		if stage.boss_pool.is_empty():
 			return null
 		stage.ordered_wave_cards = false
@@ -116,7 +123,7 @@ static func _create_main_run(definition: PracticeFactionDef, deck: Array[WaveCar
 			# Short lessons suppress salvage and pressure reinforcements. The
 			# longer run retains its stage's existing economy and pressure tuning.
 			if not pacing_cards.is_empty():
-				var pacing: WaveCard = pacing_cards[int(card_index / 2) % pacing_cards.size()]
+				var pacing: WaveCard = pacing_cards[clampi(card_copy.min_enemy_tier - 1, 0, pacing_cards.size() - 1)]
 				card_copy.in_wave_target_budget_scale = pacing.in_wave_target_budget_scale
 				card_copy.downtime_target_point_budget = pacing.downtime_target_point_budget
 				card_copy.pressure_enemy_point_budget = pacing.pressure_enemy_point_budget

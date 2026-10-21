@@ -23,7 +23,7 @@ foreach ($folder in @('assets', 'content', 'scenes', 'scripts', 'systems', '.god
 }
 Write-Output "Isolated validation project: $validationRoot"
 
-foreach ($scene in @('merc_regular_checks', 'merc_attack_checks', 'merc_practice_checks')) {
+foreach ($scene in @('merc_regular_checks', 'merc_attack_checks', 'merc_capital_checks', 'merc_flagship_checks', 'merc_practice_checks')) {
     & $GodotExe --headless --path $validationRoot --fixed-fps 60 --scene "res://scripts/tests/$scene.tscn"
     if ($LASTEXITCODE -ne 0) { throw "Merc check failed: $scene" }
 }

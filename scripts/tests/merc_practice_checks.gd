@@ -43,10 +43,10 @@ func _run_checks() -> void:
 	var buyer: BudgetBuyer = _world.get_node("StageRoot/BudgetBuyer") as BudgetBuyer
 	var run: RunDefinition = load("res://content/data/runs/merc_practice.tres") as RunDefinition
 	var stage: StageDef = run.get_stage(0)
-	_check(stage.get_boss_pool().size() == 1, "Practice must have one valid Merc boss.")
+	_check(stage.get_boss_pool().size() == 2, "Practice must offer both valid Merc bosses.")
 	_check(stage.completion_flow == StageDef.CompletionFlow.BOSS_FINALE, "Practice must end with boss victory.")
-	var expected_ids: Array[String] = ["merc_corvette_mk1", "merc_frigate_mk1", "merc_destroyer_mk1"]
-	for wave_offset in range(3):
+	var expected_ids: Array[String] = ["merc_corvette_mk1", "merc_frigate_mk1", "merc_destroyer_mk1", "merc_cruiser_mk1", "merc_carrier_mk1"]
+	for wave_offset in range(expected_ids.size()):
 		for sample in range(12):
 			# Each sample represents a fresh teaching wave, rather than asking the
 			# buyer's anti-repetition history to repeat the same primary forever.
@@ -74,28 +74,36 @@ func _run_checks() -> void:
 	_check(is_equal_approx(_director._get_wave_timeout_sec(), 22.0), "Practice pacing did not override wave timeout.")
 	_check(is_equal_approx(_director._get_downtime_sec(), 5.0), "Practice pacing did not override downtime.")
 	var elapsed: float = 0.0
-	while not _director.is_boss_wave_active() and elapsed < 125.0:
+	while not _director.is_boss_wave_active() and elapsed < 190.0:
 		await get_tree().process_frame
 		elapsed += get_process_delta_time()
 	_check(_director.is_boss_wave_active(), "Practice did not reach its boss within the short encounter window.")
-	_check(_observed_waves == [1, 2, 3, 4], "Practice did not run all three teaching waves before its boss.")
-	var boss: MercEnforcer = _director._active_boss_instance as MercEnforcer
+	_check(_observed_waves == [1, 2, 3, 4, 5, 6], "Practice did not run all five teaching waves before its boss.")
+	var boss: Enemy = _director._active_boss_instance
 	if boss != null:
 		for target: Node in get_tree().get_nodes_in_group("targets"):
 			if target is Enemy:
-				_check(target == boss, "Normal wave enemies overlapped the boss handoff.")
+				var is_current_wing: bool = boss is MercFlagship and int(target.get_meta(MercEscortWing.OWNER_META, 0)) == boss.get_instance_id() and target.is_in_group(MercEscortWing.ESCORT_GROUP)
+				_check(target == boss or is_current_wing, "Normal wave enemies overlapped the boss handoff.")
 		boss.global_position = _ship.global_position + Vector3(0, 0, -340)
 		boss.explosion_scene = null
 		boss.hull = boss.eff_max_hull * 0.5
 		await get_tree().process_frame
 		await get_tree().process_frame
-		_check(boss.is_in_second_phase(), "Boss did not enter its second phase.")
-		var escort_count: int = 0
-		for enemy: Node in get_tree().get_nodes_in_group("faction_mercs"):
-			if enemy.get_meta("enforcer_escort", false):
-				escort_count += 1
-		_check(escort_count == 1, "Boss must call exactly one accounted shield escort.")
-		_check(int(_spawner.get_alive_counts().get("enemies", 0)) == 2, "Spawner did not account for boss and escort.")
+		_check(int(boss.get_meta("merc_phase", 0)) == 2, "Boss did not enter its second phase.")
+		if boss is MercEnforcer:
+			var escort_count: int = 0
+			for enemy: Node in get_tree().get_nodes_in_group("faction_mercs"):
+				if enemy.get_meta("enforcer_escort", false):
+					escort_count += 1
+			_check(escort_count == 1, "Enforcer must call exactly one accounted shield escort.")
+			_check(int(_spawner.get_alive_counts().get("enemies", 0)) == 2, "Spawner did not account for Enforcer and escort.")
+		elif boss is MercFlagship:
+			var flagship: MercFlagship = boss as MercFlagship
+			_check(flagship.get_living_escort_count() > 0 and flagship.get_living_escort_count() <= 3, "Flagship must deploy a bounded escort wing.")
+			_check(int(_spawner.get_alive_counts().get("enemies", 0)) == flagship.get_living_escort_count() + 1, "Spawner did not account for Flagship and its wing.")
+		else:
+			_check(false, "Practice spawned an unsupported Merc boss.")
 		var saw_warning: bool = false
 		for frame in range(900):
 			await get_tree().process_frame
@@ -109,10 +117,15 @@ func _run_checks() -> void:
 		_check(_completed_count == 1, "Boss defeat must complete the practice run exactly once.")
 		_check(_spawner.get_alive_counts().get("enemies", -1) == 0, "Boss victory left an enemy or escort alive.")
 		_check(get_tree().get_nodes_in_group("enemy_attack_telegraphs").is_empty(), "Boss victory left an attack warning alive.")
+		_check(get_tree().get_nodes_in_group("merc_escorts").is_empty(), "Boss victory left a summoned wing alive.")
 	else:
-		_check(false, "Stage did not spawn the Contract Enforcer actor.")
+		_check(false, "Stage did not spawn a Merc boss actor.")
 	# Let the real victory timer return to the menu, then prove a fresh launch.
-	await get_tree().create_timer(GameFlow.VICTORY_RETURN_DELAY_SEC + 0.25, true).timeout
+	for frame_index in range(int(ceil((GameFlow.VICTORY_RETURN_DELAY_SEC + 1.0) * 60.0))):
+		await get_tree().process_frame
+		if get_tree().current_scene != null and get_tree().current_scene != _world:
+			break
+	await get_tree().process_frame
 	var returned_world: Node = get_tree().current_scene
 	_check(returned_world != null and returned_world != _world, "Victory did not return to a fresh menu.")
 	if returned_world != null and returned_world.has_node("MainMenuOverlay"):
@@ -141,10 +154,10 @@ func _mute_test_menu_music(node: Node) -> void:
 
 func _on_wave_started(index: int, _enemy_budget: int, _target_budget: int) -> void:
 	_observed_waves.append(index)
-	if index <= 3:
+	if index <= 5:
 		var stage: StageDef = GameFlow.get_current_stage()
 		_check(_director._active_card == stage.wave_cards[index - 1], "Teaching cards played out of order.")
-		var expected_primary: Array[String] = ["merc_corvette_mk1", "merc_frigate_mk1", "merc_destroyer_mk1"]
+		var expected_primary: Array[String] = ["merc_corvette_mk1", "merc_frigate_mk1", "merc_destroyer_mk1", "merc_cruiser_mk1", "merc_carrier_mk1"]
 		var plan: Dictionary = _director.get_debug_snapshot().get("wave_plan", {})
 		_check(str(plan.get("primary_enemy_id", "")) == expected_primary[index - 1], "Live wave did not choose its authored primary role.")
 

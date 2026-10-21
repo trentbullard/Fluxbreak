@@ -5,6 +5,7 @@ enum CorvetteState { APPROACH, BURST, RETREAT }
 
 const SHIELD_RECIPIENT_COOLDOWN: StringName = &"merc_shield_pulse_ready_msec"
 const SUPPORT_LINK_DURATION_SEC: float = 0.55
+const CAPITAL_ATTACK_COLOR: Color = Color(1.0, 0.60, 0.16, 0.9)
 
 var _behavior: MercBehaviorDef = MercBehaviorDef.new()
 var _controlled_turrets: Array[EnemyTurret] = []
@@ -19,8 +20,18 @@ var _escort: Enemy = null
 var _active_attack: EnemyAttackTelegraph = null
 var _support_links: Array[Dictionary] = []
 var _orbit_direction: float = 1.0
+var _broadside_side: float = 1.0
+var _broadside_shots_left: int = 0
+var _broadside_interval_left: float = 0.0
+var _broadside_recovery_left: float = 0.0
+var _escort_wing: MercEscortWing = null
+var _escort_interval_left: float = 9.0
+var _escort_windup_left: float = 0.0
+var _escort_label: Label3D = null
 
 func configure_enemy(d: EnemyDef, spawn_context: EnemySpawnContext = null) -> void:
+	_cancel_charge()
+	_clear_escort_wing()
 	super.configure_enemy(d, spawn_context)
 	var merc_def: MercEnemyDef = d as MercEnemyDef
 	if merc_def != null and merc_def.behavior != null:
@@ -29,23 +40,52 @@ func configure_enemy(d: EnemyDef, spawn_context: EnemySpawnContext = null) -> vo
 		_behavior = MercBehaviorDef.new()
 	set_meta(&"merc_mode", _behavior.mode)
 	_collect_controlled_turrets()
+	_broadside_shots_left = 0
+	_broadside_interval_left = 0.0
+	_broadside_recovery_left = 0.0
+	_escort_interval_left = maxf(_behavior.escort_interval_sec, 1.0)
+	_escort_windup_left = 0.0
+	if _behavior.mode == MercBehaviorDef.Mode.CARRIER and _behavior.escort_child_def != null and not _spawn_context.is_summoned:
+		_escort_wing = MercEscortWing.new()
+		_escort_wing.name = "EscortWing"
+		add_child(_escort_wing)
+		_escort_wing.setup(self, _behavior.escort_child_def, _behavior.escort_alive_cap, _behavior.escort_total_cap, _behavior.escort_global_cap, _behavior.escort_enemy_cap, _behavior.escort_release_radius)
+	if is_instance_valid(_escort_label):
+		_escort_label.visible = false
 
 func _ready() -> void:
 	super._ready()
 	_collect_controlled_turrets()
 	_attack_cooldown_left = randf_range(0.7, 1.4)
 	_orbit_direction = -1.0 if get_instance_id() % 2 == 0 else 1.0
+	_broadside_side = _orbit_direction
+	_escort_label = Label3D.new()
+	_escort_label.name = "EscortLaunchCountdown"
+	_escort_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_escort_label.no_depth_test = true
+	_escort_label.font_size = 28
+	_escort_label.outline_size = 6
+	_escort_label.pixel_size = 0.3
+	_escort_label.position = Vector3.UP * (label_height + 22.0)
+	_escort_label.modulate = CAPITAL_ATTACK_COLOR
+	_escort_label.visible = false
+	add_child(_escort_label)
 	about_to_die.connect(_on_merc_about_to_die)
 
 func _physics_process(delta: float) -> void:
 	if _dead:
 		return
 	_update_support_links(delta)
-	if player_ship == null or not is_instance_valid(player_ship) or not player_ship.visible:
+	if player_ship == null or not is_instance_valid(player_ship) or not player_ship.visible or not player_ship.is_alive():
 		_cancel_charge()
+		_broadside_shots_left = 0
+		_escort_windup_left = 0.0
+		if is_instance_valid(_escort_label):
+			_escort_label.visible = false
 		return
 	_attack_cooldown_left = maxf(_attack_cooldown_left - delta, 0.0)
-	_face_target(player_ship.global_position)
+	if _behavior.mode != MercBehaviorDef.Mode.CRUISER:
+		_face_target(player_ship.global_position)
 	match _behavior.mode:
 		MercBehaviorDef.Mode.CORVETTE:
 			_tick_corvette(delta)
@@ -53,6 +93,10 @@ func _physics_process(delta: float) -> void:
 			_tick_frigate(delta)
 		MercBehaviorDef.Mode.DESTROYER:
 			_tick_destroyer()
+		MercBehaviorDef.Mode.CRUISER:
+			_tick_cruiser(delta)
+		MercBehaviorDef.Mode.CARRIER:
+			_tick_carrier(delta)
 
 func get_tactical_state() -> String:
 	match _behavior.mode:
@@ -60,6 +104,16 @@ func get_tactical_state() -> String:
 			return "Shield escort"
 		MercBehaviorDef.Mode.DESTROYER:
 			return "Cannon charging" if is_instance_valid(_active_attack) else "Cannon recovery"
+		MercBehaviorDef.Mode.CRUISER:
+			if _broadside_recovery_left > 0.0:
+				return "Exposed broadside turn"
+			return "Port broadside" if _broadside_side < 0.0 else "Starboard broadside"
+		MercBehaviorDef.Mode.CARRIER:
+			if _escort_windup_left > 0.0:
+				return "Escort launch %.1f" % _escort_windup_left
+			if is_instance_valid(_escort_wing) and _escort_wing.get_total_spawned() >= _behavior.escort_total_cap:
+				return "Escort reserve exhausted"
+			return "Carrier formation anchor"
 		_:
 			match _corvette_state:
 				CorvetteState.BURST:
@@ -133,6 +187,101 @@ func _tick_destroyer() -> void:
 	encounter_root.add_child(_active_attack)
 	_active_attack.resolved.connect(_on_charge_resolved)
 	_active_attack.start_attack(self, player_ship, turret, maxf(_behavior.charge_windup_sec, 0.2), maxf(_behavior.charge_radius, 1.0), true)
+
+func _tick_cruiser(delta: float) -> void:
+	_face_broadside(delta)
+	if is_instance_valid(_active_attack):
+		_steer_to_velocity(Vector3.ZERO)
+		return
+	if _broadside_recovery_left > 0.0:
+		_broadside_recovery_left = maxf(_broadside_recovery_left - delta, 0.0)
+		# The opposite flank becomes visible during a slow, silent recovery turn.
+		_steer_in_band(player_ship.global_position, _behavior.approach_range, _behavior.retreat_range)
+		return
+	if _broadside_shots_left > 0:
+		_steer_to_velocity(Vector3.ZERO)
+		_broadside_interval_left = maxf(_broadside_interval_left - delta, 0.0)
+		if _broadside_interval_left <= 0.0:
+			_start_broadside_round()
+		return
+	_steer_in_band(player_ship.global_position, _behavior.approach_range, _behavior.retreat_range)
+	if _attack_cooldown_left <= 0.0 and _has_target_in_weapon_range():
+		_broadside_shots_left = clampi(_behavior.broadside_shots, 1, 6)
+		_start_broadside_round()
+
+func _face_broadside(delta: float) -> void:
+	var to_player: Vector3 = player_ship.global_position - global_position
+	var tangent: Vector3 = to_player.normalized().cross(Vector3.UP) * _broadside_side
+	if tangent.length_squared() > 0.001:
+		var desired_basis: Basis = global_transform.looking_at(global_position + tangent * 100.0, Vector3.UP).basis
+		global_basis = global_basis.slerp(desired_basis, clampf(delta * maxf(_behavior.steering_response, 0.1), 0.0, 1.0))
+
+func _start_broadside_round() -> void:
+	if _dead or not _has_target_in_weapon_range():
+		_finish_broadside()
+		return
+	var turret: EnemyTurret = _first_valid_turret()
+	var encounter_root: Node = get_tree().current_scene
+	if turret == null or encounter_root == null:
+		_finish_broadside()
+		return
+	_active_attack = EnemyAttackTelegraph.new()
+	var side_name: String = "PORT" if _broadside_side < 0.0 else "STARBOARD"
+	_active_attack.set_warning_style(side_name + " BROADSIDE", CAPITAL_ATTACK_COLOR)
+	encounter_root.add_child(_active_attack)
+	_active_attack.resolved.connect(_on_broadside_resolved)
+	_active_attack.start_attack(self, player_ship, turret, maxf(_behavior.broadside_windup_sec, 0.3), maxf(_behavior.broadside_radius, 1.0), true)
+
+func _on_broadside_resolved(_hit: bool) -> void:
+	_active_attack = null
+	_broadside_shots_left = maxi(_broadside_shots_left - 1, 0)
+	if _broadside_shots_left > 0:
+		_broadside_interval_left = maxf(_behavior.broadside_interval_sec, 0.1)
+	else:
+		_finish_broadside()
+
+func _finish_broadside() -> void:
+	_broadside_shots_left = 0
+	_broadside_interval_left = 0.0
+	_broadside_recovery_left = maxf(_behavior.broadside_recovery_sec, 0.3)
+	_attack_cooldown_left = maxf(_behavior.attack_cooldown_sec, _broadside_recovery_left)
+	_broadside_side *= -1.0
+	_orbit_direction = _broadside_side
+
+func _tick_carrier(delta: float) -> void:
+	if _escort_windup_left > 0.0:
+		_steer_to_velocity(Vector3.ZERO)
+		_escort_windup_left = maxf(_escort_windup_left - delta, 0.0)
+		if is_instance_valid(_escort_label):
+			_escort_label.text = "ESCORT LAUNCH  %.1f" % _escort_windup_left
+		if _escort_windup_left <= 0.0:
+			_release_escorts()
+		return
+	_steer_in_band(player_ship.global_position, _behavior.approach_range, _behavior.retreat_range)
+	_escort_interval_left = maxf(_escort_interval_left - delta, 0.0)
+	if _escort_interval_left <= 0.0 and _can_release_escorts():
+		_escort_windup_left = maxf(_behavior.escort_windup_sec, 0.4)
+		if is_instance_valid(_escort_label):
+			_escort_label.text = "ESCORT LAUNCH  %.1f" % _escort_windup_left
+			_escort_label.visible = true
+		return
+	if _attack_cooldown_left <= 0.0 and _fire_controlled_shot():
+		_attack_cooldown_left = maxf(_behavior.attack_cooldown_sec, 0.1)
+
+func _can_release_escorts() -> bool:
+	return is_instance_valid(_escort_wing) and _escort_wing.get_living_count() < _behavior.escort_alive_cap and _escort_wing.get_total_spawned() < _behavior.escort_total_cap
+
+func _release_escorts() -> void:
+	if is_instance_valid(_escort_wing):
+		var released: int = _escort_wing.spawn_escorts(maxi(_behavior.escort_burst_count, 1))
+		if released > 0:
+			EffectsBus.show_float(global_position, "ESCORT WING +%d" % released, CAPITAL_ATTACK_COLOR)
+	_escort_interval_left = maxf(_behavior.escort_interval_sec, 1.0)
+	_escort_windup_left = 0.0
+	# The launch is a vulnerable pause, followed by a quiet weapon recovery.
+	_attack_cooldown_left = maxf(_behavior.attack_cooldown_sec, 0.1)
+	if is_instance_valid(_escort_label):
+		_escort_label.visible = false
 
 func _steer_in_band(target_position: Vector3, inner_range: float, outer_range: float) -> void:
 	var to_target: Vector3 = target_position - global_position
@@ -316,6 +465,16 @@ func _cancel_charge() -> void:
 func _on_merc_about_to_die(_enemy: Enemy) -> void:
 	_cancel_charge()
 	_clear_support_links()
+	_clear_escort_wing()
+	_escort_windup_left = 0.0
+	if is_instance_valid(_escort_label):
+		_escort_label.visible = false
+
+func _clear_escort_wing() -> void:
+	if is_instance_valid(_escort_wing):
+		_escort_wing.clear_escorts()
+		_escort_wing.queue_free()
+	_escort_wing = null
 
 func _clear_support_links() -> void:
 	for entry: Dictionary in _support_links:
@@ -328,3 +487,4 @@ func _clear_support_links() -> void:
 func _exit_tree() -> void:
 	_cancel_charge()
 	_clear_support_links()
+	_clear_escort_wing()

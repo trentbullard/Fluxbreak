@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="MercFlagshipDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/merc_flagship_def.gd" id="1_def"]
+[ext_resource type="Resource" path="res://content/data/factions/mercs.tres" id="2_faction"]
+[ext_resource type="Resource" path="res://content/data/enemy_roles/spawner.tres" id="3_role"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/merc_flagship.tscn" id="4_actor"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/merc_vanguard_flagship_mk1.tscn" id="5_model"]
+[ext_resource type="Resource" path="res://content/data/boss_movement/merc_flagship_movement.tres" id="6_movement"]
+[ext_resource type="Resource" path="res://content/data/enemies/merc_corvette_mk1.tres" id="7_escort"]
+[ext_resource type="Resource" path="res://content/data/weapons/merc_flagship_cannon.tres" id="8_weapon"]
+
+[resource]
+script = ExtResource("1_def")
+boss_description = "The Merc fleet's command carrier marks heavy broadside lanes and fixed siege salvos. Finite Corvette wings defend its shield network; eliminate them to stop its shield support and use the recovery windows to attack the flagship."
+movement_def = ExtResource("6_movement")
+initial_delay_sec = 3.0
+broadside_windup_sec = 1.8
+salvo_windup_sec = 1.6
+broadside_radius = 40.0
+salvo_radius = 65.0
+recovery_sec = 2.3
+cadence_sec = 1.8
+phase_two_hull_threshold = 0.7
+phase_three_hull_threshold = 0.35
+phase_two_cadence_multiplier = 0.85
+phase_three_cadence_multiplier = 0.7
+escort_def = ExtResource("7_escort")
+escort_offset = 150.0
+escorts_per_wing = 2
+escort_living_cap = 3
+escort_lifetime_cap = 6
+escort_shield_interval_sec = 12.0
+escort_shield_restore = 18.0
+escort_shield_radius = 480.0
+id = "merc_vanguard_flagship_mk1"
+display_name = "Vanguard Flagship"
+faction = ExtResource("2_faction")
+role = ExtResource("3_role")
+tier = 5
+threat_cost = 30
+bounty_scrap = 50
+can_be_elite = false
+score_on_kill = 1200
+max_hull = 2400.0
+max_shield = 400.0
+shield_regen = 0.5
+evasion = 0.01
+thrust = 70.0
+weapon = ExtResource("8_weapon")
+actor_scene = ExtResource("4_actor")
+model_scene = ExtResource("5_model")

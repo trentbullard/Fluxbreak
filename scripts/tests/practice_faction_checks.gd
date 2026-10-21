@@ -57,18 +57,22 @@ func _check_factory_runs() -> void:
 		var faction_id: StringName = faction_def.faction.get_faction_id()
 		_check(not known_ids.has(faction_id), "Practice registry contains a duplicate faction.")
 		known_ids[faction_id] = true
-		_check(faction_def.wave_cards.size() == 6, "%s must expose six wave cards." % faction_id)
-		var tier_counts: Dictionary = {1: 0, 2: 0, 3: 0}
+		var seed_stage: StageDef = faction_def.short_run.get_stage(0)
+		var lesson_tiers: PackedInt32Array = seed_stage.authored_tier_caps
+		_check(lesson_tiers.size() == (5 if faction_id == &"mercs" else 3), "Practice must teach each available faction archetype.")
+		_check(faction_def.wave_cards.size() == lesson_tiers.size() * 2, "%s must expose two wave cards per lesson tier." % faction_id)
+		var tier_counts: Dictionary = {}
 		for card: WaveCard in faction_def.wave_cards:
 			_check(card != null and card.get_faction_bias_id() == faction_id, "Registry deck mixes factions.")
 			if card != null:
 				tier_counts[card.min_enemy_tier] = int(tier_counts.get(card.min_enemy_tier, 0)) + 1
-		_check(tier_counts == {1: 2, 2: 2, 3: 2}, "%s needs two cards for each introductory tier." % faction_id)
-		var seed_stage: StageDef = faction_def.short_run.get_stage(0)
+		for tier: int in lesson_tiers:
+			_check(int(tier_counts.get(tier, 0)) == 2, "%s needs two cards for tier %d." % [faction_id, tier])
 		var original_seed_id: StringName = seed_stage.stage_id
 		var original_seed_cards: Array[WaveCard] = seed_stage.wave_cards.duplicate()
 		var original_seed_hint: String = seed_stage.combat_hint
 		var seen_cards: Dictionary = {}
+		var seen_bosses: Dictionary = {}
 		for seed_index in range(32):
 			var seeded_rng: RandomNumberGenerator = RandomNumberGenerator.new()
 			seeded_rng.seed = seed_index + 71
@@ -80,23 +84,26 @@ func _check_factory_runs() -> void:
 			_check(short_run.get_stage_count() == 1, "Short practice must have exactly one stage.")
 			var short_stage: StageDef = short_run.get_stage(0)
 			_check(short_stage != seed_stage, "Short practice must clone the cached stage.")
-			_check(short_stage.ordered_wave_cards and short_stage.wave_cards.size() == 3, "Short practice must resolve three ordered lessons at launch.")
-			_check(short_stage.boss_wave_index == 4 and short_stage.should_end_run_on_boss_defeat(), "Short practice must end at its fourth-wave boss.")
-			_check(short_stage.authored_tier_caps == PackedInt32Array([1, 2, 3]), "Short practice must retain introductory tier caps.")
+			_check(short_stage.ordered_wave_cards and short_stage.wave_cards.size() == lesson_tiers.size(), "Practice must resolve its authored lessons at launch.")
+			_check(short_stage.boss_wave_index == lesson_tiers.size() + 1 and short_stage.should_end_run_on_boss_defeat(), "Practice must end with a boss after its lessons.")
+			_check(short_stage.authored_tier_caps == lesson_tiers, "Practice must retain its faction's introductory tier caps.")
 			_check(is_equal_approx(short_stage.wave_timeout_override_sec, 22.0) and is_equal_approx(short_stage.downtime_override_sec, 5.0), "Short practice must retain 22/5 pacing.")
 			for card_index in short_stage.wave_cards.size():
 				var drawn_card: WaveCard = short_stage.wave_cards[card_index]
-				_check(drawn_card.min_enemy_tier == card_index + 1, "A short lesson skips its enemy tier.")
+				_check(drawn_card.min_enemy_tier == lesson_tiers[card_index], "A short lesson skips its enemy tier.")
 				_check(drawn_card.get_faction_bias_id() == faction_id, "A short lesson switches faction.")
 				if seed_index == 0:
 					_check(is_zero_approx(drawn_card.in_wave_target_budget_scale) and drawn_card.downtime_target_point_budget == 0, "Short lessons must retain their brief, salvage-free pacing.")
 					_check(not short_stage.pressure_reinforcements_enabled and not drawn_card.allow_pressure_spikes and drawn_card.pressure_enemy_point_budget == 0 and drawn_card.pressure_target_point_budget == 0, "Short lessons must suppress pressure reinforcements.")
 				seen_cards[drawn_card.get_card_id()] = true
 			_check_stage_bosses(short_stage, faction_id)
+			_check(short_stage.get_boss_pool().size() == 1, "Practice must lock one boss when the run is created.")
+			seen_bosses[short_stage.get_boss_pool()[0].id] = true
 			# Mutating this run must not change its seed or subsequent factory runs.
 			short_stage.combat_hint = "isolated runtime hint"
 			short_stage.wave_cards.clear()
-		_check(seen_cards.size() == 6, "Seeded short encounters did not cover both variants of all three lessons.")
+		_check(seen_cards.size() == faction_def.wave_cards.size(), "Seeded encounters did not cover every lesson variant.")
+		_check(seen_bosses.size() == seed_stage.get_boss_pool().size(), "Seeded encounters did not cover the faction's Practice boss pool.")
 		_check(seed_stage.stage_id == original_seed_id and seed_stage.wave_cards == original_seed_cards and seed_stage.combat_hint == original_seed_hint, "Factory mutated a cached short-stage resource.")
 		var main_run: RunDefinition = PracticeRunFactory.create_run(faction_id, false)
 		_check(main_run != null and main_run.get_stage_count() == 2, "Main Practice must retain two stages.")
@@ -105,10 +112,13 @@ func _check_factory_runs() -> void:
 		_check(main_run.enemy_faction == faction_def.faction, "Main Practice lost its selected faction.")
 		var first_stage: StageDef = main_run.get_stage(0)
 		var final_stage: StageDef = main_run.get_stage(1)
+		if faction_id == &"mercs":
+			_check(first_stage.get_boss_pool().size() == 1 and first_stage.get_boss_pool()[0].id == "merc_contract_enforcer_mk1", "Merc Campaign must use Contract Enforcer at its gateway.")
+			_check(final_stage.get_boss_pool().size() == 1 and final_stage.get_boss_pool()[0].id == "merc_vanguard_flagship_mk1", "Merc Campaign must finish with Vanguard Flagship.")
 		_check(first_stage.should_open_gateway_on_boss_defeat() and first_stage.next_stage_id == final_stage.get_stage_id(), "Main Practice must connect its first boss gateway to the selected final stage.")
 		_check(final_stage.should_end_run_on_boss_defeat(), "Main Practice must finish after its final boss.")
 		for stage: StageDef in main_run.get_stages():
-			_check(not stage.ordered_wave_cards and stage.get_wave_cards().size() == 6, "Main Practice must use all six weighted cards.")
+			_check(not stage.ordered_wave_cards and stage.get_wave_cards().size() == faction_def.wave_cards.size(), "Campaign must use the full faction deck.")
 			_check(stage.boss_wave_index == 30, "Main Practice must retain its 30-wave stage length.")
 			_check(stage.wave_timeout_override_sec <= 0.0 and stage.downtime_override_sec < 0.0, "Main Practice must retain normal wave pacing.")
 			_check(stage.pressure_reinforcements_enabled, "Main Practice must retain regular pressure reinforcements.")
@@ -184,6 +194,7 @@ func _check_selected_faction(faction_def: PracticeFactionDef, short_practice: bo
 	_check_deck_budgets(faction_def, buyer, catalog)
 	if not short_practice:
 		_check_card_selection(director)
+		_check_authored_deck_selection(director, faction_def)
 	for stage_index in active_run.get_stage_count():
 		var stage: StageDef = GameFlow.get_current_stage()
 		_check(stage == active_run.get_stage(stage_index), "Gateway selected a stage outside the active cloned run.")
@@ -243,7 +254,9 @@ func _check_deck_budgets(faction_def: PracticeFactionDef, buyer: BudgetBuyer, ca
 	var faction_id: StringName = faction_def.faction.get_faction_id()
 	for card: WaveCard in faction_def.wave_cards:
 		var lesson_tier: int = card.min_enemy_tier
-		var budget: int = [4, 8, 12][lesson_tier - 1]
+		var lesson_stage: StageDef = faction_def.short_run.get_stage(0)
+		var lesson_index: int = lesson_stage.authored_tier_caps.find(lesson_tier)
+		var budget: int = lesson_stage.authored_enemy_budgets[lesson_index]
 		var primaries: Array[EnemyDef] = catalog.get_pool(faction_def.faction, card.primary_role_bias, lesson_tier)
 		_check(not catalog.get_affordable_pool(primaries, budget).is_empty(), "A wave card cannot afford its named primary at its introductory budget.")
 		for sample_index in range(12):
@@ -293,7 +306,8 @@ func _check_card_selection(director: WaveDirector) -> void:
 	_check(director._choose_card() == early_card, "Director ignored the last card's repeat cooldown.")
 	for wave_index in range(1, stage.boss_wave_index):
 		director._wave_index = wave_index
-		_check(director._get_max_enemy_tier() <= (5 if GameFlow.get_run_faction().get_faction_id() == &"machines" else 3), "Main Practice can request unimplemented enemy tiers.")
+		var faction_id: StringName = GameFlow.get_run_faction().get_faction_id()
+		_check(director._get_max_enemy_tier() <= (5 if faction_id == &"machines" or faction_id == &"mercs" else 3), "Campaign can request unimplemented enemy tiers.")
 	stage.wave_cards.assign(original_cards)
 	director._wave_index = 0
 	director._pending_card = null
@@ -308,8 +322,26 @@ func _check_live_enemies(faction_id: StringName) -> void:
 			_check(enemy.def != null and enemy.def.get_faction_id() == faction_id, "A live wave spawned another faction.")
 	_check(count > 0, "Actual opening wave failed to spawn enemies.")
 
+func _check_authored_deck_selection(director: WaveDirector, faction_def: PracticeFactionDef) -> void:
+	var stage: StageDef = GameFlow.get_current_stage()
+	var seen_cards: Dictionary = {}
+	director._rng.seed = 74192
+	director._state = RunState.State.DOWNTIME
+	for incoming_wave: int in range(1, stage.boss_wave_index):
+		director._wave_index = incoming_wave - 1
+		for sample_index: int in range(8):
+			var card: WaveCard = director._choose_card()
+			_check(card != null and card.get_faction_bias_id() == faction_def.faction.get_faction_id(), "The live Campaign deck selected another faction.")
+			_check(card.min_enemy_tier <= stage.authored_tier_caps[incoming_wave - 1], "A Campaign composition bypassed its tier unlock.")
+			seen_cards[card.get_card_id()] = true
+			director._remember_card(card)
+	_check(seen_cards.size() == faction_def.wave_cards.size(), "A seeded Campaign selection never reached an authored card.")
+	director._wave_index = 0
+	director._recent_card_ids.clear()
+	director._pending_card = null
+
 func _check_no_stale_abilities() -> void:
-	for group_name: String in ["bug_brood", "grey_tethers", "grey_displacements", "enemy_attack_telegraphs"]:
+	for group_name: String in ["bug_brood", "grey_tethers", "grey_displacements", "enemy_attack_telegraphs", "merc_escorts"]:
 		_check(get_tree().get_nodes_in_group(group_name).is_empty(), "Stage handoff left stale %s." % group_name)
 	_check(is_equal_approx(_ship.get_movement_slow_multiplier(), 1.0), "Stage handoff left a faction status on the player.")
 

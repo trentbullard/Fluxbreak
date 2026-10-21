@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="MercBehaviorDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/merc_behavior_def.gd" id="1_behavior"]
+
+[resource]
+script = ExtResource("1_behavior")
+mode = 3
+approach_range = 250.0
+retreat_range = 290.0
+max_speed = 80.0
+steering_response = 1.4
+orbit_strength = 0.18
+attack_cooldown_sec = 4.8
+broadside_windup_sec = 1.1
+broadside_radius = 24.0
+broadside_shots = 3
+broadside_interval_sec = 0.35
+broadside_recovery_sec = 2.0

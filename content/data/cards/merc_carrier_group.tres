@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="WaveCard" format=3]
+
+[ext_resource type="Script" path="res://content/defs/wave_card.gd" id="1"]
+[ext_resource type="Resource" path="res://content/data/factions/mercs.tres" id="2"]
+[ext_resource type="Resource" path="res://content/data/enemy_roles/spawner.tres" id="3"]
+[ext_resource type="Resource" path="res://content/data/enemy_roles/bruiser.tres" id="4"]
+[ext_resource type="Resource" path="res://content/data/enemy_roles/support.tres" id="5"]
+
+[resource]
+script = ExtResource("1")
+card_id = "merc_carrier_group"
+min_enemy_tier = 5
+display_name = "Carrier Group"
+faction_bias = ExtResource("2")
+primary_role_bias = ExtResource("3")
+secondary_role_bias = ExtResource("4")
+support_role_bias = ExtResource("5")
+primary_budget_share = 0.5
+secondary_budget_share = 0.3
+support_budget_share = 0.2
+max_primary_budget_share = 0.6
+allow_swarm_primary = false
+allow_pressure_spikes = false
+pressure_enemy_point_budget = 0
+downtime_target_point_budget = 0
+in_wave_target_budget_scale = 0.0
+package_count_min = 3
+package_count_max = 3
+batch_size_min = 1
+batch_size_max = 2
+inter_batch_sec = 0.7
+tags = Array[String](["mercs", "capital", "spawner"])
+

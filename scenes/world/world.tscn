@@ -60,6 +60,8 @@
 [ext_resource type="Resource" path="res://content/data/enemies/merc_corvette_mk1.tres" id="merc_corvette"]
 [ext_resource type="Resource" path="res://content/data/enemies/merc_frigate_mk1.tres" id="merc_frigate"]
 [ext_resource type="Resource" path="res://content/data/enemies/merc_destroyer_mk1.tres" id="merc_destroyer"]
+[ext_resource type="Resource" path="res://content/data/enemies/merc_cruiser_mk1.tres" id="merc_cruiser"]
+[ext_resource type="Resource" path="res://content/data/enemies/merc_carrier_mk1.tres" id="merc_carrier"]
 [ext_resource type="Resource" path="res://content/data/enemies/bug_sporeling_mk1.tres" id="bug_sporeling"]
 [ext_resource type="Resource" path="res://content/data/enemies/bug_carapace_mk1.tres" id="bug_carapace"]
 [ext_resource type="Resource" path="res://content/data/enemies/bug_broodmother_mk1.tres" id="bug_broodmother"]
@@ -247,7 +249,7 @@ scaling_def = ExtResource("56_scalingres")
 
 [node name="EnemyCatalog" type="Node" parent="StageRoot" unique_id=2145914352]
 script = ExtResource("10_6hctx")
-enemies = Array[ExtResource("13_jyr8v")]([ExtResource("14_5o5dd"), ExtResource("15_d0ajt"), ExtResource("16_jyr8v"), ExtResource("18_4jq4u"), ExtResource("19_sar2w"), ExtResource("merc_corvette"), ExtResource("merc_frigate"), ExtResource("merc_destroyer"), ExtResource("bug_sporeling"), ExtResource("bug_carapace"), ExtResource("bug_broodmother"), ExtResource("grey_probe"), ExtResource("grey_seeker"), ExtResource("grey_vessel")])
+enemies = Array[ExtResource("13_jyr8v")]([ExtResource("14_5o5dd"), ExtResource("15_d0ajt"), ExtResource("16_jyr8v"), ExtResource("18_4jq4u"), ExtResource("19_sar2w"), ExtResource("merc_corvette"), ExtResource("merc_frigate"), ExtResource("merc_destroyer"), ExtResource("merc_cruiser"), ExtResource("merc_carrier"), ExtResource("bug_sporeling"), ExtResource("bug_carapace"), ExtResource("bug_broodmother"), ExtResource("grey_probe"), ExtResource("grey_seeker"), ExtResource("grey_vessel")])
 
 [node name="TargetCatalog" type="Node" parent="StageRoot" unique_id=1303860640]
 script = ExtResource("11_ues17")

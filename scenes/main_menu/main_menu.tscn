@@ -232,7 +232,7 @@ layout_mode = 2
 
 [node name="MercPractice" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/MercPracticeContainer"]
 layout_mode = 2
-tooltip_text = "Three short waves, then a boss. Uses the selected faction for the entire run."
+tooltip_text = "Short introduction waves, then a faction boss. Uses the selected faction for the entire run."
 focus_neighbor_top = NodePath("../../PracticeContainer/Practice")
 focus_neighbor_bottom = NodePath("../../SettingsContainer/Settings")
 focus_next = NodePath("../../SettingsContainer/Settings")

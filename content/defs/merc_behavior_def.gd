@@ -1,7 +1,7 @@
 extends Resource
 class_name MercBehaviorDef
 
-enum Mode { CORVETTE, FRIGATE, DESTROYER }
+enum Mode { CORVETTE, FRIGATE, DESTROYER, CRUISER, CARRIER }
 
 ## Tactical role used by the shared Merc actor.
 @export var mode: Mode = Mode.CORVETTE
@@ -47,3 +47,35 @@ enum Mode { CORVETTE, FRIGATE, DESTROYER }
 @export_range(0.2, 8.0, 0.1) var charge_windup_sec: float = 1.5
 ## Half-width of the charged corridor; moving outside it avoids the shot.
 @export_range(1.0, 200.0, 1.0) var charge_radius: float = 30.0
+
+@export_group("Cruiser Broadside")
+## Locked corridor countdown before each round of an alternating broadside.
+@export_range(0.3, 8.0, 0.05) var broadside_windup_sec: float = 1.1
+## Half-width of each marked broadside corridor.
+@export_range(1.0, 100.0, 1.0) var broadside_radius: float = 24.0
+## Committed rounds per broadside; every round receives its own warning.
+@export_range(1, 6, 1) var broadside_shots: int = 3
+## Quiet interval between the previous round resolving and the next warning.
+@export_range(0.1, 3.0, 0.05) var broadside_interval_sec: float = 0.35
+## Exposed turn after a broadside, during which weapons remain silent.
+@export_range(0.3, 10.0, 0.1) var broadside_recovery_sec: float = 2.0
+
+@export_group("Carrier Escort Wing")
+## Ordinary Merc child hull launched through the encounter's real Spawner.
+@export var escort_child_def: EnemyDef
+## Interval before the next launch warning, including the first one.
+@export_range(1.0, 40.0, 0.1) var escort_interval_sec: float = 9.0
+## Visible launch countdown; killing the Carrier cancels it and its escorts.
+@export_range(0.4, 8.0, 0.1) var escort_windup_sec: float = 1.4
+## Requested escorts per launch, bounded by all remaining capacity limits.
+@export_range(1, 6, 1) var escort_burst_count: int = 2
+## Maximum living escorts belonging to one Carrier.
+@export_range(1, 8, 1) var escort_alive_cap: int = 3
+## Lifetime escort allowance; defeated escorts never refund this budget.
+@export_range(1, 24, 1) var escort_total_cap: int = 6
+## Maximum living summoned Merc escorts across all sources in the encounter.
+@export_range(1, 24, 1) var escort_global_cap: int = 10
+## Total encounter enemy ceiling respected by escort launches.
+@export_range(1, 100, 1) var escort_enemy_cap: int = 50
+## Distance from the owner at which escorts emerge.
+@export_range(10.0, 300.0, 1.0) var escort_release_radius: float = 75.0

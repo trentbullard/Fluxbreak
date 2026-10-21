@@ -25,9 +25,9 @@ Faction home systems are always consistent and should reinforce faction identity
 
 The main menu's Faction selector offers Random, Machines, Mercs, Bugs, and Greys. Both run buttons use it. Random chooses once when a run starts; every wave, reinforcement, boss, and later stage keeps that faction. The HUD shows the resolved faction. An explicit selection remains selected when returning to the menu, while Random draws again for the next run.
 
-Practice contains three introduction waves and a boss. Each faction has two card variants for each introduction tier, and one variant per tier is drawn at launch. Campaign retains the two-stage run with a boss gateway followed by a final boss; its six-card faction deck unlocks compositions as enemy tiers become available and avoids immediate card repeats. Campaign salvage and pressure tuning remain distinct from the shorter lessons.
+Practice contains introduction waves and a boss. Mercs have five lessons and ten cards; Machines, Bugs, and Greys currently have three lessons and six cards each. Each lesson tier has two card variants, and one variant per tier is drawn at launch. A Practice boss is also chosen once at launch. Campaign retains the two-stage run with a boss gateway followed by a final boss; its full faction deck unlocks compositions as enemy tiers become available and avoids immediate card repeats. Campaign salvage and pressure tuning remain distinct from the shorter lessons.
 
-The first Merc, Bug, and Grey bosses currently serve both boss encounters in their Campaign runs. Additional classes and dedicated final bosses remain future roster work. Machines Practice uses a locally tuned version of the existing Machine Boss I; its full encounter remains in Campaign.
+Merc Campaign uses Contract Enforcer at its gateway and Vanguard Flagship at its finale. The first Bug and Grey bosses currently serve both encounters in their Campaign runs; their additional classes and final bosses remain future roster work. Machines Practice uses a locally tuned version of the existing Machine Boss I; its full encounter remains in Campaign.
 
 # Machines (AI Collective)
 
@@ -98,7 +98,7 @@ Their fleets resemble recognizable military doctrine.
 - Frigate  
 - Destroyer  
 - Cruiser  
-- Battleship / Carrier / Dreadnought (final class still flexible by design need)
+- Carrier
 
 ### Elite Affixes
 - Veteran  
@@ -129,9 +129,13 @@ A militarized industrial war-zone with patrol structures, weapons platforms, deb
 
 ### Merc Practice Seed
 
-The Merc short encounter uses `content/data/runs/merc_practice.tres` as its template. Choose Mercs and Practice to introduce Corvette burst-and-retreat attacks, Frigate shield support, and the Destroyer's locked charged corridor. Contract Enforcer then alternates marked corridor and spherical salvo attacks, calling one Frigate escort at 55% hull. Defeating the boss completes the short run.
+The Merc short encounter uses `content/data/runs/merc_practice.tres` as its template. Choose Mercs and Practice for five lessons: Corvette burst-and-retreat, Frigate shield support, Destroyer charged corridors, Cruiser broadsides, and Carrier escort deployment. Each class has two card variants. The boss is drawn from Contract Enforcer and a shorter Vanguard Flagship encounter; defeating it completes the run.
 
-Amber volumes and a screen-space countdown show when a special attack will resolve. Leaving the marked volume avoids that special; ordinary gunfire retains the game's hit/miss calculations. Cyan support links show bounded allied shield restoration. The current ships use readable placeholder models; the remaining Merc classes and variants remain future progression.
+Cruisers anchor a formation with three separately warned broadside rounds, then turn through a silent recovery window. Carriers launch two Corvettes at a time, with at most three living escorts and six total launches per carrier. Summoned escorts grant no kill rewards or adaptive pressure credit, cannot summon further ships, share a global ten-escort limit and a fifty-enemy encounter ceiling, and disappear when their owner dies or leaves the scene.
+
+Contract Enforcer alternates marked corridor and spherical salvo attacks, calling one Frigate escort at 55% hull. Vanguard Flagship uses distinct sequences at 70% and 35% hull, requests finite escort wings on arrival and each phase transition, and periodically restores only its own escorts' shields. Its warnings and recovery remain full length throughout the fight. It never gains an invulnerability phase. Campaign uses the full Flagship at its finale; Practice uses reduced hull and shields with the same mechanics.
+
+Amber volumes and a screen-space countdown show when a special attack will resolve. Leaving the marked volume avoids that special; ordinary gunfire retains the game's hit/miss calculations. Cyan support links show bounded Frigate restoration, while Flagship support pulses identify the affected escorts. All Merc actors retain targeting volumes without physical body collision. The five base classes and both bosses are implemented with readable placeholder models; later progression variants remain future work.
 
 # Bugs (Swarm Hive)
 

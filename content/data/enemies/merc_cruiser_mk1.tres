@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="MercEnemyDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/merc_enemy_def.gd" id="1_def"]
+[ext_resource type="Resource" path="res://content/data/factions/mercs.tres" id="2_faction"]
+[ext_resource type="Resource" path="res://content/data/enemy_roles/bruiser.tres" id="3_role"]
+[ext_resource type="Resource" path="res://content/data/weapons/merc_cruiser_broadside.tres" id="4_weapon"]
+[ext_resource type="Resource" path="res://content/data/merc_behaviors/cruiser.tres" id="5_behavior"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/merc_enemy.tscn" id="6_actor"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/merc_cruiser_mk1.tscn" id="7_model"]
+
+[resource]
+script = ExtResource("1_def")
+behavior = ExtResource("5_behavior")
+id = "merc_cruiser_mk1"
+display_name = "Cruiser Mk I"
+faction = ExtResource("2_faction")
+role = ExtResource("3_role")
+tier = 4
+threat_cost = 6
+bounty_scrap = 7
+can_be_elite = false
+score_on_kill = 60
+max_hull = 240.0
+max_shield = 50.0
+shield_regen = 0.5
+evasion = 0.02
+thrust = 42.0
+weapon = ExtResource("4_weapon")
+actor_scene = ExtResource("6_actor")
+model_scene = ExtResource("7_model")

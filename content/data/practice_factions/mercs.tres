@@ -10,11 +10,20 @@
 [ext_resource type="Resource" path="res://content/data/cards/merc_shield_convoy.tres" id="8"]
 [ext_resource type="Resource" path="res://content/data/cards/merc_firing_line.tres" id="9"]
 [ext_resource type="Resource" path="res://content/data/cards/merc_rail_ambush.tres" id="10"]
+[ext_resource type="Resource" path="res://content/data/cards/merc_broadside_line.tres" id="11"]
+[ext_resource type="Resource" path="res://content/data/cards/merc_armored_column.tres" id="12"]
+[ext_resource type="Resource" path="res://content/data/cards/merc_carrier_group.tres" id="13"]
+[ext_resource type="Resource" path="res://content/data/cards/merc_reserve_wing.tres" id="14"]
+[ext_resource type="Script" path="res://content/defs/enemy_boss_def.gd" id="15"]
+[ext_resource type="Resource" path="res://content/data/enemies/merc_contract_enforcer_mk1.tres" id="16"]
+[ext_resource type="Resource" path="res://content/data/enemies/merc_vanguard_flagship_mk1.tres" id="17"]
 
 [resource]
 script = ExtResource("1")
 faction = ExtResource("3")
 short_run = ExtResource("4")
-wave_cards = Array[ExtResource("2")]([ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10")])
-max_enemy_tier = 3
-combat_hint = "Leave amber warnings before FIRE. Cyan Frigates restore nearby allied shields; approach to bring them into weapon range.\nDestroyers hold a firing line. Change direction after their corridor attack locks."
+wave_cards = Array[ExtResource("2")]([ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10"), ExtResource("11"), ExtResource("12"), ExtResource("13"), ExtResource("14")])
+max_enemy_tier = 5
+main_boss_pool = Array[ExtResource("15")]([ExtResource("16")])
+final_boss_pool = Array[ExtResource("15")]([ExtResource("17")])
+combat_hint = "Leave amber warnings before FIRE. Approach cyan Frigates to stop allied shield restoration.\nCruisers recover after broadsides. Carriers launch a finite wing; destroy the carrier to clear its escorts. Vanguard Flagship adds shield and deployment intervals between locked attacks."
