@@ -4,7 +4,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 if ([string]::IsNullOrWhiteSpace($GodotExe) -or -not (Test-Path -LiteralPath $GodotExe)) {
-    throw 'Set GODOT_EXE to the Godot 4.6.3 console executable or pass -GodotExe.'
+    throw 'Set GODOT_EXE to the Godot console executable or pass -GodotExe.'
 }
 
 $repoRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))

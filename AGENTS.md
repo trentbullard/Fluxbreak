@@ -1,7 +1,7 @@
-# Project Agent Guide (Godot 4.6.3, GDScript typed)
+# Project Agent Guide (Godot 4.7.2, GDScript typed)
 
 ## Absolute Rules
-- Language: **Godot 4.6.3 GDScript (typed)**.
+- Language: **Godot 4.7.2 GDScript (typed)**.
 - No `:=` unless paired with an explicit `as` type. Prefer explicit `var x: float = 1.0`.
 - Respect existing @export, @onready, signals, groups, and node paths.
 - Do not invent autoloads, input actions, or resources—use what exists or propose adding them explicitly in diffs.
@@ -27,7 +27,7 @@ If context is too large, ask for specific paths.
 If other files are needed, ask with justifications.
 
 ## Repo Map (authoritative)
-- **Engine**: Godot 4.6.3; typed GDScript; autoload singletons in `project.godot`.
+- **Engine**: Godot 4.7.2; typed GDScript; autoload singletons in `project.godot`.
 
 ## Local Godot CLI (required for validation/builds)
 - Configure `GODOT_EXE` in the user environment to the local Godot console executable.
