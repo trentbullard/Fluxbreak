@@ -15,7 +15,7 @@ The game is built around auto-combat rather than manual aiming. Your job is to s
 
 ## What You Do In A Run
 
-1. Pick a pilot and faction from the main menu, then launch Campaign for a two-stage run or Practice for short introduction waves and a boss. Random chooses one faction for the entire run.
+1. Prepare your pilot, ship, and starting weapon in Hangar, then open Play to choose a faction and launch Campaign for a two-stage run or Practice for short introduction waves and a boss. Random chooses one faction for the entire run.
 2. Fly through a 3D combat space while your turrets auto-acquire and fire on targets in range.
 3. Survive enemy waves, destroy hostile ships, and collect nanobots.
 4. Dock with points of interest such as the Weapons Platform, Shield Array, and Repair Depot.
@@ -24,8 +24,10 @@ The game is built around auto-combat rather than manual aiming. Your job is to s
 
 ## Current Content Snapshot
 
-- Pilots include `Rookie` and `Ace`
-- Ships include `Fighter Mk1` and `Heavy Bruiser`
+- Home opens Play, Hangar, Upgrades, Settings, or Exit. Play shows the current loadout and offers Change Loadout; Hangar offers selection details and Continue To Play. Back or Escape returns to Home, and closing Upgrades returns to the page that opened it.
+- The passive 3D hangar displays existing ships and placeholder pilot stand-ins, with a smooth camera moving between selection bays. Settings includes master volume, fullscreen, control instructions, and Animate Hangar, which can be disabled to reduce motion.
+- Pilots include `Rookie`, `Ace`, and `Technician`
+- Ships include `Fighter Mk1`, `Heavy Bruiser`, and `Drone Carrier`
 - Weapons currently include pulse, laser, and drone-based loadout pieces
 - Upgrade families cover hull, shields, targeting, systems, salvage, and thrusters
 - Enemy content includes Machines, Mercs, Bugs, and Greys, with faction wave decks, bosses, and wave-directed scaling
@@ -60,7 +62,7 @@ Combat targeting and firing are handled automatically by the ship's weapon syste
 
 - Engine: Godot 4.7.2
 - Language: typed GDScript
-- Project version: `0.2.3.1`
+- Project version: `0.3.0`
 
 ## Running The Project
 
@@ -95,6 +97,8 @@ Fluxbreak is aiming for readable chaos. The guiding rubric for new work is simpl
 - keep the game fast on mid-tier hardware
 
 ## TODO
+
+See the [ordered gameplay roadmap](docs/plans/next_gameplay_milestones.md) for the next five milestones. Campaign sector choice and working sector modifiers are the recommended next gameplay step after the menu and Hangar work.
 
 - music
 - ammo/damage types

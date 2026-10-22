@@ -1,0 +1,81 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/main_menu/hangar_preview.gd" id="1_preview"]
+
+[sub_resource type="Environment" id="Environment_Hangar"]
+background_mode = 1
+background_color = Color(0.009, 0.016, 0.025, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.24, 0.38, 0.5, 1)
+ambient_light_energy = 0.75
+reflected_light_source = 2
+tonemap_mode = 2
+
+[sub_resource type="StandardMaterial3D" id="Material_Floor"]
+albedo_color = Color(0.017, 0.027, 0.038, 1)
+metallic = 0.5
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="Mesh_Floor"]
+material = SubResource("Material_Floor")
+size = Vector3(120, 0.7, 132)
+
+[sub_resource type="BoxMesh" id="Mesh_Wall"]
+material = SubResource("Material_Floor")
+size = Vector3(1, 22, 132)
+
+[node name="HangarPreview" type="Node3D"]
+process_mode = 3
+script = ExtResource("1_preview")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_Hangar")
+
+[node name="Floor" type="MeshInstance3D" parent="."]
+position = Vector3(28, -0.7, 32)
+mesh = SubResource("Mesh_Floor")
+cast_shadow = 0
+
+[node name="PortBulkhead" type="MeshInstance3D" parent="."]
+position = Vector3(-25, 9.7, 32)
+mesh = SubResource("Mesh_Wall")
+cast_shadow = 0
+
+[node name="StarboardBulkhead" type="MeshInstance3D" parent="."]
+position = Vector3(82, 9.7, 32)
+mesh = SubResource("Mesh_Wall")
+cast_shadow = 0
+
+[node name="Bays" type="Node3D" parent="."]
+
+[node name="KeyLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-52, -30, -15)
+light_color = Color(0.8, 0.9, 1, 1)
+light_energy = 1.8
+
+[node name="FillLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-25, 135, 0)
+light_color = Color(0.4, 0.62, 0.85, 1)
+light_energy = 0.55
+
+[node name="DisplayKey" type="OmniLight3D" parent="."]
+position = Vector3(2, 9, -7)
+light_color = Color(1, 0.82, 0.6, 1)
+light_energy = 8.0
+omni_range = 22.0
+omni_attenuation = 0.65
+
+[node name="DisplayRim" type="OmniLight3D" parent="."]
+position = Vector3(-6, 5, 6)
+light_color = Color(0.13, 0.7, 1, 1)
+light_energy = 4.0
+omni_range = 18.0
+omni_attenuation = 0.8
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(14, 13, -18)
+current = true
+projection = 1
+size = 21.0
+near = 0.1
+far = 150.0

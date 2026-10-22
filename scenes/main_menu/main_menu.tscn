@@ -1,369 +1,626 @@
 [gd_scene format=3 uid="uid://drrnshnyy4682"]
 
-[ext_resource type="Script" uid="uid://ctypdxlxrxqme" path="res://scripts/main_menu/main_menu.gd" id="1_0ebjn"]
-[ext_resource type="Script" uid="uid://bp86upa6vqbpe" path="res://scripts/main_menu/high_score_container.gd" id="3_ob46e"]
-[ext_resource type="Texture2D" uid="uid://c8r3d4xeppq31" path="res://assets/logo/fluxbreak.png" id="3_uqeha"]
-[ext_resource type="Resource" uid="uid://cgc248sqmyo6r" path="res://content/data/pilots/pilot_roster.tres" id="4_pilot_roster"]
-[ext_resource type="FontFile" uid="uid://bajq4o7ypmdmu" path="res://assets/fonts/Chakra_Petch/ChakraPetch-Light.ttf" id="4_wem23"]
-[ext_resource type="FontFile" uid="uid://dtkmmkanjxyxd" path="res://assets/fonts/Orbitron/Orbitron-Regular.ttf" id="5_3ovsr"]
-[ext_resource type="AudioStream" uid="uid://letca81rhxc1" path="res://assets/sounds/fluxbreak_menu.mp3" id="7_5seab"]
-[ext_resource type="Script" uid="uid://2kewa2vhj44v" path="res://scripts/main_menu/flux_anchors_container.gd" id="10_fac"]
-[ext_resource type="PackedScene" uid="uid://cx03u4eql62kw" path="res://scenes/main_menu/upgrades_panel.tscn" id="11_upgpanel"]
-[ext_resource type="Resource" path="res://content/data/runs/greys_practice.tres" id="12_merc_practice"]
+[ext_resource type="Script" uid="uid://2kewa2vhj44v" path="res://scripts/main_menu/flux_anchors_container.gd" id="anchors"]
+[ext_resource type="FontFile" uid="uid://bajq4o7ypmdmu" path="res://assets/fonts/Chakra_Petch/ChakraPetch-Light.ttf" id="body"]
+[ext_resource type="Texture2D" uid="uid://c8r3d4xeppq31" path="res://assets/logo/fluxbreak.png" id="brand_logo"]
+[ext_resource type="FontFile" uid="uid://dtkmmkanjxyxd" path="res://assets/fonts/Orbitron/Orbitron-Regular.ttf" id="display"]
+[ext_resource type="PackedScene" path="res://scenes/main_menu/hangar_preview.tscn" id="hangar"]
+[ext_resource type="Script" uid="uid://ctypdxlxrxqme" path="res://scripts/main_menu/main_menu.gd" id="menu"]
+[ext_resource type="AudioStream" uid="uid://letca81rhxc1" path="res://assets/sounds/fluxbreak_menu.mp3" id="music"]
+[ext_resource type="Resource" path="res://content/data/runs/greys_practice.tres" id="practice"]
+[ext_resource type="Resource" uid="uid://cgc248sqmyo6r" path="res://content/data/pilots/pilot_roster.tres" id="roster"]
+[ext_resource type="Script" uid="uid://bp86upa6vqbpe" path="res://scripts/main_menu/high_score_container.gd" id="score"]
+[ext_resource type="PackedScene" uid="uid://cx03u4eql62kw" path="res://scenes/main_menu/upgrades_panel.tscn" id="upgrades"]
 
-[sub_resource type="LabelSettings" id="LabelSettings_ob46e"]
+[sub_resource type="StyleBoxFlat" id="disabled"]
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+bg_color = Color(0.035, 0.045, 0.055, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.12, 0.16, 0.18, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="focus"]
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.9, 0.64, 0.29, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="hover"]
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+bg_color = Color(0.07, 0.16, 0.2, 0.98)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.25, 0.85, 0.9, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="normal"]
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+bg_color = Color(0.045, 0.085, 0.11, 0.93)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.17, 0.32, 0.38, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="pressed"]
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+bg_color = Color(0.08, 0.25, 0.28, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.36, 0.96, 0.95, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="Theme" id="theme"]
+default_font = ExtResource("body")
+default_font_size = 20
+Button/colors/font_color = Color(0.88, 0.95, 0.97, 1)
+Button/font_sizes/font_size = 16
+Button/fonts/font = ExtResource("display")
+Button/styles/disabled = SubResource("disabled")
+Button/styles/focus = SubResource("focus")
+Button/styles/hover = SubResource("hover")
+Button/styles/normal = SubResource("normal")
+Button/styles/pressed = SubResource("pressed")
+CheckButton/font_sizes/font_size = 19
+OptionButton/font_sizes/font_size = 17
+OptionButton/styles/disabled = SubResource("disabled")
+OptionButton/styles/focus = SubResource("focus")
+OptionButton/styles/hover = SubResource("hover")
+OptionButton/styles/normal = SubResource("normal")
+OptionButton/styles/pressed = SubResource("pressed")
+
+[sub_resource type="Gradient" id="shade"]
+offsets = PackedFloat32Array(0, 0.46, 1)
+colors = PackedColorArray(0.012, 0.022, 0.035, 0.98, 0.012, 0.022, 0.035, 0.76, 0.012, 0.022, 0.035, 0.02)
+
+[sub_resource type="GradientTexture2D" id="shade_texture"]
+gradient = SubResource("shade")
+width = 256
+height = 4
+
+[sub_resource type="LabelSettings" id="brand_title"]
 line_spacing = 0.0
-font = ExtResource("4_wem23")
-font_size = 120
-outline_size = 4
+font = ExtResource("body")
+font_size = 60
+outline_size = 2
 outline_color = Color(0, 0, 0, 1)
 shadow_size = 0
-shadow_color = Color(0, 0, 0, 1)
-shadow_offset = Vector2(0, 0)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_uqeha"]
-bg_color = Color(0, 0, 0, 0.6)
+[sub_resource type="StyleBoxFlat" id="panel"]
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+bg_color = Color(0.025, 0.045, 0.067, 0.92)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.18, 0.31, 0.37, 0.7)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
 
-[sub_resource type="LabelSettings" id="LabelSettings_5seab"]
-font = ExtResource("5_3ovsr")
-font_size = 20
-
-[sub_resource type="Theme" id="Theme_4xg86"]
-default_font = ExtResource("5_3ovsr")
-
-[sub_resource type="Theme" id="Theme_wem23"]
-default_font = ExtResource("5_3ovsr")
-default_font_size = 30
-
-[sub_resource type="Theme" id="Theme_5seab"]
-default_font = ExtResource("5_3ovsr")
-default_font_size = 30
-
-[sub_resource type="Theme" id="Theme_thkx5"]
-default_font = ExtResource("5_3ovsr")
-default_font_size = 30
-
-[sub_resource type="LabelSettings" id="LabelSettings_thkx5"]
-line_spacing = 0.0
-font = ExtResource("5_3ovsr")
-
-[sub_resource type="LabelSettings" id="LabelSettings_3ovsr"]
-font = ExtResource("5_3ovsr")
-font_size = 20
-outline_size = 4
-outline_color = Color(0, 0, 0, 1)
-
-[sub_resource type="LabelSettings" id="LabelSettings_4xg86"]
-font = ExtResource("5_3ovsr")
-font_size = 12
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_5seab"]
-
-[sub_resource type="LabelSettings" id="LabelSettings_x2yjq"]
-line_spacing = 0.0
-font = ExtResource("5_3ovsr")
-
-[node name="MainMenu" type="Control" unique_id=1550428847]
+[node name="MainMenu" type="Control" unique_id=1976370970]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_0ebjn")
-pilot_roster = ExtResource("4_pilot_roster")
-merc_practice_run = ExtResource("12_merc_practice")
+theme = SubResource("theme")
+script = ExtResource("menu")
+pilot_roster = ExtResource("roster")
+merc_practice_run = ExtResource("practice")
 
-[node name="CenterContainer" type="CenterContainer" parent="." unique_id=1275361430]
+[node name="Backdrop" type="ColorRect" parent="." unique_id=1392021097]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
+color = Color(0.012, 0.022, 0.035, 1)
 
-[node name="MainMenuContainer" type="VBoxContainer" parent="CenterContainer" unique_id=1274890402]
-layout_mode = 2
-
-[node name="TitleContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer" unique_id=533965598]
-layout_mode = 2
-
-[node name="Logo" type="Sprite2D" parent="CenterContainer/MainMenuContainer/TitleContainer" unique_id=1373381031]
-position = Vector2(36, 86.000015)
-scale = Vector2(0.264, 0.264)
-texture = ExtResource("3_uqeha")
-
-[node name="Title" type="Label" parent="CenterContainer/MainMenuContainer/TitleContainer" unique_id=1225919921]
-layout_mode = 2
-text = "FluxBreak"
-label_settings = SubResource("LabelSettings_ob46e")
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="ButtonPanel" type="PanelContainer" parent="CenterContainer/MainMenuContainer" unique_id=1323018284]
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_uqeha")
-
-[node name="ButtonMargins" type="MarginContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel" unique_id=1969483963]
-layout_mode = 2
-theme_override_constants/margin_left = 20
-theme_override_constants/margin_top = 20
-theme_override_constants/margin_right = 20
-theme_override_constants/margin_bottom = 20
-
-[node name="ButtonsContainer" type="VBoxContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins" unique_id=1387951927]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="PilotContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=52075162]
-layout_mode = 2
-
-[node name="Row" type="HBoxContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PilotContainer" unique_id=1086414238]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="PilotLabel" type="Label" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PilotContainer/Row" unique_id=1410288629]
-layout_mode = 2
-text = "Pilot:"
-label_settings = SubResource("LabelSettings_5seab")
-
-[node name="PilotPicker" type="OptionButton" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PilotContainer/Row" unique_id=1416721210]
-layout_mode = 2
-focus_neighbor_bottom = NodePath("../../../ShipContainer/Row/ShipPicker")
-focus_next = NodePath("../../../ShipContainer/Row/ShipPicker")
-theme = SubResource("Theme_4xg86")
-
-[node name="ShipContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=1484818313]
-layout_mode = 2
-
-[node name="Row" type="HBoxContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/ShipContainer" unique_id=1185400440]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="ShipLabel" type="Label" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/ShipContainer/Row" unique_id=1907789670]
-layout_mode = 2
-text = "Ship:"
-label_settings = SubResource("LabelSettings_5seab")
-
-[node name="ShipPicker" type="OptionButton" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/ShipContainer/Row" unique_id=415172510]
-layout_mode = 2
-focus_neighbor_top = NodePath("../../../PilotContainer/Row/PilotPicker")
-focus_neighbor_bottom = NodePath("../../../WeaponContainer/Row/WeaponPicker")
-focus_next = NodePath("../../../WeaponContainer/Row/WeaponPicker")
-focus_previous = NodePath("../../../PilotContainer/Row/PilotPicker")
-theme = SubResource("Theme_4xg86")
-
-[node name="WeaponContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=45511775]
-layout_mode = 2
-
-[node name="Row" type="HBoxContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/WeaponContainer" unique_id=2097435128]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="WeaponLabel" type="Label" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/WeaponContainer/Row" unique_id=1281082294]
-layout_mode = 2
-text = "Weapon:"
-label_settings = SubResource("LabelSettings_5seab")
-
-[node name="WeaponPicker" type="OptionButton" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/WeaponContainer/Row" unique_id=1582726976]
-layout_mode = 2
-focus_neighbor_top = NodePath("../../../ShipContainer/Row/ShipPicker")
-focus_neighbor_bottom = NodePath("../../../FactionContainer/Row/FactionPicker")
-focus_next = NodePath("../../../FactionContainer/Row/FactionPicker")
-focus_previous = NodePath("../../../ShipContainer/Row/ShipPicker")
-theme = SubResource("Theme_4xg86")
-
-[node name="FactionContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer"]
-layout_mode = 2
-
-[node name="Row" type="HBoxContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/FactionContainer"]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="FactionLabel" type="Label" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/FactionContainer/Row"]
-layout_mode = 2
-text = "Faction:"
-label_settings = SubResource("LabelSettings_5seab")
-
-[node name="FactionPicker" type="OptionButton" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/FactionContainer/Row"]
-custom_minimum_size = Vector2(150, 0)
-layout_mode = 2
-tooltip_text = "Choose a faction for Campaign and Practice. Random chooses one faction for the entire run."
-focus_neighbor_top = NodePath("../../../WeaponContainer/Row/WeaponPicker")
-focus_neighbor_bottom = NodePath("../../../UpgradesContainer/Upgrades")
-focus_next = NodePath("../../../UpgradesContainer/Upgrades")
-focus_previous = NodePath("../../../WeaponContainer/Row/WeaponPicker")
-theme = SubResource("Theme_4xg86")
-
-[node name="FactionSummary" type="Label" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer"]
-layout_mode = 2
-theme = SubResource("Theme_4xg86")
-theme_override_font_sizes/font_size = 16
-text = "Random chooses one faction for the entire run."
-horizontal_alignment = 1
-
-[node name="UpgradesContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=943631027]
-layout_mode = 2
-
-[node name="Upgrades" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/UpgradesContainer" unique_id=383352009]
-layout_mode = 2
-focus_neighbor_top = NodePath("../../FactionContainer/Row/FactionPicker")
-focus_neighbor_bottom = NodePath("../../PracticeContainer/Practice")
-focus_next = NodePath("../../PracticeContainer/Practice")
-focus_previous = NodePath("../../FactionContainer/Row/FactionPicker")
-theme = SubResource("Theme_wem23")
-text = "Upgrades"
-
-[node name="PracticeContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=807671300]
-layout_mode = 2
-
-[node name="Practice" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PracticeContainer" unique_id=1368523961]
-layout_mode = 2
-tooltip_text = "Two-stage campaign. The selected faction stays for the entire run."
-focus_neighbor_top = NodePath("../../UpgradesContainer/Upgrades")
-focus_neighbor_bottom = NodePath("../../MercPracticeContainer/MercPractice")
-focus_next = NodePath("../../MercPracticeContainer/MercPractice")
-focus_previous = NodePath("../../UpgradesContainer/Upgrades")
-theme = SubResource("Theme_wem23")
-text = "Campaign"
-
-[node name="MercPracticeContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer"]
-layout_mode = 2
-
-[node name="MercPractice" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/MercPracticeContainer"]
-layout_mode = 2
-tooltip_text = "Short introduction waves, then a faction boss. Uses the selected faction for the entire run."
-focus_neighbor_top = NodePath("../../PracticeContainer/Practice")
-focus_neighbor_bottom = NodePath("../../SettingsContainer/Settings")
-focus_next = NodePath("../../SettingsContainer/Settings")
-focus_previous = NodePath("../../PracticeContainer/Practice")
-theme = SubResource("Theme_wem23")
-text = "Practice"
-
-[node name="SettingsContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=967670781]
-layout_mode = 2
-
-[node name="Settings" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/SettingsContainer" unique_id=567390409]
-layout_mode = 2
-focus_neighbor_top = NodePath("../../MercPracticeContainer/MercPractice")
-focus_neighbor_bottom = NodePath("../../ExitContainer/Exit")
-focus_next = NodePath("../../ExitContainer/Exit")
-focus_previous = NodePath("../../MercPracticeContainer/MercPractice")
-theme = SubResource("Theme_5seab")
-disabled = true
-text = "Settings"
-
-[node name="ExitContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=1427433585]
-layout_mode = 2
-
-[node name="Exit" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/ExitContainer" unique_id=1486470593]
-layout_mode = 2
-focus_neighbor_top = NodePath("../../SettingsContainer/Settings")
-focus_previous = NodePath("../../SettingsContainer/Settings")
-theme = SubResource("Theme_thkx5")
-text = "Exit"
-
-[node name="InstructionPanel" type="PanelContainer" parent="CenterContainer/MainMenuContainer" unique_id=947885478]
-layout_mode = 2
-
-[node name="InstructionsLabel" type="Label" parent="CenterContainer/MainMenuContainer/InstructionPanel" unique_id=795163864]
-layout_mode = 2
-text = "Instructions (for now)
-
-Autobattler - guns will fire on closest/best target
-Enemies and objects drop NANOBOTS (NB value in the HUD)
-NANOBOTS are used to purchase upgrades and weapons
-Dock with POIs to purchase upgrades
-NANOBOTS can also be used to repair the ship's hull
-Survive as long as you can
-Unlock pilots and ships by reaching certain achievements"
-label_settings = SubResource("LabelSettings_thkx5")
-horizontal_alignment = 1
-
-[node name="HighScoreContainer" type="Control" parent="." unique_id=1390078896]
+[node name="HangarBackground" type="SubViewportContainer" parent="." unique_id=818899141]
 layout_mode = 1
-anchors_preset = 0
-offset_left = 10.0
-offset_top = 10.0
-offset_right = 10.0
-offset_bottom = 10.0
-script = ExtResource("3_ob46e")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+stretch = true
 
-[node name="HighScoreLabel" type="Label" parent="HighScoreContainer" unique_id=1615079141]
+[node name="HangarViewport" type="SubViewport" parent="HangarBackground" unique_id=799004676]
+own_world_3d = true
+handle_input_locally = false
+msaa_3d = 1
+gui_disable_input = true
+size = Vector2i(1152, 648)
+render_target_update_mode = 4
+
+[node name="HangarPreview" parent="HangarBackground/HangarViewport" unique_id=1061715967 instance=ExtResource("hangar")]
+
+[node name="Shade" type="TextureRect" parent="." unique_id=1017916008]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("shade_texture")
+expand_mode = 1
+
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=1184723879]
 layout_mode = 0
-offset_right = 83.0
-offset_bottom = 23.0
-text = "High Score: 0"
-label_settings = SubResource("LabelSettings_3ovsr")
+offset_left = 48.0
+offset_top = 75.0
+offset_right = 510.0
+offset_bottom = 645.0
 
-[node name="FluxAnchorsContainer" type="Control" parent="." unique_id=894659263]
+[node name="MainMenuContainer" type="VBoxContainer" parent="CenterContainer" unique_id=811653235]
+custom_minimum_size = Vector2(460, 0)
+layout_mode = 2
+theme_override_constants/separation = 9
+
+[node name="TitleContainer" type="Control" parent="CenterContainer/MainMenuContainer" unique_id=2120530776]
+custom_minimum_size = Vector2(0, 85)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Logo" type="Sprite2D" parent="CenterContainer/MainMenuContainer/TitleContainer" unique_id=1907279609]
+position = Vector2(113.67999, 42.679993)
+scale = Vector2(0.15882812, 0.15882812)
+texture = ExtResource("brand_logo")
+
+[node name="Title" type="Label" parent="CenterContainer/MainMenuContainer/TitleContainer" unique_id=453433828]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -132.0
+offset_top = 4.0
+offset_right = 132.0
+offset_bottom = 83.0
+grow_horizontal = 2
+text = "FluxBreak"
+label_settings = SubResource("brand_title")
+
+[node name="SectionTitle" type="Label" parent="CenterContainer/MainMenuContainer" unique_id=1759608718]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 0.85, 0.88, 1)
+theme_override_fonts/font = ExtResource("display")
+theme_override_font_sizes/font_size = 21
+text = "READY FOR DEPARTURE"
+
+[node name="SectionDescription" type="Label" parent="CenterContainer/MainMenuContainer" unique_id=1883226744]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.75, 0.8, 1)
+theme_override_font_sizes/font_size = 19
+text = "Choose your loadout. Find your edge. Break through."
+autowrap_mode = 3
+
+[node name="ButtonPanel" type="PanelContainer" parent="CenterContainer/MainMenuContainer" unique_id=966912678]
+layout_mode = 2
+theme_override_styles/panel = SubResource("panel")
+
+[node name="ButtonMargins" type="MarginContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel" unique_id=1111175789]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="ButtonsContainer" type="VBoxContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins" unique_id=2082658382]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="PlayContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=783332311]
+layout_mode = 2
+
+[node name="Play" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PlayContainer" unique_id=318719476]
+custom_minimum_size = Vector2(334, 43)
+layout_mode = 2
+text = "PLAY"
+alignment = 0
+
+[node name="HangarContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=375674296]
+layout_mode = 2
+
+[node name="Hangar" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/HangarContainer" unique_id=709919726]
+custom_minimum_size = Vector2(334, 43)
+layout_mode = 2
+text = "HANGAR / LOADOUT"
+alignment = 0
+
+[node name="LoadoutSummary" type="Label" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=1575690386]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.78, 0.89, 0.92, 1)
+theme_override_font_sizes/font_size = 20
+autowrap_mode = 3
+
+[node name="ChangeLoadoutContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=138260829]
+visible = false
+layout_mode = 2
+
+[node name="ChangeLoadout" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/ChangeLoadoutContainer" unique_id=395581504]
+custom_minimum_size = Vector2(334, 43)
+layout_mode = 2
+text = "CHANGE LOADOUT"
+alignment = 0
+
+[node name="PilotContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=1294092265]
+visible = false
+layout_mode = 2
+
+[node name="Row" type="HBoxContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PilotContainer" unique_id=1358822057]
+custom_minimum_size = Vector2(334, 43)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="PilotLabel" type="Label" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PilotContainer/Row" unique_id=825690361]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "PILOT"
+
+[node name="PilotPicker" type="OptionButton" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PilotContainer/Row" unique_id=850104877]
+custom_minimum_size = Vector2(246, 43)
+layout_mode = 2
+size_flags_horizontal = 3
+clip_text = true
+
+[node name="ShipContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=1239425287]
+visible = false
+layout_mode = 2
+
+[node name="Row" type="HBoxContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/ShipContainer" unique_id=681681909]
+custom_minimum_size = Vector2(334, 43)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ShipLabel" type="Label" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/ShipContainer/Row" unique_id=1135732146]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "SHIP"
+
+[node name="ShipPicker" type="OptionButton" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/ShipContainer/Row" unique_id=1814240542]
+custom_minimum_size = Vector2(246, 43)
+layout_mode = 2
+size_flags_horizontal = 3
+clip_text = true
+
+[node name="WeaponContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=619856290]
+visible = false
+layout_mode = 2
+
+[node name="Row" type="HBoxContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/WeaponContainer" unique_id=630937774]
+custom_minimum_size = Vector2(334, 43)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="WeaponLabel" type="Label" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/WeaponContainer/Row" unique_id=180110232]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "STARTER"
+
+[node name="WeaponPicker" type="OptionButton" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/WeaponContainer/Row" unique_id=1700005471]
+custom_minimum_size = Vector2(246, 43)
+layout_mode = 2
+size_flags_horizontal = 3
+clip_text = true
+
+[node name="FactionContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=1778266473]
+visible = false
+layout_mode = 2
+
+[node name="Row" type="HBoxContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/FactionContainer" unique_id=1354117624]
+custom_minimum_size = Vector2(334, 43)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="FactionLabel" type="Label" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/FactionContainer/Row" unique_id=1924886000]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "FACTION"
+
+[node name="FactionPicker" type="OptionButton" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/FactionContainer/Row" unique_id=876641387]
+custom_minimum_size = Vector2(246, 43)
+layout_mode = 2
+size_flags_horizontal = 3
+clip_text = true
+
+[node name="FactionSummary" type="Label" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=1413892541]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.75, 0.8, 1)
+theme_override_font_sizes/font_size = 18
+text = "Random chooses one faction for the entire run."
+autowrap_mode = 3
+
+[node name="HangarDetails" type="Label" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=209065012]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.83, 0.86, 1)
+theme_override_font_sizes/font_size = 18
+autowrap_mode = 3
+
+[node name="UpgradesContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=650431195]
+layout_mode = 2
+
+[node name="Upgrades" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/UpgradesContainer" unique_id=1331168630]
+custom_minimum_size = Vector2(334, 43)
+layout_mode = 2
+text = "UPGRADES"
+alignment = 0
+
+[node name="PracticeContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=1573180351]
+visible = false
+layout_mode = 2
+
+[node name="Practice" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PracticeContainer" unique_id=362125477]
+custom_minimum_size = Vector2(334, 43)
+layout_mode = 2
+text = "Campaign"
+alignment = 0
+
+[node name="MercPracticeContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=558102067]
+visible = false
+layout_mode = 2
+
+[node name="MercPractice" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/MercPracticeContainer" unique_id=187820318]
+custom_minimum_size = Vector2(334, 43)
+layout_mode = 2
+text = "Practice"
+alignment = 0
+
+[node name="ContinueContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=931391457]
+visible = false
+layout_mode = 2
+
+[node name="ContinueToPlay" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/ContinueContainer" unique_id=1453510428]
+custom_minimum_size = Vector2(334, 43)
+layout_mode = 2
+text = "CONTINUE TO PLAY"
+alignment = 0
+
+[node name="SettingsContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=1897633865]
+layout_mode = 2
+
+[node name="Settings" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/SettingsContainer" unique_id=1974880710]
+custom_minimum_size = Vector2(334, 43)
+layout_mode = 2
+text = "SETTINGS"
+alignment = 0
+
+[node name="ExitContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=752668325]
+layout_mode = 2
+
+[node name="Exit" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/ExitContainer" unique_id=1612397036]
+custom_minimum_size = Vector2(334, 43)
+layout_mode = 2
+text = "EXIT"
+alignment = 0
+
+[node name="SettingsControls" type="VBoxContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=2068909219]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="VolumeLabel" type="Label" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/SettingsControls" unique_id=1532017471]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "MASTER VOLUME   100%"
+
+[node name="MasterVolume" type="HSlider" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/SettingsControls" unique_id=191010316]
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+value = 100.0
+
+[node name="Fullscreen" type="CheckButton" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/SettingsControls" unique_id=879001718]
+custom_minimum_size = Vector2(0, 43)
+layout_mode = 2
+text = "Fullscreen"
+
+[node name="Motion" type="CheckButton" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/SettingsControls" unique_id=348372160]
+custom_minimum_size = Vector2(0, 43)
+layout_mode = 2
+tooltip_text = "Disable camera movement and ship idle motion."
+button_pressed = true
+text = "Animate hangar"
+
+[node name="ControlsHelp" type="Label" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=743474472]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.67, 0.79, 0.83, 1)
+theme_override_font_sizes/font_size = 17
+text = "FLIGHT
+W/S thrust · Q/E roll · Mouse steer
+Shift boost · R repair · Esc pause
+
+Controller: stick steer · triggers thrust
+Shoulders roll · A boost · B repair"
+autowrap_mode = 3
+
+[node name="BackContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=2022837762]
+visible = false
+layout_mode = 2
+
+[node name="Back" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/BackContainer" unique_id=80274952]
+custom_minimum_size = Vector2(334, 43)
+layout_mode = 2
+text = "BACK"
+alignment = 0
+
+[node name="InstructionPanel" type="PanelContainer" parent="CenterContainer/MainMenuContainer" unique_id=1151340886]
+visible = false
+layout_mode = 2
+
+[node name="InstructionsLabel" type="Label" parent="CenterContainer/MainMenuContainer/InstructionPanel" unique_id=1276705668]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+
+[node name="PreviewCaption" type="PanelContainer" parent="." unique_id=1178395866]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.55
+anchor_top = 0.83
+anchor_right = 0.96
+anchor_bottom = 0.94
+mouse_filter = 2
+theme_override_styles/panel = SubResource("panel")
+
+[node name="Margin" type="MarginContainer" parent="PreviewCaption" unique_id=908271805]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="Names" type="VBoxContainer" parent="PreviewCaption/Margin" unique_id=343034323]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="ShipName" type="Label" parent="PreviewCaption/Margin/Names" unique_id=1862255172]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("display")
+theme_override_font_sizes/font_size = 24
+text = "FIGHTER MK1"
+autowrap_mode = 3
+
+[node name="PilotName" type="Label" parent="PreviewCaption/Margin/Names" unique_id=653385127]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.48, 0.79, 0.84, 1)
+theme_override_font_sizes/font_size = 19
+text = "Rookie / Pulse"
+autowrap_mode = 3
+
+[node name="HighScoreContainer" type="Control" parent="." unique_id=1782047470]
+anchors_preset = 0
+offset_left = 32.0
+offset_top = 24.0
+offset_right = 400.0
+offset_bottom = 50.0
+mouse_filter = 2
+script = ExtResource("score")
+
+[node name="HighScoreLabel" type="Label" parent="HighScoreContainer" unique_id=791550531]
+layout_mode = 0
+theme_override_font_sizes/font_size = 17
+text = "High Score: 0"
+
+[node name="FluxAnchorsContainer" type="Control" parent="." unique_id=195735293]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_top = 10.0
-offset_right = -10.0
-grow_horizontal = 0
-script = ExtResource("10_fac")
+offset_left = -400.0
+offset_top = 24.0
+offset_right = -32.0
+offset_bottom = 50.0
+mouse_filter = 2
+script = ExtResource("anchors")
 
-[node name="FluxAnchorsLabel" type="Label" parent="FluxAnchorsContainer" unique_id=791929769]
+[node name="FluxAnchorsLabel" type="Label" parent="FluxAnchorsContainer" unique_id=1824646460]
 layout_mode = 1
-anchors_preset = -1
-grow_horizontal = 0
-text = "Flux Anchors: 10000"
-label_settings = SubResource("LabelSettings_3ovsr")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 17
+text = "Flux Anchors: 0"
 horizontal_alignment = 2
 
-[node name="UpgradesPanel" parent="." unique_id=1585461120 instance=ExtResource("11_upgpanel")]
+[node name="UpgradesPanel" parent="." unique_id=1107430444 instance=ExtResource("upgrades")]
 
-[node name="RoadmapPanel" type="PanelContainer" parent="." unique_id=1140460320]
-layout_mode = 1
-anchors_preset = 6
-anchor_left = 1.0
-anchor_top = 0.5
-anchor_right = 1.0
-anchor_bottom = 0.5
-offset_left = -188.0
-offset_top = -122.0
-offset_bottom = 122.0
-grow_horizontal = 0
-grow_vertical = 2
+[node name="RoadmapPanel" type="PanelContainer" parent="." unique_id=1858094689]
+visible = false
+layout_mode = 0
 
-[node name="RoadmapLabel" type="Label" parent="RoadmapPanel" unique_id=238269971]
+[node name="RoadmapLabel" type="Label" parent="RoadmapPanel" unique_id=34110715]
 layout_mode = 2
-text = "Roadmap:
-- Upgrade POIs Finished
-- Bosses
-- New Maps
-- Many new upgrades
-   and build paths
-- Lots of new weapons
-   and ammo/damage types
-- Many new ships
-- New pilots with
-   inherent stat bonuses
-- 5 enemy 'factions' with
-   many distinct enemies
-- Music (need help)
-- Lore/Story"
-label_settings = SubResource("LabelSettings_4xg86")
+theme_override_font_sizes/font_size = 16
 
-[node name="MenuMusic" type="AudioStreamPlayer" parent="." unique_id=2118794314]
-stream = ExtResource("7_5seab")
+[node name="MenuMusic" type="AudioStreamPlayer" parent="." unique_id=1258775974]
+stream = ExtResource("music")
 
-[node name="VersionContainer" type="PanelContainer" parent="." unique_id=416780559]
+[node name="VersionContainer" type="PanelContainer" parent="." unique_id=1871862362]
 layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 5.0
-offset_top = -23.0
-offset_right = 45.0
-offset_bottom = -2.0
-grow_vertical = 0
-theme_override_styles/panel = SubResource("StyleBoxEmpty_5seab")
+offset_left = 32.0
+offset_top = -34.0
+offset_right = 160.0
+offset_bottom = -10.0
+mouse_filter = 2
 
-[node name="VersionLabel" type="Label" parent="VersionContainer" unique_id=307391590]
+[node name="VersionLabel" type="Label" parent="VersionContainer" unique_id=1298052368]
 layout_mode = 2
-label_settings = SubResource("LabelSettings_x2yjq")
-vertical_alignment = 2
+theme_override_font_sizes/font_size = 14
+
+[node name="NavigationHint" type="Label" parent="." unique_id=95476846]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 1.0
+anchor_right = 0.55
+anchor_bottom = 1.0
+offset_left = 180.0
+offset_top = -34.0
+offset_right = -16.0
+offset_bottom = -10.0
+theme_override_colors/font_color = Color(0.48, 0.62, 0.68, 1)
+theme_override_font_sizes/font_size = 14
+text = "W / S / Mouse / Stick navigate     Enter / A select     Esc / B back"

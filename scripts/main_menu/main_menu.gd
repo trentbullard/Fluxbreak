@@ -1,4 +1,4 @@
-# main_menu.gd (Godot 4.6.3)
+# main_menu.gd (Godot 4.7.2)
 extends Control
 
 signal practice_requested
@@ -28,15 +28,57 @@ signal selection_changed
 @onready var _flux_anchors_container: Control = $FluxAnchorsContainer
 @onready var _roadmap_panel: PanelContainer = $RoadmapPanel
 @onready var _version_container: PanelContainer = $VersionContainer
+@onready var _buttons: VBoxContainer = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer
+@onready var _play_button: Button = _buttons.get_node("PlayContainer/Play")
+@onready var _hangar_button: Button = _buttons.get_node("HangarContainer/Hangar")
+@onready var _change_loadout: Button = _buttons.get_node("ChangeLoadoutContainer/ChangeLoadout")
+@onready var _continue_button: Button = _buttons.get_node("ContinueContainer/ContinueToPlay")
+@onready var _back_button: Button = _buttons.get_node("BackContainer/Back")
+@onready var _section_title: Label = $CenterContainer/MainMenuContainer/SectionTitle
+@onready var _section_description: Label = $CenterContainer/MainMenuContainer/SectionDescription
+@onready var _loadout_summary: Label = _buttons.get_node("LoadoutSummary")
+@onready var _hangar_details: Label = _buttons.get_node("HangarDetails")
+@onready var _preview_caption: PanelContainer = $PreviewCaption
+@onready var _preview_ship_name: Label = $PreviewCaption/Margin/Names/ShipName
+@onready var _preview_pilot_name: Label = $PreviewCaption/Margin/Names/PilotName
+@onready var _navigation_hint: Label = $NavigationHint
+@onready var _hangar_viewport: SubViewport = $HangarBackground/HangarViewport
+@onready var _hangar_preview: Node3D = $HangarBackground/HangarViewport/HangarPreview
+@onready var _master_volume: HSlider = _buttons.get_node("SettingsControls/MasterVolume")
+@onready var _volume_value: Label = _buttons.get_node("SettingsControls/VolumeLabel")
+@onready var _fullscreen: CheckButton = _buttons.get_node("SettingsControls/Fullscreen")
+@onready var _motion: CheckButton = _buttons.get_node("SettingsControls/Motion")
+
+const MENU_SETTINGS_PATH: String = "user://menu_settings.cfg"
+const PAGE_ROWS: Dictionary = {
+	&"home": ["PlayContainer", "HangarContainer", "UpgradesContainer", "SettingsContainer", "ExitContainer"],
+	&"play": ["LoadoutSummary", "ChangeLoadoutContainer", "FactionContainer", "FactionSummary", "PracticeContainer", "MercPracticeContainer", "BackContainer"],
+	&"hangar": ["PilotContainer", "ShipContainer", "WeaponContainer", "HangarDetails", "ContinueContainer", "BackContainer"],
+	&"settings": ["SettingsControls", "ControlsHelp", "BackContainer"],
+}
 
 var _available_pilots: Array[PilotDef] = []
 var _available_ship_options: Array[PilotStarterShipOptionDef] = []
 var _available_weapon_options: Array[ShipStarterWeaponOptionDef] = []
 var _music_tween: Tween
 var _suppress_picker_callbacks: bool = false
+var _current_page: StringName = &"home"
+var _menu_initialized: bool = false
 static var _remembered_practice_faction_id: StringName = &"random"
 
 func _ready() -> void:
+	_play_button.pressed.connect(show_page.bind(&"play"))
+	_hangar_button.pressed.connect(show_page.bind(&"hangar"))
+	_change_loadout.pressed.connect(show_page.bind(&"hangar"))
+	_continue_button.pressed.connect(show_page.bind(&"play"))
+	_back_button.pressed.connect(show_page.bind(&"home"))
+	selection_changed.connect(_refresh_loadout_view)
+	resized.connect(_update_responsive_layout)
+	_center_container.minimum_size_changed.connect(_queue_responsive_layout)
+	_load_menu_settings()
+	_master_volume.value_changed.connect(_on_master_volume_changed)
+	_fullscreen.toggled.connect(_on_fullscreen_toggled)
+	_motion.toggled.connect(_on_motion_toggled)
 	visibility_changed.connect(_on_visibility_changed)
 	_on_visibility_changed()
 	btn_practice.pressed.connect(_on_practice_pressed)
@@ -53,6 +95,9 @@ func _ready() -> void:
 	_refresh_practice_faction_picker()
 	_refresh_pilot_picker()
 	_apply_current_pilot_selection(false)
+	_menu_initialized = true
+	_refresh_loadout_view(true)
+	show_page(&"home")
 	if visible and _has_connected_controller():
 		call_deferred("_focus_default_control")
 	_upgrades_panel.closed.connect(_on_upgrades_panel_closed)
@@ -69,6 +114,10 @@ func _fade_in_music() -> void:
 	_music_tween.tween_property(music, "volume_db", 0.0, 5.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 func _on_visibility_changed() -> void:
+	if is_instance_valid(_hangar_preview):
+		_hangar_preview.call("set_active", visible)
+	if is_instance_valid(_hangar_viewport):
+		_hangar_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS if visible else SubViewport.UPDATE_DISABLED
 	if visible:
 		_start_music()
 		if _has_connected_controller():
@@ -79,11 +128,156 @@ func _on_visibility_changed() -> void:
 func _input(event: InputEvent) -> void:
 	if not visible:
 		return
+	if _upgrades_panel.visible:
+		return
 	if not _is_controller_event(event):
 		return
 	if get_viewport().gui_get_focus_owner() != null:
 		return
 	call_deferred("_focus_default_control")
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not visible or _upgrades_panel.visible:
+		return
+	if event.is_action_pressed("ui_cancel") and not event.is_echo() and _current_page != &"home":
+		show_page(&"home")
+		get_viewport().set_input_as_handled()
+
+func get_current_page() -> StringName:
+	return _current_page
+
+func show_page(page: StringName) -> void:
+	if not PAGE_ROWS.has(page):
+		return
+	_current_page = page
+	if not is_node_ready():
+		return
+	var rows: Array = PAGE_ROWS[page]
+	for child: Node in _buttons.get_children():
+		var control: Control = child as Control
+		if control != null:
+			control.visible = rows.has(String(control.name))
+	match page:
+		&"play":
+			_section_title.text = "DEPLOY"
+			_section_description.text = "Two-stage Campaign or a short Practice encounter."
+		&"hangar":
+			_section_title.text = "HANGAR / LOADOUT"
+			_section_description.text = "Choose a pilot, hull and starting weapon. Build the rest out there."
+		&"settings":
+			_section_title.text = "SETTINGS"
+			_section_description.text = "Display, audio and hangar motion."
+		_:
+			_section_title.text = "READY FOR DEPARTURE"
+			_section_description.text = "Choose your loadout. Find your edge. Break through."
+	_refresh_loadout_view()
+	_wire_page_focus()
+	_queue_responsive_layout()
+	call_deferred("_focus_default_control")
+
+func _refresh_loadout_view(immediate: bool = false) -> void:
+	if not _menu_initialized:
+		return
+	var pilot: PilotDef = GameFlow.selected_pilot
+	var ship: ShipDef = GameFlow.get_selected_ship()
+	var weapon: WeaponDef = GameFlow.get_selected_weapon()
+	if _available_pilots.is_empty() or pilot == null or not GameFlow.is_pilot_unlocked(pilot):
+		pilot = null
+		ship = null
+		weapon = null
+	var pilot_name: String = pilot.get_display_name_or_default() if pilot != null else "No pilot selected"
+	var ship_name: String = ship.get_display_name_or_default() if ship != null else "No ship selected"
+	var weapon_name: String = weapon.get_display_name_or_default() if weapon != null else "No weapon selected"
+	_loadout_summary.text = "%s  /  %s\n%s" % [pilot_name, ship_name, weapon_name]
+	_preview_ship_name.text = ship_name.to_upper()
+	_preview_pilot_name.text = "%s  /  %s" % [pilot_name, weapon_name]
+	var details: String = pilot.description.strip_edges() if pilot != null else "Unlock a pilot to prepare a loadout."
+	if ship != null:
+		details += "\n\nBASE HULL  %d    SHIELD  %d    SPEED  %d" % [int(ship.max_hull), int(ship.max_shield), int(ship.max_speed_forward)]
+	_hangar_details.text = details
+	_continue_button.disabled = btn_practice.disabled
+	_hangar_preview.call("set_selection", pilot, ship, immediate)
+
+func _queue_responsive_layout() -> void:
+	# Container minimums settle after rows are shown or hidden, including the
+	# first frame before the player has ever resized the window.
+	call_deferred("_update_responsive_layout")
+
+func _update_responsive_layout() -> void:
+	if not is_node_ready():
+		return
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var panel_width: float = clampf(viewport_size.x * 0.36, 390.0, 510.0)
+	var margin: float = clampf(viewport_size.x * 0.04, 24.0, 72.0)
+	var column: Control = _center_container.get_node("MainMenuContainer") as Control
+	column.custom_minimum_size.x = panel_width
+	var top_margin: float = clampf(viewport_size.y - 70.0 - column.get_combined_minimum_size().y, 50.0, 75.0)
+	_center_container.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+	_center_container.position = Vector2(margin, top_margin)
+	_center_container.size = Vector2(panel_width, maxf(viewport_size.y - top_margin - 70.0, 480.0))
+	var logo: Sprite2D = column.get_node("TitleContainer/Logo") as Sprite2D
+	logo.position = Vector2(panel_width * 0.5 - 118.0, 37.0)
+
+func _get_page_controls() -> Array[Control]:
+	match _current_page:
+		&"play":
+			return [_change_loadout, faction_picker, btn_practice, btn_merc_practice, _back_button]
+		&"hangar":
+			return [pilot_picker, ship_picker, weapon_picker, _continue_button, _back_button]
+		&"settings":
+			return [_master_volume, _fullscreen, _motion, _back_button]
+	return [_play_button, _hangar_button, btn_upgrades, btn_settings, btn_exit]
+
+func _wire_page_focus() -> void:
+	var controls: Array[Control] = []
+	for control: Control in _get_page_controls():
+		var button: BaseButton = control as BaseButton
+		if control.is_visible_in_tree() and (button == null or not button.disabled):
+			controls.append(control)
+	for index: int in controls.size():
+		var control: Control = controls[index]
+		var previous: Control = controls[(index - 1 + controls.size()) % controls.size()]
+		var next: Control = controls[(index + 1) % controls.size()]
+		control.focus_neighbor_top = control.get_path_to(previous)
+		control.focus_previous = control.get_path_to(previous)
+		control.focus_neighbor_bottom = control.get_path_to(next)
+		control.focus_next = control.get_path_to(next)
+
+func _load_menu_settings() -> void:
+	var config: ConfigFile = ConfigFile.new()
+	config.load(MENU_SETTINGS_PATH)
+	var volume: float = clampf(float(config.get_value("audio", "master_volume", AudioServer.get_bus_volume_linear(0))), 0.0, 1.0)
+	_master_volume.set_value_no_signal(volume * 100.0)
+	_volume_value.text = "MASTER VOLUME   %d%%" % int(roundf(volume * 100.0))
+	AudioServer.set_bus_volume_linear(0, volume)
+	var fullscreen: bool = bool(config.get_value("display", "fullscreen", DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN))
+	_fullscreen.set_pressed_no_signal(fullscreen)
+	if DisplayServer.get_name() != "headless" and config.has_section_key("display", "fullscreen"):
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen else DisplayServer.WINDOW_MODE_WINDOWED)
+	var animate: bool = bool(config.get_value("display", "hangar_motion", true))
+	_motion.set_pressed_no_signal(animate)
+	_hangar_preview.call("set_motion_enabled", animate)
+
+func _save_menu_settings() -> void:
+	var config: ConfigFile = ConfigFile.new()
+	config.set_value("audio", "master_volume", _master_volume.value / 100.0)
+	config.set_value("display", "fullscreen", _fullscreen.button_pressed)
+	config.set_value("display", "hangar_motion", _motion.button_pressed)
+	config.save(MENU_SETTINGS_PATH)
+
+func _on_master_volume_changed(value: float) -> void:
+	AudioServer.set_bus_volume_linear(0, value / 100.0)
+	_volume_value.text = "MASTER VOLUME   %d%%" % int(roundf(value))
+	_save_menu_settings()
+
+func _on_fullscreen_toggled(enabled: bool) -> void:
+	if DisplayServer.get_name() != "headless":
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if enabled else DisplayServer.WINDOW_MODE_WINDOWED)
+	_save_menu_settings()
+
+func _on_motion_toggled(enabled: bool) -> void:
+	_hangar_preview.call("set_motion_enabled", enabled)
+	_save_menu_settings()
 
 func _start_music() -> void:
 	music.volume_db = -80.0
@@ -171,7 +365,7 @@ func _update_practice_faction_summary() -> void:
 		faction_summary.text = "%s for the entire run." % faction_picker.get_item_text(faction_picker.get_selected())
 
 func _on_settings_pressed() -> void:
-	print("Settings clicked — not implemented yet.")
+	show_page(&"settings")
 
 func _on_upgrades_pressed() -> void:
 	_set_main_menu_content_visible(false)
@@ -179,14 +373,20 @@ func _on_upgrades_pressed() -> void:
 
 func _on_upgrades_panel_closed() -> void:
 	_set_main_menu_content_visible(true)
-	_focus_default_control()
+	_wire_page_focus()
+	if btn_upgrades.is_visible_in_tree():
+		btn_upgrades.grab_focus()
+	else:
+		_focus_default_control()
 
 func _set_main_menu_content_visible(p_visible: bool) -> void:
 	_center_container.visible = p_visible
 	_high_score_container.visible = p_visible
 	_flux_anchors_container.visible = p_visible
-	_roadmap_panel.visible = p_visible
+	_roadmap_panel.visible = false
 	_version_container.visible = p_visible
+	_preview_caption.visible = p_visible
+	_navigation_hint.visible = p_visible
 
 func _on_exit_pressed() -> void:
 	get_tree().quit()
@@ -477,33 +677,17 @@ func _set_focus_modes() -> void:
 	btn_merc_practice.focus_mode = Control.FOCUS_ALL
 	btn_settings.focus_mode = Control.FOCUS_ALL
 	btn_exit.focus_mode = Control.FOCUS_ALL
+	for control: Control in [_play_button, _hangar_button, _change_loadout, _continue_button, _back_button, _master_volume, _fullscreen, _motion]:
+		control.focus_mode = Control.FOCUS_ALL
 
 func _focus_default_control() -> void:
-	if not visible:
+	if not visible or _upgrades_panel.visible:
 		return
-	if not btn_practice.disabled:
-		btn_practice.grab_focus()
-		return
-	if not btn_upgrades.disabled:
-		btn_upgrades.grab_focus()
-		return
-	if not pilot_picker.disabled:
-		pilot_picker.grab_focus()
-		return
-	if not ship_picker.disabled:
-		ship_picker.grab_focus()
-		return
-	if not weapon_picker.disabled:
-		weapon_picker.grab_focus()
-		return
-	if not faction_picker.disabled:
-		faction_picker.grab_focus()
-		return
-	if not btn_settings.disabled:
-		btn_settings.grab_focus()
-		return
-	if not btn_exit.disabled:
-		btn_exit.grab_focus()
+	for control: Control in _get_page_controls():
+		var button: BaseButton = control as BaseButton
+		if control.is_visible_in_tree() and (button == null or not button.disabled):
+			control.grab_focus()
+			return
 
 func _has_connected_controller() -> bool:
 	return Input.get_connected_joypads().size() > 0
