@@ -167,6 +167,12 @@ func start_new_run(run_definition: RunDefinition = null) -> void:
 	_resolve_selected_or_default_weapon()
 	_emit_stage_changed(0)
 
+## Leave a run without victory rewards or stale sector state in the main menu.
+func abandon_run() -> void:
+	_run_active = false
+	_run_end_in_progress = false
+	_clear_run_progression()
+
 func record_damage_dealt(amount: float, combat_stat_context: CombatStatContext) -> void:
 	_record_run_meta_stat(META_STAT_DAMAGE_DEALT, amount, combat_stat_context)
 	_record_active_boss_metric(BOSS_STAT_DAMAGE_DEALT, amount, combat_stat_context)
@@ -642,7 +648,10 @@ func get_current_stage() -> StageDef:
 	return _active_run_definition.get_stage(_active_stage_index)
 
 func get_active_stage_modifiers() -> Array[StageModifierDef]:
-	var stage: StageDef = get_current_stage()
+	return get_stage_modifiers_for(get_current_stage())
+
+## Briefings and active stages share one cached roll until this run ends.
+func get_stage_modifiers_for(stage: StageDef) -> Array[StageModifierDef]:
 	if stage == null:
 		return []
 	var key: String = _get_stage_roll_key(stage)
@@ -657,6 +666,8 @@ func has_next_stage() -> bool:
 	if _active_run_definition == null:
 		return false
 	var current_stage: StageDef = get_current_stage()
+	if current_stage != null and not current_stage.gateway_routes.is_empty():
+		return not current_stage.get_gateway_routes().is_empty()
 	if current_stage != null and current_stage.next_stage_id != &"":
 		return _active_run_definition.find_stage_index_by_id(current_stage.next_stage_id) >= 0
 	return _active_run_definition.get_stage(_active_stage_index + 1) != null
@@ -665,11 +676,38 @@ func advance_to_next_stage(target_stage_id: StringName = &"") -> bool:
 	if _active_run_definition == null:
 		return false
 
+	var current_stage: StageDef = get_current_stage()
+	if current_stage == null:
+		return false
+	if not current_stage.gateway_routes.is_empty():
+		if target_stage_id == &"":
+			return false
+		var offered: SectorRouteDef = null
+		for route: SectorRouteDef in current_stage.get_gateway_routes():
+			if route.get_destination_id() == target_stage_id:
+				offered = route
+				break
+		if offered == null:
+			return false
+		var destination_index: int = _active_stage_index + 1
+		if destination_index >= _active_run_definition.stages.size():
+			return false
+		var destination: StageDef = PracticeRunFactory.copy_stage_for_play(offered.destination_stage)
+		if destination == null:
+			return false
+		var faction: FactionDef = _active_run_definition.enemy_faction
+		if faction != null and destination.boss_faction != null and destination.boss_faction.get_faction_id() != faction.get_faction_id():
+			return false
+		_active_run_definition.stages[destination_index] = destination
+		_emit_stage_changed(destination_index)
+		return true
+
 	var next_stage_index: int = -1
 	if target_stage_id != &"":
 		next_stage_index = _active_run_definition.find_stage_index_by_id(target_stage_id)
+		if next_stage_index <= _active_stage_index:
+			return false
 	else:
-		var current_stage: StageDef = get_current_stage()
 		if current_stage != null and current_stage.next_stage_id != &"":
 			next_stage_index = _active_run_definition.find_stage_index_by_id(current_stage.next_stage_id)
 		if next_stage_index < 0:
@@ -1027,9 +1065,8 @@ func _emit_selection_changed() -> void:
 	selection_changed.emit(selected_pilot, selected_ship)
 
 func _resolve_run_definition(run_definition: RunDefinition) -> RunDefinition:
-	if run_definition != null:
-		return run_definition
-	return PracticeRunFactory.create_run()
+	var source: RunDefinition = run_definition if run_definition != null else PracticeRunFactory.create_run()
+	return PracticeRunFactory.copy_run_for_play(source)
 
 func _emit_stage_changed(stage_index: int) -> void:
 	if _active_run_definition == null:

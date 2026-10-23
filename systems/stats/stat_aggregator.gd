@@ -23,14 +23,60 @@ const PHASE_ORDER: Dictionary = {
 
 var _mods: Dictionary = {}
 var _base_values: Dictionary = {}
+var _stage_projection_enabled: bool = false
+var _observed_stage: StageDef = null
 
 func _ready() -> void:
-	# Example wiring for upgrades from EventBus:
-	# EventBus.add_bulkhead_requested.connect(add_upgrade)
-	# EventBus.add_shield_requested.connect(add_upgrade)
-	# EventBus.add_targeting_requested.connect(add_upgrade)
-	# EventBus.add_systems_requested.connect(add_upgrade)
-	pass
+	set_process(_stage_projection_enabled)
+
+## Only the player's source aggregator projects stage effects. Minion copies
+## receive matching modifiers through copy_modifiers_to, without a second layer.
+func set_stage_projection_enabled(enabled: bool) -> void:
+	if _stage_projection_enabled == enabled:
+		return
+	_stage_projection_enabled = enabled
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	set_process(enabled)
+	if enabled:
+		if not GameFlow.stage_changed.is_connected(_on_stage_changed):
+			GameFlow.stage_changed.connect(_on_stage_changed)
+		if not GameFlow.run_completed.is_connected(_on_run_completed):
+			GameFlow.run_completed.connect(_on_run_completed)
+	else:
+		if GameFlow.stage_changed.is_connected(_on_stage_changed):
+			GameFlow.stage_changed.disconnect(_on_stage_changed)
+		if GameFlow.run_completed.is_connected(_on_run_completed):
+			GameFlow.run_completed.disconnect(_on_run_completed)
+	_observed_stage = GameFlow.get_current_stage() if enabled else null
+	notify_changed()
+
+func _process(_delta: float) -> void:
+	# Death/menu exits can clear progression without emitting stage_changed.
+	# Notify caches once on that identity change, including while paused.
+	var current_stage: StageDef = GameFlow.get_current_stage()
+	if current_stage != _observed_stage:
+		_observed_stage = current_stage
+		notify_changed()
+
+func _on_stage_changed(stage: StageDef, _stage_index: int) -> void:
+	_observed_stage = stage
+	notify_changed()
+
+func _on_run_completed() -> void:
+	_observed_stage = GameFlow.get_current_stage()
+	notify_changed()
+
+func _get_stage_player_modifiers() -> Array[StatModifier]:
+	var modifiers: Array[StatModifier] = []
+	if not _stage_projection_enabled or GameFlow.get_current_stage() == null:
+		return modifiers
+	for stage_modifier: StageModifierDef in GameFlow.get_active_stage_modifiers():
+		if stage_modifier == null:
+			continue
+		for modifier: StatModifier in stage_modifier.player_modifiers:
+			if modifier != null and modifier.enabled:
+				modifiers.append(modifier)
+	return modifiers
 
 func set_base_value(stat_id: int, value: float) -> void:
 	_base_values[stat_id] = value
@@ -140,10 +186,12 @@ func compute(stat_id: int, base_value: float) -> float:
 	return compute_for_context(stat_id, base_value, Context.ANY)
 
 func compute_for_context(stat_id: int, base_value: float, context: int) -> float:
-	if not _mods.has(stat_id):
+	var arr: Array = _mods.get(stat_id, []).duplicate()
+	for stage_modifier: StatModifier in _get_stage_player_modifiers():
+		if stage_modifier.stat == stat_id:
+			arr.append(stage_modifier)
+	if arr.is_empty():
 		return base_value
-	
-	var arr: Array = _mods[stat_id]
 	
 	var pre: Array = []
 	var add_mult: Array = []
@@ -196,17 +244,20 @@ func compute_for_context(stat_id: int, base_value: float, context: int) -> float
 
 func get_modifier_copies_for_context(context: int) -> Array[StatModifier]:
 	var copies: Array[StatModifier] = []
+	var active_modifiers: Array[StatModifier] = []
 	for stat_id in _mods.keys():
 		var mods_for_stat: Array = _mods[stat_id]
 		for modifier_variant in mods_for_stat:
 			var modifier: StatModifier = modifier_variant as StatModifier
-			if modifier == null or not modifier.enabled:
-				continue
-			if not _modifier_applies_to_context(modifier, context):
-				continue
-			var modifier_copy: StatModifier = modifier.duplicate(true) as StatModifier
-			if modifier_copy != null:
-				copies.append(modifier_copy)
+			if modifier != null:
+				active_modifiers.append(modifier)
+	active_modifiers.append_array(_get_stage_player_modifiers())
+	for modifier: StatModifier in active_modifiers:
+		if not modifier.enabled or not _modifier_applies_to_context(modifier, context):
+			continue
+		var modifier_copy: StatModifier = modifier.duplicate(true) as StatModifier
+		if modifier_copy != null:
+			copies.append(modifier_copy)
 	return copies
 
 func copy_modifiers_to(target: StatAggregator, context: int) -> void:

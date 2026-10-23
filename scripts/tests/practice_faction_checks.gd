@@ -229,8 +229,11 @@ func _check_selected_faction(faction_def: PracticeFactionDef, short_practice: bo
 			if gateway != null:
 				_ship.global_position = gateway.global_position
 				gateway_manager._process(gateway.get_docking_time() + 1.0)
+				_check(GameFlow.get_active_stage_index() == stage_index and gateway_manager.is_briefing_open(), "A gateway must show its briefing instead of advancing on elapsed docking time.")
+				_check(gateway_manager.get_active_gateways().size() == 2, "Campaign must offer both sector routes after its first boss.")
+				_check(gateway_manager.confirm_gateway(), "Explicit gateway confirmation must accept the offered sector.")
 				await _wait_frames(3)
-			_check(GameFlow.get_active_stage_index() == stage_index + 1, "Docking did not advance to the next main Practice stage.")
+			_check(GameFlow.get_active_stage_index() == stage_index + 1, "Confirmed sector did not advance to the next Campaign stage.")
 			_check(director.get_wave_index() == 0, "Gateway did not reset the local wave index.")
 			_check_no_stale_abilities()
 		else:

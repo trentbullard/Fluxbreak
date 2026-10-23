@@ -3,10 +3,18 @@
 [ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="1_h0jwy"]
 [ext_resource type="Script" uid="uid://c0baui7bplv2c" path="res://content/defs/stage_modifier_def.gd" id="1_stage_modifier_def"]
 
+[sub_resource type="Resource" id="ShieldRegen"]
+script = ExtResource("1_h0jwy")
+stat = 14
+op = 1
+value = 0.85
+source_id = "stage:solar_flare_front"
+
 [resource]
 script = ExtResource("1_stage_modifier_def")
 modifier_id = &"solar_flare_front"
 display_name = "Solar Flare Front"
-description = "Radiation spikes and heat bloom push the run toward shield strain and harsher ambient danger."
+description = "-15% player shield regeneration while in this sector."
 kind = 1
 tags = PackedStringArray("heat", "radiation", "negative")
+player_modifiers = Array[ExtResource("1_h0jwy")]([SubResource("ShieldRegen")])

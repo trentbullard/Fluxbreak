@@ -3,9 +3,24 @@
 [ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="1_8ce6e"]
 [ext_resource type="Script" uid="uid://c0baui7bplv2c" path="res://content/defs/stage_modifier_def.gd" id="1_stage_modifier_def"]
 
+[sub_resource type="Resource" id="ForwardSpeed"]
+script = ExtResource("1_8ce6e")
+stat = 0
+op = 1
+value = 1.15
+source_id = "stage:thruster_corridors"
+
+[sub_resource type="Resource" id="ReverseSpeed"]
+script = ExtResource("1_8ce6e")
+stat = 1
+op = 1
+value = 1.15
+source_id = "stage:thruster_corridors"
+
 [resource]
 script = ExtResource("1_stage_modifier_def")
 modifier_id = &"thruster_corridors"
 display_name = "Thruster Corridors"
-description = "Wide open lanes and clean approach vectors. A good hook for future player mobility or scanner bonuses."
+description = "+15% player forward and reverse top speed while in this sector."
 tags = PackedStringArray("mobility", "navigation", "positive")
+player_modifiers = Array[ExtResource("1_8ce6e")]([SubResource("ForwardSpeed"), SubResource("ReverseSpeed")])

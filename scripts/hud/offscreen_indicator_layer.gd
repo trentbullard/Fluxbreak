@@ -87,6 +87,9 @@ func _draw() -> void:
 		# Apply distance-based alpha fade
 		var alpha_mult: float = _get_distance_alpha(distance)
 		var adjusted_entry: OffscreenIconRegistry.IconEntry = _create_faded_entry(entry, alpha_mult)
+		if obj is BossGateway:
+			adjusted_entry.color = (obj as BossGateway).get_marker_color()
+			adjusted_entry.color.a *= alpha_mult
 		
 		# Draw the icon
 		OffscreenIconRegistry.draw_icon(self, adjusted_entry, edge_pos, rotation_angle)
@@ -108,7 +111,7 @@ func _sync_tracked_objects() -> void:
 	_sync_group("targets", "")  # Will auto-detect enemy vs target via meta
 	_sync_group("drops", "drop")  # Nanobot swarms and other drops
 	_sync_group("poi", "")       # Points of interest - auto-detect type
-	_sync_group("boss_gateways", "boss_gateway")
+	_sync_group("boss_gateways", "")
 
 func _sync_group(group_name: String, forced_kind: String) -> void:
 	var nodes: Array[Node] = get_tree().get_nodes_in_group(group_name)
@@ -128,6 +131,9 @@ func _sync_group(group_name: String, forced_kind: String) -> void:
 			# Connect to tree_exited for cleanup
 			if not obj.tree_exited.is_connected(_on_object_removed):
 				obj.tree_exited.connect(_on_object_removed.bind(obj))
+		elif obj is BossGateway:
+			# A route may also be configured after its gateway first becomes visible.
+			_tracked[obj] = _detect_kind(obj)
 
 func _detect_kind(obj: Node3D) -> String:
 	if obj is Enemy:
@@ -146,6 +152,11 @@ func _detect_kind(obj: Node3D) -> String:
 			_:
 				return "poi"
 	if obj is BossGateway:
+		match (obj as BossGateway).get_marker_key():
+			&"salvage":
+				return "boss_gateway_salvage"
+			&"assault":
+				return "boss_gateway_assault"
 		return "boss_gateway"
 	if obj.has_meta("kind"):
 		var kind_meta: String = String(obj.get_meta("kind"))

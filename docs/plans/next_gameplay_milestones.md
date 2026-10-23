@@ -1,10 +1,10 @@
 # Next Gameplay Milestones
 
-Updated October 22, 2026.
+Updated October 23, 2026.
 
 Fluxbreak now has a working four-faction foundation: Machines, Mercs, Bugs, and Greys, with faction wave decks, Campaign runs, and shorter Practice encounters. The next steps should make that content easier to use and give the player more meaningful decisions during a run.
 
-The order below preserves the recommended five-item roadmap. **Campaign sector choice is the recommended next gameplay milestone** after the menu and Hangar prototype.
+The order below preserves the recommended five-item roadmap. Items 1 and 2 are complete; **more useful points of interest are the recommended next gameplay milestone**.
 
 ## 1. Main Menu, Hangar, Play, and Camera Prototype
 
@@ -21,16 +21,17 @@ The order below preserves the recommended five-item roadmap. **Campaign sector c
 
 ## 2. Campaign Sector Choices and Working Sector Modifiers
 
-**Status: Planned.**
+**Status: Complete — implemented October 23, 2026.**
 
-- Give Campaign a meaningful choice of the next sector instead of relying only on a fixed sequence.
-- Start with one choice after the first boss, keeping two played stages and the same faction throughout the run.
-- A salvage sector could offer more wrecks and utility opportunities with ambush pressure; an assault sector could offer heavier patrols, more capital ships, and better access to offensive upgrades.
-- Show the relevant threat, reward, and modifier information before the player commits.
-- Make sector modifiers change the actual encounter or run conditions, so choosing a route has a visible gameplay consequence.
-- Connect the choice to the existing stage and gateway flow, with clear transitions and progression.
+- Campaign still plays two stages. Defeating its first boss opens a choice between Salvage Corridor and Assault Lane, retaining the selected faction and intended finale boss.
+- The gateways have distinct shapes as well as colors: a cyan hexagon for Salvage and an amber chevron for Assault.
+- Approaching a gateway opens a paused briefing with its destination, threats, opportunities, and actual numeric conditions. Entry requires the Enter this sector button, using mouse, keyboard, or controller. Escape, Back, or Not yet dismisses the briefing; leave that gateway's proximity area before approaching again to reopen it.
+- Salvage Corridor grants **+25% nanobots from pickups** and **-10% player weapon base range**, with more wreck targets, repair/utility station opportunities, and tighter escort batches.
+- Assault Lane grants **+15% forward and reverse top speed** against **+15% enemy maximum hull**, with more frequent existing heavy formations and a bias toward weapon and shield stations. Machines use their existing heaviest formations.
+- Sector effects form a temporary stat layer, separate from purchased upgrades. The chosen conditions stay fixed when previewing or cancelling; the active layer is replaced at sector entry and cleared when the run ends or is abandoned.
+- The same ship, build, and nanobots carry into the chosen final sector. Practice keeps its existing length, pacing, and single-stage structure.
 
-This is the recommended next gameplay step after the menu and Hangar work: it adds decisions around the combat content already available.
+The next recommended gameplay step is item 3: make more points of interest offer distinct decisions inside those sectors.
 
 ## 3. More Useful Points of Interest
 

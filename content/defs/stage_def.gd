@@ -15,6 +15,8 @@ enum CompletionFlow {
 ## Optional combat instructions displayed below the run timer.
 @export_multiline var combat_hint: String = ""
 @export var next_stage_id: StringName = &""
+## Explicit destination choices at the boss gateway; an empty list stays linear.
+@export var gateway_routes: Array[SectorRouteDef] = []
 
 @export_group("Scene Prep")
 @export var stage_scene: PackedScene
@@ -87,6 +89,24 @@ func get_display_name_or_default() -> String:
 	if from_id != "":
 		return from_id.capitalize()
 	return "Stage"
+
+func get_gateway_routes() -> Array[SectorRouteDef]:
+	var resolved: Array[SectorRouteDef] = []
+	var route_ids: Dictionary = {}
+	var destination_ids: Dictionary = {}
+	for route: SectorRouteDef in gateway_routes:
+		if route == null or route.destination_stage == null:
+			continue
+		var route_id: StringName = route.get_route_id()
+		var destination_id: StringName = route.get_destination_id()
+		if route_id == &"" or destination_id == &"" or destination_id == get_stage_id():
+			continue
+		if route_ids.has(route_id) or destination_ids.has(destination_id):
+			continue
+		resolved.append(route)
+		route_ids[route_id] = true
+		destination_ids[destination_id] = true
+	return resolved
 
 func get_panorama_options() -> Array[Texture2D]:
 	var resolved: Array[Texture2D] = []

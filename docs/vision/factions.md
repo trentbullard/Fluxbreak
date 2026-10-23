@@ -27,6 +27,8 @@ The main menu's Faction selector offers Random, Machines, Mercs, Bugs, and Greys
 
 Practice contains introduction waves and a boss. Mercs, Bugs, and Greys have five lessons and ten cards each; Machines currently have three lessons and six cards. Each lesson tier has two card variants, and one variant per tier is drawn at launch. A Practice boss is also chosen once at launch. Campaign retains the two-stage run with a boss gateway followed by a final boss; its full faction deck unlocks compositions as enemy tiers become available and avoids immediate card repeats. Campaign salvage and pressure tuning remain distinct from the shorter lessons.
 
+After the first Campaign boss, the player chooses Salvage Corridor or Assault Lane through distinct cyan hexagonal and amber chevron gateways. A paused briefing discloses the route's real conditions before explicit confirmation. Both choices preserve the run's faction, ship, build, nanobots, and finale boss; their wave-card and station opportunities differ. See [current sector choices](gameplay.md#current-campaign-sector-choices) for the tradeoffs and controls. Practice has no route choice.
+
 Merc Campaign uses Contract Enforcer at its gateway and Vanguard Flagship at its finale. Bug Campaign uses Nestbreaker Matron at its gateway and The First Queen at its finale. Grey Campaign uses The Witness at its gateway and The Veiled Mind at its finale. Machines Practice uses a locally tuned version of the existing Machine Boss I; its full encounter remains in Campaign.
 
 # Machines (AI Collective)

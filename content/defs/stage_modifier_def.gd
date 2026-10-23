@@ -17,8 +17,11 @@ enum ModifierKind {
 @export_range(0.0, 100.0, 0.05) var weight: float = 1.0
 @export var tags: PackedStringArray = PackedStringArray()
 
-@export_group("Future Gameplay Hooks")
+@export_group("Gameplay Effects")
+## Temporary player stats, projected centrally for this stage only. Each
+## modifier's player/minion scope flags also govern inherited drone effects.
 @export var player_modifiers: Array[StatModifier] = []
+## Temporary enemy spawn stats, consumed by EnemyStatResolver.
 @export var enemy_modifiers: Array[StatModifier] = []
 
 func get_modifier_id() -> StringName:

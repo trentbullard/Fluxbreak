@@ -23,3 +23,11 @@
 - Replay Through Variance: Pilot choice, faction choice, starting system modifiers, upgrade rolls, ship combinations, and dialogue pairings should create strong replay variety even before additional story systems exist.
 - Endless Mode: Endless should exist as a mode where narrative completion falls away and the run is judged by survival quality and duration. Enemy scaling must eventually exceed realistic player scaling no matter how strong the build becomes.
 - Endless Design Principle: The best endless builds should feel like temporary victories against inevitability — players squeezing out extra seconds through superior synergy, movement, and decision-making rather than reaching true immortality.
+
+## Current Campaign Sector Choices
+
+Campaign plays two stages against one faction. Its first boss opens two explicit routes into the final sector: the cyan hexagonal Salvage Corridor and amber chevron Assault Lane. Approaching either gateway pauses flight for a briefing. Mouse, keyboard, and controller can confirm entry; Escape, Back, or Not yet dismisses it. A dismissed gateway reopens only after the player leaves its proximity area and returns.
+
+Salvage Corridor offers more wrecks and repair/utility station opportunities with tighter escort batches, +25% nanobots from pickups, and -10% player weapon base range. Assault Lane favors existing heavy formations and weapon/shield stations, with +15% forward/reverse top speed and +15% enemy maximum hull. Both routes preserve the faction, ship, purchased build, nanobots, and intended final boss.
+
+Briefing conditions remain stable while comparing routes. Sector modifiers are temporary and replace the previous sector's layer rather than accumulating as upgrades. Practice remains a short, single-stage introduction followed by a boss.

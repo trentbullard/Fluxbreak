@@ -8,6 +8,8 @@ const FACTION_PATHS: Array[String] = [
 	"res://content/data/practice_factions/greys.tres",
 ]
 const MAIN_TEMPLATE: String = "res://content/data/runs/story_mode_intro.tres"
+const SECTOR_MODIFIER_ROOT: String = "res://content/data/stages/modifiers/"
+const SECTOR_POI_ROOT: String = "res://content/data/pois/sectors/"
 
 static func get_factions() -> Array[PracticeFactionDef]:
 	var factions: Array[PracticeFactionDef] = []
@@ -69,6 +71,7 @@ static func _create_short_run(definition: PracticeFactionDef, deck: Array[WaveCa
 		stage.wave_cards.append(_pick_card(choices, rng).duplicate(false) as WaveCard)
 	stage.ordered_wave_cards = true
 	stage.next_stage_id = &""
+	stage.gateway_routes = []
 	stage.completion_flow = StageDef.CompletionFlow.BOSS_FINALE
 	stage.boss_faction = definition.faction
 	stage.boss_pool = _copy_bosses(seed_stage.get_boss_pool(), definition.faction)
@@ -107,6 +110,7 @@ static func _create_main_run(definition: PracticeFactionDef, deck: Array[WaveCar
 	for index: int in range(template.get_stage_count()):
 		var stage: StageDef = template.get_stage(index).duplicate(false) as StageDef
 		stage.stage_id = StringName("practice_%s_stage_%d" % [faction_id, index + 1])
+		stage.gateway_routes = []
 		stage.display_name = "%s %s" % [faction_name, "Approach" if index == 0 else "Stronghold"]
 		stage.description = "Campaign stage %d against %s." % [index + 1, faction_name]
 		stage.combat_hint = definition.combat_hint
@@ -150,7 +154,156 @@ static func _create_main_run(definition: PracticeFactionDef, deck: Array[WaveCar
 		else:
 			stage.completion_flow = StageDef.CompletionFlow.BOSS_FINALE
 			stage.next_stage_id = &""
+	if run.stages.size() == 2:
+		run.stages[0].gateway_routes = _create_sector_routes(run.stages[1], faction_name)
 	return run
+
+static func _create_sector_routes(final_stage: StageDef, faction_name: String) -> Array[SectorRouteDef]:
+	var routes: Array[SectorRouteDef] = []
+	for salvage: bool in [true, false]:
+		var destination: StageDef = copy_stage_for_play(final_stage)
+		var suffix: String = "salvage" if salvage else "assault"
+		destination.stage_id = StringName("%s_%s" % [final_stage.get_stage_id(), suffix])
+		destination.display_name = "%s %s" % [faction_name, "Salvage Corridor" if salvage else "Assault Lane"]
+		destination.description = "A wreck-strewn recovery lane into the enemy stronghold." if salvage else "A direct assault through the stronghold's heavy formations."
+		destination.next_stage_id = &""
+		destination.gateway_routes = []
+		destination.completion_flow = StageDef.CompletionFlow.BOSS_FINALE
+		destination.guaranteed_modifiers = []
+		var modifier_ids: Array[String] = ["salvage_tide", "sensor_static"]
+		if not salvage:
+			modifier_ids = ["thruster_corridors", "armored_patrols"]
+		for modifier_id: String in modifier_ids:
+			var modifier: StageModifierDef = load(SECTOR_MODIFIER_ROOT + modifier_id + ".tres") as StageModifierDef
+			if modifier != null:
+				destination.guaranteed_modifiers.append(modifier)
+		destination.guaranteed_modifiers = _copy_stage_modifiers(destination.guaranteed_modifiers)
+		destination.bonus_pool = []
+		destination.debuff_pool = []
+		destination.random_bonus_count = 0
+		destination.random_debuff_count = 0
+		destination.poi_defs = []
+		for station: String in ["arms_factory", "shield_array", "repair_hangar"]:
+			var poi: PoiDef = load(SECTOR_POI_ROOT + suffix + "_" + station + ".tres") as PoiDef
+			if poi != null:
+				var poi_copy: PoiDef = poi.duplicate(false) as PoiDef
+				poi_copy.upgrade_tags = poi.upgrade_tags.duplicate()
+				destination.poi_defs.append(poi_copy)
+		_tune_sector_cards(destination, salvage)
+		var route: SectorRouteDef = SectorRouteDef.new()
+		route.route_id = StringName(suffix)
+		route.display_name = "Salvage Corridor" if salvage else "Assault Lane"
+		route.description = destination.description
+		route.threat_summary = "-10% weapon range. Escort waves arrive in tighter batches." if salvage else "+15% enemy hull. Heavy formations appear more often."
+		route.reward_summary = "+25% nanobot gain. More wrecks and repair/utility stations." if salvage else "+15% forward and reverse speed. More weapon and shield stations."
+		route.marker_kind = SectorRouteDef.MarkerKind.SALVAGE if salvage else SectorRouteDef.MarkerKind.ASSAULT
+		route.marker_color = Color(0.2, 0.86, 0.75, 1.0) if salvage else Color(0.97, 0.6, 0.2, 1.0)
+		route.destination_stage = destination
+		routes.append(route)
+	return routes
+
+static func _tune_sector_cards(stage: StageDef, salvage: bool) -> void:
+	var highest_card_tier: int = 1
+	for card: WaveCard in stage.wave_cards:
+		if card != null:
+			highest_card_tier = maxi(highest_card_tier, card.min_enemy_tier)
+	for card: WaveCard in stage.wave_cards:
+		if card == null:
+			continue
+		if salvage:
+			card.in_wave_target_budget_scale = minf(maxf(card.in_wave_target_budget_scale * 1.5, card.in_wave_target_budget_scale + 0.12), 1.0)
+			card.downtime_target_point_budget += 2
+			card.pressure_target_point_budget += 1
+			card.target_size_band_max = maxi(card.target_size_band_max, 2)
+			if card.min_enemy_tier <= 2:
+				card.inter_batch_sec = maxf(card.inter_batch_sec * 0.75, 0.15)
+				card.pressure_enemy_point_budget += 1
+		else:
+			# Machines currently have no authored tier4/5 cards. Their heaviest
+			# available formations gain weight without inventing missing units.
+			var is_heavy: bool = card.min_enemy_tier >= 4 or (highest_card_tier < 4 and card.min_enemy_tier == highest_card_tier)
+			card.weight = minf(card.weight * (1.8 if is_heavy else 0.85), 10.0)
+
+## Own the run's mutable configuration while sharing immutable visual assets.
+static func copy_run_for_play(source: RunDefinition) -> RunDefinition:
+	if source == null:
+		return null
+	var copied: RunDefinition = source.duplicate(false) as RunDefinition
+	copied.stages = []
+	var memo: Dictionary = {}
+	for stage: StageDef in source.get_stages():
+		var stage_copy: StageDef = _copy_stage_tree(stage, memo, {})
+		if stage_copy != null:
+			copied.stages.append(stage_copy)
+	return copied
+
+## Copy a chosen destination without mutating the offered briefing snapshot.
+static func copy_stage_for_play(source: StageDef) -> StageDef:
+	return _copy_stage_tree(source, {}, {})
+
+static func _copy_stage_tree(source: StageDef, memo: Dictionary, ancestors: Dictionary) -> StageDef:
+	if source == null or ancestors.has(source.get_instance_id()):
+		return null
+	var key: int = source.get_instance_id()
+	if memo.has(key):
+		return memo[key] as StageDef
+	var copied: StageDef = source.duplicate(false) as StageDef
+	memo[key] = copied
+	ancestors[key] = true
+	copied.wave_cards = []
+	for card: WaveCard in source.wave_cards:
+		if card == null:
+			continue
+		var card_copy: WaveCard = card.duplicate(false) as WaveCard
+		card_copy.tags = card.tags.duplicate()
+		card_copy.enemy_modifiers = _copy_stat_modifiers(card.enemy_modifiers)
+		copied.wave_cards.append(card_copy)
+	copied.boss_pool = []
+	for boss: EnemyBossDef in source.boss_pool:
+		if boss != null:
+			copied.boss_pool.append(boss.duplicate(false) as EnemyBossDef)
+	copied.poi_defs = []
+	for poi: PoiDef in source.poi_defs:
+		if poi != null:
+			var poi_copy: PoiDef = poi.duplicate(false) as PoiDef
+			poi_copy.upgrade_tags = poi.upgrade_tags.duplicate()
+			copied.poi_defs.append(poi_copy)
+	copied.guaranteed_modifiers = _copy_stage_modifiers(source.guaranteed_modifiers)
+	copied.bonus_pool = _copy_stage_modifiers(source.bonus_pool)
+	copied.debuff_pool = _copy_stage_modifiers(source.debuff_pool)
+	copied.panorama_options = source.panorama_options.duplicate()
+	copied.authored_enemy_budgets = source.authored_enemy_budgets.duplicate()
+	copied.authored_tier_caps = source.authored_tier_caps.duplicate()
+	copied.gateway_routes = []
+	for route: SectorRouteDef in source.gateway_routes:
+		if route == null:
+			copied.gateway_routes.append(null)
+			continue
+		var route_copy: SectorRouteDef = route.duplicate(false) as SectorRouteDef
+		route_copy.destination_stage = _copy_stage_tree(route.destination_stage, memo, ancestors)
+		# Retain a malformed route declaration so it cannot silently turn into
+		# an automatic linear jump; the public helper omits unusable markers.
+		copied.gateway_routes.append(route_copy)
+	ancestors.erase(key)
+	return copied
+
+static func _copy_stage_modifiers(source: Array[StageModifierDef]) -> Array[StageModifierDef]:
+	var copied: Array[StageModifierDef] = []
+	for modifier: StageModifierDef in source:
+		if modifier == null:
+			continue
+		var modifier_copy: StageModifierDef = modifier.duplicate(false) as StageModifierDef
+		modifier_copy.player_modifiers = _copy_stat_modifiers(modifier.player_modifiers)
+		modifier_copy.enemy_modifiers = _copy_stat_modifiers(modifier.enemy_modifiers)
+		copied.append(modifier_copy)
+	return copied
+
+static func _copy_stat_modifiers(source: Array[StatModifier]) -> Array[StatModifier]:
+	var copied: Array[StatModifier] = []
+	for modifier: StatModifier in source:
+		if modifier != null:
+			copied.append(modifier.duplicate(false) as StatModifier)
+	return copied
 
 static func _copy_bosses(pool: Array[EnemyBossDef], faction: FactionDef) -> Array[EnemyBossDef]:
 	var copies: Array[EnemyBossDef] = []

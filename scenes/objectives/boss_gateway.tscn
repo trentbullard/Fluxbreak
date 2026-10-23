@@ -10,8 +10,8 @@ albedo_color = Color(0.1725, 0.851, 1, 0.75)
 
 [sub_resource type="TorusMesh" id="TorusMesh_gateway"]
 material = SubResource("StandardMaterial3D_gateway")
-inner_radius = 100.0
-outer_radius = 80.0
+inner_radius = 80.0
+outer_radius = 100.0
 rings = 32
 ring_segments = 28
 
@@ -41,3 +41,15 @@ mesh = SubResource("TorusMesh_gateway")
 material_override = SubResource("StandardMaterial3D_gateway")
 cast_shadow = 0
 mesh = SubResource("SphereMesh_gateway_core")
+
+[node name="MarkerGlyph" type="Node3D" parent="."]
+
+[node name="RouteLabel" type="Label3D" parent="."]
+position = Vector3(0, 165, 0)
+billboard = 1
+no_depth_test = true
+font_size = 56
+outline_size = 10
+pixel_size = 0.8
+text = "Gateway Rift"
+outline_modulate = Color(0.015, 0.025, 0.035, 1)

@@ -129,6 +129,7 @@ var _pilot_ingenuity: float = 5.0
 var _regen_timer: Timer
 var _nanobots: int = 0
 var _hull_repair_cooldown_remaining: float = 0.0
+var _hull_repair_input_suppressed: bool = false
 var shield_mesh: MeshInstance3D
 var _shield_mat: StandardMaterial3D
 var _shield_base_albedo: Color = Color.WHITE
@@ -149,6 +150,8 @@ var _tether_break_distance: float = 0.0
 
 func _ready() -> void:
 	add_to_group("player")
+	if stat_aggregator != null:
+		stat_aggregator.set_stage_projection_enabled(true)
 	reconfigure_from_selected_pilot()
 	_apply_rigidbody_damping()
 	RunState.start_run()
@@ -419,6 +422,10 @@ func get_hull_repair_cooldown_remaining() -> float:
 func get_hull_repair_cooldown() -> float:
 	return max(hull_repair_cooldown, 0.0)
 
+## Returning from a gateway must not spend nanobots on the shared Back/B input.
+func suppress_hull_repair_until_release() -> void:
+	_hull_repair_input_suppressed = true
+
 # --- private methods ---
 
 func _refresh() -> void:
@@ -430,7 +437,10 @@ func _physics_process(delta: float) -> void:
 	_tick_tether_status(delta)
 	if _hull_repair_cooldown_remaining > 0.0:
 		_hull_repair_cooldown_remaining = max(_hull_repair_cooldown_remaining - delta, 0.0)
-	if Input.is_action_just_pressed("hull_repair"):
+	if _hull_repair_input_suppressed:
+		if not Input.is_action_pressed("hull_repair") and not Input.is_action_just_pressed("hull_repair"):
+			_hull_repair_input_suppressed = false
+	elif Input.is_action_just_pressed("hull_repair"):
 		_try_use_hull_repair()
 
 	_update_translation()
@@ -1282,7 +1292,16 @@ func _update_shield_mesh_visibility() -> void:
 	shield_mesh.visible = ratio > 0.0
 
 func _on_stats_changed(_affected: Array[Stat]) -> void:
+	var previous_max_hull: float = eff_max_hull
+	var previous_max_shield: float = eff_max_shield
 	_refresh_effective_stats()
+	# Re-projecting a sector never refills health or rebuilds the loadout. Only
+	# remove health above a capacity that actually shrank with the old modifier.
+	if eff_max_hull < previous_max_hull:
+		hull = minf(hull, maxf(eff_max_hull, 0.0) * (1.0 + maxf(overheal, 0.0)))
+	if eff_max_shield < previous_max_shield:
+		shield = minf(shield, maxf(eff_max_shield, 0.0))
+	_update_shield_mesh_visibility()
 
 func _on_heal_hull_requested(amount: float, percent: float) -> void:
 	var flat: float = max(0.0, amount)

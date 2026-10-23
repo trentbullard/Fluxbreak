@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="StageModifierDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/stat_modifier_def.gd" id="1_mod"]
+[ext_resource type="Script" path="res://content/defs/stage_modifier_def.gd" id="2_stage"]
+
+[sub_resource type="Resource" id="EnemyHull"]
+script = ExtResource("1_mod")
+stat = 12
+op = 1
+value = 1.15
+source_id = "stage:armored_patrols"
+applies_to_player = false
+
+[resource]
+script = ExtResource("2_stage")
+modifier_id = &"armored_patrols"
+display_name = "Armored Patrols"
+description = "+15% enemy maximum hull for ships spawned in this sector."
+kind = 1
+tags = PackedStringArray("hull", "patrols", "negative")
+enemy_modifiers = Array[ExtResource("1_mod")]([SubResource("EnemyHull")])

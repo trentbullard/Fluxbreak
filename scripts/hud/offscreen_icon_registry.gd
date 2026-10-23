@@ -4,7 +4,7 @@
 extends RefCounted
 class_name OffscreenIconRegistry
 
-enum IconShape { TRIANGLE, CIRCLE, SQUARE, DIAMOND }
+enum IconShape { TRIANGLE, CIRCLE, SQUARE, DIAMOND, HEXAGON, CHEVRONS }
 
 # Entry: defines how a given kind should be displayed
 class IconEntry:
@@ -73,6 +73,14 @@ func _register_defaults() -> void:
 	boss_gateway.outline_color = Color(0.05, 0.22, 0.22, 1.0)
 	boss_gateway.outline_width = 3.0
 	register("boss_gateway", boss_gateway)
+	var salvage_gateway: IconEntry = IconEntry.new(IconShape.HEXAGON, Color(0.2, 0.9, 1.0, 0.98), 20.0)
+	salvage_gateway.outline_color = Color(0.025, 0.14, 0.2, 1.0)
+	salvage_gateway.outline_width = 3.0
+	register("boss_gateway_salvage", salvage_gateway)
+	var assault_gateway: IconEntry = IconEntry.new(IconShape.CHEVRONS, Color(1.0, 0.5, 0.16, 0.98), 24.0)
+	assault_gateway.outline_color = Color(0.22, 0.055, 0.025, 1.0)
+	assault_gateway.outline_width = 3.0
+	register("boss_gateway_assault", assault_gateway)
 
 func register(kind: String, entry: IconEntry) -> void:
 	_entries[kind] = entry
@@ -110,6 +118,31 @@ static func _draw_shape(canvas: CanvasItem, entry: IconEntry, center: Vector2, a
 			_draw_square(canvas, center, s, angle, entry.color, entry.outline_color, entry.outline_width)
 		IconShape.DIAMOND:
 			_draw_diamond(canvas, center, s, angle, entry.color, entry.outline_color, entry.outline_width)
+		IconShape.HEXAGON:
+			_draw_hexagon(canvas, center, s, angle, entry.color, entry.outline_color, entry.outline_width)
+		IconShape.CHEVRONS:
+			_draw_chevrons(canvas, center, s, angle, entry.color, entry.outline_color, entry.outline_width)
+
+static func _draw_hexagon(canvas: CanvasItem, center: Vector2, size: float, angle: float, fill: Color, outline: Color, outline_w: float) -> void:
+	var points: PackedVector2Array = []
+	for corner: int in range(6):
+		var direction: float = angle + PI / 6.0 + TAU * float(corner) / 6.0
+		points.append(center + Vector2(cos(direction), sin(direction)) * size * 0.5)
+	canvas.draw_polygon(points, [fill])
+	if outline_w > 0.0:
+		points.append(points[0])
+		canvas.draw_polyline(points, outline, outline_w, true)
+
+static func _draw_chevrons(canvas: CanvasItem, center: Vector2, size: float, angle: float, fill: Color, outline: Color, outline_w: float) -> void:
+	for row: int in range(2):
+		var shift: float = -0.3 + float(row) * 0.42
+		var local_points: Array[Vector2] = [Vector2(shift - 0.3, -0.35), Vector2(shift + 0.12, 0.0), Vector2(shift - 0.3, 0.35)]
+		var points: PackedVector2Array = []
+		for point: Vector2 in local_points:
+			points.append(center + point.rotated(angle) * size)
+		if outline_w > 0.0:
+			canvas.draw_polyline(points, outline, 4.0 + outline_w * 2.0, true)
+		canvas.draw_polyline(points, fill, 4.0, true)
 
 static func _draw_triangle(canvas: CanvasItem, center: Vector2, size: float, angle: float, fill: Color, outline: Color, outline_w: float) -> void:
 	# Pointing triangle (arrow-like) - tip points in direction of angle

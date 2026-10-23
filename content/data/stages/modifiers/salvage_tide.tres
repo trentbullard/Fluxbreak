@@ -3,9 +3,17 @@
 [ext_resource type="Script" uid="uid://c7mxb2uqowqsm" path="res://content/defs/stat_modifier_def.gd" id="1_7sa8x"]
 [ext_resource type="Script" uid="uid://c0baui7bplv2c" path="res://content/defs/stage_modifier_def.gd" id="1_stage_modifier_def"]
 
+[sub_resource type="Resource" id="NanobotGain"]
+script = ExtResource("1_7sa8x")
+stat = 47
+op = 1
+value = 1.25
+source_id = "stage:salvage_tide"
+
 [resource]
 script = ExtResource("1_stage_modifier_def")
 modifier_id = &"salvage_tide"
 display_name = "Salvage Tide"
-description = "Drift lanes are rich with broken station mass and salvage. Good candidate for extra nanobot economy and objective density."
+description = "+25% nanobots gained from pickups while in this sector."
 tags = PackedStringArray("economy", "salvage", "positive")
+player_modifiers = Array[ExtResource("1_7sa8x")]([SubResource("NanobotGain")])

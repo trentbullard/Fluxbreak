@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="PoiDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/poi_def.gd" id="1_def"]
+[ext_resource type="PackedScene" path="res://scenes/pois/poi_shield_array.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_def")
+poi_id = "salvage_shield_array"
+display_name = "Shield Array"
+poi_type = 1
+spawn_weight = 1.2
+scene_override = ExtResource("2_scene")
+emission_color = Color(0.2, 0.8, 0.4, 1)
+emission_energy = 2.5
+upgrade_tags = Array[String](["defense", "shields", "hull"])

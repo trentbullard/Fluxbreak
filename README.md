@@ -18,14 +18,16 @@ The game is built around auto-combat rather than manual aiming. Your job is to s
 1. Prepare your pilot, ship, and starting weapon in Hangar, then open Play to choose a faction and launch Campaign for a two-stage run or Practice for short introduction waves and a boss. Random chooses one faction for the entire run.
 2. Fly through a 3D combat space while your turrets auto-acquire and fire on targets in range.
 3. Survive enemy waves, destroy hostile ships, and collect nanobots.
-4. Dock with points of interest such as the Weapons Platform, Shield Array, and Repair Depot.
+4. Dock with points of interest such as the Arms Factory, Shield Array, and Repair Hangar.
 5. Spend nanobots on run-defining upgrades or new weapons, then push into the next wave.
-6. Chase a higher score, a deeper wave count, and new pilot unlocks.
+6. In Campaign, defeat the first boss and choose the Salvage Corridor or Assault Lane before entering the final sector. Review its threats, opportunities, and conditions, then explicitly confirm entry.
+7. Chase a higher score, a deeper wave count, and new pilot unlocks.
 
 ## Current Content Snapshot
 
 - Home opens Play, Hangar, Upgrades, Settings, or Exit. Play shows the current loadout and offers Change Loadout; Hangar offers selection details and Continue To Play. Back or Escape returns to Home, and closing Upgrades returns to the page that opened it.
 - The passive 3D hangar displays existing ships and placeholder pilot stand-ins, with a smooth camera moving between selection bays. Settings includes master volume, fullscreen, control instructions, and Animate Hangar, which can be disabled to reduce motion.
+- Campaign keeps two played stages. Its first boss opens a cyan hexagonal Salvage Corridor gateway and an amber chevron Assault Lane gateway. The briefing supports mouse, keyboard, and controller confirmation; Escape, Back, or Not yet returns to flight. Your faction, ship, upgrades, and nanobots carry forward. Practice retains its existing short encounter.
 - Pilots include `Rookie`, `Ace`, and `Technician`
 - Ships include `Fighter Mk1`, `Heavy Bruiser`, and `Drone Carrier`
 - Weapons currently include pulse, laser, and drone-based loadout pieces
@@ -62,7 +64,7 @@ Combat targeting and firing are handled automatically by the ship's weapon syste
 
 - Engine: Godot 4.7.2
 - Language: typed GDScript
-- Project version: `0.3.0`
+- Project version: `0.4.0`
 
 ## Running The Project
 
@@ -98,12 +100,17 @@ Fluxbreak is aiming for readable chaos. The guiding rubric for new work is simpl
 
 ## TODO
 
-See the [ordered gameplay roadmap](docs/plans/next_gameplay_milestones.md) for the next five milestones. Campaign sector choice and working sector modifiers are the recommended next gameplay step after the menu and Hangar work.
+See the [ordered gameplay roadmap](docs/plans/next_gameplay_milestones.md). Menu/Hangar navigation and Campaign sector choices are complete; more useful points of interest are the recommended next milestone.
 
-- music
-- ammo/damage types
-- Add progression variants for Mercs, Bugs, and Greys.
-- Define and implement the fifth faction, including its ships, bosses, and wave deck, once the first four factions' combat identities are stable.
+- [x] Main Menu, Hangar, Play, and passive camera prototype.
+- [x] Campaign sector choices with working temporary sector modifiers.
+- [ ] Add salvage beacons, refit stations, and bounty relays.
+- [ ] Expand special units and readable auto-combat counterplay.
+- [ ] Add ammo/damage specialization and resistances.
+- [ ] Add progression variants for Mercs, Bugs, and Greys.
+- [ ] Define and implement the fifth faction, including its ships, bosses, and wave deck, once the first four factions' combat identities are stable.
+
+Music, pilot artwork, and story/lore expansion remain deferred.
 
 ## License
 

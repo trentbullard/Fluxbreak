@@ -204,7 +204,7 @@ func _refresh_timer_readouts() -> void:
 		return
 
 	if _director.is_gateway_hold_active():
-		_wave_label.text = "Boss Cleared • Dock with Gateway"
+		_wave_label.text = "Boss cleared · Dock to inspect a route"
 		return
 
 	if _director.get_state() == RunState.State.IN_WAVE:

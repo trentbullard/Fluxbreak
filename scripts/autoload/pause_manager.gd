@@ -22,10 +22,11 @@ func _ready() -> void:
 	menu_requested.connect(_on_menu)
 	quit_requested.connect(_on_quit)
 
-func _unhandled_input(_event: InputEvent) -> void:
-	if Input.is_action_just_pressed("pause"):
-		if _is_main_menu_active():
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("pause") and not event.is_echo():
+		if _is_main_menu_active() or _is_sector_briefing_open():
 			return
+		get_viewport().set_input_as_handled()
 		toggle_pause()
 
 func _is_main_menu_active() -> bool:
@@ -37,6 +38,13 @@ func _is_main_menu_active() -> bool:
 
 	var main_menu_overlay: CanvasItem = cs.get_node_or_null("MainMenuOverlay") as CanvasItem
 	return main_menu_overlay != null and main_menu_overlay.visible
+
+func _is_sector_briefing_open() -> bool:
+	for node: Node in get_tree().get_nodes_in_group("sector_briefing_modal"):
+		var modal: CanvasItem = node as CanvasItem
+		if modal != null and modal.is_visible_in_tree():
+			return true
+	return false
 
 func toggle_pause() -> void:
 	if is_paused:
@@ -62,11 +70,13 @@ func _on_resume_requested() -> void:
 	Input.set_mouse_mode(_was_mouse_mode)
 
 func _on_restart() -> void:
+	GameFlow.abandon_run()
 	get_tree().paused = false
 	is_paused = false
 	get_tree().reload_current_scene()
 
 func _on_menu() -> void:
+	GameFlow.abandon_run()
 	get_tree().paused = false
 	is_paused = false
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)

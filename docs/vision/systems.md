@@ -26,6 +26,18 @@ Systemic upgrades may apply to the player, minions, or both, but scope should al
 - Minions should inherit the build's identity without turning into opaque parallel actors that bypass readability.
 - Minion scaling should emphasize command reach, uptime, role definition, and tactical pressure before invisible DPS inflation.
 
+### Current Sector Modifier Layer
+
+Sector conditions apply through a temporary layer separate from purchased upgrades. Player conditions refresh when the active stage changes; enemy conditions are resolved for ships spawned in that sector. Changing sectors replaces the layer, and ending or abandoning a run clears it. Briefings and entry share one cached condition roll, so comparing or cancelling a route cannot reroll its effects.
+
+- Salvage Tide: +25% nanobots gained from pickups.
+- Sensor Static: -10% player weapon base range.
+- Thruster Corridors: +15% player forward and reverse top speed.
+- Armored Patrols: +15% enemy maximum hull.
+- Solar Flare Front: -15% player shield regeneration.
+
+Campaign's Salvage route fixes Salvage Tide plus Sensor Static; its Assault route fixes Thruster Corridors plus Armored Patrols. These stat effects do not imply an environmental damage-hazard system. Practice retains its existing encounter settings.
+
 ## Meta-Progression
 
 Outside active runs, the player gains access to persistent progression through meta-currency earned over time.

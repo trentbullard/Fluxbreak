@@ -7,22 +7,34 @@ signal docking_started(gateway: BossGateway)
 signal docking_progress(gateway: BossGateway, time_remaining: float)
 signal docking_cancelled(gateway: BossGateway)
 signal docking_complete(gateway: BossGateway)
+signal briefing_opened(gateway: BossGateway)
+signal briefing_closed()
 
 @export var ship_path: NodePath
 @export var wave_director_path: NodePath
 @export var poi_spawner_path: NodePath
 @export var docking_manager_path: NodePath
 @export var gateway_min_distance_from_ship: float = 550.0
+## Extra clearance required before a declined gateway can offer its briefing again.
+@export var gateway_rearm_margin: float = 60.0
 
 var _ship: Ship
 var _wave_director: WaveDirector
 var _poi_spawner: PoiSpawner
 var _docking_manager: DockingManager
 var _active_gateway: BossGateway = null
+var _gateways: Array[BossGateway] = []
+var _briefing_gateway: BossGateway = null
+var _dismissed_gateways: Dictionary = {}
+var _gateway_stage: StageDef = null
+var _gateway_run: RunDefinition = null
 var _docking_timer: float = 0.0
 var _transfer_in_progress: bool = false
+var _was_paused: bool = false
+var _was_mouse_mode: int = Input.MOUSE_MODE_CAPTURED
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	if ship_path != NodePath(""):
 		_ship = get_node_or_null(ship_path) as Ship
 	if wave_director_path != NodePath(""):
@@ -36,144 +48,235 @@ func _ready() -> void:
 	if not GameFlow.stage_changed.is_connected(_on_stage_changed):
 		GameFlow.stage_changed.connect(_on_stage_changed)
 
-func _process(delta: float) -> void:
-	if _active_gateway == null or _transfer_in_progress:
+func _process(_delta: float) -> void:
+	if _transfer_in_progress or _gateways.is_empty():
 		return
-	if _ship == null or not is_instance_valid(_ship):
+	if not _is_ship_available() or GameFlow.get_active_run_definition() != _gateway_run or GameFlow.get_current_stage() != _gateway_stage:
+		_clear_gateway()
 		return
-	if get_tree().paused:
+	if _briefing_gateway != null:
+		if is_instance_valid(_briefing_gateway) and not _briefing_gateway.is_queued_for_deletion():
+			return
+		_close_briefing(true)
+	if get_tree().paused or PauseManager.is_paused:
 		return
-	var distance_sq: float = _ship.global_position.distance_squared_to(_active_gateway.global_position)
-	var docking_radius: float = _active_gateway.get_docking_radius()
-	if distance_sq <= docking_radius * docking_radius:
-		if _docking_timer <= 0.0:
-			_docking_timer = _active_gateway.get_docking_time() * _get_effective_docking_time_mult()
-			docking_started.emit(_active_gateway)
-		_docking_timer = max(_docking_timer - max(delta, 0.0), 0.0)
-		docking_progress.emit(_active_gateway, _docking_timer)
-		if _docking_timer <= 0.0:
-			_complete_docking()
-		return
-	if _docking_timer > 0.0:
-		_cancel_docking()
+	var closest: BossGateway = null
+	var closest_distance_sq: float = INF
+	for gateway: BossGateway in get_active_gateways():
+		var distance_sq: float = _ship.global_position.distance_squared_to(gateway.global_position)
+		var instance_id: int = gateway.get_instance_id()
+		if _dismissed_gateways.has(instance_id):
+			var rearm_radius: float = gateway.get_docking_radius() + maxf(gateway_rearm_margin, 0.0)
+			if distance_sq > rearm_radius * rearm_radius:
+				_dismissed_gateways.erase(instance_id)
+			else:
+				continue
+		var radius: float = gateway.get_docking_radius()
+		if distance_sq <= radius * radius and distance_sq < closest_distance_sq:
+			closest = gateway
+			closest_distance_sq = distance_sq
+	if closest != null:
+		_open_briefing(closest)
 
 func get_active_gateway() -> BossGateway:
-	return _active_gateway
+	if is_instance_valid(_briefing_gateway):
+		return _briefing_gateway
+	return _active_gateway if is_instance_valid(_active_gateway) else null
 
+func get_active_gateways() -> Array[BossGateway]:
+	var valid: Array[BossGateway] = []
+	for gateway: BossGateway in _gateways:
+		if is_instance_valid(gateway) and not gateway.is_queued_for_deletion():
+			valid.append(gateway)
+	return valid
+
+func get_briefing_gateway() -> BossGateway:
+	return _briefing_gateway if is_instance_valid(_briefing_gateway) else null
+
+func is_briefing_open() -> bool:
+	return get_briefing_gateway() != null
+
+## Retained for HUD integrations; gateways now wait for explicit confirmation.
 func get_docking_timer() -> float:
-	return _docking_timer
+	return 0.0
 
-func _get_effective_docking_time_mult() -> float:
-	if _ship == null or not is_instance_valid(_ship):
-		return 1.0
-	return max(_ship.get_effective_docking_time_mult(), 0.0)
+func _is_ship_available() -> bool:
+	return is_instance_valid(_ship) and not _ship.is_queued_for_deletion() and _ship.visible and _ship.is_alive()
 
 func _on_gateway_ready(stage: StageDef, spawn_position: Vector3) -> void:
 	_clear_gateway()
 	if stage == null or stage.gateway_scene == null:
-		push_warning("BossGatewayManager: active gateway stage has no gateway_scene configured.")
-		return
-	var gateway_node: Node = stage.gateway_scene.instantiate()
-	var gateway: BossGateway = gateway_node as BossGateway
-	if gateway == null:
-		if gateway_node != null:
-			gateway_node.queue_free()
-		push_warning("BossGatewayManager: gateway_scene must instantiate a BossGateway root.")
+		push_warning("BossGatewayManager: gateway stage has no gateway scene.")
 		return
 	var tree: SceneTree = get_tree()
-	if tree == null or tree.current_scene == null:
-		gateway.queue_free()
+	if tree.current_scene == null:
 		return
-	tree.current_scene.add_child(gateway)
-	gateway.global_position = _resolve_gateway_spawn_position(spawn_position, gateway)
-	_active_gateway = gateway
-	if _poi_spawner != null:
+	_gateway_stage = stage
+	_gateway_run = GameFlow.get_active_run_definition()
+	var routes: Array[SectorRouteDef] = stage.get_gateway_routes()
+	if routes.is_empty():
+		var next_stage: StageDef = _resolve_linear_destination(stage)
+		if next_stage == null:
+			return
+		var linear: SectorRouteDef = SectorRouteDef.new()
+		linear.route_id = &"next_sector"
+		linear.display_name = next_stage.get_display_name_or_default()
+		linear.description = next_stage.description
+		linear.destination_stage = next_stage
+		routes.append(linear)
+	var direction: Vector3 = spawn_position - _ship.global_position if _is_ship_available() else Vector3.FORWARD
+	if direction.length_squared() < 0.001:
+		direction = Vector3.FORWARD
+	direction = direction.normalized()
+	var side: Vector3 = direction.cross(Vector3.UP).normalized()
+	if side.length_squared() < 0.001:
+		side = Vector3.RIGHT
+	for index: int in routes.size():
+		var gateway: BossGateway = stage.gateway_scene.instantiate() as BossGateway
+		if gateway == null:
+			push_warning("BossGatewayManager: gateway scene must instantiate BossGateway.")
+			continue
+		gateway.configure_route(routes[index])
+		tree.current_scene.add_child(gateway)
+		var center: Vector3 = _resolve_gateway_spawn_position(spawn_position, gateway)
+		var spacing: float = gateway.get_docking_radius() * 2.0 + maxf(gateway_rearm_margin, 80.0)
+		gateway.global_position = center + side * (float(index) - float(routes.size() - 1) * 0.5) * spacing
+		_gateways.append(gateway)
+		if _active_gateway == null:
+			_active_gateway = gateway
+		gateway_spawned.emit(gateway)
+	if not _gateways.is_empty() and _poi_spawner != null:
 		_poi_spawner.pause_spawning()
-	gateway_spawned.emit(gateway)
+
+func _resolve_linear_destination(stage: StageDef) -> StageDef:
+	if _gateway_run == null:
+		return null
+	if stage.next_stage_id != &"":
+		var index: int = _gateway_run.find_stage_index_by_id(stage.next_stage_id)
+		return _gateway_run.get_stage(index)
+	return _gateway_run.get_stage(GameFlow.get_active_stage_index() + 1)
 
 func _resolve_gateway_spawn_position(spawn_position: Vector3, gateway: BossGateway) -> Vector3:
-	if _ship == null or not is_instance_valid(_ship):
+	if not _is_ship_available():
 		return spawn_position
-	var minimum_distance: float = max(gateway_min_distance_from_ship, gateway.get_docking_radius() * 1.5)
-	var ship_position: Vector3 = _ship.global_position
-	var direction: Vector3 = spawn_position - ship_position
+	var minimum_distance: float = maxf(gateway_min_distance_from_ship, gateway.get_docking_radius() * 1.5)
+	var direction: Vector3 = spawn_position - _ship.global_position
 	if direction.length_squared() <= 0.0001:
 		direction = Vector3.FORWARD
 	else:
 		direction = direction.normalized()
-	var target_position: Vector3 = spawn_position
-	if ship_position.distance_squared_to(target_position) < minimum_distance * minimum_distance:
-		target_position = ship_position + direction * minimum_distance
-	return target_position
+	if _ship.global_position.distance_squared_to(spawn_position) < minimum_distance * minimum_distance:
+		return _ship.global_position + direction * minimum_distance
+	return spawn_position
 
-func _complete_docking() -> void:
-	if _active_gateway == null:
+func _open_briefing(gateway: BossGateway) -> void:
+	if _transfer_in_progress or is_briefing_open() or not _is_ship_available():
 		return
-	docking_complete.emit(_active_gateway)
+	_briefing_gateway = gateway
+	_was_paused = get_tree().paused
+	_was_mouse_mode = Input.mouse_mode
+	get_tree().paused = true
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	docking_started.emit(gateway)
+	briefing_opened.emit(gateway)
+
+func cancel_gateway() -> void:
+	var gateway: BossGateway = get_briefing_gateway()
+	if gateway == null or _transfer_in_progress:
+		return
+	_dismissed_gateways[gateway.get_instance_id()] = true
+	_close_briefing(true)
+	docking_cancelled.emit(gateway)
+
+func confirm_gateway() -> bool:
+	var gateway: BossGateway = get_briefing_gateway()
+	if gateway == null or _transfer_in_progress or not _is_ship_available():
+		return false
+	if GameFlow.get_current_stage() != _gateway_stage or GameFlow.get_active_run_definition() != _gateway_run:
+		return false
+	if not get_active_gateways().has(gateway):
+		return false
+	var radius: float = gateway.get_docking_radius()
+	if _ship.global_position.distance_squared_to(gateway.global_position) > radius * radius:
+		cancel_gateway()
+		return false
+	var route: SectorRouteDef = gateway.get_route()
+	if route == null or route.get_destination_id() == &"":
+		return false
+	var offered: Array[SectorRouteDef] = _gateway_stage.get_gateway_routes()
+	if not offered.is_empty() and not offered.has(route):
+		return false
 	_transfer_in_progress = true
-	_docking_timer = 0.0
-	_transfer_to_next_stage()
-
-func _cancel_docking() -> void:
-	if _active_gateway == null:
-		return
-	_docking_timer = 0.0
-	docking_cancelled.emit(_active_gateway)
-
-func _transfer_to_next_stage() -> void:
-	_clear_runtime_stage_nodes()
+	var old_nodes: Array[Node] = []
+	_collect_runtime_stage_nodes(get_tree().current_scene, old_nodes)
+	# Advance before freeing old actors: a rejected destination leaves this sector intact.
+	var advanced: bool = GameFlow.advance_to_next_stage(route.get_destination_id())
+	if not advanced:
+		_transfer_in_progress = false
+		return false
+	docking_complete.emit(gateway)
+	_close_briefing(true)
+	for node: Node in old_nodes:
+		if is_instance_valid(node) and not node.is_queued_for_deletion():
+			node.queue_free()
 	if _poi_spawner != null:
 		_poi_spawner.clear_runtime_tracking()
 	if _docking_manager != null:
 		_docking_manager.reset_for_stage()
-	var advanced: bool = GameFlow.advance_to_next_stage()
-	if not advanced:
-		_transfer_in_progress = false
-		_clear_gateway()
-		GameFlow.player_won()
-		return
-	if _ship != null and is_instance_valid(_ship):
-		_ship.reset_for_stage_transition()
+	_ship.reset_for_stage_transition()
 	if _wave_director != null:
 		_wave_director.begin_stage_after_gateway_transfer()
 	if _poi_spawner != null:
 		_poi_spawner.resume_stage_spawning(true)
 	_transfer_in_progress = false
 	_clear_gateway()
+	return true
 
-func _clear_runtime_stage_nodes() -> void:
-	var tree: SceneTree = get_tree()
-	if tree == null or tree.current_scene == null:
-		return
-	_queue_free_runtime_nodes(tree.current_scene)
+func _complete_docking() -> void:
+	confirm_gateway()
 
-func _queue_free_runtime_nodes(node: Node) -> void:
-	for child in node.get_children():
-		_queue_free_runtime_nodes(child)
-	if node == null or not is_instance_valid(node):
+func _cancel_docking() -> void:
+	cancel_gateway()
+
+func _close_briefing(restore_state: bool) -> void:
+	if _briefing_gateway == null:
 		return
-	if node == _ship:
+	_briefing_gateway = null
+	if restore_state and is_inside_tree():
+		if is_instance_valid(_ship):
+			_ship.suppress_hull_repair_until_release()
+		get_tree().paused = _was_paused
+		Input.mouse_mode = _was_mouse_mode
+	briefing_closed.emit()
+
+func _collect_runtime_stage_nodes(node: Node, collected: Array[Node]) -> void:
+	if not is_instance_valid(node) or node == _ship:
 		return
-	if (
-		node is Enemy
-		or node is TargetObject
-		or node is PoiInstance
-		or node is BossGateway
-		or node is NanobotSwarm
-		or node is PackWarpExit
-		or node is Projectile
-	):
-		node.queue_free()
+	for child: Node in node.get_children():
+		_collect_runtime_stage_nodes(child, collected)
+	if node is Enemy or node is TargetObject or node is PoiInstance or node is BossGateway or node is NanobotSwarm or node is PackWarpExit or node is Projectile:
+		collected.append(node)
 
 func _on_stage_changed(_stage: StageDef, _stage_index: int) -> void:
-	_docking_timer = 0.0
-	if _transfer_in_progress:
-		return
-	_clear_gateway()
+	if not _transfer_in_progress:
+		_clear_gateway()
 
 func _clear_gateway() -> void:
-	if _active_gateway != null and is_instance_valid(_active_gateway):
-		_active_gateway.queue_free()
+	_close_briefing(true)
+	for gateway: BossGateway in _gateways:
+		if is_instance_valid(gateway) and not gateway.is_queued_for_deletion():
+			gateway.queue_free()
+	_gateways.clear()
 	_active_gateway = null
+	_gateway_stage = null
+	_gateway_run = null
+	_dismissed_gateways.clear()
 	_docking_timer = 0.0
 	gateway_cleared.emit()
+
+func _exit_tree() -> void:
+	_close_briefing(false)
+	for gateway: BossGateway in _gateways:
+		if is_instance_valid(gateway) and not gateway.is_queued_for_deletion():
+			gateway.queue_free()
+	_gateways.clear()

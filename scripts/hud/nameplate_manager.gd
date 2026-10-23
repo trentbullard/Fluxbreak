@@ -110,8 +110,8 @@ func _sync_targets() -> void:
 						distance_text
 					]
 				elif kind == "boss_gateway":
-					_apply_gateway_indicator(ui)
-					label.text = "%s\n%s  •  Dock to Advance" % [
+					_apply_gateway_indicator(ui, target)
+					label.text = "%s\n%s  •  Dock to inspect" % [
 						_gateway_display_name(target),
 						distance_text
 					]
@@ -197,12 +197,12 @@ func _reset_poi_indicator(ui: Control) -> void:
 	indicator.visible = false
 	indicator.color = POI_UNVISITED_COLOR
 
-func _apply_gateway_indicator(ui: Control) -> void:
+func _apply_gateway_indicator(ui: Control, gateway: Node3D) -> void:
 	var indicator: ColorRect = ui.get_node_or_null("HBox/StateIndicator") as ColorRect
 	if indicator == null:
 		return
 	indicator.visible = true
-	indicator.color = GATEWAY_COLOR
+	indicator.color = (gateway as BossGateway).get_marker_color() if gateway is BossGateway else GATEWAY_COLOR
 
 func _gateway_display_name(gateway: Node3D) -> String:
 	if gateway is BossGateway:
