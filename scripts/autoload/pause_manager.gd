@@ -24,7 +24,7 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause") and not event.is_echo():
-		if _is_main_menu_active() or _is_sector_briefing_open():
+		if _is_main_menu_active() or _is_sector_briefing_open() or _is_camera_settings_open():
 			return
 		get_viewport().set_input_as_handled()
 		toggle_pause()
@@ -41,6 +41,13 @@ func _is_main_menu_active() -> bool:
 
 func _is_sector_briefing_open() -> bool:
 	for node: Node in get_tree().get_nodes_in_group("sector_briefing_modal"):
+		var modal: CanvasItem = node as CanvasItem
+		if modal != null and modal.is_visible_in_tree():
+			return true
+	return false
+
+func _is_camera_settings_open() -> bool:
+	for node: Node in get_tree().get_nodes_in_group("camera_settings_modal"):
 		var modal: CanvasItem = node as CanvasItem
 		if modal != null and modal.is_visible_in_tree():
 			return true

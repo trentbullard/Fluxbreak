@@ -11,6 +11,7 @@
 [ext_resource type="Resource" uid="uid://cgc248sqmyo6r" path="res://content/data/pilots/pilot_roster.tres" id="roster"]
 [ext_resource type="Script" uid="uid://bp86upa6vqbpe" path="res://scripts/main_menu/high_score_container.gd" id="score"]
 [ext_resource type="PackedScene" uid="uid://cx03u4eql62kw" path="res://scenes/main_menu/upgrades_panel.tscn" id="upgrades"]
+[ext_resource type="PackedScene" path="res://scenes/settings/camera_settings_panel.tscn" id="camera_settings"]
 
 [sub_resource type="StyleBoxFlat" id="disabled"]
 content_margin_left = 14.0
@@ -479,6 +480,12 @@ tooltip_text = "Disable camera movement and ship idle motion."
 button_pressed = true
 text = "Animate hangar"
 
+[node name="CameraSettings" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/SettingsControls"]
+custom_minimum_size = Vector2(0, 43)
+layout_mode = 2
+text = "FLIGHT CAMERA"
+alignment = 0
+
 [node name="ControlsHelp" type="Label" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=743474472]
 visible = false
 layout_mode = 2
@@ -487,7 +494,6 @@ theme_override_font_sizes/font_size = 17
 text = "FLIGHT
 W/S thrust · Q/E roll · Mouse steer
 Shift boost · R repair · Esc pause
-
 Controller: stick steer · triggers thrust
 Shoulders roll · A boost · B repair"
 autowrap_mode = 3
@@ -584,6 +590,8 @@ text = "Flux Anchors: 0"
 horizontal_alignment = 2
 
 [node name="UpgradesPanel" parent="." unique_id=1107430444 instance=ExtResource("upgrades")]
+
+[node name="CameraSettingsPanel" parent="." instance=ExtResource("camera_settings")]
 
 [node name="RoadmapPanel" type="PanelContainer" parent="." unique_id=1858094689]
 visible = false

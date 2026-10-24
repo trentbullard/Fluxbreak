@@ -1045,14 +1045,7 @@ func _resolve_layout_socket_with_root(root_path: NodePath, marker_path: NodePath
 func _sync_camera_from_visuals(visuals: ShipVisualDef) -> void:
 	if camera_rig == null or visuals == null:
 		return
-	camera_rig.height_offset = visuals.camera_height
-	camera_rig.distance_offset = visuals.camera_distance
-	camera_rig.angle_offset_deg = visuals.camera_angle_deg
-	camera_rig.fov = visuals.camera_fov
-	camera_rig.position = Vector3(0.0, camera_rig.height_offset, -camera_rig.distance_offset)
-	var cam: Camera3D = camera_rig.get_node_or_null("Camera3D") as Camera3D
-	if cam != null:
-		cam.fov = visuals.camera_fov
+	camera_rig.apply_ship_visuals(visuals)
 
 func _build_runtime_model(visuals: ShipVisualDef) -> void:
 	if visuals == null or visuals.model_scene == null:

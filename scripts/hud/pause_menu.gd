@@ -8,6 +8,8 @@ class_name PauseMenu
 @onready var btn_menu: Button = $ScreenRoot/CenterContainer/VBox/MainMenu
 @onready var btn_quit: Button = $ScreenRoot/CenterContainer/VBox/Quit
 @onready var stat_panel: StatPanel = $ScreenRoot/StatPanel
+@onready var btn_camera: Button = $ScreenRoot/CenterContainer/VBox/CameraSettings
+@onready var camera_settings_panel: CameraSettingsPanel = $ScreenRoot/CameraSettingsPanel
 
 func _ready() -> void:
 	visible = false
@@ -15,6 +17,8 @@ func _ready() -> void:
 
 	_set_focus_modes()
 	btn_resume.pressed.connect(_on_resume_clicked)
+	btn_camera.pressed.connect(open_camera_settings)
+	camera_settings_panel.closed.connect(_on_camera_settings_closed)
 	btn_restart.pressed.connect(_on_restart_clicked)
 	btn_menu.pressed.connect(_on_menu_clicked)
 	btn_quit.pressed.connect(_on_quit_clicked)
@@ -23,13 +27,15 @@ func _ready() -> void:
 
 func _on_paused_changed(is_paused: bool) -> void:
 	visible = is_paused
+	if not is_paused:
+		camera_settings_panel.close_panel()
 	if is_paused:
 		btn_resume.grab_focus()
 		if stat_panel != null:
 			stat_panel.refresh()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not visible:
+	if not visible or camera_settings_panel.visible:
 		return
 	if _is_controller_event(event) and get_viewport().gui_get_focus_owner() == null:
 		_set_focus_modes()
@@ -39,13 +45,39 @@ func _unhandled_input(event: InputEvent) -> void:
 		PauseManager.resume_requested.emit()
 
 func _input(event: InputEvent) -> void:
-	if not visible:
+	if not visible or camera_settings_panel.visible:
 		return
+	var key_event: InputEventKey = event as InputEventKey
+	if key_event != null and key_event.pressed:
+		var key: Key = key_event.physical_keycode if key_event.physical_keycode != 0 else key_event.keycode
+		if key == KEY_UP or key == KEY_DOWN or key == KEY_TAB:
+			var controls: Array[Control] = [btn_resume, btn_camera, btn_restart, btn_menu, btn_quit]
+			var index: int = controls.find(get_viewport().gui_get_focus_owner())
+			var backwards: bool = key == KEY_UP or (key == KEY_TAB and key_event.shift_pressed)
+			index = posmod(index + (-1 if backwards else 1), controls.size())
+			controls[index].grab_focus()
+			get_viewport().set_input_as_handled()
+			return
+		if key == KEY_ENTER or key == KEY_KP_ENTER or key == KEY_SPACE:
+			var button: Button = get_viewport().gui_get_focus_owner() as Button
+			if button in [btn_resume, btn_camera, btn_restart, btn_menu, btn_quit] and not key_event.echo:
+				button.pressed.emit()
+				get_viewport().set_input_as_handled()
+			return
 	if not _is_controller_event(event):
 		return
 	if get_viewport().gui_get_focus_owner() != null:
 		return
 	btn_resume.grab_focus()
+
+func open_camera_settings() -> void:
+	if not visible or not PauseManager.is_paused:
+		return
+	camera_settings_panel.open_panel()
+
+func _on_camera_settings_closed() -> void:
+	if visible:
+		btn_camera.grab_focus()
 
 func _on_resume_clicked() -> void:
 	PauseManager.resume_requested.emit()
@@ -63,6 +95,7 @@ func _on_quit_clicked() -> void:
 
 func _set_focus_modes() -> void:
 	btn_resume.focus_mode = Control.FOCUS_ALL
+	btn_camera.focus_mode = Control.FOCUS_ALL
 	btn_restart.focus_mode = Control.FOCUS_ALL
 	btn_menu.focus_mode = Control.FOCUS_ALL
 	btn_quit.focus_mode = Control.FOCUS_ALL

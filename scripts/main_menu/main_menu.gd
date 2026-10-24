@@ -48,6 +48,8 @@ signal selection_changed
 @onready var _volume_value: Label = _buttons.get_node("SettingsControls/VolumeLabel")
 @onready var _fullscreen: CheckButton = _buttons.get_node("SettingsControls/Fullscreen")
 @onready var _motion: CheckButton = _buttons.get_node("SettingsControls/Motion")
+@onready var _camera_settings_button: Button = _buttons.get_node("SettingsControls/CameraSettings")
+@onready var _camera_settings_panel: CameraSettingsPanel = $CameraSettingsPanel
 
 const MENU_SETTINGS_PATH: String = "user://menu_settings.cfg"
 const PAGE_ROWS: Dictionary = {
@@ -79,6 +81,8 @@ func _ready() -> void:
 	_master_volume.value_changed.connect(_on_master_volume_changed)
 	_fullscreen.toggled.connect(_on_fullscreen_toggled)
 	_motion.toggled.connect(_on_motion_toggled)
+	_camera_settings_button.pressed.connect(open_camera_settings)
+	_camera_settings_panel.closed.connect(_on_camera_settings_closed)
 	visibility_changed.connect(_on_visibility_changed)
 	_on_visibility_changed()
 	btn_practice.pressed.connect(_on_practice_pressed)
@@ -128,7 +132,10 @@ func _on_visibility_changed() -> void:
 func _input(event: InputEvent) -> void:
 	if not visible:
 		return
-	if _upgrades_panel.visible:
+	if _upgrades_panel.visible or _camera_settings_panel.visible:
+		return
+	if _current_page == &"settings" and _handle_settings_key(event):
+		get_viewport().set_input_as_handled()
 		return
 	if not _is_controller_event(event):
 		return
@@ -136,8 +143,38 @@ func _input(event: InputEvent) -> void:
 		return
 	call_deferred("_focus_default_control")
 
+func _handle_settings_key(event: InputEvent) -> bool:
+	var key_event: InputEventKey = event as InputEventKey
+	if key_event == null or not key_event.pressed:
+		return false
+	var key: Key = key_event.physical_keycode if key_event.physical_keycode != 0 else key_event.keycode
+	var focused: Control = get_viewport().gui_get_focus_owner()
+	if key == KEY_UP or key == KEY_DOWN or key == KEY_TAB:
+		var controls: Array[Control] = _get_page_controls()
+		var index: int = controls.find(focused)
+		var backwards: bool = key == KEY_UP or (key == KEY_TAB and key_event.shift_pressed)
+		index = posmod(index + (-1 if backwards else 1), controls.size())
+		controls[index].grab_focus()
+		return true
+	if key == KEY_LEFT or key == KEY_RIGHT:
+		var slider: HSlider = focused as HSlider
+		if slider != null:
+			slider.value += slider.step * (-1.0 if key == KEY_LEFT else 1.0)
+		return true
+	if key == KEY_ENTER or key == KEY_KP_ENTER or key == KEY_SPACE:
+		var button: Button = focused as Button
+		if button != null and not key_event.echo:
+			if button.toggle_mode:
+				button.button_pressed = not button.button_pressed
+			button.pressed.emit()
+		return true
+	if key == KEY_ESCAPE and not key_event.echo:
+		show_page(&"home")
+		return true
+	return false
+
 func _unhandled_input(event: InputEvent) -> void:
-	if not visible or _upgrades_panel.visible:
+	if not visible or _upgrades_panel.visible or _camera_settings_panel.visible:
 		return
 	if event.is_action_pressed("ui_cancel") and not event.is_echo() and _current_page != &"home":
 		show_page(&"home")
@@ -166,7 +203,7 @@ func show_page(page: StringName) -> void:
 			_section_description.text = "Choose a pilot, hull and starting weapon. Build the rest out there."
 		&"settings":
 			_section_title.text = "SETTINGS"
-			_section_description.text = "Display, audio and hangar motion."
+			_section_description.text = "Display, audio, flight camera and hangar motion."
 		_:
 			_section_title.text = "READY FOR DEPARTURE"
 			_section_description.text = "Choose your loadout. Find your edge. Break through."
@@ -225,7 +262,7 @@ func _get_page_controls() -> Array[Control]:
 		&"hangar":
 			return [pilot_picker, ship_picker, weapon_picker, _continue_button, _back_button]
 		&"settings":
-			return [_master_volume, _fullscreen, _motion, _back_button]
+			return [_master_volume, _fullscreen, _motion, _camera_settings_button, _back_button]
 	return [_play_button, _hangar_button, btn_upgrades, btn_settings, btn_exit]
 
 func _wire_page_focus() -> void:
@@ -366,6 +403,13 @@ func _update_practice_faction_summary() -> void:
 
 func _on_settings_pressed() -> void:
 	show_page(&"settings")
+
+func open_camera_settings() -> void:
+	_camera_settings_panel.open_panel()
+
+func _on_camera_settings_closed() -> void:
+	if visible and _camera_settings_button.is_visible_in_tree():
+		_camera_settings_button.grab_focus()
 
 func _on_upgrades_pressed() -> void:
 	_set_main_menu_content_visible(false)
@@ -677,11 +721,11 @@ func _set_focus_modes() -> void:
 	btn_merc_practice.focus_mode = Control.FOCUS_ALL
 	btn_settings.focus_mode = Control.FOCUS_ALL
 	btn_exit.focus_mode = Control.FOCUS_ALL
-	for control: Control in [_play_button, _hangar_button, _change_loadout, _continue_button, _back_button, _master_volume, _fullscreen, _motion]:
+	for control: Control in [_play_button, _hangar_button, _change_loadout, _continue_button, _back_button, _master_volume, _fullscreen, _motion, _camera_settings_button]:
 		control.focus_mode = Control.FOCUS_ALL
 
 func _focus_default_control() -> void:
-	if not visible or _upgrades_panel.visible:
+	if not visible or _upgrades_panel.visible or _camera_settings_panel.visible:
 		return
 	for control: Control in _get_page_controls():
 		var button: BaseButton = control as BaseButton

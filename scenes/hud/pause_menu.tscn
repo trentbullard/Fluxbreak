@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://bapsjbior1dq4" path="res://scripts/hud/pause_menu.gd" id="1_xxxx0"]
 [ext_resource type="FontFile" uid="uid://dtkmmkanjxyxd" path="res://assets/fonts/Orbitron/Orbitron-Regular.ttf" id="2_5h01g"]
 [ext_resource type="Script" uid="uid://n8f7g08pbmb5" path="res://scripts/hud/stat_panel.gd" id="2_stat_panel"]
+[ext_resource type="PackedScene" path="res://scenes/settings/camera_settings_panel.tscn" id="camera_settings"]
 
 [sub_resource type="Theme" id="Theme_wiae1"]
 default_font = ExtResource("2_5h01g")
@@ -79,18 +80,28 @@ layout_mode = 2
 [node name="Resume" type="Button" parent="ScreenRoot/CenterContainer/VBox" unique_id=376462362]
 layout_mode = 2
 focus_neighbor_left = NodePath("../../../StatPanel")
-focus_neighbor_bottom = NodePath("../Restart")
-focus_next = NodePath("../Restart")
+focus_neighbor_bottom = NodePath("../CameraSettings")
+focus_next = NodePath("../CameraSettings")
 theme = SubResource("Theme_wiae1")
 text = "Resume"
+
+[node name="CameraSettings" type="Button" parent="ScreenRoot/CenterContainer/VBox"]
+layout_mode = 2
+focus_neighbor_left = NodePath("../../../StatPanel")
+focus_neighbor_top = NodePath("../Resume")
+focus_neighbor_bottom = NodePath("../Restart")
+focus_next = NodePath("../Restart")
+focus_previous = NodePath("../Resume")
+theme = SubResource("Theme_wiae1")
+text = "Camera Settings"
 
 [node name="Restart" type="Button" parent="ScreenRoot/CenterContainer/VBox" unique_id=1032932810]
 layout_mode = 2
 focus_neighbor_left = NodePath("../../../StatPanel")
-focus_neighbor_top = NodePath("../Resume")
+focus_neighbor_top = NodePath("../CameraSettings")
 focus_neighbor_bottom = NodePath("../MainMenu")
 focus_next = NodePath("../MainMenu")
-focus_previous = NodePath("../Resume")
+focus_previous = NodePath("../CameraSettings")
 theme = SubResource("Theme_cgdix")
 text = "Restart"
 
@@ -136,3 +147,5 @@ script = ExtResource("2_stat_panel")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+
+[node name="CameraSettingsPanel" parent="ScreenRoot" instance=ExtResource("camera_settings")]
