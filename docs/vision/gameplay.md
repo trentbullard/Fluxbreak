@@ -28,6 +28,8 @@
 
 Campaign plays two stages against one faction. Its first boss opens two explicit routes into the final sector: the cyan hexagonal Salvage Corridor and amber chevron Assault Lane. Approaching either gateway pauses flight for a briefing. Mouse, keyboard, and controller can confirm entry; Escape, Back, or Not yet dismisses it. A dismissed gateway reopens only after the player leaves its proximity area and returns.
 
+Boss arrival preserves the existing battlefield: enemies, their owned summons and attacks, and stationary salvage targets remain in their current state. Defeating the first boss opens its gateways immediately while survivors continue fighting. The briefing pauses combat; dismissing it resumes the same threats. Confirming a route cleans up the previous sector. Defeating the final boss completes the run immediately, regardless of remaining enemies.
+
 Salvage Corridor offers more wrecks and repair/utility station opportunities with tighter escort batches, +25% nanobots from pickups, and -10% player weapon base range. Assault Lane favors existing heavy formations and weapon/shield stations, with +15% forward/reverse top speed and +15% enemy maximum hull. Both routes preserve the faction, ship, purchased build, nanobots, and intended final boss.
 
 Briefing conditions remain stable while comparing routes. Sector modifiers are temporary and replace the previous sector's layer rather than accumulating as upgrades. Practice remains a short, single-stage introduction followed by a boss.

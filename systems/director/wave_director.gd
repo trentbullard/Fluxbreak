@@ -1124,7 +1124,7 @@ func _start_boss_wave() -> void:
 		return
 
 	_cancel_active_deliveries("boss_wave_started")
-	_clear_non_boss_hostiles()
+	# The boss joins the live battlefield; surviving actors keep their state.
 	var boss_request: SpawnRequest = SpawnRequest.new()
 	boss_request.kind = "Enemy"
 	boss_request.enemy_def = boss_def
@@ -1195,23 +1195,6 @@ func _clear_active_boss_state() -> void:
 	_active_boss_instance = null
 	_active_boss_def = null
 	_boss_wave_active = false
-
-func _clear_non_boss_hostiles() -> void:
-	var tree: SceneTree = get_tree()
-	if tree == null:
-		return
-	var targets: Array[Node] = tree.get_nodes_in_group("targets")
-	for entry in targets:
-		if entry == null or not is_instance_valid(entry):
-			continue
-		if entry is Enemy:
-			var enemy: Enemy = entry as Enemy
-			if enemy is EnemyBoss:
-				continue
-			enemy.queue_free()
-			continue
-		if entry is TargetObject:
-			(entry as TargetObject).queue_free()
 
 func _enter_gateway_hold(stage: StageDef, position: Vector3) -> void:
 	_cancel_active_deliveries("gateway_hold")

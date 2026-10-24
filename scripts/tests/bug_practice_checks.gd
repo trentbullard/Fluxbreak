@@ -8,6 +8,8 @@ var _spawner: Spawner
 var _observed_waves: Array[int] = []
 var _completed_count: int = 0
 var _peak_brood_count: int = 0
+var _boss_arrival_snapshot: Array[Dictionary] = []
+var _boss_arrival_checked: bool = false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -60,6 +62,7 @@ func _run_checks() -> void:
 					found_expected = true
 			_check(found_expected, "Wave %d omitted its teaching enemy in sample %d." % [wave_offset + 1, sample])
 	_director.wave_started.connect(_on_wave_started)
+	_director.boss_wave_started.connect(_on_boss_wave_started)
 	GameFlow.run_completed.connect(_on_completed)
 	var menu: Control = _world.get_node("MainMenuOverlay") as Control
 	menu.call("set_practice_faction_id", &"bugs")
@@ -79,14 +82,11 @@ func _run_checks() -> void:
 		elapsed += get_process_delta_time()
 	_check(_director.is_boss_wave_active(), "Bugs Practice did not reach its boss within the short encounter window.")
 	_check(_observed_waves == [1, 2, 3, 4, 5, 6], "All five teaching waves must precede the boss.")
+	_check(_boss_arrival_checked, "Boss arrival must verify preservation of ordinary actors.")
 	await get_tree().process_frame
 	await get_tree().process_frame
 	var boss: Enemy = _director._active_boss_instance
 	if boss != null:
-		for target: Node in get_tree().get_nodes_in_group("targets"):
-			if target is Enemy:
-				var current_brood: bool = target.is_in_group("bug_brood") and int(target.get_meta("brood_parent_id", 0)) == boss.get_instance_id()
-				_check(target == boss or current_brood, "The boss handoff left normal enemies or stale brood alive.")
 		boss.global_position = _ship.global_position + Vector3(0, 0, -300)
 		boss.explosion_scene = null
 		boss.hull = boss.eff_max_hull * 0.5
@@ -95,7 +95,7 @@ func _run_checks() -> void:
 		var saw_brood: bool = false
 		for frame in range(1500):
 			await get_tree().process_frame
-			if not get_tree().get_nodes_in_group("enemy_attack_telegraphs").is_empty():
+			if _has_warning_from(boss):
 				saw_warning = true
 			if brood.get_living_count() > 0:
 				saw_brood = true
@@ -106,14 +106,19 @@ func _run_checks() -> void:
 		_check(saw_brood, "Bug boss never released its finite brood during combat.")
 		_check(brood.get_living_count() <= 8, "Bug boss exceeded eight living children.")
 		_check(brood.get_total_spawned() <= 16, "Bug boss exceeded its lifetime budget.")
+		var boss_id: int = boss.get_instance_id()
+		var boss_children: Array[WeakRef] = []
+		for child: Node in get_tree().get_nodes_in_group("bug_brood"):
+			if int(child.get_meta("brood_parent_id", 0)) == boss_id:
+				boss_children.append(weakref(child))
 		boss.apply_damage(boss.hull + boss.shield + 100.0)
 		await get_tree().process_frame
 		await get_tree().process_frame
 		_check(_completed_count == 1, "Boss defeat must complete the run exactly once.")
-		_check(int(_spawner.get_alive_counts().get("enemies", -1)) == 0, "Victory left Bug enemies alive.")
-		_check(get_tree().get_nodes_in_group("bug_brood").is_empty(), "Victory left summoned brood alive.")
-		_check(get_tree().get_nodes_in_group("enemy_attack_telegraphs").is_empty(), "Victory left attack warnings alive.")
-		_check(get_tree().get_nodes_in_group("bug_spore_zones").is_empty(), "Victory left spore zones alive.")
+		_check(get_tree().paused, "Victory must pause immediately despite surviving ordinary enemies.")
+		for reference: WeakRef in boss_children:
+			_check(not is_instance_valid(reference.get_ref()), "Boss victory must remove its own brood while preserving children of living mothers.")
+		_check_live_ability_owners(boss_id)
 	else:
 		_check(false, "The stage did not spawn a Bug boss actor.")
 	_check(_peak_brood_count <= 12, "Practice exceeded the global brood cap.")
@@ -124,6 +129,8 @@ func _run_checks() -> void:
 	await get_tree().process_frame
 	var returned_world: Node = get_tree().current_scene
 	_check(returned_world != null and returned_world != _world, "Victory did not return to a fresh menu.")
+	_check(_completed_count == 1, "Survivors must not produce another run completion.")
+	_check_no_world_combat()
 	if returned_world != null and returned_world.has_node("MainMenuOverlay"):
 		var returned_menu: Control = returned_world.get_node("MainMenuOverlay") as Control
 		returned_menu.call("set_practice_faction_id", &"bugs")
@@ -137,11 +144,14 @@ func _run_checks() -> void:
 		returned_world.queue_free()
 		await get_tree().process_frame
 		await get_tree().process_frame
+		_check_no_world_combat()
 	print("BUG PRACTICE CHECKS: %s; waves=%s; boss reached at %.1fs; peak brood=%d" % ["PASS" if _failures.is_empty() else "FAIL", str(_observed_waves), elapsed, _peak_brood_count])
 	call_deferred("_finish_checks")
 
 func _on_wave_started(index: int, _enemy_budget: int, _target_budget: int) -> void:
 	_observed_waves.append(index)
+	if index == 6:
+		_snapshot_boss_arrival()
 	if index <= 5:
 		var stage: StageDef = GameFlow.get_current_stage()
 		_check(_director._active_card == stage.wave_cards[index - 1], "Bug teaching cards played out of order.")
@@ -158,3 +168,53 @@ func _finish_checks() -> void:
 func _mute_test_menu_music(node: Node) -> void:
 	if node is AudioStreamPlayer and node.name == &"MenuMusic":
 		(node as AudioStreamPlayer).stream = null
+
+func _snapshot_boss_arrival() -> void:
+	_boss_arrival_snapshot.clear()
+	for node: Node in get_tree().get_nodes_in_group("targets"):
+		if node is Enemy and not node is EnemyBoss:
+			var enemy: Enemy = node as Enemy
+			if not enemy._dead and not enemy.is_queued_for_deletion():
+				_boss_arrival_snapshot.append({"actor": enemy, "id": enemy.get_instance_id(), "hull": enemy.hull, "shield": enemy.shield})
+
+func _on_boss_wave_started(_boss_def: EnemyBossDef, _wave_index: int) -> void:
+	# Both signals run synchronously: no legitimate damage can occur in between.
+	_boss_arrival_checked = true
+	for entry: Dictionary in _boss_arrival_snapshot:
+		var valid: bool = is_instance_valid(entry["actor"])
+		_check(valid, "Boss arrival must preserve each living ordinary enemy identity.")
+		if valid:
+			var enemy: Enemy = entry["actor"] as Enemy
+			_check(enemy.get_instance_id() == int(entry["id"]) and not enemy._dead and not enemy.is_queued_for_deletion(), "Boss arrival must keep each prior enemy alive.")
+			_check(is_equal_approx(enemy.hull, float(entry["hull"])) and is_equal_approx(enemy.shield, float(entry["shield"])), "Boss arrival must preserve ordinary enemy damage.")
+	_check_live_ability_owners()
+
+func _has_warning_from(source: Enemy) -> bool:
+	for node: Node in get_tree().get_nodes_in_group("enemy_attack_telegraphs"):
+		var warning: EnemyAttackTelegraph = node as EnemyAttackTelegraph
+		if warning != null and not warning.is_queued_for_deletion() and warning._source == source:
+			return true
+	return false
+
+func _check_live_ability_owners(defeated_boss_id: int = 0) -> void:
+	for group_name: String in ["enemy_attack_telegraphs", "bug_spore_zones", "grey_displacements", "grey_tethers"]:
+		for ability: Node in get_tree().get_nodes_in_group(group_name):
+			if ability.is_queued_for_deletion():
+				continue
+			var source_value: Variant = ability.get("_source")
+			var source: Enemy = source_value as Enemy if is_instance_valid(source_value) else null
+			var living: bool = is_instance_valid(source) and not source._dead and not source.is_queued_for_deletion()
+			_check(living, "A surviving %s must belong to a living enemy; orphan warnings are forbidden." % group_name)
+			if living:
+				_check(source.get_instance_id() != defeated_boss_id, "Defeated boss must clean its own abilities.")
+	for child: Node in get_tree().get_nodes_in_group("bug_brood"):
+		var owner_id: int = int(child.get_meta("brood_parent_id", 0))
+		var owner_value: Object = instance_from_id(owner_id) if owner_id != 0 else null
+		var owner_enemy: Enemy = owner_value as Enemy
+		_check(is_instance_valid(owner_enemy) and not owner_enemy._dead and not owner_enemy.is_queued_for_deletion() and owner_id != defeated_boss_id, "Every retained Bug brood must have a living owner.")
+
+func _check_no_world_combat() -> void:
+	for group_name: String in ["enemy_attack_telegraphs", "bug_spore_zones", "grey_displacements", "grey_tethers", "bug_brood", "merc_escorts"]:
+		_check(get_tree().get_nodes_in_group(group_name).is_empty(), "World teardown left stale combat group %s." % group_name)
+	for node: Node in get_tree().get_nodes_in_group("targets"):
+		_check(not node is Enemy and not node is TargetObject, "World teardown must remove all old enemies and stationary targets.")

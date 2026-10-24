@@ -228,8 +228,9 @@ Complete and validate Phase 1, update its status in the plan, then stop. Report 
 
 ## Phase status
 
-- Phase 1: implemented and automated validation passed (2026-10-24); awaiting gameplay playtesting before Phase 2.
-- Phases 2–6: not started.
+- Phase 1: implemented and automated validation passed (2026-10-24); Phase 2 subsequently authorized by the user.
+- Phase 2: implemented and automated validation passed (2026-10-24); ready for gameplay playtesting.
+- Phases 3–6: not started.
 - Phase 7: deferred; not implemented or enabled.
 
 ### Phase 1 implementation record — 2026-10-24
@@ -275,3 +276,29 @@ All checks used isolated player-data namespaces. No version increment, executabl
 3. Check short Practice and a Campaign sample for the other factions for preserved lesson order, boss selection, faction identity, and unexpected capital concentration.
 4. Use the debug snapshot/HUD to distinguish purchased, delivered, alive, and nearby counts; record any remainder reason or cancellation that occurs during normal play.
 5. Report difficulty and delivery observations before beginning Phase 2. Boss-arrival clearing, target selection/lifetimes, nanobot behavior, and the stronger budget curve remain scheduled for later phases.
+
+### Phase 2 implementation record — 2026-10-24
+
+Removed the boss-start arena cleanup and its now-unused helper. Boss arrival preserves the same living ordinary enemies, their owned summons, damaged hull/shields, stationary targets, and active attacks. Existing drops and projectiles also remain. Already-purchased requests that have not launched are still cancelled at the boss transition, and ordinary pressure purchasing remains suppressed during the boss encounter.
+
+Boss defeat still opens the first sector's gateways immediately or completes the final encounter immediately, without requiring other enemies to die. Survivors continue fighting during gateway hold, pause with the briefing, and resume when it is dismissed. Accepted gateway transfer retains its existing cleanup of the old sector. Real summon ownership cleanup and caps are unchanged.
+
+Updated all-faction routing and gateway checks to seed damaged actors and pending attacks before the actual boss transition. Faction-specific Practice checks now accept living survivors while checking every remaining attack/summon has a valid living owner. Dead boss-owned effects must disappear immediately; full combat cleanup remains mandatory after transfer and world teardown. Grey boss-ability demonstrations move away from ordinary survivors and allow their existing warnings to finish naturally so shared warning limits do not invalidate the isolated demonstration. This changes test staging only.
+
+#### Validation passed
+
+- Godot 4.7.2 headless import.
+- All-faction Practice/Campaign routing suite: 15,682 assertions; all four factions, damaged enemy and wreck preservation, survivor-owned warnings, reward/progression guards, immediate gateway/finale completion, exactly-once victory, and final world cleanup.
+- Gateway choice suite: 997 checks; all four factions and both routes, real boss arrival/defeat, Carrier/Broodmother summons, preserved asteroids/drops/projectiles, attack pause/resume, pending-pressure cancellation, physical mouse/keyboard/controller confirmation and dismissal, and reward-free old-sector cleanup.
+- Merc, Bug, and Grey regular, advanced, boss, and Practice suites; real summon caps/ownership, major warnings, tether cleanup, and menu return remain valid.
+- Phase 1 purchasing/delivery suite: 26,008 assertions; no regression in whole formation delivery, timeout, pause, or stale-request cancellation.
+- Final validation logs have no engine errors, warnings, or leak reports. Independent review found no actionable issues; whitespace checks passed.
+
+No HP/damage, quantity curve, movement, target-purchasing/lifetime, or nanobot changes were made. Version remains 0.4.2; the executable and installer have not been rebuilt for Phase 2. Phases 3–6 remain unstarted and Phase 7 remains deferred.
+
+#### Next playtest
+
+1. Reach a boss with surviving wave enemies and an asteroid or wreck nearby. Confirm the same actors and their existing damage remain as the boss arrives.
+2. Defeat the first Campaign boss while ordinary enemies remain; confirm both gateways appear immediately and the survivors continue engaging.
+3. Inspect a gateway, dismiss it with Not yet/Escape/controller Back, and confirm the same fight resumes. Choose a route and verify the old battlefield is removed on transfer.
+4. Defeat a Practice or final Campaign boss with survivors still alive. Confirm victory appears immediately and returns to a clean menu once.

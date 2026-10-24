@@ -17,6 +17,7 @@ var _baseline_forward: float = 0.0
 var _baseline_reverse: float = 0.0
 var _baseline_range: float = 0.0
 var _mouse_accept_gui_events: int = 0
+var _survival_fixture: Dictionary = {}
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -76,10 +77,11 @@ func _check_route(faction: PracticeFactionDef, route_index: int) -> void:
 	var failures_before: int = _failures
 	await _launch_campaign(faction.faction.get_faction_id())
 	var approach: StageDef = GameFlow.get_current_stage()
-	_director._enter_gateway_hold(approach, _ship.global_position + Vector3.FORWARD * 1000.0)
+	_survival_fixture = _add_boss_survival_fixture(faction)
+	await _start_and_defeat_gateway_boss(approach)
 	await _wait_frames(3)
 	var gateways: Array[BossGateway] = _manager.get_active_gateways()
-	_check(gateways.size() == 2 and _director.is_gateway_hold_active(), "The actual gateway-ready flow creates both offered routes")
+	_check(gateways.size() == 2 and _director.is_gateway_hold_active(), "Defeating the actual Campaign boss creates both offered routes with surviving threats")
 	if gateways.size() != 2:
 		await _dispose_world()
 		return
@@ -91,8 +93,15 @@ func _check_route(faction: PracticeFactionDef, route_index: int) -> void:
 	_check(GameFlow.get_active_stage_index() == 0 and not _manager.is_briefing_open(), "Elapsed time outside a gateway cannot inspect or transfer")
 	await _inspect(other)
 	var first_title: String = _hud._title.text
+	var retained_attack: EnemyAttackTelegraph = _survival_fixture["attack"] as EnemyAttackTelegraph
+	var paused_remaining: float = retained_attack.get_time_remaining() if is_instance_valid(retained_attack) else -1.0
+	await _wait_physics_frames(3)
+	_check(is_instance_valid(retained_attack) and is_equal_approx(retained_attack.get_time_remaining(), paused_remaining), "The gateway briefing freezes an existing survivor's attack windup")
 	await _send_escape_with_unrelated_input()
 	_check_dismissed("Physical Escape")
+	await _wait_physics_frames(3)
+	_check(is_instance_valid(retained_attack) and retained_attack.get_time_remaining() < paused_remaining, "Dismissing the briefing resumes the same surviving attack")
+	_check_survival_fixture("Gateway dismissal")
 	_manager._process(10000.0)
 	_check(not _manager.is_briefing_open(), "A dismissed gateway cannot reopen while the ship remains inside it")
 	_ship.global_position = other.global_position + Vector3.UP * (other.get_docking_radius() + _manager.gateway_rearm_margin * 0.5)
@@ -154,6 +163,7 @@ func _check_route(faction: PracticeFactionDef, route_index: int) -> void:
 	var shield: float = _ship.shield
 	var score: int = RunState.run_score
 	var purchases: int = RunState.weapons_purchased
+	var kill_rate_before_transfer: float = CombatStats.get_enemy_kill_rate()
 	var changes_before: int = _stage_changes
 	var destination_id: StringName = original_route.get_destination_id()
 	await _inspect(chosen)
@@ -176,9 +186,14 @@ func _check_route(faction: PracticeFactionDef, route_index: int) -> void:
 	_check(not _manager.is_briefing_open() and not _hud.visible and not get_tree().paused and not PauseManager.is_paused, "Successful confirmation closes the briefing and restores flight")
 	_check(_manager.get_active_gateways().is_empty() and get_tree().get_nodes_in_group("boss_gateways").is_empty(), "Transfer removes both old gateways")
 	_check(not is_instance_valid(source) and _warnings_empty(), "Transfer removes old actors, tether links, displacement markers and pending attacks")
+	for key: String in ["source", "target", "attack", "drop", "projectile"]:
+		_check(not is_instance_valid(_survival_fixture[key]), "Confirmed transfer removes the retained pre-boss %s" % key)
+	for child_id: int in _survival_fixture["summon_ids"]:
+		_check(not is_instance_id_valid(child_id), "Confirmed transfer removes a retained owned summon without waiting for its death")
 	_check(_ship.get_tether_source() == null and is_equal_approx(_ship.get_movement_slow_multiplier(), 1.0), "Transfer clears the actual movement penalty")
 	_check(is_equal_approx(_ship.hull, hull) and is_equal_approx(_ship.shield, shield), "Sector transfer preserves damaged hull and shield without healing")
 	_check(_ship.get_nanobots() == 2222 and RunState.run_score == score and RunState.weapons_purchased == purchases, "Sector transfer preserves currency, score and weapon price progression")
+	_check(get_tree().get_nodes_in_group("drops").is_empty() and CombatStats.get_enemy_kill_rate() <= kill_rate_before_transfer and is_zero_approx(CombatStats._frame_enemy_kills), "Transfer grants no synthetic nanobot drops or adaptive kills for retained actors")
 	_check(RunState.get_purchased_upgrade_ids().has("gateway_carried_upgrade"), "Sector transfer preserves purchased upgrade memory")
 	_check(_ship.hardpoint_manager.get_weapons() == weapons and _first_player_turret().get_instance_id() == turret_id, "Sector transfer preserves the exact weapon loadout and turret instances")
 	_check(is_equal_approx(_ship.get_hull_repair_cooldown_remaining(), 1.7), "Sector transfer preserves the existing repair cooldown")
@@ -187,6 +202,104 @@ func _check_route(faction: PracticeFactionDef, route_index: int) -> void:
 	_check_route_stats(original_route)
 	await _dispose_world()
 	print("GATEWAY ROUTE: %s %s %s" % [faction.faction.get_faction_id(), original_route.get_route_id(), "PASS" if _failures == failures_before else "FAIL"])
+
+func _add_boss_survival_fixture(faction: PracticeFactionDef) -> Dictionary:
+	var catalog: EnemyCatalog = _world.get_node("StageRoot/EnemyCatalog") as EnemyCatalog
+	var definition: EnemyDef = catalog.get_pool(faction.faction, null, 1)[0]
+	if faction.faction.get_faction_id() == &"mercs":
+		definition = load("res://content/data/enemies/merc_carrier_mk1.tres") as EnemyDef
+	elif faction.faction.get_faction_id() == &"bugs":
+		definition = load("res://content/data/enemies/bug_broodmother_mk1.tres") as EnemyDef
+	var source: Enemy = _director._spawner.spawn_one_with_def_at_position(Spawner.SpawnKind.ENEMY, definition, _ship.global_position + Vector3.RIGHT * 6000.0) as Enemy
+	_freeze_survivor(source)
+	source.hull = source.eff_max_hull * 0.6
+	source.shield = source.eff_max_shield * 0.4
+	var summons: Array[Enemy] = []
+	if source is MercEnemy:
+		var carrier: MercEnemy = source as MercEnemy
+		_check(carrier._escort_wing != null and carrier._escort_wing.spawn_escorts(2) == 2, "The real Carrier launches its owned pre-boss escorts")
+		if carrier._escort_wing != null:
+			summons = carrier._escort_wing.get_living_escorts()
+	elif source is BugEnemy:
+		var mother: BugEnemy = source as BugEnemy
+		_check(mother._brood != null and mother._brood.spawn_brood(2) == 2, "The real Broodmother launches its owned pre-boss children")
+		for node: Node in get_tree().get_nodes_in_group("bug_brood"):
+			if int(node.get_meta("brood_parent_id", 0)) == source.get_instance_id():
+				summons.append(node as Enemy)
+	var summon_ids: Array[int] = []
+	for child: Enemy in summons:
+		_freeze_survivor(child)
+		child.hull *= 0.5
+		summon_ids.append(child.get_instance_id())
+	var target: TargetObject = _director._spawner.spawn_one_with_def_at_position(Spawner.SpawnKind.TARGET, load("res://content/data/targets/asteroid_small.tres") as TargetDef, source.global_position + Vector3.UP * 1000.0) as TargetObject
+	target.freeze = true
+	target.process_mode = Node.PROCESS_MODE_DISABLED
+	target.hull = target.max_hull * 0.6
+	var attack: EnemyAttackTelegraph = EnemyAttackTelegraph.new()
+	_world.add_child(attack)
+	attack.start_attack(source, _ship, source, 1000.0, 36.0)
+	var drop: NanobotSwarm = Enemy.NanobotSwarmScene.instantiate() as NanobotSwarm
+	drop.process_mode = Node.PROCESS_MODE_DISABLED
+	_world.add_child(drop)
+	drop.global_position = source.global_position
+	drop.value = 321
+	var projectile: Projectile = Projectile.new()
+	projectile.process_mode = Node.PROCESS_MODE_DISABLED
+	projectile.configure_shot(source, _ship, WeaponCombatResolver.ShotResult.MISS, 0.0, 0.3, 1.0, [], false)
+	_world.add_child(projectile)
+	projectile.global_position = source.global_position
+	return {"source": source, "source_hull": source.hull, "source_shield": source.shield, "summons": summons, "summon_ids": summon_ids, "target": target, "target_hull": target.hull, "attack": attack, "drop": drop, "projectile": projectile}
+
+func _start_and_defeat_gateway_boss(stage: StageDef) -> void:
+	_director._wave_index = stage.boss_wave_index
+	_director._state = RunState.State.IN_WAVE
+	_director._wave_timer = 0.0
+	RunState.set_state(RunState.State.IN_WAVE)
+	var pending: SpawnRequest = SpawnRequest.new()
+	pending.enemy_def = (_survival_fixture["source"] as Enemy).def
+	pending.count = 1
+	pending.package_id = "obsolete_pressure_formation"
+	# Exercise the real pending timer, not merely the cancellation flags.
+	_director._run_requests_coroutine([pending], {"formation_schedule": [{"package_id": pending.package_id, "launch_at_sec": 0.05}]}, {}, _director._wave_token, "pressure", false)
+	var score_before: int = RunState.run_score
+	var drops_before: int = get_tree().get_nodes_in_group("drops").size()
+	var kills_before: float = CombatStats._frame_enemy_kills
+	_director._start_boss_wave()
+	var boss: Enemy = _director._active_boss_instance
+	_check(boss != null and _director.is_boss_wave_active(), "The actual Campaign boss starts while the existing battlefield remains alive")
+	if boss == null:
+		return
+	_freeze_survivor(boss)
+	_check(RunState.run_score == score_before and get_tree().get_nodes_in_group("drops").size() == drops_before and is_equal_approx(CombatStats._frame_enemy_kills, kills_before), "Boss arrival grants no synthetic score, drops or kill pressure")
+	await get_tree().create_timer(0.10, false).timeout
+	_check_survival_fixture("Boss arrival")
+	var history: Array[Dictionary] = _director.get_delivery_history()
+	var pressure: Dictionary = history.back() if not history.is_empty() else {}
+	var reasons: Dictionary = pressure.get("cancel_reasons", {})
+	_check(int(pressure.get("planned_units", 0)) == 1 and int(pressure.get("spawned_units", -1)) == 0 and int(pressure.get("pending_units", -1)) == 0 and int(pressure.get("cancelled_units", 0)) == 1 and int(reasons.get("boss_wave_started", 0)) == 1, "Boss arrival cancels every pending pressure unit before its timer can spawn it")
+	# Boss rewards are legitimate; subsequent transfer checks take a fresh baseline.
+	boss.apply_damage(boss.hull + boss.shield + 1000000.0)
+	await _wait_frames(3)
+	_check_survival_fixture("Boss defeat")
+	_check(_director.is_gateway_hold_active() and GameFlow.get_active_stage_index() == 0, "Boss defeat opens the gateway hold immediately despite ordinary enemies and owned summons")
+	_check(int(pressure.get("spawned_units", -1)) == 0, "The cancelled pre-boss pressure purchase remains cancelled in gateway hold")
+
+func _freeze_survivor(enemy: Enemy) -> void:
+	enemy.freeze = true
+	enemy.process_mode = Node.PROCESS_MODE_DISABLED
+	enemy.explosion_scene = null
+
+func _check_survival_fixture(reason: String) -> void:
+	var source: Enemy = _survival_fixture["source"] as Enemy
+	var target: TargetObject = _survival_fixture["target"] as TargetObject
+	var attack: EnemyAttackTelegraph = _survival_fixture["attack"] as EnemyAttackTelegraph
+	_check(is_instance_valid(source) and not source._dead and not source.is_queued_for_deletion(), reason + " retains the exact living ordinary enemy")
+	_check(is_instance_valid(source) and is_equal_approx(source.hull, float(_survival_fixture["source_hull"])) and is_equal_approx(source.shield, float(_survival_fixture["source_shield"])), reason + " preserves the enemy's damaged hull and shield")
+	_check(is_instance_valid(target) and not target._dead and not target.is_queued_for_deletion() and is_equal_approx(target.hull, float(_survival_fixture["target_hull"])), reason + " retains the exact damaged stationary target")
+	_check(is_instance_valid(attack) and not attack.is_queued_for_deletion() and attack.is_warning_for(_ship), reason + " preserves the survivor's real pending attack")
+	_check(is_instance_valid(_survival_fixture["drop"]) and is_instance_valid(_survival_fixture["projectile"]), reason + " leaves the existing drop and projectile intact")
+	for child: Enemy in _survival_fixture["summons"]:
+		_check(is_instance_valid(child) and not child._dead and not child.is_queued_for_deletion() and is_equal_approx(child.hull, child.eff_max_hull * 0.5) and child._spawn_context.is_summoned, reason + " retains a damaged owned summon with its summon context")
 
 func _inspect(gateway: BossGateway) -> void:
 	_ship.global_position = gateway.global_position
@@ -285,9 +398,9 @@ func _send_escape_with_unrelated_input() -> void:
 	axis.axis = JOY_AXIS_LEFT_X
 	axis.axis_value = 0.1
 	Input.parse_input_event(axis)
-	# parse_input_event queues the three events together; inspect after their
-	# dispatch, rather than mistaking the original paused briefing for a reopen.
-	await _wait_frames(1)
+	# Dispatch this accumulated batch together even when the caller resumed from
+	# physics_frame; the next process_frame can precede normal input dispatch.
+	Input.flush_buffered_events()
 	_check(not get_tree().paused and not PauseManager.is_paused and not (_world.get_node("PauseMenu") as CanvasLayer).visible, "Consumed Escape followed by same-frame mouse and stick motion cannot reopen pause")
 	await _wait_frames(2)
 	var release: InputEventKey = InputEventKey.new()
@@ -356,6 +469,7 @@ func _dispose_world() -> void:
 	_manager = null
 	_hud = null
 	_director = null
+	_survival_fixture = {}
 
 func _on_stage_changed(_stage: StageDef, _index: int) -> void:
 	_stage_changes += 1
@@ -369,6 +483,10 @@ func _mute_test_audio(node: Node) -> void:
 func _wait_frames(count: int) -> void:
 	for frame: int in range(count):
 		await get_tree().process_frame
+
+func _wait_physics_frames(count: int) -> void:
+	for frame: int in range(count):
+		await get_tree().physics_frame
 
 func _check(condition: bool, description: String) -> void:
 	_checks += 1

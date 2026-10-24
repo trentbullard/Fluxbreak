@@ -201,6 +201,7 @@ func _check_selected_faction(faction_def: PracticeFactionDef, short_practice: bo
 	if not short_practice:
 		_check_card_selection(director)
 		_check_authored_deck_selection(director, faction_def)
+	var final_survivors: Dictionary = {}
 	for stage_index in active_run.get_stage_count():
 		var stage: StageDef = GameFlow.get_current_stage()
 		_check(stage == active_run.get_stage(stage_index), "Gateway selected a stage outside the active cloned run.")
@@ -210,9 +211,21 @@ func _check_selected_faction(faction_def: PracticeFactionDef, short_practice: bo
 		await _wait_frames(35)
 		_check(director._active_card != null and director._active_card.get_faction_bias_id() == faction_id, "Live wave selected a card outside the run faction.")
 		_check_live_enemies(faction_id)
+		# Preserve real, damaged actors across the actual boss transition. Keep
+		# this routing fixture distant and still so combat cannot alter it.
+		var survivors: Dictionary = _seed_boss_survivors(world)
+		var score_before_boss: int = RunState.run_score
+		var currency_before_boss: int = _ship.get_nanobots()
+		var kills_before_boss: int = GameFlow._run_enemy_kills
+		var kill_progress_before_boss: Dictionary = GameFlow._run_meta_stats_global.duplicate(true)
+		var drops_before_boss: int = get_tree().get_nodes_in_group("drops").size()
 		director._wave_index = stage.boss_wave_index - 1
 		director._next_wave()
+		_check(RunState.run_score == score_before_boss and _ship.get_nanobots() == currency_before_boss, "Boss arrival must not grant synthetic score or collected nanobots.")
+		_check(GameFlow._run_enemy_kills == kills_before_boss and GameFlow._run_meta_stats_global == kill_progress_before_boss, "Boss arrival must not report synthetic kills or combat progression.")
+		_check(get_tree().get_nodes_in_group("drops").size() == drops_before_boss, "Boss arrival must not turn survivors into reward drops.")
 		await _wait_frames(3)
+		_check_boss_survivors(survivors, "Boss arrival")
 		_check(director.is_boss_wave_active(), "Practice failed to create its selected faction boss.")
 		var boss: Enemy = director._active_boss_instance
 		if boss == null:
@@ -221,6 +234,7 @@ func _check_selected_faction(faction_def: PracticeFactionDef, short_practice: bo
 		boss.explosion_scene = null
 		boss.apply_damage(boss.hull + boss.shield + 1000.0)
 		await _wait_frames(3)
+		_check_boss_survivors(survivors, "Boss defeat")
 		if stage_index < active_run.get_stage_count() - 1:
 			_check(director.is_gateway_hold_active() and _completed_count == 0, "The first main boss must open a gateway without completing the run.")
 			var gateway_manager: BossGatewayManager = world.get_node("StageRoot/BossGatewayManager") as BossGatewayManager
@@ -235,10 +249,11 @@ func _check_selected_faction(faction_def: PracticeFactionDef, short_practice: bo
 				await _wait_frames(3)
 			_check(GameFlow.get_active_stage_index() == stage_index + 1, "Confirmed sector did not advance to the next Campaign stage.")
 			_check(director.get_wave_index() == 0, "Gateway did not reset the local wave index.")
+			_check_boss_survivors_removed(survivors, "Confirmed sector transfer")
 			_check_no_stale_abilities()
 		else:
-			_check(_completed_count == 1, "Final boss defeat must complete its selected run exactly once.")
-			_check_no_stale_abilities()
+			_check(_completed_count == 1, "Final boss defeat must complete its selected run immediately and exactly once despite survivors.")
+			final_survivors = survivors
 	# Let the real victory timer return to the menu, then verify the next menu
 	# can build an independent run without retaining the completed stage.
 	# Poll the real victory transition. A second SceneTreeTimer awaiting the
@@ -251,13 +266,116 @@ func _check_selected_faction(faction_def: PracticeFactionDef, short_practice: bo
 	await _wait_frames(3)
 	var returned_world: Node3D = get_tree().current_scene as Node3D
 	_check(returned_world != null and returned_world != world, "Victory did not return to a fresh practice menu.")
+	_check(_completed_count == 1, "Survivors must not delay victory or cause a repeated run completion during the return timer.")
+	_check_boss_survivors_removed(final_survivors, "Victory world teardown")
 	if returned_world != null:
+		_ship = returned_world.get_node("Ship") as Ship
+		# Living sources may legitimately retain their attacks during victory.
+		# Full cleanup is required after the old world is actually removed.
+		_check_no_stale_abilities()
 		var returned_menu: Control = returned_world.get_node("MainMenuOverlay") as Control
 		_check(returned_menu.call("get_practice_faction_id") == faction_id, "Victory lost the player's explicit practice faction selection.")
 		var restart_run: RunDefinition = returned_menu.call("build_practice_run", short_practice) as RunDefinition
 		_check(restart_run != null and restart_run != active_run and restart_run.enemy_faction == faction_def.faction, "Returned menu failed to build a fresh run for the selected faction.")
 		await _dispose_world(returned_world)
 	print("PRACTICE ROUTE: %s %s %s" % [String(faction_id), "short" if short_practice else "main", "PASS" if _failures.size() == initial_failure_count else "FAIL"])
+
+func _seed_boss_survivors(world: Node3D) -> Dictionary:
+	var spawner: Spawner = world.get_node("StageRoot/Spawner") as Spawner
+	var source_def: EnemyDef = null
+	for node: Node in get_tree().get_nodes_in_group("targets"):
+		var enemy: Enemy = node as Enemy
+		if enemy != null and enemy.def != null and not enemy.def is EnemyBossDef:
+			source_def = enemy.def
+			break
+	_check(source_def != null, "Boss-survivor fixture needs a real selected-faction regular enemy definition.")
+	if source_def == null:
+		return {}
+	var enemy_def: EnemyDef = source_def.duplicate() as EnemyDef
+	enemy_def.max_shield = 40.0
+	enemy_def.shield_regen = 0.0
+	var fixture_position: Vector3 = _ship.global_position + Vector3.UP * 30000.0
+	var enemy: Enemy = spawner.spawn_one_with_def_at_position(Spawner.SpawnKind.ENEMY, enemy_def, fixture_position) as Enemy
+	var wreck_def: TargetDef = (load("res://content/data/targets/wreck_medium.tres") as TargetDef).duplicate() as TargetDef
+	wreck_def.max_shield = 40.0
+	var target: TargetObject = spawner.spawn_one_with_def_at_position(Spawner.SpawnKind.TARGET, wreck_def, fixture_position + Vector3.RIGHT * 1000.0) as TargetObject
+	_check(enemy != null and target != null, "Boss-survivor fixture must create actual enemy and stationary target actors through the spawner.")
+	if enemy == null or target == null:
+		return {}
+	enemy.freeze = true
+	enemy.process_mode = Node.PROCESS_MODE_DISABLED
+	enemy.explosion_scene = null
+	enemy.hull = enemy.eff_max_hull * 0.6
+	enemy.shield = enemy.eff_max_shield * 0.4
+	target.freeze = true
+	target.process_mode = Node.PROCESS_MODE_DISABLED
+	target.hull = target.max_hull * 0.6
+	target.shield = target.max_shield * 0.4
+	var warning: EnemyAttackTelegraph = EnemyAttackTelegraph.new()
+	world.add_child(warning)
+	warning.start_attack(enemy, _ship, enemy, 50.0, 36.0)
+	_check(warning.is_warning_for(_ship) and warning._source == enemy and not enemy._dead and _ship.visible and _ship.is_alive(), "Boss-survivor fixture must begin with a live warning against the visible living player.")
+	var survivors: Dictionary = {
+		"enemy": enemy,
+		"enemy_id": enemy.get_instance_id(),
+		"enemy_hull": enemy.hull,
+		"enemy_shield": enemy.shield,
+		"target": target,
+		"target_id": target.get_instance_id(),
+		"target_hull": target.hull,
+		"target_shield": target.shield,
+		"warning": warning,
+	}
+	var warning_id: int = warning.get_instance_id()
+	var source_id: int = enemy.get_instance_id()
+	var player_id: int = _ship.get_instance_id()
+	var on_warning_exit: Callable = func() -> void:
+		# The source may already have been freed by a legitimate transfer.
+		# Capture IDs instead of Nodes so teardown cannot invalidate captures.
+		var exiting_warning: EnemyAttackTelegraph = instance_from_id(warning_id) as EnemyAttackTelegraph
+		var exiting_source: Enemy = instance_from_id(source_id) as Enemy
+		var exiting_player: Ship = instance_from_id(player_id) as Ship
+		survivors["warning_exit_state"] = {
+			"stage": GameFlow.get_active_stage_index(),
+			"elapsed": exiting_warning._elapsed_sec if exiting_warning != null else -1.0,
+			"active": exiting_warning._active if exiting_warning != null else false,
+			"resolved": exiting_warning._has_resolved if exiting_warning != null else false,
+			"source_valid": exiting_source != null,
+			"source_dead": exiting_source._dead if exiting_source != null else true,
+			"source_in_tree": exiting_source.is_inside_tree() if exiting_source != null else false,
+			"target_valid": exiting_player != null,
+			"target_visible": exiting_player.visible if exiting_player != null else false,
+			"target_alive": exiting_player.is_alive() if exiting_player != null else false,
+		}
+	warning.tree_exiting.connect(on_warning_exit, CONNECT_ONE_SHOT)
+	return survivors
+
+func _check_boss_survivors(survivors: Dictionary, transition: String) -> void:
+	_check(not survivors.is_empty(), transition + " requires the seeded survivor fixture.")
+	if survivors.is_empty():
+		return
+	var enemy_valid: bool = is_instance_valid(survivors["enemy"])
+	var target_valid: bool = is_instance_valid(survivors["target"])
+	_check(enemy_valid and target_valid, transition + " must preserve the same ordinary enemy and stationary target.")
+	if enemy_valid:
+		var enemy: Enemy = survivors["enemy"] as Enemy
+		_check(enemy.get_instance_id() == int(survivors["enemy_id"]) and not enemy._dead and not enemy.is_queued_for_deletion(), transition + " must keep the original enemy alive.")
+		_check(is_equal_approx(enemy.hull, float(survivors["enemy_hull"])) and is_equal_approx(enemy.shield, float(survivors["enemy_shield"])), transition + " must preserve damaged enemy hull and shield.")
+	if target_valid:
+		var target: TargetObject = survivors["target"] as TargetObject
+		_check(target.get_instance_id() == int(survivors["target_id"]) and not target._dead and not target.is_queued_for_deletion(), transition + " must keep the original stationary target alive.")
+		_check(is_equal_approx(target.hull, float(survivors["target_hull"])) and is_equal_approx(target.shield, float(survivors["target_shield"])), transition + " must preserve damaged target hull and shield.")
+	var warning_valid: bool = is_instance_valid(survivors["warning"])
+	_check(warning_valid, transition + " must retain an attack owned by a surviving ordinary enemy. Exit diagnostics: " + str(survivors.get("warning_exit_state", {})))
+	if warning_valid:
+		var warning: EnemyAttackTelegraph = survivors["warning"] as EnemyAttackTelegraph
+		_check(warning.is_warning_for(_ship) and warning._source == survivors["enemy"], transition + " must keep the retained warning attached to its living source.")
+
+func _check_boss_survivors_removed(survivors: Dictionary, transition: String) -> void:
+	_check(not survivors.is_empty(), transition + " requires the seeded survivor fixture.")
+	if survivors.is_empty():
+		return
+	_check(not is_instance_valid(survivors["enemy"]) and not is_instance_valid(survivors["target"]) and not is_instance_valid(survivors["warning"]), transition + " must remove old actors and their owned pending attack.")
 
 func _check_deck_budgets(faction_def: PracticeFactionDef, buyer: BudgetBuyer, catalog: EnemyCatalog) -> void:
 	var faction_id: StringName = faction_def.faction.get_faction_id()
