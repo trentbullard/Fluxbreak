@@ -83,6 +83,10 @@ var _delivery_history: Array[Dictionary] = []
 var _main_delivery: Dictionary = {}
 var _delivery_sample_remaining: float = 0.0
 var _run_finished: bool = false
+var _last_ordinary_enemy_points_pre_adaptive: float = -1.0
+var _quantity_carryover_reference: float = -1.0
+var _sector_opening_macro_threat: float = -1.0
+var _pending_opening_performance: Dictionary = {}
 
 func get_state() -> RunState.State:
 	return _state
@@ -197,6 +201,8 @@ func _process(delta: float) -> void:
 		next_wave_eta.emit(eta)
 
 func _start_downtime(first: bool = false) -> void:
+	if not first:
+		_capture_wave_performance()
 	_cancel_active_deliveries("downtime_started")
 	_gateway_hold_active = false
 	_state = RunState.State.DOWNTIME
@@ -205,6 +211,35 @@ func _start_downtime(first: bool = false) -> void:
 	_downtime_remaining = 5.0 if first else _get_downtime_sec()
 	_ensure_pending_card()
 	downtime_started.emit(_downtime_remaining, _wave_index + 1)
+
+func _is_campaign_quantity_wave(stage: StageDef) -> bool:
+	var run: RunDefinition = GameFlow.get_active_run_definition()
+	if run == null or run.run_mode != RunDefinition.RunMode.STORY:
+		return false
+	var wave_offset: int = maxi(_wave_index - 1, 0)
+	return stage == null or wave_offset >= stage.authored_enemy_budgets.size()
+
+func _get_live_opening_performance() -> Dictionary:
+	return {
+		"pps": CombatStats.get_pps(),
+		"incoming_damage_per_sec": CombatStats.get_damage_taken_per_sec(),
+		"kill_rate": CombatStats.get_enemy_kill_rate(),
+		"duration_sec": 0.0,
+		"source": "live"
+	}
+
+func _capture_wave_performance() -> void:
+	var snapshot: Dictionary = CombatStats.capture_wave_performance_window()
+	if not snapshot.is_empty() and float(snapshot.get("duration_sec", 0.0)) > 0.0:
+		_pending_opening_performance = snapshot
+
+func _consume_opening_performance() -> Dictionary:
+	if _pending_opening_performance.is_empty():
+		return _get_live_opening_performance()
+	var snapshot: Dictionary = _pending_opening_performance.duplicate(true)
+	_pending_opening_performance.clear()
+	snapshot["source"] = "active_wave_window"
+	return snapshot
 
 func _get_wave_card_deck() -> Array[WaveCard]:
 	var active_stage: StageDef = GameFlow.get_current_stage()
@@ -298,6 +333,9 @@ func _remember_card(card: WaveCard) -> void:
 		_recent_card_ids.remove_at(0)
 
 func _next_wave() -> void:
+	# Also capture direct/debug advancement; an inactive recorder cannot erase
+	# the snapshot already saved before ordinary downtime.
+	_capture_wave_performance()
 	_cancel_active_deliveries("wave_token_invalidated")
 	_wave_token += 1
 	RunState.set_state(RunState.State.IN_WAVE)
@@ -324,17 +362,40 @@ func _next_wave() -> void:
 	_active_card = _consume_pending_card()
 	_remember_card(_active_card)
 
-	var pps: float = CombatStats.get_pps()
-	var incoming_damage: float = CombatStats.get_damage_taken_per_sec()
-	var kill_rate: float = CombatStats.get_enemy_kill_rate()
+	var stage: StageDef = GameFlow.get_current_stage()
+	var campaign_quantity: bool = _is_campaign_quantity_wave(stage)
+	var performance: Dictionary = _consume_opening_performance() if campaign_quantity else _get_live_opening_performance()
+	var pps: float = float(performance["pps"])
+	var incoming_damage: float = float(performance["incoming_damage_per_sec"])
+	var kill_rate: float = float(performance["kill_rate"])
 	var stage_index: int = max(GameFlow.get_active_stage_index(), 0)
 	var threat: float = 0.0
+	var macro_threat: float = 0.0
+	var threat_performance_scale: float = 1.0
 	if _threat_dir != null:
-		threat = _threat_dir.compute_threat(_elapsed_sec, _wave_index, stage_index, pps, incoming_damage)
+		if campaign_quantity:
+			# Sector carryover replaces the old flat stage bonus; local growth
+			# always uses the first-sector macro curve.
+			macro_threat = _threat_dir.compute_macro_threat(_elapsed_sec, _wave_index, 0)
+			threat_performance_scale = _threat_dir.get_performance_scale(pps, incoming_damage)
+			threat = maxf(macro_threat * threat_performance_scale, 0.0)
+		else:
+			threat = _threat_dir.compute_threat(_elapsed_sec, _wave_index, stage_index, pps, incoming_damage)
 
 	var budgets: Dictionary = {"enemy_points": 0, "target_points": 0}
+	var quantity_curve: Dictionary = {}
 	if _wave_budgeter != null:
 		budgets = _wave_budgeter.to_budgets(threat, _elapsed_sec, _wave_index, _active_card)
+		if campaign_quantity:
+			if _wave_index == 1:
+				_sector_opening_macro_threat = macro_threat
+			var opening_macro: float = _sector_opening_macro_threat
+			if opening_macro < 0.0:
+				opening_macro = _threat_dir.compute_macro_threat(0.0, 1, 0) if _threat_dir != null else 0.0
+			var carried_reference: float = _quantity_carryover_reference if stage_index > 0 else -1.0
+			quantity_curve = _wave_budgeter.build_campaign_quantity_budget(macro_threat, _wave_index, opening_macro, carried_reference)
+			_last_ordinary_enemy_points_pre_adaptive = float(quantity_curve["enemy_points_pre_adaptive"])
+			budgets["enemy_points"] = maxi(int(round(float(quantity_curve["quantity_curve_points"]) * threat_performance_scale)), _wave_budgeter.min_enemy_points)
 	var opening_adjustment: Dictionary = {"enemy_points": int(budgets.get("enemy_points", 0)), "scale": 1.0}
 	if _intensity_dir != null:
 		opening_adjustment = _intensity_dir.get_opening_adjustment(
@@ -343,12 +404,17 @@ func _next_wave() -> void:
 			incoming_damage
 		)
 	budgets["enemy_points"] = int(opening_adjustment.get("enemy_points", budgets.get("enemy_points", 0)))
-	var stage: StageDef = GameFlow.get_current_stage()
 	var wave_offset: int = max(_wave_index - 1, 0)
 	if stage != null and wave_offset < stage.authored_enemy_budgets.size():
 		budgets["enemy_points"] = max(stage.authored_enemy_budgets[wave_offset], 0)
 		opening_adjustment["enemy_points"] = budgets["enemy_points"]
 		opening_adjustment["scale"] = 1.0
+	budgets["enemy_points_pre_adaptive"] = int(quantity_curve.get("enemy_points_pre_adaptive", budgets["enemy_points"]))
+	budgets["enemy_quantity_curve"] = quantity_curve
+	budgets["threat_performance_scale"] = threat_performance_scale
+	budgets["opening_performance"] = performance
+	if campaign_quantity:
+		CombatStats.begin_wave_performance_window()
 	_current_enemy_density_reference = max(
 		soft_enemy_density_base + float(max(_wave_index - 1, 0)) * soft_enemy_density_per_wave,
 		float(int(budgets.get("enemy_points", 0))) * 0.65
@@ -417,6 +483,10 @@ func _build_wave_debug_snapshot(
 		"threat": threat,
 		"enemy_points": int(budgets.get("enemy_points", 0)),
 		"target_points": int(budgets.get("target_points", 0)),
+		"enemy_points_pre_adaptive": int(budgets.get("enemy_points_pre_adaptive", 0)),
+		"enemy_quantity_curve": budgets.get("enemy_quantity_curve", {}).duplicate(true),
+		"threat_performance_scale": float(budgets.get("threat_performance_scale", 1.0)),
+		"opening_performance": budgets.get("opening_performance", {}).duplicate(true),
 		"soft_enemy_density_reference": _current_enemy_density_reference,
 		"opening_enemy_scale": float(opening_adjustment.get("scale", 1.0)),
 		"pressure_state": _intensity_dir.get_last_pressure_state() if _intensity_dir != null else "n/a",
@@ -443,6 +513,7 @@ func _start_pressure_loop() -> void:
 	_run_pressure_coroutine(_pressure_token)
 
 func _exit_tree() -> void:
+	CombatStats.cancel_wave_performance_window()
 	_cancel_active_deliveries("director_removed")
 	_wave_token += 1
 	_pressure_token += 1
@@ -1054,6 +1125,7 @@ func _sample_delivery_density() -> void:
 		ledger["peak_nearby_enemies"] = maxi(int(ledger.get("peak_nearby_enemies", 0)), nearby)
 
 func _on_run_completed() -> void:
+	CombatStats.cancel_wave_performance_window()
 	_run_finished = true
 	_cancel_active_deliveries("run_completed")
 
@@ -1181,6 +1253,9 @@ func _on_active_boss_about_to_die(target: Enemy) -> void:
 		GameFlow.record_stage_completed(current_stage)
 		if _enemy_combat_scaling_dir != null:
 			_enemy_combat_scaling_dir.set_carried_baseline_from_snapshot(carryover_snapshot)
+		# Boss budget is zero and buyer expenditure is incidental. Carry only
+		# the last ordinary allocation before either adaptive adjustment.
+		_quantity_carryover_reference = _last_ordinary_enemy_points_pre_adaptive
 		_enter_gateway_hold(current_stage, gateway_position)
 		return
 	GameFlow.player_won()
@@ -1214,6 +1289,14 @@ func _enter_gateway_hold(stage: StageDef, position: Vector3) -> void:
 	gateway_ready.emit(stage, position)
 
 func _reset_stage_runtime(clear_progression: bool, clear_scaling_baseline: bool, first_downtime: bool) -> void:
+	if clear_progression:
+		CombatStats.cancel_wave_performance_window()
+		_quantity_carryover_reference = -1.0
+		_pending_opening_performance.clear()
+	else:
+		_capture_wave_performance()
+	_last_ordinary_enemy_points_pre_adaptive = -1.0
+	_sector_opening_macro_threat = -1.0
 	_cancel_active_deliveries("stage_reset")
 	_wave_token += 1
 	_wave_index = 0

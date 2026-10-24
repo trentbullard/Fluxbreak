@@ -77,6 +77,8 @@ Numeric defaults below are initial playtest settings. Implement them as document
 
 ### Phase 3 — Coordinate formation approaches and spawn placement
 
+**Status: skipped by explicit playtest decision (2026-10-24).** Existing independent approaches already provide the desired overlapping pressure after purchasing/delivery and faction changes. Do not implement this controller, transit state, or spawn-placement pass as part of Phase 4.
+
 **Goal:** Deliver overlapping groups without replacing individual combat behavior.
 
 - Carry a unique encounter ID and formation ID from `SpawnRequest` into `EnemySpawnContext`, including context duplication. Pressure purchases need distinct IDs even within the same wave.
@@ -230,7 +232,9 @@ Complete and validate Phase 1, update its status in the plan, then stop. Report 
 
 - Phase 1: implemented and automated validation passed (2026-10-24); Phase 2 subsequently authorized by the user.
 - Phase 2: implemented and automated validation passed (2026-10-24); ready for gameplay playtesting.
-- Phases 3–6: not started.
+- Phase 3: skipped by the user (2026-10-24); existing movement and formation delivery retained.
+- Phase 4: implemented and automated validation passed (2026-10-24); ready for gameplay playtesting.
+- Phases 5–6: not started.
 - Phase 7: deferred; not implemented or enabled.
 - Subsequent faction balance pass: implemented and automated validation passed (2026-10-24). See [durability, persistent minions and Grey attacks](faction_balance_pass.md). This explicitly supersedes original summon population/owner-death cleanup rules; it does not advance Phases 3–7.
 
@@ -303,3 +307,42 @@ No HP/damage, quantity curve, movement, target-purchasing/lifetime, or nanobot c
 2. Defeat the first Campaign boss while ordinary enemies remain; confirm both gateways appear immediately and the survivors continue engaging.
 3. Inspect a gateway, dismiss it with Not yet/Escape/controller Back, and confirm the same fight resumes. Choose a route and verify the old battlefield is removed on transfer.
 4. Defeat a Practice or final Campaign boss with survivors still alive. Confirm victory appears immediately and returns to a clean menu once.
+
+### Phase 4 implementation record — 2026-10-24
+
+Phase 3 was explicitly skipped after playtesting found the existing independent approaches sufficiently oppressive. No formation controller, transit state, movement-speed coordination or spawn-placement change was implemented.
+
+Procedural Campaign quantity now uses the original first-sector wave/time curve through local wave 10 and multiplies it by `1.025 ^ max(local_wave - 10, 0)` thereafter. `WaveBudgeter` exposes the geometric factor/start wave, 0.4 sector-opening fraction and 1.5 local-growth multiplier as documented configuration. The old flat stage threat bonus is omitted from this Campaign path because quantity carryover replaces it; the original threat/budget APIs remain available to other modes.
+
+The last ordinary neutral allocation is recorded before both performance adjustments and before purchasing. At the first boss's gateway, this value becomes the next sector's fixed reference. The boss's zero budget and buyer expenditure cannot overwrite it. Sector two uses `0.4 * reference + 1.5 * (first-sector local geometric points - opening points)`, bounded by the existing minimum. The opening baseline uses that sector's actual first-opening time, preventing the initial five-second wait from accidentally adding growth to the promised 40% opening. Float precision is retained through curve construction and the threat performance factor, then the existing opening adjustment applies once. The neutral integer allocation is the carryover reference.
+
+An independent recorder in the existing `CombatStats` singleton retains only the trailing five active ordinary-wave seconds. Reports are bucketed when received, including a closing hit/kill before its EMA update. Downtime captures and stops this recorder before changing state. Saved values survive the break, boss and gateway and are consumed once at the next procedural opening. Short clears use their real active duration; pause does not age or add to the window. Existing live EMAs continue unchanged for in-wave pressure. New-run reset and terminal cleanup stop the recorder and discard its transient state.
+
+Exact neutral fixtures below assume local elapsed time `(local_wave - 1) * 60` seconds and sector-one wave 29's 170-point neutral reference. Actual run time and bounded performance adjustments change the delivered allocations.
+
+| Local wave | Sector 1 points | Sector 2 points | Geometric factor |
+|---|---:|---:|---:|
+| 1 | 7 | 68 | 1.000000 |
+| 10 | 39 | 116 | 1.000000 |
+| 20 | 95 | 200 | 1.280085 |
+| 25 | 134 | 258 | 1.448298 |
+| 29 | 170 | 313 | 1.598650 |
+
+The exact sector-two wave-20 value is 200 rather than the illustrative table's 201; this is the specified equation with unrounded intermediate values, not additional tuning.
+
+Authored Practice budgets, order, tier caps and boss selection retain precedence. Buyer logic, card rules, delivery, spawn profiles, approach mechanics, pressure settings, target buying/lifetimes, HP/damage scaling, rewards and downtime durations were not changed. Phases 5–6 remain unstarted and Phase 7 remains deferred. No version increment or release build is included.
+
+#### Validation
+
+- Focused quantity/progression/performance suite: 644 assertions passed, including all factions and both real gateway routes, zero-expenditure buyer, boss handoff, adaptive factors applied once, authored Practice, independent combat stats, pending closing-frame events, exact opening wait, pause and one-time snapshot use.
+- Purchasing/delivery suite: 26,008 assertions passed.
+- Gateway choice suite: 1,041 checks passed across all four factions and both routes.
+- Stage modifier suite: 76 checks passed.
+- Complete Practice/Campaign routing suite: 15,663 assertions passed; every faction's short and full runs, gateways, finale, random selection and clean menu return.
+- Godot 4.7.2 import and successful validation logs contain no engine errors, warnings or leaked objects. Independent production review found no actionable issues; final whitespace checks passed.
+
+#### Next playtest
+
+1. Compare the same faction and build around waves 10, 20, 25 and 29. The early quantity curve is retained; later waves should accumulate considerably more pressure.
+2. Complete the first boss and compare sector two's opening with the preceding late waves, then compare sector-two wave 10 with sector-one wave 10.
+3. Check both routes and a short Practice encounter for unchanged timing, controls, faction, lessons and completion. Use debug `enemy_points_pre_adaptive`, `enemy_quantity_curve` and `opening_performance` to distinguish the neutral curve, carryover and saved performance from final allocations.
