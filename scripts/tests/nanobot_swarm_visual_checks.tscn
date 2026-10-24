@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/tests/nanobot_swarm_visual_checks.gd" id="1"]
+
+[node name="NanobotSwarmVisualChecks" type="Node3D"]
+script = ExtResource("1")

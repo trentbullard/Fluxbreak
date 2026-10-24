@@ -262,10 +262,10 @@ func _add_boss_survival_fixture(faction: PracticeFactionDef) -> Dictionary:
 	_world.add_child(attack)
 	attack.start_attack(source, _ship, source, 1000.0, 36.0)
 	var drop: NanobotSwarm = Enemy.NanobotSwarmScene.instantiate() as NanobotSwarm
+	drop.initialize(321)
 	drop.process_mode = Node.PROCESS_MODE_DISABLED
 	_world.add_child(drop)
 	drop.global_position = source.global_position
-	drop.value = 321
 	var projectile: Projectile = Projectile.new()
 	projectile.process_mode = Node.PROCESS_MODE_DISABLED
 	projectile.configure_shot(source, _ship, WeaponCombatResolver.ShotResult.MISS, 0.0, 0.3, 1.0, [], false)

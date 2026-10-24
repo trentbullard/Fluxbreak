@@ -1,6 +1,8 @@
 [gd_scene format=3 uid="uid://dtnutlcuxr4ys"]
 
 [ext_resource type="Script" uid="uid://dfmvya8pot7y0" path="res://scripts/drops/nanobot_swarm.gd" id="1_k4eqp"]
+[ext_resource type="Script" path="res://scripts/drops/nanobot_swarm_visuals.gd" id="2_visuals"]
+[ext_resource type="Shader" path="res://scripts/drops/nanobot_swarm_particles.gdshader" id="3_particles"]
 
 [sub_resource type="Gradient" id="Gradient_w65sh"]
 colors = PackedColorArray(0.6155507, 0.8756056, 1, 1, 0.54102784, 0.54102784, 0.54102784, 0.354)
@@ -10,16 +12,16 @@ gradient = SubResource("Gradient_w65sh")
 
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_fyv4k"]
 emission_shape = 1
-emission_sphere_radius = 1.0
+emission_sphere_radius = 2.5
 angle_min = 1.0728835e-05
 angle_max = 20.000011
 spread = 75.0
-initial_velocity_min = 5.0
-initial_velocity_max = 10.0
+initial_velocity_min = 12.5
+initial_velocity_max = 25.0
 angular_velocity_min = 9.999984
 angular_velocity_max = 59.99998
-radial_velocity_min = -3.0000222
-radial_velocity_max = -3.0000222
+radial_velocity_min = -7.5000555
+radial_velocity_max = -7.5000555
 gravity = Vector3(0, 0, 0)
 damping_min = 0.2
 damping_max = 0.4
@@ -28,15 +30,11 @@ turbulence_enabled = true
 turbulence_noise_speed = Vector3(1, 1, 1)
 turbulence_influence_max = 0.15
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_72fs5"]
-vertex_color_use_as_albedo = true
-albedo_color = Color(3.1573774e-05, 0.480375, 0.90340185, 1)
-emission_enabled = true
-emission = Color(4.7841968e-05, 0.47236526, 0.89034986, 1)
-billboard_mode = 1
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_particles"]
+shader = ExtResource("3_particles")
 
 [sub_resource type="PointMesh" id="PointMesh_jifgu"]
-material = SubResource("StandardMaterial3D_72fs5")
+material = SubResource("ShaderMaterial_particles")
 
 [node name="NanobotSwarm" type="GPUParticles3D" unique_id=1197649539 node_paths=PackedStringArray("particles", "attractor")]
 amount = 1000
@@ -50,3 +48,6 @@ attractor = NodePath("GPUParticlesAttractorSphere3D")
 
 [node name="GPUParticlesAttractorSphere3D" type="GPUParticlesAttractorSphere3D" parent="." unique_id=36595440]
 radius = 12.0
+
+[node name="SwarmVisuals" type="Node3D" parent="."]
+script = ExtResource("2_visuals")

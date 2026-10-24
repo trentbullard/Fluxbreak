@@ -125,6 +125,8 @@ These are points, not ship counts. Wave 30 is the boss. Actual elapsed time and 
 
 ### Phase 5 — Progress stationary salvage opportunities
 
+**Status: skipped by explicit playtest decision (2026-10-24).** Recent quantity, pacing and reward tuning feels balanced. Retain the current stationary-target policy; the proposal below remains a reference and is not part of Phase 6.
+
 Replace the conflicting target-purchasing paths with one progression-aware policy. Remove configuration and code made obsolete by that replacement.
 
 - Use run-wide progression for target selection, preserving the transition into wrecks across sectors.
@@ -151,8 +153,8 @@ Replace the conflicting target-purchasing paths with one progression-aware polic
 **Value and collection**
 
 - Keep every swarm independent; never merge or automatically credit it.
-- Use 90 seconds of linear decay from its original value, beginning at spawn.
-- Calculate remaining value directly from original value and age, using integer ceiling while positive. At 90 seconds, expire without credit.
+- Use 120 seconds of linear decay from its original value, beginning at spawn. This explicitly replaces the original 90-second setting after the reduction in nanobot reward scaling, giving early-run collection more time.
+- Calculate remaining value directly from original value and age, using integer ceiling while positive. At 120 seconds, expire without credit.
 - Decay continues outside magnet range and during attraction, and pauses with gameplay.
 - Award the remaining value exactly once when pickup commits; preserve existing collection modifiers.
 - Introduce explicit initialization before scene insertion. Both enemy and target drop paths currently assign value after `_ready()`, which would otherwise initialize decay from zero.
@@ -161,8 +163,8 @@ Replace the conflicting target-purchasing paths with one progression-aware polic
 **Visibility**
 
 - Enlarge the cloud’s extent approximately 2.5 times without increasing its particle count.
-- Add a camera-facing, unshaded cyan/green and white core with a dark contour. Preserve normal depth occlusion.
-- Maintain an apparent core diameter of approximately 14–36 UI-scaled pixels. Keep it readable through 3,000 metres and fade it out by 3,500 metres.
+- Keep the original moving blue/cyan particles, make them brighter and give each a thin dark outline. The separate central core/badge was rejected after the first visual playtest; remove it.
+- Use small individual point sizes, approximately 3.2 pixels nearby and 2 pixels far away. Retain normal depth occlusion and the 3,000–3,500 metre distance fade. The original 14–36 pixel central-core requirement is superseded by this particle-only direction.
 - Keep pickup geometry, magnet range, and attraction movement unchanged.
 - Reduce visual strength with remaining value, retaining a readable contour until the final seconds. Reflect decay in existing offscreen drop indicators.
 - Avoid per-swarm lights and additional through-object HUD markers.
@@ -201,7 +203,7 @@ Required scenarios:
 - **Movement:** slow capitals with fast escorts; member death; player interception; Machines; charges, retreats, displacement, and separation pulses.
 - **Progression:** waves 1/10/20/25/29 in both sectors; carryover uses the ordinary allocation; authored Practice overrides remain effective.
 - **Targets:** guaranteed affordable wrecks, route differences, replacement allowances, expiration grace, no expiration loot, and no fresh asteroids after the cutoff.
-- **Swarms:** both initialization paths; correct value at 0/30/60/90 seconds; pause; out-of-range decay; pickup/expiration races; unchanged magnet behavior; no merging.
+- **Swarms:** both initialization paths; correct value at 0/30/60/90/120 seconds; pause; out-of-range decay; pickup/expiration races; unchanged magnet behavior; no merging.
 - **Visual/performance checks:** fresh and aged swarms at 100/1,000/3,000 metres against empty space, asteroid fields, planets, and solar flare. Profile 50–100 combatants and 100 simultaneous swarms; report CPU/GPU frame times and investigate matched-load regressions before advancing.
 
 After every phase, report changes, validation results, remaining limitations, and the recommended playtest. Update this document’s phase status. Stop at the assigned phase boundary.
@@ -234,7 +236,8 @@ Complete and validate Phase 1, update its status in the plan, then stop. Report 
 - Phase 2: implemented and automated validation passed (2026-10-24); ready for gameplay playtesting.
 - Phase 3: skipped by the user (2026-10-24); existing movement and formation delivery retained.
 - Phase 4: implemented and automated validation passed (2026-10-24); ready for gameplay playtesting.
-- Phases 5–6: not started.
+- Phase 5: skipped by the user (2026-10-24); current stationary-target policy retained after positive pacing/economy playtests.
+- Phase 6: implemented and focused functional/rendered validation passed (2026-10-24), with a user-approved 120-second lifetime replacing 90 seconds; ready for gameplay playtesting.
 - Phase 7: deferred; not implemented or enabled.
 - Subsequent faction balance pass: implemented and automated validation passed (2026-10-24). See [durability, persistent minions and Grey attacks](faction_balance_pass.md). This explicitly supersedes original summon population/owner-death cleanup rules; it does not advance Phases 3–7.
 
@@ -346,3 +349,65 @@ Authored Practice budgets, order, tier caps and boss selection retain precedence
 1. Compare the same faction and build around waves 10, 20, 25 and 29. The early quantity curve is retained; later waves should accumulate considerably more pressure.
 2. Complete the first boss and compare sector two's opening with the preceding late waves, then compare sector-two wave 10 with sector-one wave 10.
 3. Check both routes and a short Practice encounter for unchanged timing, controls, faction, lessons and completion. Use debug `enemy_points_pre_adaptive`, `enemy_quantity_curve` and `opening_performance` to distinguish the neutral curve, carryover and saved performance from final allocations.
+
+### Phase 5 decision — 2026-10-24
+
+Skipped at the user's request after positive playtests of the new enemy quantities, pacing and reduced reward coefficient. No stationary-target purchasing, replacement allowance, wreck weighting or expiration changes are implemented. The Phase 5 proposal is retained above as a reference, not an active requirement for Phase 6.
+
+### Phase 6 implementation record — 2026-10-24
+
+Implemented with a **120-second** lifetime, explicitly superseding the original 90-second proposal. The recent `nanobot_base_strength = 0.20` remains unchanged. No quantity, base reward, target, price, combat or movement balance changes accompany this phase.
+
+#### Lifetime and collection
+
+Each enemy or target death initializes its swarm value before adding it to the scene. Remaining payout is `ceil(original_value * (1 - active_age / 120))` while age is below 120 seconds; at the deadline it expires without reward. A 400-value swarm therefore pays 400/300/200/100/0 at 0/30/60/90/120 seconds before the existing ship collection modifiers.
+
+Every swarm remains independent. Aging continues outside pickup range, during magnet attraction and without a player; gameplay pause suspends it. Collected and expired states are terminal. Pickup captures its remaining integer value and recipient before deferred credit, preventing duplicate callbacks, expiration races and later value assignments from changing the award. Freed, queued or dead recipients cannot receive credit. Zero-value drops expire immediately.
+
+Pickup distance (5 m), ship pickup-range upgrades, 0.6-second magnet delay, attraction ramp/strength and 120 m/s attraction movement are retained. Explicitly disabled processing remains respected by fixtures. Confirmed sector transfer still removes drops without granting synthetic income.
+
+#### Initial visibility implementation (superseded by the particle-only revision below)
+
+The existing cloud retains 1,000 particles. Its emission radius and spatial velocities increase 2.5 times; the parent transform and collection geometry do not scale. A separate scene child draws a camera-facing cyan/green core, white center and dark contour, using a shared unshaded shader with per-instance fading. Normal depth testing is retained. There are no new lights or through-object HUD markers.
+
+Projection-aware sizing produces approximately 36 viewport/HUD pixels nearby, reducing to 14 at 3,000 m. The core and cloud retain distance visibility through 3,000 m and fade out by 3,500 m. Camera projection, aspect-preservation mode and FOV are accounted for. Remaining value dims the cloud and core; the dark contour stays strong until the last 6 seconds, then fades out. Existing offscreen drop icons and their distance labels use the same value-based fading.
+
+#### Validation
+
+- Godot 4.7.2 import: clean. Save-isolated functional suite: **121 assertions passed**. Coverage includes exact 0/30/60/90/120-second payouts, small-value ceiling, independent overlapping drops, playerless/out-of-range aging, gameplay pause, attraction movement, captured pickup value/recipient, expiration races, duplicate callbacks and both actual death/spawn paths.
+- Camera checks unproject the actual core corners to verify 14–36 pixel bounds with perspective and orthographic cameras, 70°/110° FOV and both aspect-preservation modes. Distant/behind-camera hiding, particle count, collection geometry and aging strength are checked.
+- Existing reward suite: **178 assertions passed**. Gateway suite: **1,041 checks passed**, including both routes for all four factions and sector cleanup. Stage modifiers: **76 checks passed**, including real collection bonuses.
+- Complete Practice/Campaign routing suite: **15,667 assertions passed**, covering every faction's short and full runs, gateways, finales, random selection and clean return to the menu.
+- Rendered Vulkan suite: **55 checks passed**; an additional screenshots-only pass passed **47 checks**. Fresh and 90-second-aged swarms were inspected at 100/1,000/3,000 m against real stage starfield, asteroid and planet panoramas and labelled representative contrast backdrops. The solar-flare backdrop is synthetic. Pixel comparison confirms a solid foreground hull hides the core. Successful logs contain no engine errors, warnings or leaked objects.
+
+Matched-load results on AMD Radeon RX 7900 XT, Forward+, 1280×720, 100 independent swarms (100,000 particles), ABBA case order with warmup:
+
+| Active combatants | Baseline → enhanced render CPU | Baseline → enhanced GPU | Baseline → enhanced swarm-script CPU |
+|---|---:|---:|---:|
+| 50 | 0.162 → 0.165 ms | 0.202 → 0.359 ms | 0.082 → 0.293 ms |
+| 100 | 0.169 → 0.171 ms | 0.218 → 0.367 ms | 0.082 → 0.293 ms |
+
+The approximately 0.21 ms script and 0.15 ms GPU increase for 100 swarms includes projection/instance updates, the additional depth-tested cores and alpha cloud rendering. The baseline restores the original cloud extent and opaque lit point material, disables the new core and retains identical active lifetime logic. Combatants use real Corvette physics/steering and separation with simple hull meshes and disabled weapons. These are isolated component comparisons, not full combat frame times. Frame pacing was capped at 240 FPS; the periodically refreshed process monitor produced inconsistent samples and is excluded from CPU conclusions. Actual game backgrounds, full models, attacks and effects still need live playtesting.
+
+Repeatable checks: `scripts/tests/run_nanobot_swarm_checks.ps1` and `scripts/tests/run_nanobot_swarm_visual_checks.ps1`, using `GODOT_EXE`. Both isolate saves; the rendered wrapper writes images and metrics into a temporary artifact directory. `-ScreenshotsOnly` skips the rendered performance pass.
+
+#### Next playtest
+
+1. Compare fresh and aged drops at close range and at 1–3 km against the existing backgrounds. Confirm the dark contour is readable without covering nearby enemy warnings or ship silhouettes.
+2. Leave early-wave drops for 30–60 seconds, then collect with and without pickup-range upgrades. Assess whether the 120-second window leaves enough time to make tactical collection choices after the reward-scaling reduction.
+3. Pause or open a gateway briefing and verify nearby swarms retain value; cancel and resume collection. Confirm transfer removes old-sector drops.
+4. Play a crowded late wave with accumulated drops. Compare clarity and frame pacing against normal play before considering the deferred coordination experiment.
+
+Phase 6 stops here for playtesting. Phase 7 remains deferred and disabled. No version increment, executable export or installer build was performed.
+
+### Phase 6 visual revision — original particle swarm
+
+The user rejected the central-core design after playtesting. Restore the original moving particle-cloud appearance, retain its 2.5-times enlarged extent and brighten the individual blue/cyan particles with thin dark outlines. Remove the separate core node, its shader and obsolete core-size/projection configuration.
+
+The scene still uses a single 1,000-particle `PointMesh` emitter, now with a shared unshaded point shader. Each particle uses its own screen-space point coordinates to draw a small bright center and dark edge, with an apparent diameter of approximately 3.2 pixels nearby and 2 pixels at distance. The visual helper only adjusts point size and cloud fading; it no longer draws or scales a separate object. Normal depth testing, the 3,000–3,500 m distance fade, independent value fading and existing offscreen indicator fading are retained.
+
+The 120-second lifetime, decay formula, pickup initialization, terminal collection states, magnet behavior and all reward/balance settings remain unchanged. Earlier core-specific screenshots, pixel-size assertions and performance numbers above describe the superseded version.
+
+Validation: Godot 4.7.2 import is clean; the updated functional swarm suite passes **81 assertions**, including particle-only scene structure, unchanged geometry/count, near/far fading, no visual scaling of collection geometry and all existing lifecycle/collection checks. The revised rendered suite passes **57 checks** with no engine errors, warnings or leaked objects. With labels removed from its bright-background comparison, tinted particle area increases from 441 to 1,197 pixels and the new particles contribute 275 dark edge pixels. These are antialiased, translucent edges rather than opaque black dots. Actual starfield, asteroid and planet panoramas, representative solar-flare contrast, fresh/aged clouds and normal foreground occlusion are captured again.
+
+At the same 1280×720/RX 7900 XT fixture settings, with 100 swarms and 50/100 active combatants, baseline → outlined GPU times are **0.207 → 0.205 ms / 0.215 → 0.217 ms**; no meaningful GPU regression was detected in these samples. Swarm script work increases from approximately **0.084 to 0.220 ms per 100 drops**. Render CPU measures **0.161 → 0.126 ms / 0.169 → 0.135 ms**. Baseline and measurement limitations remain as above; these are component comparisons, not full combat frame times. The current production shader and particle-only captures supersede the earlier core preview and performance figures.

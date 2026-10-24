@@ -86,6 +86,8 @@ func _draw() -> void:
 		
 		# Apply distance-based alpha fade
 		var alpha_mult: float = _get_distance_alpha(distance)
+		if obj is NanobotSwarm:
+			alpha_mult *= NanobotSwarmVisuals.value_visual_strength((obj as NanobotSwarm).get_value_fraction())
 		var adjusted_entry: OffscreenIconRegistry.IconEntry = _create_faded_entry(entry, alpha_mult)
 		if obj is BossGateway:
 			adjusted_entry.color = (obj as BossGateway).get_marker_color()
@@ -96,7 +98,7 @@ func _draw() -> void:
 		
 		# Draw distance text if enabled
 		if show_distance_text:
-			_draw_distance_label(edge_pos, distance, rotation_angle, entry.size)
+			_draw_distance_label(edge_pos, distance, rotation_angle, entry.size, alpha_mult)
 
 func _sync_tracked_objects() -> void:
 	# Clear stale entries
@@ -276,7 +278,7 @@ func _create_faded_entry(entry: OffscreenIconRegistry.IconEntry, alpha_mult: flo
 	faded.texture = entry.texture
 	return faded
 
-func _draw_distance_label(pos: Vector2, distance: float, angle: float, icon_size: float) -> void:
+func _draw_distance_label(pos: Vector2, distance: float, angle: float, icon_size: float, alpha_mult: float = 1.0) -> void:
 	var distance_text: String = HudDistanceFormatter.format_distance(distance)
 	
 	# Position text slightly offset from the icon, opposite the direction it points
@@ -289,8 +291,8 @@ func _draw_distance_label(pos: Vector2, distance: float, angle: float, icon_size
 	var font_size: int = distance_font_size
 	
 	# Draw with outline for readability
-	draw_string_outline(font, text_pos, distance_text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size, 3, Color.BLACK)
-	draw_string(font, text_pos, distance_text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size, Color(0.9, 0.9, 0.9, 0.9))
+	draw_string_outline(font, text_pos, distance_text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size, 3, Color(0.0, 0.0, 0.0, alpha_mult))
+	draw_string(font, text_pos, distance_text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size, Color(0.9, 0.9, 0.9, 0.9 * alpha_mult))
 
 # Public API for manual registration (e.g., for POIs or quest markers)
 func register_icon_type(kind: String, shape: OffscreenIconRegistry.IconShape, color: Color, font_size: float = 14.0) -> void:

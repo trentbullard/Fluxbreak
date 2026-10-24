@@ -125,9 +125,9 @@ func _die() -> void:
 		var swarm_node: NanobotSwarm = NanobotSwarmScene.instantiate() as NanobotSwarm
 		if swarm_node != null:
 			swarm_node.global_transform = xf
-			var parent_node := (get_parent() if get_parent() != null else get_tree().root)
+			swarm_node.initialize(RunState.calc_target_nanobots(def))
+			var parent_node: Node = get_parent() if get_parent() != null else get_tree().root
 			parent_node.add_child(swarm_node)
-			swarm_node.value = RunState.calc_target_nanobots(def)
 
 	if explosion_scene != null:
 		var fx: CPUParticles3D = explosion_scene.instantiate() as CPUParticles3D
