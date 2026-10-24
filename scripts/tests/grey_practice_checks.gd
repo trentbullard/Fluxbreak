@@ -97,7 +97,8 @@ func _run_checks() -> void:
 	if boss != null:
 		_protected_boss = boss
 		# Preservation was checked at the real boss handoff. Exercise the boss's
-		# own cadence away from surviving Vessels sharing the global tether slot.
+		# own cadence away from surviving Vessels competing for the Ship's
+		# existing nonstacking active movement status.
 		# Keep those actors alive and let their committed warnings end normally.
 		boss.set_physics_process(false)
 		_ship.global_position += Vector3.UP * 30000.0
@@ -114,6 +115,7 @@ func _run_checks() -> void:
 		boss.set_physics_process(true)
 		boss.explosion_scene = null
 		boss.hull = boss.eff_max_hull * (0.3 if boss is GreyVeiledMind else 0.5)
+		boss.shield = 0.0
 		var states: Array[StringName] = []
 		var saw_rupture_hud: bool = false
 		var saw_tether_hud: bool = false
@@ -136,15 +138,15 @@ func _run_checks() -> void:
 					var turret: PlayerTurret = child as PlayerTurret
 					if turret != null and controller.get_assigned_target(turret, turret.team_id) == boss:
 						reacquired_after_shift = true
-			if warning_label.visible and warning_label.text.contains("RUPTURE"):
+			if warning_label.visible and (warning_label.text.contains("RUPTURE") or warning_label.text.contains("COLLAPSE")):
 				saw_rupture_hud = true
-			if warning_label.visible and warning_label.text.contains("TETHER"):
+			if warning_label.visible and (warning_label.text.contains("TETHER") or warning_label.text.contains("CAPTURE CORRIDOR")):
 				saw_tether_hud = true
 			var majors: int = int(is_instance_valid(boss.get("_attack"))) + int(is_instance_valid(boss.get("_displacement"))) + int(is_instance_valid(boss.get("_tether")))
 			max_majors = maxi(max_majors, majors)
 			if states.has(&"tether") and states.has(&"displacement") and state == &"recovery" and saw_rupture_hud and saw_tether_hud and reacquired_after_shift:
 				break
-		_check(int(boss.get_meta("grey_phase", 0)) >= 2, "Grey boss did not enter its hull-based later phase.")
+		_check(int(boss.get_meta("grey_phase", 0)) >= 2, "Grey boss did not enter its combined-durability later phase.")
 		_check(states.has(&"displacement") and states.has(&"rupture") and states.has(&"tether"), "Witness must demonstrate all three distinct majors.")
 		_check(max_majors == 1, "Witness overlapped its major abilities.")
 		_check(saw_rupture_hud and saw_tether_hud, "The HUD omitted the actual rupture or tether warning.")

@@ -40,7 +40,7 @@ func configure_enemy(d: EnemyDef, spawn_context: EnemySpawnContext = null) -> vo
 	_brood_spawner = BugBroodSpawner.new()
 	_brood_spawner.name = "QueenBroodSpawner"
 	add_child(_brood_spawner)
-	_brood_spawner.setup(self, _queen_def.brood_child_def, mini(_queen_def.brood_alive_cap, 8), mini(_queen_def.brood_total_cap, 16), 12, 50, _queen_def.brood_spawn_radius)
+	_brood_spawner.setup(self, _queen_def.brood_child_def, _queen_def.brood_spawn_radius)
 
 func _ready() -> void:
 	super._ready()
@@ -154,7 +154,7 @@ func _begin_attack(target: Node3D) -> void:
 			_begin_charge(target, socket)
 
 func _begin_brood() -> void:
-	if not is_instance_valid(_brood_spawner) or _brood_spawner.get_total_spawned() >= mini(_queen_def.brood_total_cap, 16) or _brood_spawner.get_living_count() >= mini(_queen_def.brood_alive_cap, 8):
+	if not is_instance_valid(_brood_spawner):
 		_begin_recovery()
 		return
 	_attack_state = &"brood"
@@ -266,8 +266,6 @@ func _clear_encounter_runtime() -> void:
 	linear_velocity = Vector3.ZERO
 	angular_velocity = Vector3.ZERO
 	_restore_swelling()
-	if is_instance_valid(_brood_spawner):
-		_brood_spawner.clear_brood()
 
 func _exit_tree() -> void:
 	_clear_encounter_runtime()

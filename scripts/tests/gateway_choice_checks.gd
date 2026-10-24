@@ -226,6 +226,29 @@ func _add_boss_survival_fixture(faction: PracticeFactionDef) -> Dictionary:
 		for node: Node in get_tree().get_nodes_in_group("bug_brood"):
 			if int(node.get_meta("brood_parent_id", 0)) == source.get_instance_id():
 				summons.append(node as Enemy)
+	# A second real summoner dies before the boss arrives. Its children must
+	# survive both gateway dismissal and the boss, then leave with the sector.
+	if source is MercEnemy or source is BugEnemy:
+		var orphan_request: SpawnRequest = SpawnRequest.new()
+		orphan_request.grants_kill_rewards = false
+		orphan_request.contributes_to_pressure = false
+		var former_owner: Enemy = _director._spawner.spawn_one_with_def_at_position(Spawner.SpawnKind.ENEMY, definition, source.global_position + Vector3.RIGHT * 1000.0, orphan_request) as Enemy
+		_freeze_survivor(former_owner)
+		var independent_children: Array[Enemy] = []
+		if former_owner is MercEnemy:
+			var former_carrier: MercEnemy = former_owner as MercEnemy
+			_check(former_carrier._escort_wing.spawn_escorts(2) == 2, "A second real Carrier creates the persistence fixture")
+			independent_children = former_carrier._escort_wing.get_living_escorts()
+		else:
+			var former_mother: BugEnemy = former_owner as BugEnemy
+			_check(former_mother._brood.spawn_brood(2) == 2, "A second real Broodmother creates the persistence fixture")
+			for node: Node in get_tree().get_nodes_in_group("bug_brood"):
+				if int(node.get_meta("brood_parent_id", 0)) == former_owner.get_instance_id():
+					independent_children.append(node as Enemy)
+		former_owner.apply_damage(former_owner.hull + former_owner.shield + 1000000.0)
+		for child: Enemy in independent_children:
+			_check(is_instance_valid(child) and not child._dead and not child.is_queued_for_deletion(), "Killing a real summoner leaves its existing children active before boss arrival")
+			summons.append(child)
 	var summon_ids: Array[int] = []
 	for child: Enemy in summons:
 		_freeze_survivor(child)
@@ -299,7 +322,7 @@ func _check_survival_fixture(reason: String) -> void:
 	_check(is_instance_valid(attack) and not attack.is_queued_for_deletion() and attack.is_warning_for(_ship), reason + " preserves the survivor's real pending attack")
 	_check(is_instance_valid(_survival_fixture["drop"]) and is_instance_valid(_survival_fixture["projectile"]), reason + " leaves the existing drop and projectile intact")
 	for child: Enemy in _survival_fixture["summons"]:
-		_check(is_instance_valid(child) and not child._dead and not child.is_queued_for_deletion() and is_equal_approx(child.hull, child.eff_max_hull * 0.5) and child._spawn_context.is_summoned, reason + " retains a damaged owned summon with its summon context")
+		_check(is_instance_valid(child) and not child._dead and not child.is_queued_for_deletion() and is_equal_approx(child.hull, child.eff_max_hull * 0.5) and child._spawn_context.is_summoned, reason + " retains a damaged summon, including children whose owner already died")
 
 func _inspect(gateway: BossGateway) -> void:
 	_ship.global_position = gateway.global_position

@@ -49,7 +49,7 @@ func configure_enemy(d: EnemyDef, spawn_context: EnemySpawnContext = null) -> vo
 		_escort_wing = MercEscortWing.new()
 		_escort_wing.name = "EscortWing"
 		add_child(_escort_wing)
-		_escort_wing.setup(self, _behavior.escort_child_def, _behavior.escort_alive_cap, _behavior.escort_total_cap, _behavior.escort_global_cap, _behavior.escort_enemy_cap, _behavior.escort_release_radius)
+		_escort_wing.setup(self, _behavior.escort_child_def, _behavior.escort_release_radius)
 	if is_instance_valid(_escort_label):
 		_escort_label.visible = false
 
@@ -115,8 +115,6 @@ func get_tactical_state() -> String:
 		MercBehaviorDef.Mode.CARRIER:
 			if _escort_windup_left > 0.0:
 				return "Escort launch %.1f" % _escort_windup_left
-			if is_instance_valid(_escort_wing) and _escort_wing.get_total_spawned() >= _behavior.escort_total_cap:
-				return "Escort reserve exhausted"
 			return "Carrier formation anchor"
 		_:
 			match _corvette_state:
@@ -273,7 +271,7 @@ func _tick_carrier(delta: float) -> void:
 		_attack_cooldown_left = maxf(_behavior.attack_cooldown_sec, 0.1)
 
 func _can_release_escorts() -> bool:
-	return is_instance_valid(_escort_wing) and _escort_wing.get_living_count() < _behavior.escort_alive_cap and _escort_wing.get_total_spawned() < _behavior.escort_total_cap
+	return is_instance_valid(_escort_wing)
 
 func _release_escorts() -> void:
 	if is_instance_valid(_escort_wing):
@@ -475,8 +473,8 @@ func _on_merc_about_to_die(_enemy: Enemy) -> void:
 		_escort_label.visible = false
 
 func _clear_escort_wing() -> void:
+	# Only the launcher belongs to this actor; released escorts belong to the sector.
 	if is_instance_valid(_escort_wing):
-		_escort_wing.clear_escorts()
 		_escort_wing.queue_free()
 	_escort_wing = null
 

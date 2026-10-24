@@ -26,4 +26,4 @@ wave_cards = Array[ExtResource("2")]([ExtResource("5"), ExtResource("6"), ExtRes
 max_enemy_tier = 5
 main_boss_pool = Array[ExtResource("15")]([ExtResource("16")])
 final_boss_pool = Array[ExtResource("15")]([ExtResource("17")])
-combat_hint = "Leave marked corridors before Devourers commit, then attack during their recovery.\nDestroy Broodmothers and Hive Queens to clear their broods. Spore zones stay fixed: leave the sphere before each pulse. The First Queen combines these attacks in separate phases."
+combat_hint = "Leave marked corridors before Devourers commit, then attack during their recovery.\nDestroy Broodmothers and Hive Queens to stop new broods; existing offspring keep fighting. Spore zones stay fixed: leave the sphere before each pulse. The First Queen combines these attacks in separate phases."

@@ -96,6 +96,9 @@ func _spawn_single_escort() -> void:
 		return
 	var request: SpawnRequest = SpawnRequest.new()
 	request.enemy_def = _merc_def.escort_def
+	request.is_summoned = true
+	request.grants_kill_rewards = false
+	request.contributes_to_pressure = false
 	if _spawn_context != null:
 		request.wave_index = _spawn_context.wave_index
 		request.stage_index = _spawn_context.stage_index
@@ -106,6 +109,8 @@ func _spawn_single_escort() -> void:
 	_escort = spawner.spawn_one_with_def_at_position(Spawner.SpawnKind.ENEMY, _merc_def.escort_def, position, request) as Enemy
 	if _escort != null:
 		_escort.set_meta("enforcer_escort", true)
+		_escort.add_to_group(MercEscortWing.ESCORT_GROUP)
+		_escort.set_meta(MercEscortWing.OWNER_META, get_instance_id())
 		_escort.play_warp_in()
 
 func _find_spawner() -> Spawner:
@@ -125,10 +130,7 @@ func _clear_encounter_runtime() -> void:
 		_attack.cancel()
 	_attack = null
 	_active_socket = null
-	# Removing the escort directly grants no kill reward and still updates the
-	# real Spawner's tree-exit accounting on victory or a scene transition.
-	if is_instance_valid(_escort):
-		_escort.queue_free()
+	# A completed escort launch remains part of the battlefield after this owner.
 	_escort = null
 
 func _exit_tree() -> void:

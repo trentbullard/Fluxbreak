@@ -2,27 +2,30 @@ extends Node3D
 
 const SHIP_SCENE: PackedScene = preload("res://scenes/ship/ship.tscn")
 const ENEMY_SCENE: PackedScene = preload("res://scenes/enemies/enemy.tscn")
+const PROBE: GreyEnemyDef = preload("res://content/data/enemies/grey_probe_mk1.tres")
+const SEEKER: GreyEnemyDef = preload("res://content/data/enemies/grey_seeker_mk1.tres")
+const VESSEL: GreyEnemyDef = preload("res://content/data/enemies/grey_vessel_mk1.tres")
 const HARBINGER: GreyEnemyDef = preload("res://content/data/enemies/grey_harbinger_mk1.tres")
 const MOTHERSHIP: GreyEnemyDef = preload("res://content/data/enemies/grey_mothership_mk1.tres")
-const PROBE: GreyEnemyDef = preload("res://content/data/enemies/grey_probe_mk1.tres")
-const VESSEL: GreyEnemyDef = preload("res://content/data/enemies/grey_vessel_mk1.tres")
+const WITNESS: GreyBossDef = preload("res://content/data/enemies/grey_witness_mk1.tres")
+const MIND: GreyMindDef = preload("res://content/data/enemies/grey_veiled_mind_mk1.tres")
 
-var _ship: Ship = null
-var _spawner: Spawner = null
-var _enemies: Array[GreyEnemy] = []
-var _assertions: int = 0
+var _ship: Ship
+var _spawner: Spawner
+var _enemies: Array[Enemy] = []
+var _checks: int = 0
 var _failures: int = 0
 
 func _ready() -> void:
-	if String(ProjectSettings.get_setting("application/config/name", "")) != "Fluxbreak Grey Validation":
-		push_error("Advanced Grey checks require the isolated Fluxbreak Grey Validation project.")
-		get_tree().quit(2)
-		return
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	call_deferred("_run_checks")
 
 func _run_checks() -> void:
+	if String(ProjectSettings.get_setting("application/config/name", "")) != "Fluxbreak Grey Validation":
+		get_tree().quit(2)
+		return
 	_ship = SHIP_SCENE.instantiate() as Ship
-	_ship.name = "AdvancedGreyTestShip"
+	_ship.name = "TestShip"
 	_ship.freeze = true
 	_ship.process_mode = Node.PROCESS_MODE_DISABLED
 	add_child(_ship)
@@ -30,328 +33,289 @@ func _run_checks() -> void:
 	_ship.shield = 0.0
 	_ship.eff_evasion = 0.0
 	_ship.eff_damage_taken_mult = 1.0
-	_silence_audio(_ship)
 	_spawner = Spawner.new()
-	_spawner.ship_path = NodePath("../AdvancedGreyTestShip")
+	_spawner.ship_path = NodePath("../TestShip")
 	_spawner.enemy_scene = ENEMY_SCENE
 	_spawner.directed_mode = true
 	_spawner.min_distance_from_ship = 0.0
 	add_child(_spawner)
-	_test_shipped_actors()
-	await _clear_enemies()
-	_test_sequential_ruptures()
-	await _clear_enemies()
-	_test_mothership_cycle()
-	await _clear_enemies()
-	await _test_encounter_threat_limits()
-	await _clear_enemies()
-	await _test_cancellation_and_pause()
-	await _clear_enemies()
-	print("GREY_ADVANCED_CHECKS: %s (%d assertions, %d failures)" % ["PASS" if _failures == 0 else "FAIL", _assertions, _failures])
+	_check_geometry()
+	await _check_forecast_and_corridor()
+	await _clear()
+	await _check_paired_echoes()
+	await _clear()
+	await _check_mothership_coordination()
+	await _clear()
+	await _check_independent_attack_timing()
+	await _clear()
+	await _check_concurrent_capture_warnings()
+	await _clear()
+	print("GREY_ADVANCED_CHECKS: %d checks, %d failures" % [_checks, _failures])
 	get_tree().quit(0 if _failures == 0 else 1)
 
-func _spawn_enemy(enemy_def: GreyEnemyDef, position: Vector3 = Vector3(0.0, 0.0, 180.0)) -> GreyEnemy:
-	var enemy: GreyEnemy = _spawner.spawn_one_with_def_at_position(Spawner.SpawnKind.ENEMY, enemy_def, position) as GreyEnemy
-	_check(enemy != null, "%s spawns through the real Spawner" % enemy_def.id)
-	if enemy == null:
-		return null
-	_enemies.append(enemy)
-	enemy.freeze = true
-	enemy.set_physics_process(false)
-	enemy.explosion_scene = null
-	enemy._stop_warp_in()
-	if enemy._regen_timer != null:
-		enemy._regen_timer.stop()
-	_silence_audio(enemy)
-	var turret: EnemyTurret = enemy._first_valid_turret()
-	if turret != null:
-		turret.systems_bonus = 0.0
-		turret.eff_base_accuracy = 1.0
-		turret.eff_range_falloff = 0.0
-		turret.eff_crit_chance = 0.0
-		turret.eff_graze_on_hit = 0.0
-		turret.eff_graze_on_miss = 0.0
-		turret.eff_damage_min = 10.0
-		turret.eff_damage_max = 10.0
+func _spawn(definition: EnemyDef) -> Enemy:
+	var enemy: Enemy = _spawner.spawn_one_with_def_at_position(Spawner.SpawnKind.ENEMY, definition, Vector3(0.0, 0.0, 180.0)) as Enemy
+	_expect(enemy != null, "%s spawns using the authored actor" % definition.id)
+	if enemy != null:
+		_enemies.append(enemy)
+		enemy.freeze = true
+		enemy.set_physics_process(false)
+		enemy.explosion_scene = null
+		enemy._stop_warp_in()
+		if enemy._regen_timer != null:
+			enemy._regen_timer.stop()
+		for audio: Node in enemy.find_children("*", "AudioStreamPlayer3D", true, false):
+			(audio as AudioStreamPlayer3D).stream = null
 	return enemy
 
-func _silence_audio(root: Node) -> void:
-	for node: Node in root.find_children("*", "AudioStreamPlayer3D", true, false):
-		var audio: AudioStreamPlayer3D = node as AudioStreamPlayer3D
-		audio.stop()
-		audio.stream = null
+func _check_geometry() -> void:
+	var prediction: Vector3 = GreyAttackGeometry.forecast(Vector3.ZERO, Vector3.RIGHT * 100.0, 1.6, 0.9, 420.0)
+	_expect(prediction.is_equal_approx(Vector3.RIGHT * 144.0), "Forecast uses a bounded snapshot of velocity and full windup")
+	_expect(GreyAttackGeometry.forecast(Vector3.ZERO, Vector3.RIGHT * 10000.0, 2.0, 1.0, 420.0).length() <= 420.01, "Prediction clamps extreme player speeds")
+	for velocity: Vector3 in [Vector3.ZERO, Vector3.RIGHT * 100.0, Vector3.UP * 100.0]:
+		var axis: Vector3 = GreyAttackGeometry.crossing_axis(velocity, Vector3.FORWARD)
+		_expect(axis.is_finite() and is_equal_approx(axis.length(), 1.0), "Crossing axis handles stationary and vertical motion")
+		if velocity.length_squared() > 1.0:
+			_expect(absf(axis.dot(velocity.normalized())) < 0.001, "Capture corridor crosses travel instead of following it")
 
-func _test_shipped_actors() -> void:
-	for enemy_def: GreyEnemyDef in [HARBINGER, MOTHERSHIP]:
-		var enemy: GreyEnemy = _spawn_enemy(enemy_def)
-		if enemy == null:
-			continue
-		_check(enemy.def == enemy_def and enemy.get_faction_id() == &"greys", "%s retains its Grey identity" % enemy_def.id)
-		_check(enemy.collision_layer == 8 and enemy.collision_mask == 0, "%s is targetable without body collisions" % enemy_def.id)
-		_check(enemy.is_in_group("targets") and enemy.visible, "%s stays targetable" % enemy_def.id)
-		_check(enemy.get_visual_model_root() != null and enemy.get_muzzle_socket() != null, "%s satisfies the model and muzzle contract" % enemy_def.id)
-		_check(enemy._spawn_context.grants_kill_rewards and enemy._spawn_context.contributes_to_pressure, "%s participates in normal rewards and wave pressure" % enemy_def.id)
-		_check(enemy._controlled_turrets.size() > 0, "%s has an authored weapon" % enemy_def.id)
-		for turret: EnemyTurret in enemy._controlled_turrets:
-			_check(not turret.is_physics_processing(), "%s cannot fire autonomous hidden shots" % enemy_def.id)
-		_check(enemy_def.behavior.retreat_range <= 190.0, "%s stays in starter-gun reach" % enemy_def.id)
-	_check(HARBINGER.tier == 4 and HARBINGER.behavior.mode == GreyBehaviorDef.Mode.HARBINGER, "Harbinger completes tier four with sequential ruptures")
-	_check(MOTHERSHIP.tier == 5 and MOTHERSHIP.behavior.mode == GreyBehaviorDef.Mode.MOTHERSHIP, "Mothership completes tier five with coordinated actions")
-	_check(GreyBehaviorDef.Mode.PROBE == 0 and GreyBehaviorDef.Mode.SEEKER == 1 and GreyBehaviorDef.Mode.VESSEL == 2, "Existing serialized Grey modes retain their values")
-
-func _test_sequential_ruptures() -> void:
+func _check_forecast_and_corridor() -> void:
 	_ship.global_position = Vector3.ZERO
-	var enemy: GreyEnemy = _spawn_enemy(HARBINGER)
-	if enemy == null:
-		return
-	var hull_before: float = _ship.hull
-	enemy._attack_cooldown_left = 0.0
-	enemy._tick_harbinger()
-	var first: EnemyAttackTelegraph = enemy._active_attack
-	_check(is_instance_valid(first), "Harbinger starts its first visible rupture")
-	if not is_instance_valid(first):
-		return
-	first.set_physics_process(false)
-	_check(first.get_attack_label() == "RUPTURE I" and not first._corridor, "First rupture clearly names its locked sphere")
-	_check(first._locked_position.is_equal_approx(Vector3.ZERO), "First rupture locks the original player position")
-	_check(first.get_time_remaining() >= HARBINGER.behavior.attack_windup_sec, "First rupture grants the full authored warning")
-	first._physics_process(HARBINGER.behavior.attack_windup_sec * 0.5)
-	_check(is_equal_approx(_ship.hull, hull_before), "First rupture deals no damage during warning")
-	_ship.global_position = Vector3(HARBINGER.behavior.attack_radius * 2.5, 0.0, 0.0)
-	var next_lock: Vector3 = _ship.global_position
-	first._physics_process(HARBINGER.behavior.attack_windup_sec)
-	_check(is_equal_approx(_ship.hull, hull_before), "Moving out of the first sphere guarantees a dodge")
-	_check(enemy._active_attack == null and enemy._rupture_pulses_remaining == 1, "First rupture queues exactly one later warning")
-	_check(enemy._rupture_gap_left >= HARBINGER.behavior.rupture_second_gap_sec, "The second lock waits for the quiet inter-rupture gap")
-	enemy._tick_harbinger()
-	_check(enemy._active_attack == null, "Second rupture cannot start in the first resolution callback")
-	enemy._physics_process(HARBINGER.behavior.rupture_second_gap_sec * 0.5)
-	_check(enemy._active_attack == null, "Second rupture waits through the gap")
-	enemy._physics_process(maxf(HARBINGER.behavior.rupture_second_gap_sec, HARBINGER.behavior.attack_recovery_sec) + 0.01)
-	var second: EnemyAttackTelegraph = enemy._active_attack
-	_check(is_instance_valid(second), "Harbinger creates the second separately warned rupture after its gap")
-	if not is_instance_valid(second):
-		return
-	second.set_physics_process(false)
-	_check(second.get_attack_label() == "RUPTURE II" and second != first, "Second rupture has a distinct warning instance and name")
-	_check(second._locked_position.is_equal_approx(next_lock), "Second rupture locks the player's later position")
-	_check(second.get_time_remaining() >= HARBINGER.behavior.attack_windup_sec, "Second rupture grants another complete dodge window")
-	_check(not second.contains_position(Vector3.ZERO), "Leaving the second lock remains a valid escape even at the first location")
-	enemy._first_valid_turret().eff_damage_min = 1000.0
-	enemy._first_valid_turret().eff_damage_max = 1000.0
-	second._physics_process(HARBINGER.behavior.attack_windup_sec + 0.01)
-	_check(is_equal_approx(hull_before - _ship.hull, 10.0), "Second rupture uses its immutable damage snapshot")
-	second._physics_process(0.01)
-	_check(is_equal_approx(hull_before - _ship.hull, 10.0), "Second rupture resolves damage only once")
-	_check(enemy._rupture_pulses_remaining == 0 and enemy._recovery_left >= HARBINGER.behavior.attack_recovery_sec, "Two ruptures finish in full exposed recovery")
-	enemy._attack_cooldown_left = 0.0
-	enemy._tick_harbinger()
-	_check(enemy._active_attack == null, "Harbinger cannot bypass its final recovery")
+	_ship.linear_velocity = Vector3.RIGHT * 400.0
+	var seeker: GreyEnemy = _spawn(SEEKER) as GreyEnemy
+	seeker._displacement_cooldown_left = 100.0
+	seeker._attack_cooldown_left = 0.0
+	seeker._tick_seeker()
+	var warning: EnemyAttackTelegraph = seeker._active_attack
+	_expect(warning != null and warning.get_attack_label() == "FORECAST RUPTURE", "Seeker uses the forecast attack in live decision code")
+	warning.set_physics_process(false)
+	var locked: Vector3 = warning._locked_position
+	var steady_endpoint: Vector3 = Vector3.RIGHT * 400.0 * SEEKER.behavior.attack_windup_sec
+	_expect(warning.contains_position(steady_endpoint), "Constant forward movement reaches the forecast danger volume")
+	_ship.global_position = Vector3.UP * 100.0
+	_ship.linear_velocity = Vector3.UP * 100.0
+	_expect(warning._locked_position.is_equal_approx(locked), "Changing heading never drags a committed warning")
+	_expect(not warning.contains_position(_ship.global_position), "A course change escapes the forecast sphere")
+	var health: float = _ship.hull
+	warning._physics_process(SEEKER.behavior.attack_windup_sec + 0.01)
+	_expect(is_equal_approx(_ship.hull, health), "Leaving the real forecast volume guarantees no damage")
+	await _clear()
 	_ship.global_position = Vector3.ZERO
-	enemy._recovery_left = 0.0
-	enemy._attack_cooldown_left = 0.0
-	enemy._tick_harbinger()
-	first = enemy._active_attack
-	if is_instance_valid(first):
-		first.set_physics_process(false)
-		_ship.global_position = Vector3(10000.0, 0.0, 0.0)
-		first._physics_process(HARBINGER.behavior.attack_windup_sec + 0.01)
-		enemy._physics_process(0.01)
-		_check(enemy._rupture_pulses_remaining == 0 and enemy._active_attack == null and enemy._recovery_left > 0.0, "Leaving weapon reach safely cancels the second rupture")
-	_ship.global_position = Vector3.ZERO
-
-func _test_mothership_cycle() -> void:
-	_ship.global_position = Vector3.ZERO
-	var enemy: GreyEnemy = _spawn_enemy(MOTHERSHIP)
-	if enemy == null:
-		return
-	var hull_before: float = _ship.hull
-	enemy._attack_cooldown_left = 0.0
-	enemy._tick_mothership()
-	var pulse: EnemyAttackTelegraph = enemy._active_attack
-	_check(is_instance_valid(pulse) and enemy._tether == null and enemy._displacement == null, "Mothership begins with one isolated rupture warning")
-	if not is_instance_valid(pulse):
-		return
-	pulse.set_physics_process(false)
-	_ship.global_position = Vector3.UP * (MOTHERSHIP.behavior.attack_radius + 10.0)
-	pulse._physics_process(MOTHERSHIP.behavior.attack_windup_sec + 0.01)
-	_check(is_equal_approx(_ship.hull, hull_before), "The Mothership rupture remains dodgeable")
-	_check(enemy._mothership_next_action == 1 and enemy._recovery_left >= MOTHERSHIP.behavior.mothership_action_gap_sec, "Rupture exposes recovery before the separate displacement")
-	enemy._attack_cooldown_left = 0.0
-	enemy._tick_mothership()
-	_check(enemy._displacement == null, "Mothership cannot displace during rupture recovery")
-	_ship.global_position = Vector3.ZERO
-	enemy._recovery_left = 0.0
-	enemy._tick_mothership()
-	var displacement: GreyDisplacement = enemy._displacement
-	_check(is_instance_valid(displacement), "Mothership's second action advertises both displacement endpoints")
-	if not is_instance_valid(displacement):
-		return
-	displacement.set_physics_process(false)
-	var destination: Vector3 = displacement._destination
-	var origin: Vector3 = enemy.global_position
-	_check(destination.distance_squared_to(origin) <= pow(MOTHERSHIP.behavior.displacement_distance + 0.01, 2.0), "Mothership displacement has bounded travel")
-	_check(destination.distance_squared_to(_ship.global_position) <= 190.0 * 190.0, "Mothership's locked arrival stays in starter-gun reach")
-	_check(enemy.is_in_group("targets") and enemy.visible, "Mothership stays targetable during relocation")
-	displacement._physics_process(MOTHERSHIP.behavior.displacement_windup_sec * 0.5)
-	_check(enemy.global_position.is_equal_approx(origin) and enemy._tether == null, "The endpoint warning creates no early move or capture")
-	displacement._physics_process(MOTHERSHIP.behavior.displacement_windup_sec)
-	_check(enemy.global_position.is_equal_approx(destination) and is_equal_approx(_ship.hull, hull_before), "Arrival is locked and completely harmless")
-	_check(enemy._mothership_next_action == 2 and enemy._recovery_left > 0.0 and not enemy._post_displacement_pulse, "Arrival recovers before a separately warned tether rather than a Seeker pulse")
-	enemy._attack_cooldown_left = 0.0
-	enemy._tick_mothership()
-	_check(enemy._tether == null, "Mothership cannot capture during displacement recovery")
-	enemy._recovery_left = 0.0
-	enemy._tick_mothership()
-	var tether: GreyTether = enemy._tether
-	_check(is_instance_valid(tether) and not tether.is_attached(), "Mothership's third action begins a fresh tether warning")
-	if not is_instance_valid(tether):
-		return
-	tether.set_physics_process(false)
-	_check(is_equal_approx(_ship.get_movement_slow_multiplier(), 1.0), "Tether warning causes no immediate slow")
-	tether._physics_process(MOTHERSHIP.behavior.tether_windup_sec + 0.01)
-	_check(tether.is_attached() and _ship.get_tether_time_remaining() <= 3.0, "Standing in the capture allows a finite tether")
-	_check(_ship.get_movement_slow_multiplier() >= 0.65 and is_equal_approx(_ship.hull, hull_before), "Mothership tether respects slow limits and causes no damage")
-	_ship.global_position = enemy.global_position + Vector3.RIGHT * (MOTHERSHIP.behavior.tether_break_distance + 20.0)
-	tether._physics_process(0.01)
-	_check(enemy._tether == null and enemy._mothership_next_action == 0 and enemy._recovery_left > 0.0, "Breaking the tether recovers before the next rupture cycle")
-	_check(is_equal_approx(_ship.get_movement_slow_multiplier(), 1.0), "Breaking the link restores normal movement")
-	_ship.global_position = Vector3.ZERO
-	_ship._tether_immunity_sec = 0.0
-
-func _test_encounter_threat_limits() -> void:
-	_ship.global_position = Vector3.ZERO
-	var probe: GreyEnemy = _spawn_enemy(PROBE)
-	var harbinger: GreyEnemy = _spawn_enemy(HARBINGER)
-	var vessel: GreyEnemy = _spawn_enemy(VESSEL)
-	var mothership: GreyEnemy = _spawn_enemy(MOTHERSHIP)
-	if probe == null or harbinger == null or vessel == null or mothership == null:
-		return
-	_check(probe._start_pulse("FIRST SLOT") and harbinger._start_pulse("SECOND SLOT"), "Two different Grey actors can fill the two major volume slots")
-	probe._active_attack.set_physics_process(false)
-	harbinger._active_attack.set_physics_process(false)
-	_check(not mothership._start_pulse("THIRD SLOT") and mothership._active_attack == null, "A third actor cannot exceed the encounter-wide volume cap")
-	_check(mothership._attack_cooldown_left >= GreyEnemy.THREAT_RETRY_SEC, "A full encounter schedules a bounded retry instead of a frame-by-frame busy retry")
-	_check(not vessel._start_tether() and vessel._tether == null, "Capture warnings also consume the two-volume budget")
-	probe._cancel_specials()
-	harbinger._cancel_specials()
-	_check(vessel._start_tether(), "A freed volume slot allows one new tether warning")
+	_ship.linear_velocity = Vector3.RIGHT * 400.0
+	var vessel: GreyEnemy = _spawn(VESSEL) as GreyEnemy
+	_expect(vessel._start_tether(), "Vessel can start a directional capture")
 	var tether: GreyTether = vessel._tether
-	if not is_instance_valid(tether):
-		return
 	tether.set_physics_process(false)
-	_check(not mothership._start_tether() and mothership._tether == null, "A pending tether reserves the unique encounter tether slot")
-	_check(mothership._start_pulse("BESIDE CAPTURE"), "One damage warning may coexist with one capture warning")
-	mothership._active_attack.set_physics_process(false)
-	_check(not harbinger._start_pulse("OVERFLOW"), "Capture plus damage still blocks a third major volume")
+	_expect(tether._corridor and tether.get_attack_label() == "CAPTURE CORRIDOR", "Vessel displays a cylinder and directional response hint")
+	_expect(tether.contains_position(Vector3.RIGHT * 400.0 * VESSEL.behavior.tether_windup_sec), "Constant travel encounters the capture corridor")
+	var center: Vector3 = (tether._locked_position + tether._locked_origin) * 0.5
+	_expect(not tether.contains_position(center + Vector3.UP * 100.0), "Vertical steering remains an open escape from the lane")
+	_ship.global_position = center + Vector3.UP * 100.0
 	tether._physics_process(VESSEL.behavior.tether_windup_sec + 0.01)
-	_check(tether.is_attached(), "The capped capture may resolve into an attached link")
-	mothership._cancel_specials()
-	_check(GreyThreatLimiter.can_start_pulse(harbinger), "An attached tether leaves exactly one damage slot available")
-	_check(not GreyThreatLimiter.can_start_tether(mothership), "An attached tether retains the unique tether slot")
-	_check(harbinger._start_pulse("ALONGSIDE LINK"), "A damage warning can use the remaining slot beside an attached link")
-	harbinger._active_attack.set_physics_process(false)
-	_check(not probe._start_pulse("LINK OVERFLOW"), "An attached link counts toward the volume cap")
-	harbinger._cancel_specials()
-	tether.cancel()
-	_ship._tether_immunity_sec = 0.0
-	_check(GreyThreatLimiter.can_start_tether(mothership), "Ending a link immediately releases its slot, before queued cleanup")
-	_check(probe._start_pulse("RESOLUTION FLASH"), "A fresh warning may begin after cleanup")
-	var flash: EnemyAttackTelegraph = probe._active_attack
-	flash.set_physics_process(false)
-	_ship.global_position = Vector3.UP * 200.0
-	flash._physics_process(PROBE.behavior.attack_windup_sec + 0.01)
-	_check(flash._has_resolved and not flash._active, "The old warning becomes only a resolved visual flash")
-	_check(harbinger._start_pulse("AFTER FLASH ONE") and mothership._start_pulse("AFTER FLASH TWO"), "A resolved flash does not consume either active danger slot")
-	harbinger._active_attack.set_physics_process(false)
-	mothership._active_attack.set_physics_process(false)
-	_check(not GreyThreatLimiter.can_start_pulse(vessel), "Two replacement warnings still consume both active slots")
-	harbinger._dead = true
-	_check(GreyThreatLimiter.can_start_pulse(vessel), "Dead sources cannot reserve lingering threat slots")
-	harbinger._dead = false
-	await get_tree().process_frame
-	_ship.global_position = Vector3.ZERO
+	_expect(not tether.is_attached() and _ship.get_movement_slow_multiplier() == 1.0, "Escaping directional capture leaves movement unchanged")
 
-func _test_cancellation_and_pause() -> void:
+func _check_paired_echoes() -> void:
 	_ship.global_position = Vector3.ZERO
-	var enemy: GreyEnemy = _spawn_enemy(HARBINGER)
-	if enemy == null:
-		return
-	enemy._attack_cooldown_left = 0.0
-	enemy._tick_harbinger()
-	var pulse: EnemyAttackTelegraph = enemy._active_attack
-	if not is_instance_valid(pulse):
-		return
-	var remaining: float = pulse.get_time_remaining()
+	_ship.linear_velocity = Vector3.RIGHT * 400.0
+	var harbinger: GreyEnemy = _spawn(HARBINGER) as GreyEnemy
+	harbinger._attack_cooldown_left = 0.0
+	harbinger._tick_harbinger()
+	var first: EnemyAttackTelegraph = harbinger._active_attack
+	_expect(first != null and first._companions.size() == 1, "Harbinger announces both complementary echoes together")
+	first.set_physics_process(false)
+	var second: EnemyAttackTelegraph = first._companions[0]
+	second.set_physics_process(false)
+	var locked: Vector3 = second._locked_position
+	_expect(first._locked_position.distance_squared_to(locked) > 100.0, "Paired echoes cover different positions")
+	_expect(second.get_time_remaining() >= HARBINGER.behavior.attack_windup_sec, "Second echo has its own full warning")
+	_expect(second.contains_position(Vector3.RIGHT * 400.0 * second._windup_sec), "Harbinger forecast catches constant 400m/s flight at its own release time")
+	_ship.global_position = Vector3.UP * 250.0
+	var remaining: float = second.get_time_remaining()
 	get_tree().paused = true
-	for frame: int in range(5):
-		await get_tree().process_frame
-	get_tree().paused = false
-	_check(is_equal_approx(pulse.get_time_remaining(), remaining), "Pausing preserves the Harbinger warning countdown")
-	pulse.set_physics_process(false)
-	_ship.global_position = Vector3.UP * 200.0
-	pulse._physics_process(HARBINGER.behavior.attack_windup_sec + 0.01)
-	_check(enemy._rupture_pulses_remaining == 1, "First resolution prepares the pending second warning")
-	_ship.visible = false
-	enemy._physics_process(0.01)
-	_check(enemy._active_attack == null and enemy._rupture_pulses_remaining == 0 and enemy._rupture_gap_left <= 0.0, "Losing the player cancels the queued second rupture")
-	_ship.visible = true
-	_ship.global_position = Vector3.ZERO
-	enemy._recovery_left = 0.0
-	enemy._attack_cooldown_left = 0.0
-	enemy._tick_harbinger()
-	pulse = enemy._active_attack
-	if is_instance_valid(pulse):
-		pulse.set_physics_process(false)
-		_ship.global_position = Vector3.UP * 200.0
-		pulse._physics_process(HARBINGER.behavior.attack_windup_sec + 0.01)
-	enemy.apply_damage(1000000.0)
-	_check(enemy._rupture_pulses_remaining == 0 and enemy._active_attack == null, "Death cancels future rupture locks")
-	_ship.global_position = Vector3.ZERO
-	var mothership: GreyEnemy = _spawn_enemy(MOTHERSHIP)
-	if mothership == null:
-		return
-	mothership._mothership_next_action = 1
-	mothership._attack_cooldown_left = 0.0
-	mothership._tick_mothership()
-	var displacement: GreyDisplacement = mothership._displacement
-	_check(is_instance_valid(displacement), "Cleanup test starts a displacement")
-	mothership._cancel_specials()
-	_check(mothership._displacement == null and mothership._mothership_next_action == 0 and not mothership._post_displacement_pulse, "Cancelling a displacement cannot requeue an action through its completion signal")
-	_check(not is_instance_valid(displacement) or displacement.is_queued_for_deletion(), "Cancelled displacement removes both arrival markers")
-	mothership._mothership_next_action = 2
-	mothership._recovery_left = 0.0
-	mothership._attack_cooldown_left = 0.0
-	mothership._tick_mothership()
-	var tether: GreyTether = mothership._tether
-	_check(is_instance_valid(tether), "Cleanup test starts a tether capture")
-	if is_instance_valid(tether):
-		tether.set_physics_process(false)
-		tether._physics_process(MOTHERSHIP.behavior.tether_windup_sec + 0.01)
-		_check(tether.is_attached(), "Cleanup test attaches the finite link")
-	mothership.queue_free()
 	await get_tree().process_frame
-	_check(is_equal_approx(_ship.get_movement_slow_multiplier(), 1.0), "Owner exit cannot leave a persistent tether slow")
-	_check(not is_instance_valid(tether) or tether.is_queued_for_deletion(), "Owner exit removes the active tether warning")
-	_ship._tether_immunity_sec = 0.0
+	get_tree().paused = false
+	_expect(is_equal_approx(second.get_time_remaining(), remaining), "Pausing freezes both warnings")
+	first._physics_process(HARBINGER.behavior.attack_windup_sec + 0.01)
+	_expect(harbinger._active_attack == first and harbinger._recovery_left == 0.0, "First release cannot prematurely finish the whole pattern")
+	second._physics_process(second._windup_sec + 0.01)
+	_expect(harbinger._active_attack == null and harbinger._recovery_left > 0.0, "Full exposed recovery begins after the final release")
+	harbinger._recovery_left = 0.0
+	harbinger._attack_cooldown_left = 0.0
+	harbinger._tick_harbinger()
+	first = harbinger._active_attack
+	harbinger.apply_damage(1000000.0)
+	_expect(first.is_queued_for_deletion(), "Source death cancels all complementary warning members")
+	for node: Node in get_tree().get_nodes_in_group("enemy_attack_telegraphs"):
+		_expect(node.is_queued_for_deletion() or not (node as EnemyAttackTelegraph)._active, "No companion can outlive its killed source")
 
-func _clear_enemies() -> void:
-	for enemy: GreyEnemy in _enemies:
+func _check_mothership_coordination() -> void:
+	_ship.global_position = Vector3.ZERO
+	_ship.linear_velocity = Vector3.RIGHT * 400.0
+	var ally: GreyEnemy = _spawn(PROBE) as GreyEnemy
+	ally._attack_cooldown_left = 2.0
+	var mother: GreyEnemy = _spawn(MOTHERSHIP) as GreyEnemy
+	mother._attack_cooldown_left = 0.0
+	mother._tick_mothership()
+	_expect(mother._active_attack != null and mother._active_attack._corridor, "Mothership owns the directional half of the coordinated pattern")
+	_expect(ally._active_attack != null and ally._active_attack.get_attack_label() == "COORDINATED FORECAST", "Mothership advances an idle ally's ordinary cooldown for its complementary forecast")
+	_expect(ally._coordination_cooldown_left > 0.0, "Coordination cannot repeatedly accelerate the same ally")
+	mother._cancel_specials()
+	ally._cancel_specials()
+	mother._attack_cooldown_left = 0.0
+	mother._recovery_left = 0.0
+	mother._mothership_next_action = 1
+	mother._tick_mothership()
+	var displacement: GreyDisplacement = mother._displacement
+	_expect(displacement != null, "Mothership still announces harmless relocation")
+	displacement.set_physics_process(false)
+	displacement._physics_process(MOTHERSHIP.behavior.displacement_windup_sec + 0.01)
+	_expect(mother._post_displacement_pulse and mother._attack_cooldown_left == 0.0, "Relocation immediately schedules a new fully warned collapse")
+	mother._tick_mothership()
+	_expect(mother._active_attack != null and mother._active_attack.get_time_remaining() > 0.0, "Relocation followup never deals instant damage")
+	mother._cancel_specials()
+	mother._post_displacement_pulse = true
+	_ship.global_position = Vector3.RIGHT * 2500.0
+	mother._tick_mothership()
+	_expect(not mother._post_displacement_pulse, "Outrunning a Mothership arrival releases its abandoned followup")
+
+func _check_independent_attack_timing() -> void:
+	_ship.global_position = Vector3.ZERO
+	_ship.linear_velocity = Vector3.ZERO
+	var probes: Array[GreyEnemy] = []
+	for index: int in range(16):
+		probes.append(_spawn(PROBE) as GreyEnemy)
+	for probe: GreyEnemy in probes:
+		probe._attack_cooldown_left = 0.0
+		probe._tick_probe()
+		_expect(probe._active_attack != null, "Every ready Probe attacks on its own timing despite other active warnings")
+	_expect(_active_warning_count() == 16, "More than eight ordinary Grey warnings can exist together")
+	var first_countdown: float = probes[0]._active_attack.get_time_remaining()
+	var harbingers: Array[GreyEnemy] = []
+	for index: int in range(4):
+		var heavy: GreyEnemy = _spawn(HARBINGER) as GreyEnemy
+		heavy._attack_cooldown_left = 0.0
+		heavy._tick_harbinger()
+		_expect(heavy._active_attack != null and heavy._active_attack._companions.size() == 1, "Each Harbinger independently commits its entire two-volume pattern")
+		harbingers.append(heavy)
+	for index: int in range(2):
+		var mother: GreyEnemy = _spawn(MOTHERSHIP) as GreyEnemy
+		mother._post_displacement_pulse = true
+		mother._attack_cooldown_left = 0.0
+		mother._tick_mothership()
+		_expect(mother._active_attack != null and mother._active_attack._companions.size() == 1, "Each Mothership collapse starts independently alongside all other patterns")
+	var witness: GreyWitness = _spawn(WITNESS) as GreyWitness
+	witness._next_major = GreyWitness.Major.RUPTURE
+	witness._begin_attack(_ship)
+	_expect(witness._attack != null and witness._attack._companions.size() == 1, "Witness starts both warning volumes without waiting for ordinary ships")
+	var mind: GreyVeiledMind = _spawn(MIND) as GreyVeiledMind
+	mind._phase = 3
+	mind._next_major = GreyVeiledMind.Major.RUPTURE
+	mind._begin_attack(_ship)
+	_expect(mind._attack != null and mind._attack._companions.size() == 2, "Veiled Mind independently starts its complete three-part collapse")
+	_expect(_active_warning_count() == 33, "Sixteen singles, six heavy pairs and both boss patterns coexist without a shared volume limit")
+	_expect(is_equal_approx(probes[0]._active_attack.get_time_remaining(), first_countdown), "Other ships starting attacks never reset an existing warning's timing")
+	_freeze_warnings()
+	var unrelated: EnemyAttackTelegraph = probes[1]._active_attack
+	var unrelated_remaining: float = unrelated.get_time_remaining()
+	probes[0]._cancel_specials()
+	_expect(_active_warning_count() == 32 and unrelated.is_warning_for(_ship), "Cancelling one ship's attack preserves every unrelated warning")
+	var newcomer: GreyEnemy = _spawn(PROBE) as GreyEnemy
+	newcomer._attack_cooldown_left = 0.0
+	newcomer._tick_probe()
+	_expect(newcomer._active_attack != null and _active_warning_count() == 33, "A new ship starts immediately while more than eight other warnings remain")
+	newcomer._active_attack.set_physics_process(false)
+	var primary: EnemyAttackTelegraph = harbingers[0]._active_attack
+	var companion: EnemyAttackTelegraph = primary._companions[0]
+	_ship.global_position = Vector3.UP * 1000.0
+	primary._physics_process(primary._windup_sec + 0.01)
+	companion._physics_process(companion._windup_sec + 0.01)
+	_expect(harbingers[0]._active_attack == null and harbingers[0]._recovery_left > 0.0, "Finishing a multipart pattern retains its own final recovery")
+	_expect(unrelated.is_warning_for(_ship) and is_equal_approx(unrelated.get_time_remaining(), unrelated_remaining), "Another ship finishing its pattern cannot resolve or delay unrelated warnings")
+	_ship.global_position = Vector3.ZERO
+	var next_heavy: GreyEnemy = _spawn(HARBINGER) as GreyEnemy
+	next_heavy._attack_cooldown_left = 0.0
+	next_heavy._tick_harbinger()
+	_expect(next_heavy._active_attack != null and next_heavy._active_attack._companions.size() == 1 and _active_warning_count() == 33, "A new heavy pattern starts immediately after another finishes without admission bookkeeping")
+	_freeze_warnings()
+	await get_tree().process_frame
+
+func _check_concurrent_capture_warnings() -> void:
+	_ship.global_position = Vector3.ZERO
+	_ship.linear_velocity = Vector3.ZERO
+	var vessels: Array[GreyEnemy] = []
+	var captures: Array[GreyTether] = []
+	for index: int in range(3):
+		var vessel: GreyEnemy = _spawn(VESSEL) as GreyEnemy
+		vessel._attack_cooldown_left = 0.0
+		vessel._tick_vessel()
+		_expect(vessel._tether != null and vessel._tether.is_active(), "Each ready Vessel may show its own capture warning before a link attaches")
+		vessel._tether.set_physics_process(false)
+		vessels.append(vessel)
+		captures.append(vessel._tether)
+	_expect(_active_warning_count() == 3 and _ship.get_tether_time_remaining() == 0.0, "Multiple pending captures coexist without a shared reservation or an early slow")
+	var probe: GreyEnemy = _spawn(PROBE) as GreyEnemy
+	probe._attack_cooldown_left = 0.0
+	probe._tick_probe()
+	_expect(probe._active_attack != null and _active_warning_count() == 4, "Concurrent capture warnings do not prevent ordinary damage warnings")
+	probe._active_attack.set_physics_process(false)
+	captures[0]._physics_process(captures[0]._windup_sec + 0.01)
+	var remaining: float = _ship.get_tether_time_remaining()
+	var multiplier: float = _ship.get_movement_slow_multiplier()
+	_expect(captures[0].is_attached() and _ship.get_tether_source() == vessels[0], "The first successful capture attaches the ordinary Ship-owned movement status")
+	for index: int in range(1, captures.size()):
+		captures[index]._physics_process(captures[index]._windup_sec + 0.01)
+		_expect(not captures[index].is_attached(), "A later overlapping capture cannot replace or stack the active slow")
+	_expect(_ship.get_tether_source() == vessels[0] and is_equal_approx(_ship.get_tether_time_remaining(), remaining) and is_equal_approx(_ship.get_movement_slow_multiplier(), multiplier), "Rejected overlapping captures preserve the original owner, duration and slow strength")
+	_expect(probe._active_attack.is_warning_for(_ship), "Tether resolution leaves unrelated damage warnings active")
+	var active_fallback: GreyEnemy = _spawn(VESSEL) as GreyEnemy
+	active_fallback._attack_cooldown_left = 0.0
+	active_fallback._tick_vessel()
+	_expect(active_fallback._tether == null and active_fallback._active_attack != null, "A Vessel uses its damaging pattern when the player already has an active tether")
+	var witness: GreyWitness = _spawn(WITNESS) as GreyWitness
+	witness._next_major = GreyWitness.Major.TETHER
+	witness._begin_attack(_ship)
+	_expect(witness._tether == null and witness._attack != null, "Witness uses a damaging pattern instead of applying a second slow")
+	var mind: GreyVeiledMind = _spawn(MIND) as GreyVeiledMind
+	mind._phase = 3
+	mind._next_major = GreyVeiledMind.Major.TETHER
+	mind._begin_attack(_ship)
+	_expect(mind._tether == null and mind._attack != null and mind._attack._companions.size() == 2, "Veiled Mind's active-tether fallback keeps the full independent collapse")
+	_freeze_warnings()
+	captures[0].cancel()
+	_expect(_ship.get_tether_time_remaining() == 0.0 and _ship.is_tether_immune(), "Ending the actual link restores movement and preserves post-break immunity")
+	var immune_fallback: GreyEnemy = _spawn(VESSEL) as GreyEnemy
+	immune_fallback._attack_cooldown_left = 0.0
+	immune_fallback._tick_vessel()
+	_expect(immune_fallback._tether == null and immune_fallback._active_attack != null, "Immunity routes a new Vessel into its damage pattern without a shared capture reservation")
+	_freeze_warnings()
+	await get_tree().process_frame
+
+func _active_warning_count() -> int:
+	var count: int = 0
+	for node: Node in get_tree().get_nodes_in_group("enemy_attack_telegraphs"):
+		var warning: EnemyAttackTelegraph = node as EnemyAttackTelegraph
+		if warning != null and not warning.is_queued_for_deletion() and warning._active and not warning._has_resolved:
+			count += 1
+	return count
+
+func _freeze_warnings() -> void:
+	for node: Node in get_tree().get_nodes_in_group("enemy_attack_telegraphs"):
+		node.set_physics_process(false)
+
+func _clear() -> void:
+	for enemy: Enemy in _enemies:
 		if is_instance_valid(enemy):
 			enemy.queue_free()
 	_enemies.clear()
-	for node: Node in get_tree().get_nodes_in_group("enemy_attack_telegraphs"):
-		node.queue_free()
-	for node: Node in get_tree().get_nodes_in_group("grey_displacements"):
-		node.queue_free()
 	await get_tree().process_frame
 	await get_tree().physics_frame
-	_check(int(_spawner.get_alive_counts().get("enemies", 0)) == 0, "Advanced Grey cleanup restores Spawner counts")
-	_check(is_equal_approx(_ship.get_movement_slow_multiplier(), 1.0), "Advanced Grey cleanup leaves no movement slow")
+	_ship.clear_tether_slow(null, false)
 	_ship._tether_immunity_sec = 0.0
+	_ship.global_position = Vector3.ZERO
+	_ship.linear_velocity = Vector3.ZERO
+	_expect(int(_spawner.get_alive_counts().get("enemies", 0)) == 0, "Cleanup restores real Spawner accounting")
 
-func _check(condition: bool, description: String) -> void:
-	_assertions += 1
+func _expect(condition: bool, description: String) -> void:
+	_checks += 1
 	if not condition:
 		_failures += 1
 		push_error("GREY_ADVANCED_CHECKS: " + description)

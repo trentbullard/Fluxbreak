@@ -195,6 +195,7 @@ func _check_boss_escort_and_scaling() -> void:
 	if not escorts.is_empty():
 		var escort: Enemy = escorts[0] as Enemy
 		_expect(is_equal_approx(escort.eff_max_hull, escort.def.max_hull * 1.5), "The escort inherits the boss encounter's spawn scaling")
+		_expect(escort._spawn_context.is_summoned and not escort._spawn_context.grants_kill_rewards and not escort._spawn_context.contributes_to_pressure, "Enforcer escort follows summon reward and pressure exclusions")
 		# Killing the escort cannot create an endless replacement loop.
 		escort.explosion_scene = null
 		escort.apply_damage(1000000.0)
@@ -211,7 +212,7 @@ func _check_boss_escort_and_scaling() -> void:
 	_expect(int(spawner.get_alive_counts()["enemies"]) == 2, "The cleanup test has an active boss and escort")
 	boss.apply_damage(1000000.0)
 	await _wait(0.15)
-	_expect(int(spawner.get_alive_counts()["enemies"]) == 0, "Boss death removes its live escort and returns Spawner accounting to zero")
+	_expect(int(spawner.get_alive_counts()["enemies"]) == 1, "Boss death leaves its surviving escort independently alive and accounted")
 	spawner.queue_free()
 
 func _wait(seconds: float) -> void:

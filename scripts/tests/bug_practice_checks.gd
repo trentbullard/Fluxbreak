@@ -103,9 +103,7 @@ func _run_checks() -> void:
 				break
 		_check(int(boss.get_meta("bug_phase", 0)) == 2, "Bug boss did not enter its second phase at half hull.")
 		_check(saw_warning, "Bug boss never produced a visible locked attack warning.")
-		_check(saw_brood, "Bug boss never released its finite brood during combat.")
-		_check(brood.get_living_count() <= 8, "Bug boss exceeded eight living children.")
-		_check(brood.get_total_spawned() <= 16, "Bug boss exceeded its lifetime budget.")
+		_check(saw_brood, "Bug boss never released its brood during combat.")
 		var boss_id: int = boss.get_instance_id()
 		var boss_children: Array[WeakRef] = []
 		for child: Node in get_tree().get_nodes_in_group("bug_brood"):
@@ -117,11 +115,10 @@ func _run_checks() -> void:
 		_check(_completed_count == 1, "Boss defeat must complete the run exactly once.")
 		_check(get_tree().paused, "Victory must pause immediately despite surviving ordinary enemies.")
 		for reference: WeakRef in boss_children:
-			_check(not is_instance_valid(reference.get_ref()), "Boss victory must remove its own brood while preserving children of living mothers.")
+			_check(is_instance_valid(reference.get_ref()), "Boss victory must preserve its already released brood until actual world teardown.")
 		_check_live_ability_owners(boss_id)
 	else:
 		_check(false, "The stage did not spawn a Bug boss actor.")
-	_check(_peak_brood_count <= 12, "Practice exceeded the global brood cap.")
 	for frame_index: int in range(int(ceil((GameFlow.VICTORY_RETURN_DELAY_SEC + 1.0) * 60.0))):
 		await get_tree().process_frame
 		if get_tree().current_scene != null and get_tree().current_scene != _world:
@@ -208,10 +205,8 @@ func _check_live_ability_owners(defeated_boss_id: int = 0) -> void:
 			if living:
 				_check(source.get_instance_id() != defeated_boss_id, "Defeated boss must clean its own abilities.")
 	for child: Node in get_tree().get_nodes_in_group("bug_brood"):
-		var owner_id: int = int(child.get_meta("brood_parent_id", 0))
-		var owner_value: Object = instance_from_id(owner_id) if owner_id != 0 else null
-		var owner_enemy: Enemy = owner_value as Enemy
-		_check(is_instance_valid(owner_enemy) and not owner_enemy._dead and not owner_enemy.is_queued_for_deletion() and owner_id != defeated_boss_id, "Every retained Bug brood must have a living owner.")
+		var minion: Enemy = child as Enemy
+		_check(is_instance_valid(minion) and minion._spawn_context.is_summoned and not minion._spawn_context.grants_kill_rewards and not minion._spawn_context.contributes_to_pressure, "Retained minions stay independent and preserve summon exclusions after owner death.")
 
 func _check_no_world_combat() -> void:
 	for group_name: String in ["enemy_attack_telegraphs", "bug_spore_zones", "grey_displacements", "grey_tethers", "bug_brood", "merc_escorts"]:

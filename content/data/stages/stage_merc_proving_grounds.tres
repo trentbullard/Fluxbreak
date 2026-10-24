@@ -4,7 +4,7 @@
 [ext_resource type="Script" path="res://content/defs/enemy_boss_def.gd" id="2"]
 [ext_resource type="Script" path="res://content/defs/wave_card.gd" id="3"]
 [ext_resource type="Resource" path="res://content/data/factions/mercs.tres" id="4"]
-[ext_resource type="Resource" path="res://content/data/enemies/merc_contract_enforcer_mk1.tres" id="5"]
+[ext_resource type="Resource" path="res://content/data/enemies/merc_contract_enforcer_practice.tres" id="5"]
 [ext_resource type="Resource" path="res://content/data/cards/merc_patrol_screen.tres" id="6"]
 [ext_resource type="Resource" path="res://content/data/cards/merc_shield_escort.tres" id="7"]
 [ext_resource type="Resource" path="res://content/data/cards/merc_firing_line.tres" id="8"]
@@ -17,7 +17,7 @@ script = ExtResource("1")
 stage_id = &"merc_proving_grounds"
 display_name = "Merc Proving Grounds"
 description = "Five lessons introduce the complete Merc fleet, followed by Contract Enforcer or Vanguard Flagship. Leave amber warnings before they resolve and use capital-ship recovery windows."
-combat_hint = "Five waves, then a Merc boss. Leave amber warnings before FIRE.\nApproach shield Frigates. Cruisers recover after broadsides; destroying a Carrier clears its finite escort wing."
+combat_hint = "Five waves, then a Merc boss. Leave amber warnings before FIRE.\nApproach shield Frigates. Cruisers recover after broadsides; destroy Carriers to stop new launches, then clear their surviving escorts."
 completion_flow = 3
 boss_wave_index = 6
 boss_faction = ExtResource("4")

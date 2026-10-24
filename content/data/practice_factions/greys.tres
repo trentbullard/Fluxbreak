@@ -26,4 +26,4 @@ wave_cards = Array[ExtResource("2")]([ExtResource("5"), ExtResource("6"), ExtRes
 max_enemy_tier = 5
 main_boss_pool = Array[ExtResource("15")]([ExtResource("16")])
 final_boss_pool = Array[ExtResource("15")]([ExtResource("17")])
-combat_hint = "Harbingers warn twice: leave each locked rupture sphere. Blue shift markers are harmless; the next attack has its own warning.\nMotherships and The Veiled Mind alternate rupture, relocation and tether intervals. Break tethers by distance or source death, then use the immunity window to reposition."
+combat_hint = "Change course to escape forecast ruptures and cross out of capture corridors. Blue shift markers are harmless; damaging patterns have their own warnings.\nHarbingers and Motherships combine spatial warnings. Watch boss collapse patterns for an open escape route. Break tethers by distance or source death, then use the immunity window to reposition."

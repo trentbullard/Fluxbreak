@@ -12,5 +12,5 @@ steering_response = 2.5
 orbit_strength = 0.4
 attack_cooldown_sec = 3.6
 attack_windup_sec = 1.25
-attack_radius = 31
+attack_radius = 37.2
 attack_recovery_sec = 0.9

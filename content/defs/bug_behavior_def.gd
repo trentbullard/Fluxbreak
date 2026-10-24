@@ -33,16 +33,8 @@ enum Mode { SPORELING, CARAPACE, BROODMOTHER, DEVOURER, HIVE_QUEEN }
 @export_range(1.0, 40.0, 0.1) var brood_interval_sec: float = 8.0
 ## Visible gestation countdown before children are released.
 @export_range(0.3, 8.0, 0.1) var brood_windup_sec: float = 1.4
-## Requested children per release, clamped by every remaining cap.
+## Children per completed release; repeated releases have no minion cap.
 @export_range(1, 6, 1) var brood_burst_count: int = 2
-## Maximum living children owned by one Broodmother.
-@export_range(1, 8, 1) var brood_alive_cap: int = 4
-## Lifetime child limit; defeated children do not replenish this budget.
-@export_range(1, 24, 1) var brood_total_cap: int = 8
-## Maximum living summoned Bugs across all parents in the encounter.
-@export_range(1, 24, 1) var brood_global_cap: int = 12
-## Encounter enemy ceiling that brood releases may not exceed.
-@export_range(1, 100, 1) var brood_enemy_cap: int = 50
 ## Radius around the parent at which brood children emerge.
 @export_range(10.0, 300.0, 1.0) var brood_release_radius: float = 70.0
 

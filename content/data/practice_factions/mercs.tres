@@ -26,4 +26,4 @@ wave_cards = Array[ExtResource("2")]([ExtResource("5"), ExtResource("6"), ExtRes
 max_enemy_tier = 5
 main_boss_pool = Array[ExtResource("15")]([ExtResource("16")])
 final_boss_pool = Array[ExtResource("15")]([ExtResource("17")])
-combat_hint = "Leave amber warnings before FIRE. Approach cyan Frigates to stop allied shield restoration.\nCruisers recover after broadsides. Carriers launch a finite wing; destroy the carrier to clear its escorts. Vanguard Flagship adds shield and deployment intervals between locked attacks."
+combat_hint = "Leave amber warnings before FIRE. Approach cyan Frigates to stop allied shield restoration.\nCruisers recover after broadsides. Destroy Carriers to stop new launches; surviving escorts remain dangerous. Vanguard Flagship adds shield and deployment intervals between locked attacks."

@@ -17,7 +17,14 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	# Run routing is tested independently of balance and automatic aim.
+	_protect_routing_ship()
+
+func _protect_routing_ship() -> void:
 	if is_instance_valid(_ship):
+		# Refilling ordinary health once per frame still permits a scaled boss
+		# volley to kill the routing fixture within one physics tick.
+		_ship.eff_max_hull = 1000000.0
+		_ship.eff_max_shield = 1000000.0
 		_ship.hull = _ship.eff_max_hull
 		_ship.shield = _ship.eff_max_shield
 
@@ -112,6 +119,19 @@ func _check_factory_runs() -> void:
 		_check(main_run.enemy_faction == faction_def.faction, "Main Practice lost its selected faction.")
 		var first_stage: StageDef = main_run.get_stage(0)
 		var final_stage: StageDef = main_run.get_stage(1)
+		# Full Campaign tuning must never turn a short Practice lesson into a
+		# full-size boss fight. Compare both possible lessons by gameplay ID.
+		var campaign_bosses: Array[EnemyBossDef] = first_stage.get_boss_pool()
+		campaign_bosses.append_array(final_stage.get_boss_pool())
+		for practice_boss: EnemyBossDef in seed_stage.get_boss_pool():
+			var matched_campaign_boss: bool = false
+			for campaign_boss: EnemyBossDef in campaign_bosses:
+				if campaign_boss.id != practice_boss.id:
+					continue
+				matched_campaign_boss = true
+				_check(practice_boss != campaign_boss and practice_boss.max_hull + practice_boss.max_shield < campaign_boss.max_hull + campaign_boss.max_shield, "Practice retains a smaller independent version of each Campaign boss.")
+				break
+			_check(matched_campaign_boss, "Every Practice boss teaches an existing Campaign boss.")
 		if faction_id == &"mercs":
 			_check(first_stage.get_boss_pool().size() == 1 and first_stage.get_boss_pool()[0].id == "merc_contract_enforcer_mk1", "Merc Campaign must use Contract Enforcer at its gateway.")
 			_check(final_stage.get_boss_pool().size() == 1 and final_stage.get_boss_pool()[0].id == "merc_vanguard_flagship_mk1", "Merc Campaign must finish with Vanguard Flagship.")
@@ -190,6 +210,7 @@ func _check_selected_faction(faction_def: PracticeFactionDef, short_practice: bo
 	_check(not button.disabled, "Selected practice run must launch with the default unlocked loadout.")
 	_completed_count = 0
 	button.pressed.emit()
+	_protect_routing_ship()
 	var active_run: RunDefinition = GameFlow.get_active_run_definition()
 	_check(active_run != null and active_run.enemy_faction == faction_def.faction, "Actual menu button routed to the wrong faction.")
 	_check(GameFlow.get_run_faction() == faction_def.faction, "GameFlow failed to preserve the resolved faction.")
@@ -220,6 +241,7 @@ func _check_selected_faction(faction_def: PracticeFactionDef, short_practice: bo
 		var kill_progress_before_boss: Dictionary = GameFlow._run_meta_stats_global.duplicate(true)
 		var drops_before_boss: int = get_tree().get_nodes_in_group("drops").size()
 		director._wave_index = stage.boss_wave_index - 1
+		_protect_routing_ship()
 		director._next_wave()
 		_check(RunState.run_score == score_before_boss and _ship.get_nanobots() == currency_before_boss, "Boss arrival must not grant synthetic score or collected nanobots.")
 		_check(GameFlow._run_enemy_kills == kills_before_boss and GameFlow._run_meta_stats_global == kill_progress_before_boss, "Boss arrival must not report synthetic kills or combat progression.")

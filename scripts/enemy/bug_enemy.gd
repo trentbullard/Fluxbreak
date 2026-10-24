@@ -28,7 +28,7 @@ var _charge_time_left: float = 0.0
 func configure_enemy(d: EnemyDef, spawn_context: EnemySpawnContext = null) -> void:
 	_cancel_attack()
 	_cancel_zone()
-	_clear_brood()
+	_clear_brood_spawner()
 	super.configure_enemy(d, spawn_context)
 	var bug_def: BugEnemyDef = d as BugEnemyDef
 	_behavior = bug_def.behavior if bug_def != null and bug_def.behavior != null else BugBehaviorDef.new()
@@ -49,7 +49,7 @@ func configure_enemy(d: EnemyDef, spawn_context: EnemySpawnContext = null) -> vo
 		_brood = BugBroodSpawner.new()
 		_brood.name = "BroodSpawner"
 		add_child(_brood)
-		_brood.setup(self, bug_def.brood_child_def, _behavior.brood_alive_cap, _behavior.brood_total_cap, _behavior.brood_global_cap, _behavior.brood_enemy_cap, _behavior.brood_release_radius)
+		_brood.setup(self, bug_def.brood_child_def, _behavior.brood_release_radius)
 	if is_instance_valid(_brood_label):
 		_brood_label.visible = false
 
@@ -135,14 +135,10 @@ func get_tactical_state() -> String:
 		BugBehaviorDef.Mode.CARAPACE:
 			return "Closing with armored carapace"
 		BugBehaviorDef.Mode.BROODMOTHER:
-			if _brood != null and _brood.get_total_spawned() >= _behavior.brood_total_cap:
-				return "Brood exhausted"
 			return "Keeping distance"
 		BugBehaviorDef.Mode.DEVOURER:
 			return "Stalking a charge line"
 		BugBehaviorDef.Mode.HIVE_QUEEN:
-			if not _can_release_brood() and _zones_created >= maxi(_behavior.zone_total_cap, 1):
-				return "Hive reserves exhausted"
 			return "Hive command organism"
 		_:
 			return "Swarm pursuit"
@@ -319,7 +315,7 @@ func _on_attack_resolved(_hit: bool) -> void:
 	_animate_contraction(0.0)
 
 func _can_release_brood() -> bool:
-	return is_instance_valid(_brood) and _brood.get_living_count() < _behavior.brood_alive_cap and _brood.get_total_spawned() < _behavior.brood_total_cap
+	return is_instance_valid(_brood)
 
 func _release_brood() -> void:
 	if is_instance_valid(_brood):
@@ -406,16 +402,16 @@ func _cancel_zone() -> void:
 		_active_zone.cancel()
 	_active_zone = null
 
-func _clear_brood() -> void:
+func _clear_brood_spawner() -> void:
+	# Only the launcher belongs to this actor; released children belong to the sector.
 	if is_instance_valid(_brood):
-		_brood.clear_brood()
 		_brood.queue_free()
 	_brood = null
 
 func _on_bug_about_to_die(_enemy: Enemy) -> void:
 	_cancel_attack()
 	_cancel_zone()
-	_clear_brood()
+	_clear_brood_spawner()
 	_brood_windup_left = 0.0
 	if is_instance_valid(_brood_label):
 		_brood_label.visible = false
@@ -423,4 +419,4 @@ func _on_bug_about_to_die(_enemy: Enemy) -> void:
 func _exit_tree() -> void:
 	_cancel_attack()
 	_cancel_zone()
-	_clear_brood()
+	_clear_brood_spawner()

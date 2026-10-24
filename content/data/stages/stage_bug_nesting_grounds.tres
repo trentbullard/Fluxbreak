@@ -4,7 +4,7 @@
 [ext_resource type="Script" path="res://content/defs/enemy_boss_def.gd" id="2"]
 [ext_resource type="Script" path="res://content/defs/wave_card.gd" id="3"]
 [ext_resource type="Resource" path="res://content/data/factions/bugs.tres" id="4"]
-[ext_resource type="Resource" path="res://content/data/enemies/bug_nestbreaker_matron_mk1.tres" id="5"]
+[ext_resource type="Resource" path="res://content/data/enemies/bug_nestbreaker_matron_practice.tres" id="5"]
 [ext_resource type="Resource" path="res://content/data/cards/bug_swarm_front.tres" id="6"]
 [ext_resource type="Resource" path="res://content/data/cards/bug_carapace_screen.tres" id="7"]
 [ext_resource type="Resource" path="res://content/data/cards/bug_brood_nest.tres" id="8"]
@@ -17,7 +17,7 @@ script = ExtResource("1")
 stage_id = &"bug_nesting_grounds"
 display_name = "Bug Nesting Grounds"
 description = "Five lessons introduce the complete Bug hive, followed by Nestbreaker Matron or The First Queen. Leave marked volumes and destroy brood parents to create breathing room."
-combat_hint = "Five waves, then a Bug boss. Leave marked corridors before a Devourer commits.\nDestroy Broodmothers and Hive Queens to clear their broods. Leave fixed spore spheres before each pulse."
+combat_hint = "Five waves, then a Bug boss. Leave marked corridors before a Devourer commits.\nDestroy Broodmothers and Hive Queens to stop new broods. Existing offspring keep fighting. Leave fixed spore spheres before each pulse."
 completion_flow = 3
 boss_wave_index = 6
 boss_faction = ExtResource("4")

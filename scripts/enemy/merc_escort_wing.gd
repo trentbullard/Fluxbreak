@@ -6,31 +6,19 @@ const OWNER_META: StringName = &"merc_escort_parent_id"
 
 var _source: Enemy = null
 var _child_def: EnemyDef = null
-var _alive_cap: int = 0
-var _total_cap: int = 0
-var _global_cap: int = 10
-var _enemy_cap: int = 50
 var _radius: float = 75.0
 var _total_spawned: int = 0
 var _children: Array[WeakRef] = []
 var _spawner: Spawner = null
 
-## Configure once per owner. Repeated launches share the same lifetime budget.
-func setup(source: Enemy, child_def: EnemyDef, alive_cap: int, total_cap: int, global_cap: int = 10, enemy_cap: int = 50, radius: float = 75.0) -> void:
-	_disconnect_source()
-	clear_escorts()
+## Configure the launcher. Existing children remain independent if it is replaced.
+func setup(source: Enemy, child_def: EnemyDef, radius: float = 75.0) -> void:
 	_source = source
 	_child_def = child_def
-	_alive_cap = maxi(alive_cap, 0)
-	_total_cap = maxi(total_cap, 0)
-	_global_cap = maxi(global_cap, 0)
-	_enemy_cap = maxi(enemy_cap, 0)
 	_radius = maxf(radius, 1.0)
 	_total_spawned = 0
+	_children.clear()
 	_spawner = null
-	if is_instance_valid(_source):
-		_source.about_to_die.connect(_on_source_died)
-		_source.tree_exiting.connect(clear_escorts)
 
 func get_living_escorts() -> Array[Enemy]:
 	var living: Array[Enemy] = []
@@ -59,13 +47,11 @@ func spawn_escorts(count: int) -> int:
 		_spawner = _find_spawner()
 	if _spawner == null:
 		return 0
-	var available: int = mini(maxi(count, 0), mini(_alive_cap - get_living_count(), _total_cap - _total_spawned))
+	# Retire dead weak references once per release, not once per frame.
+	get_living_count()
 	var spawned: int = 0
-	# Synchronous checks and registration prevent multiple launchers reserving
-	# the same global slot in one physics tick.
-	for member: int in range(maxi(available, 0)):
-		if _global_escort_count() >= _global_cap or int(_spawner.get_alive_counts().get("enemies", 0)) >= _enemy_cap:
-			break
+	# Each launch preserves its authored batch size without lifetime or living caps.
+	for member: int in range(maxi(count, 0)):
 		var direction: Vector3 = Vector3(randf_range(-1.0, 1.0), randf_range(-0.5, 0.5), randf_range(-1.0, 1.0))
 		if direction.length_squared() < 0.001:
 			direction = Vector3.RIGHT
@@ -82,14 +68,6 @@ func spawn_escorts(count: int) -> int:
 		_total_spawned += 1
 		spawned += 1
 	return spawned
-
-func clear_escorts() -> void:
-	for reference: WeakRef in _children:
-		var child: Enemy = reference.get_ref() as Enemy
-		if is_instance_valid(child) and not child.is_queued_for_deletion():
-			# Cleanup deliberately skips kill, reward and pressure handling.
-			child.queue_free()
-	_children.clear()
 
 func _build_child_request() -> SpawnRequest:
 	var request: SpawnRequest = SpawnRequest.new()
@@ -111,26 +89,3 @@ func _find_spawner() -> Spawner:
 		return null
 	var found: Array[Node] = scene.find_children("*", "Spawner", true, false)
 	return found[0] as Spawner if not found.is_empty() else null
-
-func _global_escort_count() -> int:
-	var count: int = 0
-	for node: Node in get_tree().get_nodes_in_group(ESCORT_GROUP):
-		var child: Enemy = node as Enemy
-		if is_instance_valid(child) and not child._dead and not child.is_queued_for_deletion():
-			count += 1
-	return count
-
-func _disconnect_source() -> void:
-	if not is_instance_valid(_source):
-		return
-	if _source.about_to_die.is_connected(_on_source_died):
-		_source.about_to_die.disconnect(_on_source_died)
-	if _source.tree_exiting.is_connected(clear_escorts):
-		_source.tree_exiting.disconnect(clear_escorts)
-
-func _on_source_died(_enemy: Enemy) -> void:
-	clear_escorts()
-
-func _exit_tree() -> void:
-	clear_escorts()
-	_disconnect_source()

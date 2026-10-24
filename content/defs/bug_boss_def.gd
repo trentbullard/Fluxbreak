@@ -24,10 +24,6 @@ class_name BugBossDef
 @export_range(0.25, 1.0, 0.01) var phase_cadence_multiplier: float = 0.65
 ## Spawned Sporeling definition. Summons inherit encounter scaling and grant no rewards.
 @export var brood_child_def: EnemyDef
-## Maximum living brood owned by this Matron.
-@export_range(0, 16, 1) var brood_alive_cap: int = 8
-## Maximum brood this Matron can release across the whole fight.
-@export_range(0, 32, 1) var brood_total_cap: int = 16
 ## Requested brood per release before the hull threshold.
 @export_range(0, 8, 1) var brood_release_count: int = 3
 ## Requested brood per release after the hull threshold.

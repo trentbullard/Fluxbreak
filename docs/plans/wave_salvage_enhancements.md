@@ -19,7 +19,7 @@ Established decisions:
 - Make swarms larger and readable against bright and dark backgrounds, with normal world occlusion.
 - Preserve enemies and passive targets when a boss arrives.
 - Boss defeat immediately opens gateways or completes the run, regardless of surviving enemies.
-- Preserve accepted gateway-transfer cleanup and genuine summon ownership limits.
+- Preserve accepted gateway-transfer cleanup. The subsequent faction balance pass overrides the original summon ownership limits: existing minions survive their source's death or removal, and spawning has no living or lifetime population ceiling. Release cadence, batch sizes, no-recursion rules and reward exclusions remain.
 - Follow `AGENTS.md`, typed Godot 4.7.2 conventions, and existing save-isolated validation patterns.
 - Do not increment versions, export executables, or build installers as part of these phases.
 
@@ -57,7 +57,7 @@ Numeric defaults below are initial playtest settings. Implement them as document
 **Cleanup and diagnostics**
 
 - Remove all three unused legacy cap fields, their unused setters, and obsolete test assignments.
-- Preserve active summon limits and ownership cleanup.
+- Preserve summon release cadence, no-recursion rules and reward exclusions. Population ceilings and source-death child cleanup were superseded by the subsequent faction balance pass.
 - Extend the existing debug snapshot with allocated/spent/remainder points, formation composition, planned/spawned/cancelled units, dispatch duration, and peak alive/nearby counts. Use a clearly labelled 1,000-metre radius for the initial nearby metric.
 - Add seeded checks covering all factions, low budgets, high budgets, singleton role pools, and capital-heavy cards.
 
@@ -70,7 +70,7 @@ Numeric defaults below are initial playtest settings. Implement them as document
 - Keep existing completion semantics: the first boss immediately opens gateways; the final boss immediately completes the run.
 - Survivors remain active during gateway hold. Opening the briefing pauses gameplay; cancelling it resumes the same threats.
 - Confirmed sector transfer still removes the previous sector’s enemies, targets, drops, projectiles, and abilities without granting synthetic rewards.
-- Preserve cleanup triggered by a summoner’s death or removal.
+- Source death or removal cancels its attacks and future releases; existing minions remain until killed or sector/run cleanup. This supersedes the original source-death child cleanup requirement.
 - Update tests that incorrectly treat every surviving ability at boss victory as stale; distinguish legitimate living owners from orphaned effects.
 
 **Exit condition:** Boss arrival adds pressure to the existing battlefield, and neither gateway flow nor victory requires clearing survivors.
@@ -232,6 +232,7 @@ Complete and validate Phase 1, update its status in the plan, then stop. Report 
 - Phase 2: implemented and automated validation passed (2026-10-24); ready for gameplay playtesting.
 - Phases 3–6: not started.
 - Phase 7: deferred; not implemented or enabled.
+- Subsequent faction balance pass: implemented and automated validation passed (2026-10-24). See [durability, persistent minions and Grey attacks](faction_balance_pass.md). This explicitly supersedes original summon population/owner-death cleanup rules; it does not advance Phases 3–7.
 
 ### Phase 1 implementation record — 2026-10-24
 

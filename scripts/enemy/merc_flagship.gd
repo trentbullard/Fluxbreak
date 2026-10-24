@@ -35,12 +35,11 @@ func configure_enemy(d: EnemyDef, spawn_context: EnemySpawnContext = null) -> vo
 	_state_remaining_sec = _flagship_def.initial_delay_sec
 	_support_remaining_sec = _flagship_def.escort_shield_interval_sec
 	if is_instance_valid(_escort_wing):
-		_escort_wing.clear_escorts()
 		_escort_wing.queue_free()
 	_escort_wing = MercEscortWing.new()
 	_escort_wing.name = "EscortWing"
 	add_child(_escort_wing)
-	_escort_wing.setup(self, _flagship_def.escort_def, _flagship_def.escort_living_cap, _flagship_def.escort_lifetime_cap, 10, 50, _flagship_def.escort_offset)
+	_escort_wing.setup(self, _flagship_def.escort_def, _flagship_def.escort_offset)
 	set_meta("merc_phase", _phase)
 	set_meta("flagship_phase", _phase)
 
@@ -205,8 +204,6 @@ func _clear_encounter_runtime() -> void:
 		_attack.cancel()
 	_attack = null
 	_active_socket = null
-	if is_instance_valid(_escort_wing):
-		_escort_wing.clear_escorts()
 
 func _exit_tree() -> void:
 	_clear_encounter_runtime()

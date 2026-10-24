@@ -4,7 +4,7 @@
 [ext_resource type="Script" path="res://content/defs/enemy_boss_def.gd" id="2"]
 [ext_resource type="Script" path="res://content/defs/wave_card.gd" id="3"]
 [ext_resource type="Resource" path="res://content/data/factions/greys.tres" id="4"]
-[ext_resource type="Resource" path="res://content/data/enemies/grey_witness_mk1.tres" id="5"]
+[ext_resource type="Resource" path="res://content/data/enemies/grey_witness_practice.tres" id="5"]
 [ext_resource type="Resource" path="res://content/data/cards/grey_observation.tres" id="6"]
 [ext_resource type="Resource" path="res://content/data/cards/grey_pursuit.tres" id="7"]
 [ext_resource type="Resource" path="res://content/data/cards/grey_binding_pattern.tres" id="8"]
@@ -17,7 +17,7 @@ script = ExtResource("1")
 stage_id = &"grey_observatory"
 display_name = "Silent Observatory"
 description = "Five lessons introduce the complete Grey fleet, followed by The Witness or The Veiled Mind. Leave each locked volume and use recovery and tether immunity windows."
-combat_hint = "Five waves, then a Grey boss. Harbingers warn twice; leave each rupture sphere.\nBlue shifts are harmless. Break a tether by moving away or destroying its source, then use the immunity window to reposition."
+combat_hint = "Five waves, then a Grey boss. Change course to escape forecast ruptures and cross out of capture corridors.\nBlue shifts are harmless. Watch paired warnings for an open escape route. Break tethers by distance or source death, then use the immunity window."
 completion_flow = 3
 boss_wave_index = 6
 boss_faction = ExtResource("4")

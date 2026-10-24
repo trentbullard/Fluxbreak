@@ -11,7 +11,7 @@
 
 [resource]
 script = ExtResource("1_def")
-boss_description = "A living siege ship that commits to a marked charge lane, then swells before a harmless, finite brood release. At 55% hull it releases larger broods and attacks more often. Destroy the Matron to collapse its remaining offspring."
+boss_description = "A living siege ship that commits to a marked charge lane, then swells before releasing another brood. At 55% hull it releases larger broods and attacks more often. Destroy the Matron to stop future releases; surviving offspring remain active."
 movement_def = ExtResource("6_movement")
 initial_delay_sec = 2.8
 charge_windup_sec = 1.8
@@ -24,8 +24,6 @@ cadence_sec = 1.4
 phase_hull_threshold = 0.55
 phase_cadence_multiplier = 0.65
 brood_child_def = ExtResource("7_child")
-brood_alive_cap = 8
-brood_total_cap = 16
 brood_release_count = 3
 phase_brood_release_count = 4
 brood_spawn_radius = 85
@@ -38,7 +36,7 @@ threat_cost = 15
 bounty_scrap = 25
 can_be_elite = false
 score_on_kill = 500
-max_hull = 650
+max_hull = 7000
 max_shield = 0
 shield_regen = 0
 evasion = 0.01

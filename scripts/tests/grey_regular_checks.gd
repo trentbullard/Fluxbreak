@@ -168,6 +168,11 @@ func _test_seeker_displacement() -> void:
 	_check(is_instance_valid(seeker._active_attack) and seeker._active_attack.get_time_remaining() > 0.0, "Seeker follows relocation with a fresh dodgeable pulse countdown")
 	_check(is_equal_approx(_ship.hull, hull_before), "The new post-displacement pulse still causes no instant damage")
 	seeker._cancel_specials()
+	seeker._post_displacement_pulse = true
+	_ship.global_position = Vector3.RIGHT * 2000.0
+	seeker._tick_seeker()
+	_check(not seeker._post_displacement_pulse and seeker._active_attack == null, "Outrunning a relocation releases its pending followup so the Seeker resumes approach")
+	_ship.global_position = Vector3.ZERO
 	seeker._post_displacement_pulse = false
 	seeker._recovery_left = 0.0
 	seeker._displacement_cooldown_left = 0.0

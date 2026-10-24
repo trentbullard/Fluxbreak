@@ -65,17 +65,9 @@ enum Mode { CORVETTE, FRIGATE, DESTROYER, CRUISER, CARRIER }
 @export var escort_child_def: EnemyDef
 ## Interval before the next launch warning, including the first one.
 @export_range(1.0, 40.0, 0.1) var escort_interval_sec: float = 9.0
-## Visible launch countdown; killing the Carrier cancels it and its escorts.
+## Visible launch countdown; killing the Carrier cancels only the unfinished launch.
 @export_range(0.4, 8.0, 0.1) var escort_windup_sec: float = 1.4
-## Requested escorts per launch, bounded by all remaining capacity limits.
+## Escorts per completed launch; repeated launches have no minion cap.
 @export_range(1, 6, 1) var escort_burst_count: int = 2
-## Maximum living escorts belonging to one Carrier.
-@export_range(1, 8, 1) var escort_alive_cap: int = 3
-## Lifetime escort allowance; defeated escorts never refund this budget.
-@export_range(1, 24, 1) var escort_total_cap: int = 6
-## Maximum living summoned Merc escorts across all sources in the encounter.
-@export_range(1, 24, 1) var escort_global_cap: int = 10
-## Total encounter enemy ceiling respected by escort launches.
-@export_range(1, 100, 1) var escort_enemy_cap: int = 50
 ## Distance from the owner at which escorts emerge.
 @export_range(10.0, 300.0, 1.0) var escort_release_radius: float = 75.0

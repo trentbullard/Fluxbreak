@@ -99,9 +99,10 @@ func _update_weapons(target: Node3D, delta: float) -> void:
 
 func _update_phase() -> void:
 	var next_phase: int = _phase
-	if hull <= eff_max_hull * _grey_def.phase_three_hull_threshold:
+	var durability_fraction: float = (hull + shield) / maxf(eff_max_hull + eff_max_shield, 1.0)
+	if durability_fraction <= _grey_def.phase_three_hull_threshold:
 		next_phase = 3
-	elif hull <= eff_max_hull * _grey_def.phase_two_hull_threshold:
+	elif durability_fraction <= _grey_def.phase_two_hull_threshold:
 		next_phase = maxi(_phase, 2)
 	if next_phase <= _phase:
 		return
@@ -115,7 +116,7 @@ func _update_phase() -> void:
 func _get_sequence() -> Array[int]:
 	match _phase:
 		2:
-			return [Major.DISPLACEMENT, Major.RUPTURE, Major.RUPTURE]
+			return [Major.DISPLACEMENT, Major.RUPTURE]
 		3:
 			return [Major.TETHER, Major.RUPTURE, Major.DISPLACEMENT, Major.RUPTURE]
 	return [Major.RUPTURE, Major.RUPTURE]
@@ -133,12 +134,10 @@ func _advance_sequence() -> void:
 	_next_major = sequence[_sequence_index]
 
 func _begin_attack(target: Node3D) -> void:
-	if _dead or _attack_state != &"cadence" or not _is_target_available(target):
+	if _dead or is_queued_for_deletion() or not is_inside_tree() or _attack_state != &"cadence" or not _is_target_available(target):
 		return
 	if is_instance_valid(_attack) or is_instance_valid(_displacement) or is_instance_valid(_tether):
 		return
-	linear_velocity = Vector3.ZERO
-	angular_velocity = Vector3.ZERO
 	var started: bool = false
 	match _next_major:
 		Major.DISPLACEMENT:
@@ -153,6 +152,8 @@ func _begin_attack(target: Node3D) -> void:
 		_state_remaining_sec = RETRY_SEC
 
 func _begin_displacement(target: Node3D) -> bool:
+	linear_velocity = Vector3.ZERO
+	angular_velocity = Vector3.ZERO
 	var radial: Vector3 = global_position - target.global_position
 	if radial.length_squared() <= 0.0001:
 		radial = Vector3.FORWARD
@@ -171,29 +172,39 @@ func _begin_displacement(target: Node3D) -> bool:
 	return true
 
 func _begin_rupture(target: Node3D) -> bool:
-	if _weapon_sockets.is_empty() or not GreyThreatLimiter.can_start_pulse(self):
+	if _dead or is_queued_for_deletion() or not is_inside_tree() or _weapon_sockets.is_empty():
 		return false
 	var socket: BossWeaponSocket = _weapon_sockets[_socket_index % _weapon_sockets.size()]
 	if not is_instance_valid(socket) or socket.weapon == null or not _is_target_in_range(socket, target):
 		return false
+	var shape: GreyAttackPattern.Shape = GreyAttackPattern.Shape.CONVERGENCE if _phase == 3 else (GreyAttackPattern.Shape.ECHO_PAIR if _phase == 2 else GreyAttackPattern.Shape.FORECAST)
+	var pattern: EnemyAttackTelegraph = GreyAttackPattern.start(self, target, socket, "VEIL COLLAPSE %d" % _phase, shape, _grey_def.rupture_windup_sec, _grey_def.rupture_radius, _grey_def.forecast_lead_fraction, _grey_def.forecast_max_lead, _grey_def.corridor_half_length, _grey_def.corridor_radius, _grey_def.echo_gap_sec)
+	if pattern == null:
+		return false
+	linear_velocity = Vector3.ZERO
+	angular_velocity = Vector3.ZERO
 	_socket_index += 1
 	_active_socket = socket
 	_attack_state = &"rupture"
-	_attack = EnemyAttackTelegraph.new()
+	_attack = pattern
 	_attack.name = "VeiledMindRupture"
-	_attack.set_warning_style("VEILED RUPTURE", WARNING_TINT)
-	get_tree().current_scene.add_child(_attack)
 	_attack.resolved.connect(_on_rupture_resolved, CONNECT_ONE_SHOT)
-	_attack.start_attack(self, target, socket, _grey_def.rupture_windup_sec, _grey_def.rupture_radius)
 	return true
 
 func _begin_tether(target: Ship) -> bool:
-	if target == null or not GreyThreatLimiter.can_start_tether(self):
+	if target == null:
 		return false
+	if target.is_tether_immune() or target.get_tether_time_remaining() > 0.0:
+		return _begin_rupture(target)
 	_tether = GreyTether.new()
+	linear_velocity = Vector3.ZERO
+	angular_velocity = Vector3.ZERO
 	_tether.name = "VeiledMindTether"
 	get_tree().current_scene.add_child(_tether)
-	if not _tether.start_tether(self, target, _grey_def.tether_windup_sec, _grey_def.tether_duration_sec, _grey_def.tether_movement_factor, _grey_def.tether_break_distance, _grey_def.tether_radius):
+	var velocity: Vector3 = GreyAttackGeometry.target_velocity(target)
+	var center: Vector3 = GreyAttackGeometry.forecast(target.global_position, velocity, _grey_def.tether_windup_sec, _grey_def.forecast_lead_fraction, _grey_def.forecast_max_lead)
+	var axis: Vector3 = GreyAttackGeometry.crossing_axis(velocity, target.global_position - global_position)
+	if not _tether.start_tether(self, target, _grey_def.tether_windup_sec, _grey_def.tether_duration_sec, _grey_def.tether_movement_factor, _grey_def.tether_break_distance, minf(_grey_def.tether_radius, _grey_def.corridor_radius), center + axis * _grey_def.corridor_half_length, center - axis * _grey_def.corridor_half_length):
 		_tether.cancel()
 		_tether = null
 		return false
@@ -204,7 +215,7 @@ func _begin_tether(target: Ship) -> bool:
 func _on_displacement_completed(_moved: bool) -> void:
 	_displacement = null
 	if not _dead and not _clearing_runtime:
-		_begin_recovery()
+		_begin_followup()
 
 func _on_rupture_resolved(_hit: bool) -> void:
 	if is_instance_valid(_active_socket):
@@ -217,7 +228,14 @@ func _on_rupture_resolved(_hit: bool) -> void:
 func _on_tether_completed(_attached: bool) -> void:
 	_tether = null
 	if not _dead and not _clearing_runtime:
-		_begin_recovery()
+		_begin_followup()
+
+func _begin_followup() -> void:
+	# Setup actions immediately schedule a separately warned collapse. The
+	# sequence advances once that collapse starts, so setup never dilutes DPS.
+	_attack_state = &"cadence"
+	_next_major = Major.RUPTURE
+	_state_remaining_sec = 0.0
 
 func _begin_recovery() -> void:
 	_active_socket = null

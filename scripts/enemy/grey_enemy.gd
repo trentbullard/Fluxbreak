@@ -2,7 +2,6 @@ extends Enemy
 class_name GreyEnemy
 
 const PULSE_COLOR: Color = Color(0.66, 0.5, 1.0, 0.9)
-const THREAT_RETRY_SEC: float = 0.25
 
 var _behavior: GreyBehaviorDef = GreyBehaviorDef.new()
 var _controlled_turrets: Array[EnemyTurret] = []
@@ -16,10 +15,9 @@ var _post_displacement_pulse: bool = false
 var _vessel_next_pulse: bool = false
 var _orbit_direction: float = 1.0
 var _target_scan_left: float = 0.0
-var _rupture_pulses_remaining: int = 0
-var _rupture_gap_left: float = 0.0
 var _mothership_next_action: int = 0
 var _cancelling_specials: bool = false
+var _coordination_cooldown_left: float = 0.0
 
 func configure_enemy(d: EnemyDef, spawn_context: EnemySpawnContext = null) -> void:
 	_cancel_specials()
@@ -35,6 +33,7 @@ func configure_enemy(d: EnemyDef, spawn_context: EnemySpawnContext = null) -> vo
 	_vessel_next_pulse = false
 	_target_scan_left = 0.0
 	_mothership_next_action = 0
+	_coordination_cooldown_left = 0.0
 
 func _ready() -> void:
 	super._ready()
@@ -57,7 +56,7 @@ func _physics_process(delta: float) -> void:
 	_attack_cooldown_left = maxf(_attack_cooldown_left - delta, 0.0)
 	_displacement_cooldown_left = maxf(_displacement_cooldown_left - delta, 0.0)
 	_recovery_left = maxf(_recovery_left - delta, 0.0)
-	_rupture_gap_left = maxf(_rupture_gap_left - delta, 0.0)
+	_coordination_cooldown_left = maxf(_coordination_cooldown_left - delta, 0.0)
 	if global_position.distance_squared_to(player_ship.global_position) > 0.0001:
 		_face_target(player_ship.global_position)
 	match _behavior.mode:
@@ -74,7 +73,7 @@ func _physics_process(delta: float) -> void:
 	_apply_separation_pulse()
 
 func is_separation_locked() -> bool:
-	return is_instance_valid(_active_attack) or is_instance_valid(_displacement) or is_instance_valid(_tether) or _recovery_left > 0.0 or _rupture_pulses_remaining == 1 or _post_displacement_pulse
+	return is_instance_valid(_active_attack) or is_instance_valid(_displacement) or is_instance_valid(_tether) or _recovery_left > 0.0 or _post_displacement_pulse
 
 func get_tactical_state() -> String:
 	if is_instance_valid(_displacement):
@@ -85,15 +84,13 @@ func get_tactical_state() -> String:
 		return "Psionic pulse winding up"
 	if _recovery_left > 0.0:
 		return "Exposed recovery"
-	if _rupture_pulses_remaining > 0:
-		return "Second rupture preparing"
 	match _behavior.mode:
 		GreyBehaviorDef.Mode.SEEKER:
 			return "Seeking displacement"
 		GreyBehaviorDef.Mode.VESSEL:
 			return "Keeping tether distance"
 		GreyBehaviorDef.Mode.HARBINGER:
-			return "Preparing sequential ruptures"
+			return "Preparing complementary echoes"
 		GreyBehaviorDef.Mode.MOTHERSHIP:
 			return "Coordinating psionic actions"
 		_:
@@ -111,14 +108,20 @@ func _tick_seeker() -> void:
 		return
 	if _post_displacement_pulse:
 		# Relocation itself is harmless. This is a new, separately dodgeable tell.
-		if _attack_cooldown_left <= 0.0 and _start_pulse("SEEKER PULSE"):
+		if not _has_target_in_weapon_range():
+			# A player who outruns the announced arrival must not strand the
+			# Seeker in an unsteered, permanently committed followup.
+			_post_displacement_pulse = false
+			_steer_in_band(player_ship.global_position)
+			return
+		if _attack_cooldown_left <= 0.0 and _start_pattern("FORECAST RUPTURE", GreyAttackPattern.Shape.FORECAST):
 			_post_displacement_pulse = false
 		return
 	_steer_in_band(player_ship.global_position)
 	if _displacement_cooldown_left <= 0.0 and _has_target_in_weapon_range():
 		_start_displacement()
 	elif _attack_cooldown_left <= 0.0:
-		_start_pulse("SEEKER PULSE")
+		_start_pattern("FORECAST RUPTURE", GreyAttackPattern.Shape.FORECAST)
 
 func _tick_vessel() -> void:
 	if _tick_committed_action():
@@ -126,44 +129,45 @@ func _tick_vessel() -> void:
 	_steer_in_band(player_ship.global_position)
 	if _attack_cooldown_left <= 0.0 and _has_target_in_weapon_range():
 		if _vessel_next_pulse:
-			if _start_pulse("VESSEL PULSE"):
+			if _start_pattern("VESSEL PHASE LANE", GreyAttackPattern.Shape.CROSSING):
 				_vessel_next_pulse = false
 		else:
-			_start_tether()
+			if not _start_tether() and (player_ship.is_tether_immune() or player_ship.get_tether_time_remaining() > 0.0):
+				_start_pattern("VESSEL PHASE LANE", GreyAttackPattern.Shape.CROSSING)
 
 func _tick_harbinger() -> void:
 	if _tick_committed_action():
 		return
-	if _rupture_pulses_remaining == 1:
-		_steer_to_velocity(Vector3.ZERO)
-		if not _has_target_in_weapon_range():
-			_rupture_pulses_remaining = 0
-			_begin_recovery()
-		elif _rupture_gap_left <= 0.0 and _attack_cooldown_left <= 0.0:
-			_start_pulse("RUPTURE II")
-		return
 	_steer_in_band(player_ship.global_position)
 	if _attack_cooldown_left <= 0.0 and _has_target_in_weapon_range():
-		_rupture_pulses_remaining = 2
-		if not _start_pulse("RUPTURE I"):
-			_rupture_pulses_remaining = 0
+		_start_pattern("ECHO RUPTURE", GreyAttackPattern.Shape.ECHO_PAIR)
 
 func _tick_mothership() -> void:
 	if _tick_committed_action():
 		return
 	_steer_in_band(player_ship.global_position)
-	if _attack_cooldown_left > 0.0 or not _has_target_in_weapon_range():
+	if not _has_target_in_weapon_range():
+		_post_displacement_pulse = false
+		return
+	if _attack_cooldown_left > 0.0:
+		return
+	if _post_displacement_pulse:
+		if _start_pattern("MOTHERSHIP COLLAPSE", GreyAttackPattern.Shape.ECHO_PAIR):
+			_post_displacement_pulse = false
 		return
 	match _mothership_next_action:
 		0:
-			_start_pulse("MOTHERSHIP RUPTURE")
+			if _start_pattern("MOTHERSHIP PHASE LANE", GreyAttackPattern.Shape.CROSSING):
+				_coordinate_ally()
 		1:
 			if not _start_displacement():
-				# A cramped destination skips only the harmless move, never its recovery.
-				_mothership_next_action = 2
-				_begin_recovery()
+				# A blocked harmless relocation leads to a full damaging warning.
+				_post_displacement_pulse = true
+				_attack_cooldown_left = 0.0
 		_:
-			_start_tether()
+			if not _start_tether():
+				_post_displacement_pulse = true
+				_attack_cooldown_left = 0.0
 
 func _tick_committed_action() -> bool:
 	if is_instance_valid(_active_attack) or is_instance_valid(_displacement) or is_instance_valid(_tether) or _recovery_left > 0.0:
@@ -173,9 +177,6 @@ func _tick_committed_action() -> bool:
 
 func _start_pulse(attack_name: String) -> bool:
 	if _cancelling_specials or _dead or not _has_living_target() or is_instance_valid(_active_attack) or is_instance_valid(_displacement) or is_instance_valid(_tether) or not _has_target_in_weapon_range():
-		return false
-	if not GreyThreatLimiter.can_start_pulse(self):
-		_attack_cooldown_left = THREAT_RETRY_SEC
 		return false
 	var turret: EnemyTurret = _first_valid_turret()
 	var encounter_root: Node = get_tree().current_scene
@@ -188,19 +189,39 @@ func _start_pulse(attack_name: String) -> bool:
 	_active_attack.start_attack(self, player_ship, turret, maxf(_behavior.attack_windup_sec, 0.3), maxf(_behavior.attack_radius, 1.0), false)
 	return true
 
+func _start_pattern(attack_name: String, shape: GreyAttackPattern.Shape) -> bool:
+	if _cancelling_specials or _dead or not _has_living_target() or is_instance_valid(_active_attack) or is_instance_valid(_displacement) or is_instance_valid(_tether) or not _has_target_in_weapon_range():
+		return false
+	var turret: EnemyTurret = _first_valid_turret()
+	if turret == null:
+		return false
+	_active_attack = GreyAttackPattern.start(self, player_ship, turret, attack_name, shape, _behavior.attack_windup_sec, _behavior.attack_radius, _behavior.forecast_lead_fraction, _behavior.forecast_max_lead, _behavior.corridor_half_length, _behavior.corridor_radius, _behavior.rupture_second_gap_sec)
+	if _active_attack == null:
+		return false
+	_active_attack.resolved.connect(_on_pulse_resolved, CONNECT_ONE_SHOT)
+	return true
+
+## The support hull requests a complementary forecast from one idle nearby ally.
+## A support command advances one idle ally's ordinary cooldown. Commitments,
+## exposed recovery and the per-ally command cooldown still win.
+func _coordinate_ally() -> void:
+	for node: Node in get_tree().get_nodes_in_group("faction_greys"):
+		var ally: GreyEnemy = node as GreyEnemy
+		if ally == null or ally == self or ally._dead or ally._behavior.mode == GreyBehaviorDef.Mode.MOTHERSHIP or ally._coordination_cooldown_left > 0.0 or ally._recovery_left > 0.0 or ally.is_separation_locked():
+			continue
+		if ally.global_position.distance_squared_to(global_position) > _behavior.coordination_radius * _behavior.coordination_radius:
+			continue
+		if ally._start_pattern("COORDINATED FORECAST", GreyAttackPattern.Shape.FORECAST):
+			ally._coordination_cooldown_left = _behavior.coordination_ally_cooldown_sec
+			set_meta(&"grey_coordinated_ally", ally.get_instance_id())
+			return
+
 func _on_pulse_resolved(_hit: bool) -> void:
 	_active_attack = null
 	if _cancelling_specials or _dead or not _has_living_target():
-		_rupture_pulses_remaining = 0
 		return
-	if _behavior.mode == GreyBehaviorDef.Mode.HARBINGER and _rupture_pulses_remaining > 1:
-		_rupture_pulses_remaining = 1
-		_rupture_gap_left = maxf(_behavior.rupture_second_gap_sec, 0.3)
-		_attack_cooldown_left = 0.0
-		return
-	_rupture_pulses_remaining = 0
 	if _behavior.mode == GreyBehaviorDef.Mode.MOTHERSHIP:
-		_mothership_next_action = 1
+		_mothership_next_action = (_mothership_next_action + 1) % 3
 	_begin_recovery()
 
 func _start_displacement() -> bool:
@@ -251,8 +272,9 @@ func _on_displacement_completed(moved: bool) -> void:
 	if _behavior.mode == GreyBehaviorDef.Mode.MOTHERSHIP:
 		if moved:
 			_orbit_direction *= -1.0
-		_mothership_next_action = 2
-		_begin_recovery()
+		_mothership_next_action = 1
+		_post_displacement_pulse = true
+		_attack_cooldown_left = 0.0
 	elif moved:
 		_orbit_direction *= -1.0
 		_post_displacement_pulse = true
@@ -263,8 +285,7 @@ func _on_displacement_completed(moved: bool) -> void:
 func _start_tether() -> bool:
 	if _cancelling_specials or _dead or not _has_living_target() or is_instance_valid(_tether) or is_instance_valid(_active_attack) or is_instance_valid(_displacement):
 		return false
-	if not GreyThreatLimiter.can_start_tether(self):
-		_attack_cooldown_left = THREAT_RETRY_SEC
+	if player_ship.is_tether_immune() or player_ship.get_tether_time_remaining() > 0.0:
 		return false
 	var encounter_root: Node = get_tree().current_scene
 	if encounter_root == null:
@@ -272,7 +293,11 @@ func _start_tether() -> bool:
 	_tether = GreyTether.new()
 	encounter_root.add_child(_tether)
 	_tether.completed.connect(_on_tether_completed)
-	if not _tether.start_tether(self, player_ship, maxf(_behavior.tether_windup_sec, 0.4), _behavior.tether_duration_sec, _behavior.tether_slow_multiplier, _behavior.tether_break_distance, maxf(_behavior.tether_radius, 1.0)):
+	var velocity: Vector3 = GreyAttackGeometry.target_velocity(player_ship)
+	var center: Vector3 = GreyAttackGeometry.forecast(player_ship.global_position, velocity, _behavior.tether_windup_sec, _behavior.forecast_lead_fraction, _behavior.forecast_max_lead)
+	var axis: Vector3 = GreyAttackGeometry.crossing_axis(velocity, player_ship.global_position - global_position)
+	var lane_radius: float = minf(_behavior.tether_radius, _behavior.corridor_radius)
+	if not _tether.start_tether(self, player_ship, maxf(_behavior.tether_windup_sec, 0.4), _behavior.tether_duration_sec, _behavior.tether_slow_multiplier, _behavior.tether_break_distance, lane_radius, center + axis * _behavior.corridor_half_length, center - axis * _behavior.corridor_half_length):
 		var failed_tether: GreyTether = _tether
 		_tether = null
 		failed_tether.completed.disconnect(_on_tether_completed)
@@ -286,10 +311,12 @@ func _on_tether_completed(_attached: bool) -> void:
 	if _cancelling_specials or _dead or not _has_living_target():
 		return
 	if _behavior.mode == GreyBehaviorDef.Mode.MOTHERSHIP:
-		_mothership_next_action = 0
+		_mothership_next_action = 2
+		_post_displacement_pulse = true
+		_attack_cooldown_left = 0.0
 	else:
 		_vessel_next_pulse = true
-	_begin_recovery()
+		_begin_recovery()
 
 func _begin_recovery() -> void:
 	_attack_cooldown_left = maxf(_behavior.attack_cooldown_sec, 0.1)
@@ -358,8 +385,6 @@ func _reacquire_target() -> void:
 
 func _cancel_specials() -> void:
 	_cancelling_specials = true
-	_rupture_pulses_remaining = 0
-	_rupture_gap_left = 0.0
 	_mothership_next_action = 0
 	_post_displacement_pulse = false
 	var attack: EnemyAttackTelegraph = _active_attack

@@ -149,7 +149,7 @@ func _test_brood_release_and_limits() -> void:
 	var mother: BugEnemy = _spawn_enemy(BROODMOTHER, Vector3(0.0, 0.0, 350.0), request)
 	if mother == null:
 		return
-	_check(is_instance_valid(mother._brood), "A normal Broodmother owns a finite brood helper")
+	_check(is_instance_valid(mother._brood), "A normal Broodmother owns an independent brood launcher")
 	mother._attack_cooldown_left = 100.0
 	mother._brood_interval_left = 0.0
 	mother._tick_broodmother(0.01)
@@ -172,20 +172,16 @@ func _test_brood_release_and_limits() -> void:
 	_check(is_equal_approx(CombatStats._frame_enemy_kill_pressure, pressure_before), "Defeating summoned brood does not increase adaptive kill pressure")
 	await get_tree().process_frame
 	await get_tree().physics_frame
-	_check(mother._brood.get_living_count() == 1 and mother._brood.get_total_spawned() == 2, "A defeated child frees a living slot without refunding lifetime budget")
-	_check(mother._brood.spawn_brood(50) == 3, "A large release is clamped to the four-child living ceiling")
-	_living_brood(mother)
-	_check(mother._brood.get_living_count() == 4 and mother._brood.spawn_brood(1) == 0, "A mother at its living cap cannot create another child")
-	mother._brood.clear_brood()
-	await get_tree().process_frame
-	await get_tree().physics_frame
-	_check(mother._brood.spawn_brood(50) == 3, "The last release only spends the remaining lifetime budget")
-	_living_brood(mother)
-	_check(mother._brood.get_total_spawned() == 8, "A Broodmother spends at most eight children in its lifetime")
-	mother._brood.clear_brood()
-	await get_tree().process_frame
-	await get_tree().physics_frame
-	_check(mother._brood.spawn_brood(1) == 0 and not mother._can_release_brood(), "Lifetime exhaustion is permanent after children are removed")
+	_check(mother._brood.get_living_count() == 1 and mother._brood.get_total_spawned() == 2, "A killed child leaves independent summon accounting")
+	for release: int in range(5):
+		mother._brood_interval_left = 0.0
+		mother._recovery_left = 0.0
+		mother._tick_broodmother(0.01)
+		_check(mother._brood_windup_left > 0.0, "Repeated releases retain the visible gestation warning")
+		mother._tick_broodmother(BROODMOTHER.behavior.brood_windup_sec + 0.01)
+		_living_brood(mother)
+	_check(mother._brood.get_total_spawned() == 12 and mother._brood.get_living_count() == 11, "Broodmother continues authored batches beyond its former living and lifetime limits")
+	_check(mother._can_release_brood(), "Surviving children do not stop later brood releases")
 	var summoned_request: SpawnRequest = SpawnRequest.new()
 	summoned_request.is_summoned = true
 	var summoned_mother: BugEnemy = _spawn_enemy(BROODMOTHER, Vector3(0.0, 300.0, 350.0), summoned_request)
@@ -198,11 +194,21 @@ func _test_brood_release_and_limits() -> void:
 	await get_tree().process_frame
 	await get_tree().physics_frame
 	var children_remaining: int = 0
+	var independent_child: Enemy = null
 	for node: Node in get_tree().get_nodes_in_group("bug_brood"):
 		if int(node.get_meta("brood_parent_id", 0)) == owned_id:
 			children_remaining += 1
-	_check(children_remaining == 0, "Killing a Broodmother cleans up every surviving owned child")
-	print("BUG_REGULAR_CHECKS: visible release, caps, scaling, reward guards and source cleanup checked")
+			independent_child = node as Enemy
+	_check(children_remaining == 2, "Killing a Broodmother preserves every surviving child")
+	if is_instance_valid(independent_child):
+		var child_id: int = independent_child.get_instance_id()
+		var independent_score: int = RunState.run_score
+		var independent_drops: int = _nanobot_drop_count()
+		independent_child.apply_damage(1000000.0)
+		await get_tree().process_frame
+		_check(not is_instance_id_valid(child_id), "A surviving minion is removed by its own death after its parent is gone")
+		_check(RunState.run_score == independent_score and _nanobot_drop_count() == independent_drops, "Parentless brood still grants no synthetic rewards")
+	print("BUG_REGULAR_CHECKS: visible repeated releases, scaling, reward guards and persistent children checked")
 
 func _test_movement() -> void:
 	_ship.global_position = Vector3.ZERO
@@ -249,6 +255,8 @@ func _nanobot_drop_count() -> int:
 	return count
 
 func _clear_enemies() -> void:
+	for child: Node in get_tree().get_nodes_in_group("bug_brood"):
+		child.queue_free()
 	for enemy: BugEnemy in _enemies:
 		if is_instance_valid(enemy):
 			enemy.queue_free()
@@ -257,7 +265,7 @@ func _clear_enemies() -> void:
 		node.queue_free()
 	await get_tree().process_frame
 	await get_tree().physics_frame
-	_check(int(_spawner.get_alive_counts().get("enemies", 0)) == 0, "Source and brood cleanup returns Spawner accounting to zero")
+	_check(int(_spawner.get_alive_counts().get("enemies", 0)) == 0, "Explicit encounter teardown returns Spawner accounting to zero")
 
 func _check(condition: bool, description: String) -> void:
 	_assertions += 1

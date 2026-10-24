@@ -11,7 +11,7 @@
 
 [resource]
 script = ExtResource("1_def")
-boss_description = "The ancient hive sovereign alternates finite brood releases with fixed royal spore blooms. Below 70% hull, marked charge lanes join the sequence; below 35%, a faster cadence brings the familiar attacks closer together. Escape each warned pulse, punish her recovery, and destroy the Queen to collapse her brood."
+boss_description = "The ancient hive sovereign alternates continuing brood releases with fixed royal spore blooms. Below 70% hull, marked charge lanes join the sequence; below 35%, a faster cadence brings the familiar attacks closer together. Escape each warned pulse and punish her recovery. Her surviving brood persists after she dies."
 movement_def = ExtResource("6_movement")
 initial_delay_sec = 2.8
 charge_windup_sec = 1.8
@@ -30,8 +30,6 @@ spore_windup_sec = 1.8
 spore_radius = 95
 spore_pulse_count = 2
 brood_child_def = ExtResource("7_child")
-brood_alive_cap = 8
-brood_total_cap = 16
 brood_release_count = 3
 phase_brood_release_count = 4
 brood_spawn_radius = 115

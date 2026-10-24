@@ -16,6 +16,7 @@ var _next_major: int = Major.DISPLACEMENT
 var _socket_index: int = 0
 var _phase_two: bool = false
 var _relocation_side: float = 1.0
+var _rupture_then_relocate: bool = false
 
 func configure_enemy(d: EnemyDef, spawn_context: EnemySpawnContext = null) -> void:
 	_clear_encounter_runtime()
@@ -29,6 +30,7 @@ func configure_enemy(d: EnemyDef, spawn_context: EnemySpawnContext = null) -> vo
 	_socket_index = 0
 	_phase_two = false
 	_relocation_side = 1.0
+	_rupture_then_relocate = false
 	set_meta("grey_phase", 1)
 
 func _ready() -> void:
@@ -61,10 +63,10 @@ func _update_movement(target_position: Vector3, delta: float) -> void:
 	super._update_movement(target_position, delta)
 
 func _update_weapons(target: Node3D, delta: float) -> void:
-	# No socket autofire. Rupture is the Witness's only source of damage.
+	# Every damaging sphere/crossing lane is visibly committed; no socket autofire.
 	if _dead or _grey_def == null or not is_instance_valid(target) or not target.visible:
 		return
-	if not _phase_two and hull <= eff_max_hull * _grey_def.phase_hull_threshold:
+	if not _phase_two and hull + shield <= (eff_max_hull + eff_max_shield) * _grey_def.phase_hull_threshold:
 		_phase_two = true
 		set_meta("grey_phase", 2)
 		EffectsBus.show_float(global_position, "WITNESS AWAKENED", WARNING_TINT)
@@ -93,12 +95,10 @@ func _update_weapons(target: Node3D, delta: float) -> void:
 	_begin_attack(target)
 
 func _begin_attack(target: Node3D) -> void:
-	if _dead or _attack_state != &"cadence" or not is_instance_valid(target):
+	if _dead or is_queued_for_deletion() or not is_inside_tree() or _attack_state != &"cadence" or not is_instance_valid(target):
 		return
 	if is_instance_valid(_attack) or is_instance_valid(_displacement) or is_instance_valid(_tether):
 		return
-	linear_velocity = Vector3.ZERO
-	angular_velocity = Vector3.ZERO
 	match _next_major:
 		Major.DISPLACEMENT:
 			_begin_displacement(target)
@@ -108,6 +108,8 @@ func _begin_attack(target: Node3D) -> void:
 			_begin_tether(target as Ship)
 
 func _begin_displacement(target: Node3D) -> void:
+	linear_velocity = Vector3.ZERO
+	angular_velocity = Vector3.ZERO
 	var radial: Vector3 = global_position - target.global_position
 	if radial.length_squared() <= 0.0001:
 		radial = Vector3.FORWARD
@@ -126,37 +128,43 @@ func _begin_displacement(target: Node3D) -> void:
 		_begin_recovery()
 
 func _begin_rupture(target: Node3D) -> void:
-	if not GreyThreatLimiter.can_start_pulse(self):
-		_state_remaining_sec = 0.25
-		return
-	if _weapon_sockets.is_empty():
+	if _dead or is_queued_for_deletion() or not is_inside_tree() or _weapon_sockets.is_empty():
 		return
 	var socket: BossWeaponSocket = _weapon_sockets[_socket_index % _weapon_sockets.size()]
 	if not is_instance_valid(socket) or socket.weapon == null or not _is_target_in_range(socket, target):
 		return
+	var pattern: EnemyAttackTelegraph = GreyAttackPattern.start(self, target, socket, "WITNESS PHASE CROSS", GreyAttackPattern.Shape.PHASE_CROSS, _grey_def.rupture_windup_sec, _grey_def.rupture_radius, _grey_def.forecast_lead_fraction, _grey_def.forecast_max_lead, _grey_def.corridor_half_length, _grey_def.corridor_radius, _grey_def.echo_gap_sec)
+	if pattern == null:
+		return
+	linear_velocity = Vector3.ZERO
+	angular_velocity = Vector3.ZERO
 	_socket_index += 1
 	_active_socket = socket
 	_attack_state = &"rupture"
-	_next_major = Major.TETHER
-	_attack = EnemyAttackTelegraph.new()
-	_attack.set_warning_style("RUPTURE", WARNING_TINT)
-	get_tree().current_scene.add_child(_attack)
+	_next_major = Major.DISPLACEMENT if _rupture_then_relocate else Major.TETHER
+	_rupture_then_relocate = false
+	_attack = pattern
 	_attack.resolved.connect(_on_rupture_resolved, CONNECT_ONE_SHOT)
-	_attack.start_attack(self, target, socket, _grey_def.rupture_windup_sec, _grey_def.rupture_radius)
 
 func _begin_tether(target: Ship) -> void:
 	if target == null:
 		return
-	if not GreyThreatLimiter.can_start_tether(self):
-		_state_remaining_sec = 0.25
+	if target.is_tether_immune() or target.get_tether_time_remaining() > 0.0:
+		_rupture_then_relocate = true
+		_begin_rupture(target)
 		return
 	_tether = GreyTether.new()
+	linear_velocity = Vector3.ZERO
+	angular_velocity = Vector3.ZERO
 	_tether.name = "WitnessTether"
 	get_tree().current_scene.add_child(_tether)
 	_tether.completed.connect(_on_tether_completed, CONNECT_ONE_SHOT)
 	_attack_state = &"tether"
 	_next_major = Major.DISPLACEMENT
-	if not _tether.start_tether(self, target, _grey_def.tether_windup_sec, _grey_def.tether_duration_sec, _grey_def.tether_movement_factor, _grey_def.tether_break_distance, _grey_def.tether_radius):
+	var velocity: Vector3 = GreyAttackGeometry.target_velocity(target)
+	var center: Vector3 = GreyAttackGeometry.forecast(target.global_position, velocity, _grey_def.tether_windup_sec, _grey_def.forecast_lead_fraction, _grey_def.forecast_max_lead)
+	var axis: Vector3 = GreyAttackGeometry.crossing_axis(velocity, target.global_position - global_position)
+	if not _tether.start_tether(self, target, _grey_def.tether_windup_sec, _grey_def.tether_duration_sec, _grey_def.tether_movement_factor, _grey_def.tether_break_distance, minf(_grey_def.tether_radius, _grey_def.corridor_radius), center + axis * _grey_def.corridor_half_length, center - axis * _grey_def.corridor_half_length):
 		_tether.cancel()
 		_tether = null
 		_begin_recovery()
@@ -164,7 +172,11 @@ func _begin_tether(target: Ship) -> void:
 func _on_displacement_completed(_moved: bool) -> void:
 	_displacement = null
 	if not _dead:
-		_begin_recovery()
+		# Relocation is a setup, followed by a fresh full warning, not a whole
+		# empty attack/recovery/cadence cycle.
+		_attack_state = &"cadence"
+		_next_major = Major.RUPTURE
+		_state_remaining_sec = 0.0
 
 func _on_rupture_resolved(_hit: bool) -> void:
 	if is_instance_valid(_active_socket):
@@ -177,7 +189,10 @@ func _on_rupture_resolved(_hit: bool) -> void:
 func _on_tether_completed(_attached: bool) -> void:
 	_tether = null
 	if not _dead:
-		_begin_recovery()
+		_rupture_then_relocate = true
+		_attack_state = &"cadence"
+		_next_major = Major.RUPTURE
+		_state_remaining_sec = 0.0
 
 func _begin_recovery() -> void:
 	_active_socket = null

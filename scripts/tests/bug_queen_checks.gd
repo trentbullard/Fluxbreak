@@ -43,7 +43,7 @@ func _run_checks() -> void:
 	add_child(_spawner)
 	await _check_definition_and_phases()
 	await _clear_bosses()
-	await _check_brood_warning_and_caps()
+	await _check_brood_warning_and_repeated_releases()
 	await _clear_bosses()
 	await _check_spores_and_pause()
 	await _clear_bosses()
@@ -122,7 +122,7 @@ func _check_definition_and_phases() -> void:
 	_expect(boss._attack == null and boss._brood_warning == null, "A spore attack never overlaps another major attack")
 	await _wait(0.05)
 
-func _check_brood_warning_and_caps() -> void:
+func _check_brood_warning_and_repeated_releases() -> void:
 	var boss: BugFirstQueen = _spawn_boss(true)
 	if boss == null:
 		return
@@ -135,30 +135,21 @@ func _check_brood_warning_and_caps() -> void:
 	_expect(boss.get_visual_model_root().scale.x > original_scale.x, "Queen visibly swells during her brood warning")
 	boss._update_weapons(_ship, 0.4)
 	_quiet_brood()
-	_expect(boss.get_brood_spawner().get_total_spawned() == _definition.brood_release_count, "Opening release produces the finite configured brood count")
+	_expect(boss.get_brood_spawner().get_total_spawned() == _definition.brood_release_count, "Opening release produces the configured brood batch")
 	_expect(boss.get_attack_state() == &"recovery" and boss.get_visual_model_root().scale.is_equal_approx(original_scale), "Brood release restores the silhouette and exposes a recovery")
 	_expect(is_equal_approx(_ship.hull + _ship.shield, health_before), "Brood release itself cannot deal hidden damage")
 	var brood: BugBroodSpawner = boss.get_brood_spawner()
-	brood.spawn_brood(100)
-	_quiet_brood()
-	_expect(brood.get_living_count() == 8, "Queen brood never exceeds eight living offspring")
-	_expect(brood.spawn_brood(100) == 0, "A full brood does not reserve extra living slots")
+	for release: int in range(6):
+		_expect(brood.spawn_brood(3) == 3, "Queen releases each complete batch beyond former living and lifetime limits")
+		_quiet_brood()
+	_expect(brood.get_living_count() == _definition.brood_release_count + 18, "All surviving Queen offspring remain independently alive")
 	for node: Node in get_tree().get_nodes_in_group("bug_brood"):
 		var child: Enemy = node as Enemy
 		_expect(child._spawn_context.is_summoned and not child._spawn_context.grants_kill_rewards and not child._spawn_context.contributes_to_pressure, "Queen offspring cannot farm rewards or pressure")
 		_expect(child._spawn_context.stage_index == 2 and child._spawn_context.wave_index == 29 and is_equal_approx(child.eff_max_hull, child.def.max_hull * 1.5), "Queen offspring inherit the resolved encounter context")
-	brood.clear_brood()
-	await _wait(0.1)
-	_expect(brood.spawn_brood(100) == 8, "Clearing the first brood frees living slots")
-	_quiet_brood()
-	brood.clear_brood()
-	await _wait(0.1)
-	_expect(brood.get_total_spawned() == 16 and brood.spawn_brood(100) == 0, "Queen exhausts her sixteen lifetime brood slots")
 	var second: BugFirstQueen = _spawn_boss()
-	var third: BugFirstQueen = _spawn_boss()
-	if second != null and third != null:
-		_expect(second.get_brood_spawner().spawn_brood(100) == 8, "One Queen can fill eight global brood slots")
-		_expect(third.get_brood_spawner().spawn_brood(100) == 4, "Multiple Queens obey the shared twelve living brood cap")
+	if second != null:
+		_expect(second.get_brood_spawner().spawn_brood(3) == 3, "Another Queen can release despite existing living brood")
 		_quiet_brood()
 
 func _check_spores_and_pause() -> void:
@@ -253,7 +244,7 @@ func _check_cleanup() -> void:
 	await _wait(0.7)
 	_expect(not is_instance_valid(zone) and get_tree().get_nodes_in_group("bug_spore_zones").is_empty(), "Queen death cancels every pending spore pulse")
 	_expect(is_equal_approx(_ship.hull + _ship.shield, health_before), "Dead Queen attacks cannot damage the player")
-	_expect(int(_spawner.get_alive_counts()["enemies"]) == 0, "Queen death removes her brood from real Spawner accounting")
+	_expect(int(_spawner.get_alive_counts()["enemies"]) == 2, "Queen death retains her living brood in real Spawner accounting")
 	boss = _spawn_boss()
 	if boss == null:
 		return
@@ -265,7 +256,7 @@ func _check_cleanup() -> void:
 	_ship._dead = true
 	boss.set_physics_process(true)
 	await _wait(0.1)
-	_expect(not is_instance_valid(zone) and boss.get_brood_spawner().get_living_count() == 0, "Player death cancels Queen attacks and outstanding brood")
+	_expect(not is_instance_valid(zone) and boss.get_brood_spawner().get_living_count() == 2, "Player death cancels Queen attacks while children await actual run teardown")
 	boss.set_physics_process(false)
 	_ship._dead = false
 	boss.get_brood_spawner().spawn_brood(2)
@@ -275,7 +266,7 @@ func _check_cleanup() -> void:
 	zone = boss._spore_zone
 	boss.queue_free()
 	await _wait(0.7)
-	_expect(not is_instance_valid(zone) and int(_spawner.get_alive_counts()["enemies"]) == 0, "Scene exit cancels warnings and clears Queen brood")
+	_expect(not is_instance_valid(zone) and int(_spawner.get_alive_counts()["enemies"]) == 6, "Removing a Queen cancels her warnings while existing children persist")
 
 func _make_socket_deterministic(boss: BugFirstQueen) -> void:
 	for socket: BossWeaponSocket in boss._weapon_sockets:
@@ -295,6 +286,8 @@ func _quiet_brood() -> void:
 		child.explosion_scene = null
 
 func _clear_bosses() -> void:
+	for child: Node in get_tree().get_nodes_in_group("bug_brood"):
+		child.queue_free()
 	for boss: BugFirstQueen in _bosses:
 		if is_instance_valid(boss) and not boss.is_queued_for_deletion():
 			boss.queue_free()

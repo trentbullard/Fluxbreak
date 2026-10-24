@@ -41,9 +41,9 @@ func _run_checks() -> void:
 	await _clear_bosses()
 	await _check_brood_release_and_pause()
 	await _clear_bosses()
-	await _check_caps_and_no_farming()
+	await _check_repeated_releases_and_no_farming()
 	await _clear_bosses()
-	await _check_global_and_enemy_caps()
+	await _check_multiple_sources_and_recursion()
 	await _clear_bosses()
 	await _check_death_and_exit_cleanup()
 	await _clear_bosses()
@@ -178,58 +178,49 @@ func _check_brood_release_and_pause() -> void:
 	_expect(boss.get_visual_model_root().scale.is_equal_approx(original_scale), "Brood release restores the Matron's normal silhouette")
 	_expect(boss._next_charge, "The attack after a brood release is another readable charge")
 
-func _check_caps_and_no_farming() -> void:
+func _check_repeated_releases_and_no_farming() -> void:
 	var boss: NestbreakerMatron = _spawn_boss(true)
 	if boss == null:
 		return
 	var brood: BugBroodSpawner = boss.get_brood_spawner()
-	_expect(brood.spawn_brood(100) == 8 and brood.get_living_count() == 8, "Matron brood obeys the eight living child limit")
+	for release: int in range(6):
+		_expect(brood.spawn_brood(BOSS_DEF.brood_release_count) == BOSS_DEF.brood_release_count, "Matron launches its full batch without living or lifetime caps")
 	_quiet_brood()
-	_expect(brood.spawn_brood(100) == 0, "A full Matron brood cannot exceed its living cap")
+	_expect(brood.get_total_spawned() == 18 and brood.get_living_count() == 18, "Matron retains more than its former sixteen lifetime brood")
 	for node: Node in get_tree().get_nodes_in_group("bug_brood"):
 		var child: Enemy = node as Enemy
 		_expect(child._spawn_context.is_summoned and not child._spawn_context.grants_kill_rewards and not child._spawn_context.contributes_to_pressure, "Summoned brood carries explicit reward and pressure exclusions")
-		_expect(child._spawn_context.wave_index == 7 and child._spawn_context.stage_index == 2 and is_equal_approx(child.eff_max_hull, child.def.max_hull * 1.5), "Brood inherits the Matron's wave, stage, and resolved combat scaling")
+		_expect(child._spawn_context.wave_index == 7 and child._spawn_context.stage_index == 2 and is_equal_approx(child.eff_max_hull, child.def.max_hull * 1.5), "Brood inherits the Matron's encounter scaling")
 	var score_before: int = RunState.run_score
 	var drops_before: int = _count_drops()
 	var meta_kills_before: int = GameFlow._run_enemy_kills
 	var pressure_before: float = CombatStats._frame_enemy_kills
 	for node: Node in get_tree().get_nodes_in_group("bug_brood"):
-		var child: Enemy = node as Enemy
-		child.explosion_scene = null
-		child.apply_damage(1000000.0, CombatStatContext.new())
+		(node as Enemy).apply_damage(1000000.0)
 	_expect(RunState.run_score == score_before, "Killing brood cannot farm score")
 	_expect(_count_drops() == drops_before, "Killing brood cannot farm nanobot drops")
 	_expect(GameFlow._run_enemy_kills == meta_kills_before, "Killing brood cannot farm persistent enemy kill progress")
 	_expect(is_equal_approx(CombatStats._frame_enemy_kills, pressure_before), "Killing brood cannot inflate wave pressure metrics")
 	await _wait(0.1)
 	_expect(int(_spawner.get_alive_counts()["enemies"]) == 1, "Dead brood leaves real Spawner accounting clean")
-	_expect(brood.spawn_brood(100) == 8, "Killed brood frees living slots while lifetime slots remain")
+	_expect(brood.spawn_brood(3) == 3, "A Matron continues releasing after earlier brood is killed")
 	_quiet_brood()
-	brood.clear_brood()
-	await _wait(0.1)
-	_expect(brood.get_total_spawned() == 16 and brood.spawn_brood(100) == 0, "Matron cannot replace brood beyond sixteen lifetime spawns")
 
-func _check_global_and_enemy_caps() -> void:
+func _check_multiple_sources_and_recursion() -> void:
 	var first: NestbreakerMatron = _spawn_boss()
 	var second: NestbreakerMatron = _spawn_boss()
 	if first == null or second == null:
 		return
-	_expect(first.get_brood_spawner().spawn_brood(8) == 8, "The first mother occupies eight global brood slots")
-	_expect(second.get_brood_spawner().spawn_brood(8) == 4, "A second mother cannot push total living brood beyond twelve")
-	_quiet_brood()
+	for release: int in range(9):
+		_expect(first.get_brood_spawner().spawn_brood(3) == 3, "First mother retains its requested release size")
+		_expect(second.get_brood_spawner().spawn_brood(3) == 3, "Second mother is not blocked by shared living minion limits")
+		_quiet_brood()
+	_expect(int(_spawner.get_alive_counts()["enemies"]) == 56, "Brood remains fully accounted beyond the former fifty-enemy summon ceiling")
 	var child: Enemy = get_tree().get_nodes_in_group("bug_brood")[0] as Enemy
 	var recursive_spawner: BugBroodSpawner = BugBroodSpawner.new()
 	child.add_child(recursive_spawner)
-	recursive_spawner.setup(child, BOSS_DEF.brood_child_def, 8, 16)
-	_expect(recursive_spawner.spawn_brood(8) == 0, "A summoned child cannot recursively produce its own brood")
-	first.get_brood_spawner().clear_brood()
-	second.get_brood_spawner().clear_brood()
-	await _wait(0.1)
-	first.get_brood_spawner().setup(first, BOSS_DEF.brood_child_def, 8, 16, 12, 3)
-	_expect(first.get_brood_spawner().spawn_brood(8) == 1, "Brood obeys the total encounter enemy cap independently of brood caps")
-	_quiet_brood()
-	_expect(int(_spawner.get_alive_counts()["enemies"]) == 3, "Enemy capacity uses actual Spawner accounting")
+	recursive_spawner.setup(child, BOSS_DEF.brood_child_def)
+	_expect(recursive_spawner.spawn_brood(3) == 0, "A summoned child cannot recursively produce its own brood")
 
 func _check_death_and_exit_cleanup() -> void:
 	var boss: NestbreakerMatron = _spawn_boss()
@@ -246,7 +237,7 @@ func _check_death_and_exit_cleanup() -> void:
 	await _wait(0.5)
 	_expect(is_equal_approx(_ship.hull + _ship.shield, health_before), "Killing the Matron during charge windup cancels her damage")
 	_expect(not is_instance_valid(attack), "Matron death removes her pending charge warning")
-	_expect(int(_spawner.get_alive_counts()["enemies"]) == 0, "Matron death removes her living brood and returns Spawner accounting to zero")
+	_expect(int(_spawner.get_alive_counts()["enemies"]) == 2, "Matron death preserves her two living brood in Spawner accounting")
 	boss = _spawn_boss()
 	if boss == null:
 		return
@@ -256,7 +247,7 @@ func _check_death_and_exit_cleanup() -> void:
 	boss._begin_attack(_ship)
 	boss.queue_free()
 	await _wait(0.5)
-	_expect(int(_spawner.get_alive_counts()["enemies"]) == 0, "Leaving the scene during brood windup cancels the release and cleans existing brood")
+	_expect(int(_spawner.get_alive_counts()["enemies"]) == 4, "Removing a Matron cancels its unfinished release while existing brood persists")
 
 func _make_socket_deterministic(boss: NestbreakerMatron) -> void:
 	for socket: BossWeaponSocket in boss._weapon_sockets:
@@ -283,6 +274,8 @@ func _count_drops() -> int:
 	return count
 
 func _clear_bosses() -> void:
+	for child: Node in get_tree().get_nodes_in_group("bug_brood"):
+		child.queue_free()
 	for boss: NestbreakerMatron in _bosses:
 		if is_instance_valid(boss) and not boss.is_queued_for_deletion():
 			boss.queue_free()

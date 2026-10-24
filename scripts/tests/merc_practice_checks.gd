@@ -100,7 +100,7 @@ func _run_checks() -> void:
 			_check(int(_spawner.get_alive_counts().get("enemies", 0)) >= 2, "Spawner must account for Enforcer and escort alongside survivors.")
 		elif boss is MercFlagship:
 			var flagship: MercFlagship = boss as MercFlagship
-			_check(flagship.get_living_escort_count() > 0 and flagship.get_living_escort_count() <= 3, "Flagship must deploy a bounded escort wing.")
+			_check(flagship.get_living_escort_count() > 0 and flagship.get_total_escorts_spawned() == flagship._flagship_def.escorts_per_wing * 2, "Flagship launches full arrival and phase-two wings alongside existing escorts.")
 			_check(int(_spawner.get_alive_counts().get("enemies", 0)) >= flagship.get_living_escort_count() + 1, "Spawner must account for Flagship and its wing alongside survivors.")
 		else:
 			_check(false, "Practice spawned an unsupported Merc boss.")
@@ -126,7 +126,7 @@ func _run_checks() -> void:
 		_check(_completed_count == 1, "Boss defeat must complete the practice run exactly once.")
 		_check(get_tree().paused, "Victory must pause immediately despite surviving ordinary enemies.")
 		for reference: WeakRef in boss_escorts:
-			_check(not is_instance_valid(reference.get_ref()), "Boss victory must remove its own escort without requiring survivor cleanup.")
+			_check(is_instance_valid(reference.get_ref()), "Boss victory must preserve its launched escort until actual world teardown.")
 		_check_live_ability_owners(boss_id)
 	else:
 		_check(false, "Stage did not spawn a Merc boss actor.")
@@ -217,11 +217,9 @@ func _check_live_ability_owners(defeated_boss_id: int = 0) -> void:
 			_check(living, "A surviving %s must belong to a living enemy; orphan warnings are forbidden." % group_name)
 			if living:
 				_check(source.get_instance_id() != defeated_boss_id, "Defeated boss must clean its own abilities.")
-	for child: Node in get_tree().get_nodes_in_group(MercEscortWing.ESCORT_GROUP):
-		var owner_id: int = int(child.get_meta(MercEscortWing.OWNER_META, 0))
-		var owner_value: Object = instance_from_id(owner_id) if owner_id != 0 else null
-		var owner_enemy: Enemy = owner_value as Enemy
-		_check(is_instance_valid(owner_enemy) and not owner_enemy._dead and not owner_enemy.is_queued_for_deletion() and owner_id != defeated_boss_id, "Every retained Merc wing must have a living owner.")
+	for child: Node in get_tree().get_nodes_in_group("merc_escorts"):
+		var minion: Enemy = child as Enemy
+		_check(is_instance_valid(minion) and minion._spawn_context.is_summoned and not minion._spawn_context.grants_kill_rewards and not minion._spawn_context.contributes_to_pressure, "Retained minions stay independent and preserve summon exclusions after owner death.")
 
 func _check_no_world_combat() -> void:
 	for group_name: String in ["enemy_attack_telegraphs", "bug_spore_zones", "grey_displacements", "grey_tethers", "bug_brood", "merc_escorts"]:

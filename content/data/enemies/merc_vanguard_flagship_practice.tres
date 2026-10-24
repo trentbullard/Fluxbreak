@@ -11,7 +11,7 @@
 
 [resource]
 script = ExtResource("1_def")
-boss_description = "The Merc fleet's command carrier marks heavy broadside lanes and fixed siege salvos. Finite Corvette wings defend its shield network; eliminate them to stop its shield support and use the recovery windows to attack the flagship."
+boss_description = "The Merc fleet's command carrier marks heavy broadside lanes and fixed siege salvos. Continuing Corvette wings receive its shield support. Destroy the flagship to stop future wings and shield restoration; surviving escorts remain active."
 movement_def = ExtResource("6_movement")
 initial_delay_sec = 3.0
 broadside_windup_sec = 1.8
@@ -27,8 +27,6 @@ phase_three_cadence_multiplier = 0.7
 escort_def = ExtResource("7_escort")
 escort_offset = 150.0
 escorts_per_wing = 2
-escort_living_cap = 3
-escort_lifetime_cap = 6
 escort_shield_interval_sec = 12.0
 escort_shield_restore = 18.0
 escort_shield_radius = 480.0
@@ -41,9 +39,9 @@ threat_cost = 30
 bounty_scrap = 25
 can_be_elite = false
 score_on_kill = 500
-max_hull = 1000.0
-max_shield = 160.0
-shield_regen = 0.0
+max_hull = 1000
+max_shield = 160
+shield_regen = 1.5
 evasion = 0.01
 thrust = 70.0
 weapon = ExtResource("8_weapon")

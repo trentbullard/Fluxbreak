@@ -44,9 +44,9 @@ func _run_checks() -> void:
 	await _clear_enemies()
 	await _test_carrier_launch_and_lifetime()
 	await _clear_enemies()
-	await _test_shared_launch_caps()
+	await _test_multiple_launchers()
 	await _clear_enemies()
-	await _test_owner_cleanup()
+	await _test_owner_loss_persistence()
 	await _clear_enemies()
 	await _test_movement()
 	await _clear_enemies()
@@ -162,7 +162,7 @@ func _test_carrier_launch_and_lifetime() -> void:
 	var carrier: MercEnemy = _spawn_enemy(CARRIER, Vector3(0.0, 0.0, 250.0), request)
 	if carrier == null:
 		return
-	_check(is_instance_valid(carrier._escort_wing), "An ordinary Carrier owns a finite escort wing")
+	_check(is_instance_valid(carrier._escort_wing), "An ordinary Carrier owns an independent escort launcher")
 	_check(carrier._escort_interval_left > 0.0, "The first Carrier launch waits an authored interval")
 	carrier._attack_cooldown_left = 100.0
 	carrier._escort_interval_left = 0.0
@@ -191,68 +191,52 @@ func _test_carrier_launch_and_lifetime() -> void:
 	_check(is_equal_approx(CombatStats._frame_enemy_kill_pressure, pressure_before), "Defeating an escort does not inflate adaptive kill pressure")
 	await get_tree().process_frame
 	await get_tree().physics_frame
-	_check(wing.get_living_count() == 1 and wing.get_total_spawned() == 2, "Defeated escorts free living slots without refunding their lifetime allowance")
-	_check(wing.spawn_escorts(100) == 2, "An oversized request is clamped to the Carrier's living limit")
-	_freeze_escorts(wing)
-	_check(wing.get_living_count() == CARRIER.behavior.escort_alive_cap and wing.spawn_escorts(1) == 0, "A full wing cannot exceed its living cap")
-	wing.clear_escorts()
-	await get_tree().process_frame
-	await get_tree().physics_frame
-	_check(wing.spawn_escorts(100) == 2, "The final launch spends only its remaining lifetime allowance")
-	_freeze_escorts(wing)
-	_check(wing.get_total_spawned() == CARRIER.behavior.escort_total_cap, "A Carrier spends no more than six escorts over its lifetime")
-	wing.clear_escorts()
-	await get_tree().process_frame
-	await get_tree().physics_frame
-	_check(wing.spawn_escorts(1) == 0 and not carrier._can_release_escorts(), "An exhausted Carrier never replenishes its reserve")
-	_check(carrier.get_tactical_state().contains("exhausted"), "An exhausted Carrier exposes its depleted reserve in tactical status")
+	_check(wing.get_living_count() == 1 and wing.get_total_spawned() == 2, "Destroyed escorts leave accurate independent child accounting")
+	for launch: int in range(5):
+		carrier._escort_interval_left = 0.0
+		carrier._tick_carrier(0.01)
+		_check(carrier._escort_windup_left > 0.0, "Every repeated launch retains the visible launch warning")
+		carrier._tick_carrier(CARRIER.behavior.escort_windup_sec + 0.01)
+		_freeze_escorts(wing)
+	_check(wing.get_total_spawned() == 12 and wing.get_living_count() == 11, "Carrier continues full authored batches beyond its former living and lifetime limits")
+	_check(carrier._can_release_escorts(), "Living escorts do not stop future Carrier launches")
 	var summoned_request: SpawnRequest = SpawnRequest.new()
 	summoned_request.is_summoned = true
 	var summoned_carrier: MercEnemy = _spawn_enemy(CARRIER, Vector3(100.0, 0.0, 250.0), summoned_request)
 	_check(summoned_carrier != null and summoned_carrier._escort_wing == null, "A summoned Carrier cannot launch another generation")
 
-func _test_shared_launch_caps() -> void:
+func _test_multiple_launchers() -> void:
 	var first: MercEnemy = _spawn_enemy(CARRIER, Vector3(-100.0, 0.0, 250.0))
 	var second: MercEnemy = _spawn_enemy(CARRIER, Vector3(100.0, 0.0, 250.0))
 	if first == null or second == null:
 		return
-	first._escort_wing.setup(first, CORVETTE, 3, 8, 3, 50)
-	second._escort_wing.setup(second, CORVETTE, 3, 8, 3, 50)
-	_check(first._escort_wing.spawn_escorts(10) == 3, "The first source can occupy the shared global allowance")
-	var escorts: Array[Enemy] = _freeze_escorts(first._escort_wing)
-	_check(second._escort_wing.spawn_escorts(10) == 0, "A second source cannot exceed the shared global escort cap")
-	escorts[0].queue_free()
-	await get_tree().process_frame
-	await get_tree().physics_frame
-	_check(second._escort_wing.spawn_escorts(10) == 1, "A freed global slot admits exactly one escort from another source")
-	_freeze_escorts(second._escort_wing)
-	_check(first._escort_wing.get_living_count() + second._escort_wing.get_living_count() == 3, "Owned wing lists stay separate within the shared global cap")
-	first._escort_wing.clear_escorts()
-	second._escort_wing.clear_escorts()
-	await get_tree().process_frame
-	await get_tree().physics_frame
-	var encounter_cap: int = int(_spawner.get_alive_counts().get("enemies", 0)) + 1
-	first._escort_wing.setup(first, CORVETTE, 3, 8, 10, encounter_cap)
-	second._escort_wing.setup(second, CORVETTE, 3, 8, 10, encounter_cap)
-	_check(first._escort_wing.spawn_escorts(10) == 1, "A launch respects the total encounter enemy ceiling")
-	_freeze_escorts(first._escort_wing)
-	_check(second._escort_wing.spawn_escorts(10) == 0, "Other launchers cannot bypass the encounter enemy ceiling")
+	for launch: int in range(13):
+		_check(first._escort_wing.spawn_escorts(2) == 2 and second._escort_wing.spawn_escorts(2) == 2, "Multiple Carriers retain their full batch without source or shared minion ceilings")
+		_freeze_escorts(first._escort_wing)
+		_freeze_escorts(second._escort_wing)
+	_check(int(_spawner.get_alive_counts().get("enemies", 0)) == 54, "Escorts remain fully accounted beyond the former fifty-enemy summon ceiling")
 	var wrong_faction: MercEnemyDef = CORVETTE.duplicate() as MercEnemyDef
 	wrong_faction.faction = MACHINES
-	second._escort_wing.setup(second, wrong_faction, 3, 8)
+	second._escort_wing.setup(second, wrong_faction)
 	_check(second._escort_wing.spawn_escorts(1) == 0, "A wing rejects child definitions from another faction")
 
-func _test_owner_cleanup() -> void:
+func _test_owner_loss_persistence() -> void:
 	var carrier: MercEnemy = _spawn_enemy(CARRIER, Vector3(0.0, 0.0, 250.0))
 	if carrier == null:
 		return
 	carrier._escort_wing.spawn_escorts(2)
-	_freeze_escorts(carrier._escort_wing)
+	var independent_escorts: Array[Enemy] = _freeze_escorts(carrier._escort_wing)
 	var owner_id: int = carrier.get_instance_id()
 	carrier.apply_damage(1000000.0)
 	await get_tree().process_frame
 	await get_tree().physics_frame
-	_check(_owned_escort_count(owner_id) == 0, "Killing a Carrier removes all of its surviving escorts")
+	_check(_owned_escort_count(owner_id) == 2, "Killing a Carrier preserves all previously launched escorts")
+	var independent_score: int = RunState.run_score
+	var independent_drops: int = _drop_count()
+	independent_escorts[0].apply_damage(1000000.0)
+	await get_tree().process_frame
+	_check(_owned_escort_count(owner_id) == 1, "A parentless escort stays killable on its own")
+	_check(RunState.run_score == independent_score and _drop_count() == independent_drops, "Parentless escorts retain their reward exclusions")
 	var departing: MercEnemy = _spawn_enemy(CARRIER, Vector3(0.0, 0.0, 250.0))
 	departing._escort_wing.spawn_escorts(2)
 	_freeze_escorts(departing._escort_wing)
@@ -262,7 +246,7 @@ func _test_owner_cleanup() -> void:
 	departing.queue_free()
 	await get_tree().process_frame
 	await get_tree().physics_frame
-	_check(_owned_escort_count(owner_id) == 0, "Removing an owner from the encounter clears its surviving escorts")
+	_check(_owned_escort_count(owner_id) == 2, "Removing a Carrier leaves its launched escorts alive")
 	_check(RunState.run_score == score_before and _drop_count() == drops_before, "Owner-exit cleanup awards no kills or drops")
 	var interrupted: MercEnemy = _spawn_enemy(CARRIER, Vector3(0.0, 0.0, 250.0))
 	interrupted._escort_interval_left = 0.0

@@ -46,7 +46,7 @@ func _run_checks() -> void:
 	await _clear_enemies()
 	await _test_zone_caps_and_cleanup()
 	await _clear_enemies()
-	await _test_shared_brood_caps()
+	await _test_independent_brood()
 	await _clear_enemies()
 	print("BUG_ADVANCED_CHECKS: %s (%d assertions, %d failures)" % ["PASS" if _failures == 0 else "FAIL", _assertions, _failures])
 	get_tree().quit(0 if _failures == 0 else 1)
@@ -166,14 +166,14 @@ func _test_hive_alternation() -> void:
 	var hive: BugEnemy = _spawn_enemy(HIVE_QUEEN, Vector3(0.0, 0.0, 240.0))
 	if hive == null:
 		return
-	_check(is_instance_valid(hive._brood), "Hive Queen owns the shared finite brood helper")
+	_check(is_instance_valid(hive._brood), "Hive Queen owns the shared independent brood launcher")
 	hive._brood_interval_left = 0.0
 	hive._zone_interval_left = 0.0
 	hive._tick_hive_queen(0.01)
 	_check(hive._brood_windup_left > 0.0 and hive._brood_label.visible, "Hive Queen advertises its first brood pulse")
 	_check(hive._brood.get_total_spawned() == 0 and hive._active_zone == null, "Brood warning creates no early children or overlapping zone")
 	hive._tick_hive_queen(HIVE_QUEEN.behavior.brood_windup_sec + 0.01)
-	_check(hive._brood.get_total_spawned() == HIVE_QUEEN.behavior.brood_burst_count, "Finished Hive brood warning spends exactly its authored finite burst")
+	_check(hive._brood.get_total_spawned() == HIVE_QUEEN.behavior.brood_burst_count, "Finished Hive brood warning spends exactly its authored burst")
 	_freeze_brood()
 	_check(hive._hive_next_is_zone and hive._recovery_left > 0.0, "Hive alternates to a zone only after release recovery")
 	hive._tick_hive_queen(0.01)
@@ -196,12 +196,13 @@ func _test_hive_alternation() -> void:
 	_ship.global_position = Vector3.ZERO
 	hive._recovery_left = 0.0
 	hive._zones_created = HIVE_QUEEN.behavior.zone_total_cap
-	hive._brood.setup(hive, SPORELING, 4, 0, 12, 50)
+	var prior_children: int = hive._brood.get_total_spawned()
+	hive._brood_interval_left = 0.0
 	hive._hive_next_is_zone = true
 	for step: int in range(10):
 		hive._zone_interval_left = 0.0
 		hive._tick_hive_queen(1.0)
-	_check(hive._active_zone == null and hive._brood_windup_left <= 0.0, "Hive cannot replenish exhausted zone or child lifetime budgets")
+	_check(hive._active_zone == null and hive._brood.get_total_spawned() > prior_children, "Exhausted spore-zone reserves do not stop later brood releases")
 	var summoned_request: SpawnRequest = SpawnRequest.new()
 	summoned_request.is_summoned = true
 	var summoned: BugEnemy = _spawn_enemy(HIVE_QUEEN, Vector3(100.0, 0.0, 240.0), summoned_request)
@@ -282,25 +283,18 @@ func _test_zone_caps_and_cleanup() -> void:
 	await get_tree().process_frame
 	_check(not is_instance_valid(attack), "Killing a Devourer during its warning cancels the charge")
 
-func _test_shared_brood_caps() -> void:
+func _test_independent_brood() -> void:
 	var hive: BugEnemy = _spawn_enemy(HIVE_QUEEN, Vector3(-100.0, 0.0, 240.0))
 	var mother: BugEnemy = _spawn_enemy(BROODMOTHER, Vector3(100.0, 0.0, 240.0))
 	if hive == null or mother == null:
 		return
-	hive._brood.setup(hive, SPORELING, 3, 5, 3, 50)
-	mother._brood.setup(mother, SPORELING, 3, 5, 3, 50)
-	_check(hive._brood.spawn_brood(100) == 3, "Hive brood respects its requested living capacity")
-	_freeze_brood()
-	_check(mother._brood.spawn_brood(100) == 0, "Hive Queen and Broodmother share one global brood ceiling")
+	for release: int in range(7):
+		_check(hive._brood.spawn_brood(2) == 2 and mother._brood.spawn_brood(2) == 2, "Hive Queen and Broodmother release full batches without a shared minion ceiling")
+		_freeze_brood()
 	for child: Node in get_tree().get_nodes_in_group("bug_brood"):
 		var enemy: Enemy = child as Enemy
 		_check(enemy._spawn_context.is_summoned and not enemy._spawn_context.grants_kill_rewards and not enemy._spawn_context.contributes_to_pressure, "Hive brood cannot create grandchildren, rewards, or adaptive kill pressure")
 		_check(enemy.collision_layer == 8 and enemy.collision_mask == 0, "Hive brood remains targetable without physical collision")
-	hive._brood.clear_brood()
-	await get_tree().process_frame
-	await get_tree().physics_frame
-	_check(hive._brood.get_total_spawned() == 3 and mother._brood.spawn_brood(100) == 3, "Clearing brood frees shared living slots without refunding lifetime budgets")
-	_freeze_brood()
 	var owner_id: int = mother.get_instance_id()
 	mother.queue_free()
 	await get_tree().process_frame
@@ -309,7 +303,7 @@ func _test_shared_brood_caps() -> void:
 	for child: Node in get_tree().get_nodes_in_group("bug_brood"):
 		if int(child.get_meta("brood_parent_id", 0)) == owner_id:
 			remaining += 1
-	_check(remaining == 0, "Exiting a brood owner removes every surviving owned child")
+	_check(remaining == 14, "Removing a brood owner preserves all previously released children")
 
 func _make_zone(source: BugEnemy, pulses: int) -> BugSporeZone:
 	var zone: BugSporeZone = BugSporeZone.new()

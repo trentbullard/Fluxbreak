@@ -44,7 +44,7 @@ func _run_checks() -> void:
 	await _clear_enemies()
 	await _check_locked_damage_and_pause()
 	await _clear_enemies()
-	await _check_finite_wings_and_support()
+	await _check_wings_and_support()
 	await _clear_enemies()
 	await _check_death_and_exit_cleanup()
 	await _clear_enemies()
@@ -101,7 +101,7 @@ func _check_scaling_and_transitions() -> void:
 	_freeze_escorts(boss)
 	_expect(boss.get_phase() == 2 and int(boss.get_meta("flagship_phase")) == 2, "Crossing 70 percent hull enters the second phase")
 	_expect(is_equal_approx(boss._attack.get_time_remaining(), warning_before), "Second phase cannot shorten an already committed warning")
-	_expect(boss.get_living_escort_count() <= BOSS_DEF.escort_living_cap, "Phase reserves respect the shared living escort cap")
+	_expect(boss.get_living_escort_count() == BOSS_DEF.escorts_per_wing * 2, "The second phase adds its complete wing alongside surviving arrival escorts")
 	var hull_before: float = boss.hull
 	boss.apply_damage(1.0)
 	_expect(is_equal_approx(boss.hull, hull_before - 1.0), "Flagship remains damageable during an active warning and phase transition")
@@ -199,7 +199,7 @@ func _check_locked_damage_and_pause() -> void:
 	await _wait(0.32)
 	_expect(is_equal_approx(_ship.hull + _ship.shield, health_before), "Leaving the separately marked salvo sphere also avoids all damage")
 
-func _check_finite_wings_and_support() -> void:
+func _check_wings_and_support() -> void:
 	var boss: MercFlagship = _spawn_boss(true)
 	if boss == null:
 		return
@@ -252,12 +252,12 @@ func _check_finite_wings_and_support() -> void:
 	boss.apply_damage(boss.eff_max_hull * 0.3)
 	boss._update_weapons(_ship, 0.0)
 	_freeze_escorts(boss)
-	_expect(boss.get_living_escort_count() == 2 and boss.get_total_escorts_spawned() == 6, "Final phase consumes the last finite reserve wing")
+	_expect(boss.get_living_escort_count() == 2 and boss.get_total_escorts_spawned() == 6, "Final phase requests its authored complete reserve wing")
 	for escort: Enemy in boss._escort_wing.get_living_escorts():
 		escort.apply_damage(1000000.0)
 	await _wait(0.08)
 	boss._request_escort_wing()
-	_expect(boss.get_living_escort_count() == 0 and boss.get_total_escorts_spawned() == 6, "No phase or request can bypass the shared six-escort lifetime cap")
+	_expect(boss.get_living_escort_count() == 2 and boss.get_total_escorts_spawned() == 8, "A requested wing is not truncated by a former lifetime minion cap")
 
 func _check_death_and_exit_cleanup() -> void:
 	for direct_exit: bool in [false, true]:
@@ -276,8 +276,8 @@ func _check_death_and_exit_cleanup() -> void:
 			boss.apply_damage(1000000.0)
 		await _wait(0.4)
 		_expect(is_equal_approx(_ship.hull + _ship.shield, health_before), "Boss %s cancels pending damage" % ("exit" if direct_exit else "death"))
-		_expect(get_tree().get_nodes_in_group("enemy_attack_telegraphs").is_empty() and get_tree().get_nodes_in_group("merc_escorts").is_empty(), "Boss %s removes its warning and all owned escorts" % ("exit" if direct_exit else "death"))
-		_expect(int(_spawner.get_alive_counts()["enemies"]) == 0, "Boss %s returns real Spawner accounting to zero" % ("exit" if direct_exit else "death"))
+		_expect(get_tree().get_nodes_in_group("enemy_attack_telegraphs").is_empty() and get_tree().get_nodes_in_group("merc_escorts").size() == 2, "Boss %s removes its warning while preserving launched escorts" % ("exit" if direct_exit else "death"))
+		_expect(int(_spawner.get_alive_counts()["enemies"]) == 2, "Boss %s leaves surviving escorts in real Spawner accounting" % ("exit" if direct_exit else "death"))
 
 func _freeze_escorts(boss: MercFlagship) -> void:
 	for escort: Enemy in boss._escort_wing.get_living_escorts():
@@ -304,6 +304,8 @@ func _make_socket_deterministic(boss: MercFlagship) -> void:
 		socket.eff_damage_max = 12.0
 
 func _clear_enemies() -> void:
+	for child: Node in get_tree().get_nodes_in_group(MercEscortWing.ESCORT_GROUP):
+		child.queue_free()
 	get_tree().paused = false
 	for boss: MercFlagship in _bosses:
 		if is_instance_valid(boss) and not boss.is_queued_for_deletion():

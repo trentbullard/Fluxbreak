@@ -32,12 +32,11 @@ func configure_enemy(d: EnemyDef, spawn_context: EnemySpawnContext = null) -> vo
 	_state_remaining_sec = _bug_def.initial_delay_sec
 	set_meta("bug_phase", 1)
 	if is_instance_valid(_brood_spawner):
-		_brood_spawner.clear_brood()
 		_brood_spawner.queue_free()
 	_brood_spawner = BugBroodSpawner.new()
 	_brood_spawner.name = "MatronBroodSpawner"
 	add_child(_brood_spawner)
-	_brood_spawner.setup(self, _bug_def.brood_child_def, _bug_def.brood_alive_cap, _bug_def.brood_total_cap, 12, 50, _bug_def.brood_spawn_radius)
+	_brood_spawner.setup(self, _bug_def.brood_child_def, _bug_def.brood_spawn_radius)
 
 func _ready() -> void:
 	super._ready()
@@ -200,8 +199,6 @@ func _clear_encounter_runtime() -> void:
 	_active_socket = null
 	linear_velocity = Vector3.ZERO
 	_restore_swelling()
-	if is_instance_valid(_brood_spawner):
-		_brood_spawner.clear_brood()
 
 func _exit_tree() -> void:
 	_clear_encounter_runtime()

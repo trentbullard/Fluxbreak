@@ -29,6 +29,7 @@ var _weapon_host: Object = null
 var _effects: Array[StatusEffectDef] = []
 var _context: CombatStatContext = null
 var _locked_origin: Vector3 = Vector3.ZERO
+var _locked_shot_origin: Vector3 = Vector3.ZERO
 var _locked_position: Vector3 = Vector3.ZERO
 var _radius: float = 1.0
 var _corridor: bool = false
@@ -44,13 +45,38 @@ var _progress_material: StandardMaterial3D = null
 var _label: Label3D = null
 var _warning_label: String = ""
 var _warning_tint: Color = Color(1.0, 0.62, 0.12, 0.85)
+var _response_hint: String = "MOVE CLEAR"
+var _companions: Array[EnemyAttackTelegraph] = []
+var _pattern_hit: bool = false
+var _resolution_emitted: bool = false
+
+## A complementary warning gets its own geometry/countdown. The owning actor
+## recovers only after every member resolves; cancelling the primary cancels all.
+func add_companion(warning: EnemyAttackTelegraph) -> void:
+	if warning == null or warning == self or _companions.has(warning):
+		return
+	_companions.append(warning)
+	warning.resolved.connect(_on_companion_resolved.bind(warning), CONNECT_ONE_SHOT)
+
+func _on_companion_resolved(hit: bool, warning: EnemyAttackTelegraph) -> void:
+	_pattern_hit = _pattern_hit or hit
+	_companions.erase(warning)
+	_emit_pattern_resolution()
+
+func _emit_pattern_resolution() -> void:
+	if _has_resolved and _companions.is_empty() and not _resolution_emitted:
+		_resolution_emitted = true
+		resolved.emit(_pattern_hit)
 
 ## Set a faction-specific attack name and warning tint before starting it.
 func set_warning_style(label: String, tint: Color) -> void:
 	_warning_label = label.strip_edges()
 	_warning_tint = tint
 
-func start_attack(source: Enemy, target: Node3D, weapon_host: Object, windup_sec: float, radius: float, corridor: bool = false, locked_position: Vector3 = Vector3.INF) -> void:
+func set_response_hint(hint: String) -> void:
+	_response_hint = hint
+
+func start_attack(source: Enemy, target: Node3D, weapon_host: Object, windup_sec: float, radius: float, corridor: bool = false, locked_position: Vector3 = Vector3.INF, locked_origin: Vector3 = Vector3.INF) -> void:
 	if _active or _has_resolved:
 		return
 	if not is_instance_valid(source) or not is_instance_valid(target) or not is_instance_valid(weapon_host):
@@ -59,7 +85,8 @@ func start_attack(source: Enemy, target: Node3D, weapon_host: Object, windup_sec
 	_source = source
 	_target = target
 	_weapon_host = weapon_host
-	_locked_origin = WeaponCombatResolver.get_shot_origin(weapon_host)
+	_locked_shot_origin = WeaponCombatResolver.get_shot_origin(weapon_host)
+	_locked_origin = locked_origin if locked_origin.is_finite() else _locked_shot_origin
 	_locked_position = locked_position if locked_position.is_finite() else target.global_position
 	_radius = maxf(radius, 1.0)
 	_corridor = corridor
@@ -76,7 +103,7 @@ func start_attack(source: Enemy, target: Node3D, weapon_host: Object, windup_sec
 	_update_visuals(0.0)
 
 func get_shot_origin() -> Vector3:
-	return _locked_origin
+	return _locked_shot_origin
 
 func is_warning_for(target: Node3D) -> bool:
 	return _active and not _has_resolved and _target == target
@@ -88,10 +115,14 @@ func get_attack_label() -> String:
 	return _warning_label if not _warning_label.is_empty() else ("CORRIDOR" if _corridor else "SALVO")
 
 func get_response_hint() -> String:
-	return "MOVE CLEAR"
+	return _response_hint
 
 func cancel() -> void:
 	_active = false
+	for warning: EnemyAttackTelegraph in _companions:
+		if is_instance_valid(warning):
+			warning.cancel()
+	_companions.clear()
 	queue_free()
 
 ## Uses the same locked volume drawn by the warning. Ship evasion is still
@@ -112,6 +143,8 @@ func contains_position(world_position: Vector3) -> bool:
 
 func _physics_process(delta: float) -> void:
 	if _has_resolved:
+		if not _companions.is_empty():
+			return
 		_flash_remaining_sec -= delta
 		if _flash_remaining_sec <= 0.0:
 			queue_free()
@@ -169,7 +202,8 @@ func _resolve_attack() -> void:
 			turret.shot_sound.play()
 	_wire_material.albedo_color = Color(1.0, 0.85, 0.4, 1.0)
 	_label.text = "FIRE" if did_hit else "CLEAR"
-	resolved.emit(did_hit)
+	_pattern_hit = _pattern_hit or did_hit
+	_emit_pattern_resolution()
 
 func _on_source_died(_enemy: Enemy) -> void:
 	cancel()

@@ -1,0 +1,46 @@
+[gd_resource type="Resource" script_class="GreyBossDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/grey_boss_def.gd" id="1_def"]
+
+[ext_resource type="Resource" path="res://content/data/factions/greys.tres" id="2_faction"]
+[ext_resource type="Resource" path="res://content/data/enemy_roles/bruiser.tres" id="3_role"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/grey_witness.tscn" id="4_actor"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/grey_witness_mk1.tscn" id="5_model"]
+[ext_resource type="Resource" path="res://content/data/boss_movement/grey_witness_movement.tres" id="6_movement"]
+[ext_resource type="Resource" path="res://content/data/weapons/grey_witness.tres" id="7_weapon"]
+
+[resource]
+script = ExtResource("1_def")
+boss_description = "The Witness relocates before marking a crossing lane and a current-position rupture. Its directional tether briefly slows movement; leave the marked corridor, gain distance, or destroy the source to break free. Below 55% combined hull and shields the cadence quickens. Change heading or climb away from committed warnings."
+movement_def = ExtResource("6_movement")
+initial_delay_sec = 2.8
+displacement_windup_sec = 1.2
+displacement_distance = 190
+rupture_windup_sec = 1.8
+rupture_radius = 81.6
+tether_windup_sec = 1.4
+tether_duration_sec = 3.0
+tether_break_distance = 420
+tether_movement_factor = 0.7
+tether_radius = 43.2
+recovery_sec = 1.2
+cadence_sec = 0.8
+phase_hull_threshold = 0.55
+phase_cadence_multiplier = 0.75
+id = "grey_witness_mk1"
+display_name = "The Witness"
+faction = ExtResource("2_faction")
+role = ExtResource("3_role")
+tier = 4
+threat_cost = 15
+bounty_scrap = 25
+can_be_elite = false
+score_on_kill = 500
+max_hull = 190
+max_shield = 520
+shield_regen = 3
+evasion = 0.04
+thrust = 75
+weapon = ExtResource("7_weapon")
+actor_scene = ExtResource("4_actor")
+model_scene = ExtResource("5_model")

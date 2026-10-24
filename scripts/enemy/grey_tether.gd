@@ -12,7 +12,7 @@ var _attached: bool = false
 var _ever_attached: bool = false
 var _finished: bool = false
 
-func start_tether(source: Enemy, target: Ship, windup_sec: float = 1.3, duration_sec: float = 2.5, slow_multiplier: float = 0.75, break_distance: float = 360.0, radius: float = 36.0) -> bool:
+func start_tether(source: Enemy, target: Ship, windup_sec: float = 1.3, duration_sec: float = 2.5, slow_multiplier: float = 0.75, break_distance: float = 360.0, radius: float = 43.2, corridor_end: Vector3 = Vector3.INF, corridor_start: Vector3 = Vector3.INF) -> bool:
 	if _active or _finished or not is_inside_tree() or not is_instance_valid(source) or source._dead or not is_instance_valid(target) or not target.is_alive() or target.is_tether_immune() or target.get_tether_time_remaining() > 0.0:
 		return false
 	_ship = target
@@ -22,7 +22,11 @@ func start_tether(source: Enemy, target: Ship, windup_sec: float = 1.3, duration
 	if source.global_position.distance_squared_to(target.global_position) > _break_distance * _break_distance:
 		return false
 	set_warning_style("TETHER CAPTURE", Color(0.8, 0.46, 1.0, 0.9))
-	start_attack(source, target, source, windup_sec, radius)
+	var directional: bool = corridor_end.is_finite() and corridor_start.is_finite()
+	if directional:
+		set_warning_style("CAPTURE CORRIDOR", Color(0.8, 0.46, 1.0, 0.9))
+		set_response_hint("TURN OUT OF THE LANE")
+	start_attack(source, target, source, windup_sec, radius, directional, corridor_end, corridor_start)
 	add_to_group("grey_tethers")
 	return _active
 
@@ -39,10 +43,10 @@ func get_time_remaining() -> float:
 	return _ship.get_tether_time_remaining() if _attached and is_instance_valid(_ship) else super.get_time_remaining()
 
 func get_attack_label() -> String:
-	return "TETHER LINK" if _attached else "TETHER CAPTURE"
+	return "TETHER LINK" if _attached else ("CAPTURE CORRIDOR" if _corridor else "TETHER CAPTURE")
 
 func get_response_hint() -> String:
-	return "MOVE AWAY TO BREAK" if _attached else "MOVE CLEAR"
+	return "MOVE AWAY TO BREAK" if _attached else super.get_response_hint()
 
 func cancel() -> void:
 	_finish()
