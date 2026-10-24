@@ -17,6 +17,10 @@ enum Mode { CORVETTE, FRIGATE, DESTROYER, CRUISER, CARRIER }
 @export_range(0.1, 10.0, 0.1) var steering_response: float = 2.0
 ## Fraction of preferred speed used for lateral movement while in position.
 @export_range(0.0, 1.0, 0.05) var orbit_strength: float = 0.25
+## Corvette orbit-axis change period; heavier Mercs retain their existing steering.
+@export_range(0.25, 10.0, 0.05) var jink_interval_sec: float = 2.6
+## Corvette orbit-plane tilt, giving strafes a three-dimensional evasive weave.
+@export_range(0.0, 1.0, 0.05) var jink_strength: float = 0.55
 
 @export_group("Weapon Cadence")
 ## Shots per Corvette attack; each shot still uses the shared weapon hit roll.

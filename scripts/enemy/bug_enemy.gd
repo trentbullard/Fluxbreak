@@ -16,6 +16,7 @@ var _brood_label: Label3D = null
 var _animated_model: Node3D = null
 var _rest_model_scale: Vector3 = Vector3.ONE
 var _orbit_direction: float = 1.0
+var _evasive_orbit: EvasiveOrbitSteering = EvasiveOrbitSteering.new()
 var _active_zone: BugSporeZone = null
 var _zones_created: int = 0
 var _zone_interval_left: float = 0.0
@@ -26,6 +27,7 @@ var _charge_endpoint: Vector3 = Vector3.ZERO
 var _charge_time_left: float = 0.0
 
 func configure_enemy(d: EnemyDef, spawn_context: EnemySpawnContext = null) -> void:
+	_evasive_orbit.reset(get_instance_id())
 	_cancel_attack()
 	_cancel_zone()
 	_clear_brood_spawner()
@@ -98,7 +100,7 @@ func _physics_process(delta: float) -> void:
 		_face_target(player_ship.global_position)
 	match _behavior.mode:
 		BugBehaviorDef.Mode.SPORELING:
-			_tick_sporeling()
+			_tick_sporeling(delta)
 		BugBehaviorDef.Mode.CARAPACE:
 			_tick_carapace()
 		BugBehaviorDef.Mode.BROODMOTHER:
@@ -110,6 +112,8 @@ func _physics_process(delta: float) -> void:
 	_apply_separation_pulse()
 
 func is_separation_locked() -> bool:
+	if _behavior.mode == BugBehaviorDef.Mode.SPORELING:
+		return false
 	return is_instance_valid(_active_attack) or _charge_time_left > 0.0 or _brood_windup_left > 0.0 or is_instance_valid(_active_zone) or _recovery_left > 0.0
 
 func get_tactical_state() -> String:
@@ -143,10 +147,16 @@ func get_tactical_state() -> String:
 		_:
 			return "Swarm pursuit"
 
-func _tick_sporeling() -> void:
-	if _tick_committed_attack():
+func _tick_sporeling(delta: float = 1.0 / 60.0) -> void:
+	var desired: Vector3 = _evasive_orbit.desired_velocity(delta, player_ship.global_position - global_position, player_ship.linear_velocity, _behavior.approach_range * 0.45, _behavior.approach_range * 0.8, _behavior.max_speed, _behavior.orbit_strength, _orbit_direction, _behavior.jink_interval_sec, _behavior.jink_strength)
+	_steer_to_velocity(desired)
+	# Its strike stays at the captured player position; the small hull can weave.
+	if is_instance_valid(_active_attack):
+		_animate_contraction(1.0 - _active_attack.get_time_remaining() / maxf(_behavior.attack_windup_sec, 0.2))
 		return
-	_steer_in_band(player_ship.global_position, _behavior.approach_range * 0.45, _behavior.approach_range * 0.8)
+	_animate_contraction(0.0)
+	if _recovery_left > 0.0:
+		return
 	if _attack_cooldown_left <= 0.0 and _is_player_in_attack_range():
 		_start_attack(false, "SPORE STRIKE")
 

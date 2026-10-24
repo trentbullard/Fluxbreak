@@ -24,6 +24,7 @@ class_name EnemyCombatScalingDef
 @export var evasion_bonus_cap: float = 0.05
 
 @export_group("Reward Strength")
-@export var nanobot_base_strength: float = 0.55
+## Additional drop value per combat intensity; independent of enemy quantity budgets.
+@export var nanobot_base_strength: float = 0.20
 @export_range(0.0, 1.0, 0.01) var nanobot_variance_pct: float = 0.15
 @export var nanobot_min_multiplier: float = 1.0

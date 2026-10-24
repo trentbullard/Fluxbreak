@@ -20,6 +20,7 @@ var _escort: Enemy = null
 var _active_attack: EnemyAttackTelegraph = null
 var _support_links: Array[Dictionary] = []
 var _orbit_direction: float = 1.0
+var _evasive_orbit: EvasiveOrbitSteering = EvasiveOrbitSteering.new()
 var _broadside_side: float = 1.0
 var _broadside_shots_left: int = 0
 var _broadside_interval_left: float = 0.0
@@ -30,6 +31,7 @@ var _escort_windup_left: float = 0.0
 var _escort_label: Label3D = null
 
 func configure_enemy(d: EnemyDef, spawn_context: EnemySpawnContext = null) -> void:
+	_evasive_orbit.reset(get_instance_id())
 	_cancel_charge()
 	_clear_escort_wing()
 	super.configure_enemy(d, spawn_context)
@@ -129,13 +131,13 @@ func _tick_corvette(delta: float) -> void:
 	var target_position: Vector3 = player_ship.global_position
 	match _corvette_state:
 		CorvetteState.APPROACH:
-			_steer_in_band(target_position, _behavior.approach_range * 0.7, _behavior.approach_range)
+			_steer_corvette(delta, target_position, _behavior.approach_range * 0.7, _behavior.approach_range)
 			if _attack_cooldown_left <= 0.0 and _is_within_distance(player_ship, _behavior.approach_range) and _has_target_in_weapon_range():
 				_corvette_state = CorvetteState.BURST
 				_burst_shots_left = maxi(_behavior.burst_shots, 1)
 				_burst_interval_left = 0.0
 		CorvetteState.BURST:
-			_steer_in_band(target_position, _behavior.approach_range * 0.65, _behavior.retreat_range)
+			_steer_corvette(delta, target_position, _behavior.approach_range * 0.65, _behavior.approach_range)
 			_burst_interval_left -= delta
 			if _burst_interval_left <= 0.0:
 				_fire_controlled_shot()
@@ -146,10 +148,14 @@ func _tick_corvette(delta: float) -> void:
 					_retreat_time_left = maxf(_behavior.retreat_duration_sec, 0.1)
 					_attack_cooldown_left = maxf(_behavior.attack_cooldown_sec, 0.1)
 		CorvetteState.RETREAT:
-			_steer_in_band(target_position, _behavior.retreat_range, _behavior.retreat_range * 1.1)
+			_steer_corvette(delta, target_position, _behavior.retreat_range, _behavior.retreat_range * 1.1)
 			_retreat_time_left -= delta
 			if _retreat_time_left <= 0.0:
 				_corvette_state = CorvetteState.APPROACH
+
+func _steer_corvette(delta: float, target_position: Vector3, inner_range: float, outer_range: float) -> void:
+	var desired: Vector3 = _evasive_orbit.desired_velocity(delta, target_position - global_position, player_ship.linear_velocity, inner_range, outer_range, _behavior.max_speed, _behavior.orbit_strength, _orbit_direction, _behavior.jink_interval_sec, _behavior.jink_strength)
+	_steer_to_velocity(desired)
 
 func _tick_frigate(delta: float) -> void:
 	_escort_scan_left -= delta

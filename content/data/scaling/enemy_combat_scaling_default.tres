@@ -12,3 +12,4 @@ damage_strength = 0.55
 fire_rate_haste_strength = 0.38
 evasion_bonus_per_intensity = 0.018
 evasion_bonus_cap = 0.12
+nanobot_base_strength = 0.2

@@ -17,6 +17,10 @@ enum Mode { PROBE, SEEKER, VESSEL, HARBINGER, MOTHERSHIP }
 @export_range(0.1, 10.0, 0.1) var steering_response: float = 2.2
 ## Fraction of preferred speed spent drifting sideways in the combat band.
 @export_range(0.0, 1.0, 0.05) var orbit_strength: float = 0.4
+## Probe orbit-axis change period; heavier Greys keep their advertised holds.
+@export_range(0.25, 10.0, 0.05) var jink_interval_sec: float = 2.2
+## Probe orbit-plane tilt; committed pulse geometry stays fixed while it moves.
+@export_range(0.0, 1.0, 0.05) var jink_strength: float = 0.75
 
 @export_group("Psionic Pulse")
 ## Minimum time between a resolved action and another ordinary windup.
@@ -24,8 +28,8 @@ enum Mode { PROBE, SEEKER, VESSEL, HARBINGER, MOTHERSHIP }
 ## Visible delay before the player's position is tested in the locked sphere.
 @export_range(0.3, 8.0, 0.05) var attack_windup_sec: float = 1.2
 ## Radius of the pulse's locked danger volume.
-@export_range(1.0, 200.0, 1.0) var attack_radius: float = 40.8
-## Exposed pause after the pulse or completed tether.
+@export_range(1.0, 200.0, 1.0) var attack_radius: float = 46.92
+## Weapon recovery after a pulse or tether; Probes continue their evasive orbit.
 @export_range(0.1, 8.0, 0.05) var attack_recovery_sec: float = 0.6
 
 @export_group("Advanced Coordination")
@@ -34,9 +38,9 @@ enum Mode { PROBE, SEEKER, VESSEL, HARBINGER, MOTHERSHIP }
 ## Maximum prediction offset, retaining an affordable course-change escape.
 @export_range(0.0, 2000.0, 5.0) var forecast_max_lead: float = 1200.0
 ## Half-length of a crosswise phase/capture corridor.
-@export_range(20.0, 400.0, 5.0) var corridor_half_length: float = 126.0
+@export_range(20.0, 400.0, 5.0) var corridor_half_length: float = 144.9
 ## Width radius of the directional warning, deliberately smaller than a rupture.
-@export_range(5.0, 80.0, 1.0) var corridor_radius: float = 30.0
+@export_range(5.0, 80.0, 1.0) var corridor_radius: float = 34.5
 ## Extra warning time before the second simultaneously announced echo releases.
 @export_range(0.3, 4.0, 0.05) var rupture_second_gap_sec: float = 0.6
 ## Minimum exposed pause between the Mothership's different coordinated actions.
@@ -66,4 +70,4 @@ enum Mode { PROBE, SEEKER, VESSEL, HARBINGER, MOTHERSHIP }
 ## Distance from the Vessel that immediately breaks the attached tether.
 @export_range(100.0, 600.0, 1.0) var tether_break_distance: float = 420.0
 ## Radius of the locked tether warning around the player's initial position.
-@export_range(1.0, 200.0, 1.0) var tether_radius: float = 45.6
+@export_range(1.0, 200.0, 1.0) var tether_radius: float = 52.44

@@ -356,12 +356,19 @@ func _check_physical_crowd(count: int) -> void:
 		actor._attack_cooldown_left = 1000.0
 		actors.append(actor)
 	_service.set_physics_process(true)
+	# Scouts now sustain a faster authored orbit. Allow one maximum separation
+	# nudge above that cruise speed, and check every frame for runaway impulses.
+	var speed_bound: float = (CORVETTE as MercEnemyDef).behavior.max_speed + _service.max_pulse_speed + 5.0
+	var all_finite_and_bounded: bool = true
+	var peak_speed_squared: float = 0.0
 	for frame: int in range(300):
 		await get_tree().physics_frame
+		for actor: Enemy in actors:
+			peak_speed_squared = maxf(peak_speed_squared, actor.linear_velocity.length_squared())
+			all_finite_and_bounded = all_finite_and_bounded and actor.global_position.is_finite() and actor.linear_velocity.is_finite() and actor.linear_velocity.length_squared() <= speed_bound * speed_bound
 	var nearest_sum: float = 0.0
 	var lateral_sum: float = 0.0
 	var forward_sum: float = 0.0
-	var all_finite_and_bounded: bool = true
 	var collision_unchanged: bool = true
 	for actor: Enemy in actors:
 		var nearest_sq: float = INF
@@ -371,10 +378,9 @@ func _check_physical_crowd(count: int) -> void:
 		nearest_sum += sqrt(nearest_sq)
 		lateral_sum += Vector2(actor.global_position.x, actor.global_position.y).length()
 		forward_sum += actor.global_position.z - start.z
-		all_finite_and_bounded = all_finite_and_bounded and actor.global_position.is_finite() and actor.linear_velocity.is_finite() and actor.linear_velocity.length() < 180.0
 		collision_unchanged = collision_unchanged and actor.collision_layer == 8 and actor.collision_mask == 0
 	var nearest_mean: float = nearest_sum / float(count)
-	print("SEPARATION_CROWD: %d Mercs, mean nearest %.2f m, mean lateral %.2f m, approach %.2f m, %d scans" % [count, nearest_mean, lateral_sum / float(count), forward_sum / float(count), _service.get_scan_count()])
+	print("SEPARATION_CROWD: %d Mercs, mean nearest %.2f m, mean lateral %.2f m, approach %.2f m, peak speed %.2f m/s (bound %.2f), %d scans" % [count, nearest_mean, lateral_sum / float(count), forward_sum / float(count), sqrt(peak_speed_squared), speed_bound, _service.get_scan_count()])
 	_check(nearest_mean > 1.0, "%d exactly overlapped live Mercs physically spread without collisions" % count)
 	_check(lateral_sum / float(count) > 5.0, "%d Mercs gain visible lateral dispersion" % count)
 	_check(forward_sum / float(count) > 20.0, "%d Mercs retain their approach locomotion while dispersing" % count)

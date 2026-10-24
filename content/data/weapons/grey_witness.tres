@@ -13,5 +13,5 @@ accuracy_range_falloff = 0
 crit_chance = 0
 graze_on_hit = 0
 graze_on_miss = 0
-damage_min = 35
-damage_max = 45
+damage_min = 42.0
+damage_max = 54.0

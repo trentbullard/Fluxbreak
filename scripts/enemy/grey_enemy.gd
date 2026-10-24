@@ -14,12 +14,14 @@ var _recovery_left: float = 0.0
 var _post_displacement_pulse: bool = false
 var _vessel_next_pulse: bool = false
 var _orbit_direction: float = 1.0
+var _evasive_orbit: EvasiveOrbitSteering = EvasiveOrbitSteering.new()
 var _target_scan_left: float = 0.0
 var _mothership_next_action: int = 0
 var _cancelling_specials: bool = false
 var _coordination_cooldown_left: float = 0.0
 
 func configure_enemy(d: EnemyDef, spawn_context: EnemySpawnContext = null) -> void:
+	_evasive_orbit.reset(get_instance_id())
 	_cancel_specials()
 	super.configure_enemy(d, spawn_context)
 	var grey_def: GreyEnemyDef = d as GreyEnemyDef
@@ -61,7 +63,7 @@ func _physics_process(delta: float) -> void:
 		_face_target(player_ship.global_position)
 	match _behavior.mode:
 		GreyBehaviorDef.Mode.PROBE:
-			_tick_probe()
+			_tick_probe(delta)
 		GreyBehaviorDef.Mode.SEEKER:
 			_tick_seeker()
 		GreyBehaviorDef.Mode.VESSEL:
@@ -73,6 +75,8 @@ func _physics_process(delta: float) -> void:
 	_apply_separation_pulse()
 
 func is_separation_locked() -> bool:
+	if _behavior.mode == GreyBehaviorDef.Mode.PROBE and not is_instance_valid(_displacement) and not is_instance_valid(_tether):
+		return false
 	return is_instance_valid(_active_attack) or is_instance_valid(_displacement) or is_instance_valid(_tether) or _recovery_left > 0.0 or _post_displacement_pulse
 
 func get_tactical_state() -> String:
@@ -96,10 +100,12 @@ func get_tactical_state() -> String:
 		_:
 			return "Psionic drift"
 
-func _tick_probe() -> void:
-	if _tick_committed_action():
+func _tick_probe(delta: float = 1.0 / 60.0) -> void:
+	var desired: Vector3 = _evasive_orbit.desired_velocity(delta, player_ship.global_position - global_position, player_ship.linear_velocity, _behavior.approach_range, _behavior.retreat_range, _behavior.max_speed, _behavior.orbit_strength, _orbit_direction, _behavior.jink_interval_sec, _behavior.jink_strength)
+	_steer_to_velocity(desired)
+	# A Probe keeps strafing; its warning and captured shot origin never follow it.
+	if is_instance_valid(_active_attack) or _recovery_left > 0.0:
 		return
-	_steer_in_band(player_ship.global_position)
 	if _attack_cooldown_left <= 0.0:
 		_start_pulse("PSIONIC PULSE")
 

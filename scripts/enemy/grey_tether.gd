@@ -12,7 +12,7 @@ var _attached: bool = false
 var _ever_attached: bool = false
 var _finished: bool = false
 
-func start_tether(source: Enemy, target: Ship, windup_sec: float = 1.3, duration_sec: float = 2.5, slow_multiplier: float = 0.75, break_distance: float = 360.0, radius: float = 43.2, corridor_end: Vector3 = Vector3.INF, corridor_start: Vector3 = Vector3.INF) -> bool:
+func start_tether(source: Enemy, target: Ship, windup_sec: float = 1.3, duration_sec: float = 2.5, slow_multiplier: float = 0.75, break_distance: float = 360.0, radius: float = 49.68, corridor_end: Vector3 = Vector3.INF, corridor_start: Vector3 = Vector3.INF) -> bool:
 	if _active or _finished or not is_inside_tree() or not is_instance_valid(source) or source._dead or not is_instance_valid(target) or not target.is_alive() or target.is_tether_immune() or target.get_tether_time_remaining() > 0.0:
 		return false
 	_ship = target

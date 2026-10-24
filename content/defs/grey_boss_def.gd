@@ -7,9 +7,9 @@ class_name GreyBossDef
 ## Maximum forecast offset before a warning is committed.
 @export_range(0.0, 2000.0, 5.0) var forecast_max_lead: float = 1200.0
 ## Half-length of the crossing lane, leaving its sides and vertical axis open.
-@export_range(20.0, 400.0, 5.0) var corridor_half_length: float = 180.0
+@export_range(20.0, 400.0, 5.0) var corridor_half_length: float = 207.0
 ## Radius of a phase lane; a full warning precedes every release.
-@export_range(5.0, 80.0, 1.0) var corridor_radius: float = 33.6
+@export_range(5.0, 80.0, 1.0) var corridor_radius: float = 38.64
 ## Extra warning time between complementary members of one collapse.
 @export_range(0.1, 1.0, 0.05) var echo_gap_sec: float = 0.25
 ## Arrival grace period before the first clearly marked relocation.
@@ -21,7 +21,7 @@ class_name GreyBossDef
 ## Full time to leave the locked rupture sphere before damage resolves.
 @export_range(1.6, 6.0, 0.05) var rupture_windup_sec: float = 1.8
 ## Radius of the fixed three-dimensional rupture sphere.
-@export_range(5.0, 200.0, 1.0) var rupture_radius: float = 81.6
+@export_range(5.0, 200.0, 1.0) var rupture_radius: float = 93.84
 ## Harmless acquisition warning before a bounded tether interval begins.
 @export_range(0.8, 6.0, 0.05) var tether_windup_sec: float = 1.4
 ## Maximum active tether duration; the next major waits until it ends.
@@ -31,7 +31,7 @@ class_name GreyBossDef
 ## Bounded movement multiplier while the tether remains attached.
 @export_range(0.5, 1.0, 0.05) var tether_movement_factor: float = 0.7
 ## Radius of the locked tether acquisition sphere; leaving it avoids attachment.
-@export_range(5.0, 120.0, 1.0) var tether_radius: float = 43.2
+@export_range(5.0, 120.0, 1.0) var tether_radius: float = 49.68
 ## Vulnerable rest after every major, unchanged in the second phase.
 @export_range(0.5, 10.0, 0.1) var recovery_sec: float = 2.2
 ## Additional time before the next major.

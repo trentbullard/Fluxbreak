@@ -4,7 +4,7 @@ Status: implementation and automated validation complete (2026-10-24); ready for
 
 ## Scope and agreements
 
-- Machines, shared combat scaling, weapon damage, base rewards, upgrade prices, Campaign quantity budgets, and authored Practice wave budgets are unchanged.
+- The initial durability pass left Machines, shared combat scaling, weapon damage, base rewards, upgrade prices, Campaign quantity budgets, and authored Practice wave budgets unchanged. Subsequent attack, movement and reward tuning is recorded below.
 - Mercs have the largest burst durability per purchase point, led by hull with modest shields and regeneration.
 - Bugs have no shields or regeneration. Hull compensates for the missing shield pool. Sporelings remain deliberately fragile, cheap, and fast; heavier hulls move more slowly between attacks.
 - Greys have modest hull, larger shields, strong regeneration, and three additional percentage points of base evasion. Sustained focus defeats regeneration; interrupted or weak focus gives them time to recover.
@@ -139,3 +139,53 @@ Recommended playtests:
 5. Test Grey bosses with low weapon count, accuracy upgrades, and Particle Beam builds. Check for excessive regeneration stalls and shield-heavy phase pacing.
 6. Prioritize versus ignore brood producers and Carriers. Their death should stop future production while surviving offspring remain dangerous until killed.
 7. Profile long fights with several live producers. With caps removed, minion population can grow substantially; measure that cost before compensating with new restrictions.
+
+## Follow-up: attack pressure, evasive scouts and reward growth — 2026-10-24
+
+Status: implemented; validation results below are for this follow-up. These settings require gameplay playtesting.
+
+### Grey attack size and Bug/Grey damage
+
+All Grey damaging and capture dimensions increase another 15% from their already enlarged values. Radius, corridor width and corridor length scale together; this is a linear size change, not a 15% mathematical volume change. Warnings and actual hit geometry use the same dimensions. Forecast distances, warning durations, cooldowns, relocation markers and tether break distances are unchanged. All regular ships and both bosses are covered, including the separate Practice boss definitions.
+
+Representative current radii: Probe 42.78 m; Seeker/Vessel 66.24 m; Harbinger 80.04 m; Mothership 82.8 m; both bosses 93.84 m. Regular crossing corridors use 34.5 m radius and 144.9 m half-length; boss corridors use 38.64 m radius and 207 m half-length. Capture corridors inherit the same size increase, including their narrower effective corridor limit. Echo dimensions retain their authored proportions.
+
+Every Bug and Grey weapon's minimum and maximum base damage is multiplied by 1.20. This covers all five regular classes and two bosses per faction, their shared Practice weapons, spore pulses and committed charge damage. Existing combat-intensity scaling then applies normally. Merc/Machine weapon damage and every faction's defenses, bounties and purchase costs are unchanged.
+
+### Moving light fighters
+
+Corvettes, Probes and Sporelings use a shared lightweight per-actor steering helper: direct approach at distance, then continuous lateral orbit with a changing three-dimensional axis. It does not scan nearby enemies. Existing separation pulses still apply. Higher thrust lets these ships sustain curved movement under the actual rigid-body damping; it does not alter Machine movement or heavier classes.
+
+| Enemy | Cruise setting before → after | Thrust before → after | Measured mean lateral speed |
+|---|---:|---:|---:|
+| Corvette | 160 → 220 m/s | 65 → 260 | 187.0 m/s |
+| Sporeling | 190 → 245 m/s | 78 → 550 | 177.9 m/s |
+| Probe | 105 → 225 m/s | 75 → 300 | 185.1 m/s |
+
+Measurements use an isolated stationary player and real physics after approach; they are not guarantees for every crowd or player trajectory. All three followed an 80 m/s moving player and varied their orbit plane. Corvette still fires its authored burst and retreats on its existing timer. Probe and Sporeling keep moving during warnings and recovery, while the captured warning position and shot origin remain immutable. Their separation is no longer suspended during those moving warnings. Attack frequency, accuracy/evasion stats and body collision remain unchanged.
+
+### Lower nanobot reward growth
+
+The reward formula is linear in combat intensity, which itself grows with progression; there is no separate geometric nanobot multiplier. Increased wave quantities also increase total income. The coefficient `nanobot_base_strength` changes from 0.55 to 0.20 in both the class default and canonical scaling resource:
+
+`expected enemy nanobots = bounty_scrap * 100 * (1 + combat_intensity * 0.20)`
+
+| Combat intensity | Previous multiplier | Current multiplier | Expected bots per bounty scrap |
+|---|---:|---:|---:|
+| 0 | 1.0× | 1.0× | 100 |
+| 6 (late sector one) | 4.3× | 2.2× | 220 |
+| 12 (late sector two) | 7.6× | 3.4× | 340 |
+
+This reduces late per-kill rewards by about 49% and 55%, respectively, across all factions. Base payouts, ±15% variance, stationary target rewards, pickup/route modifiers, prices and summon reward exclusions are unchanged. The Campaign quantity multiplier remains `1.025 ^ max(local_wave - 10, 0)`; purchasing, delivery and authored Practice budgets are unchanged. Swarm decay and visibility work remain Phase 6 and are not implemented here.
+
+### Follow-up validation and playtest
+
+- Godot 4.7.2 headless import: clean.
+- Actual rigid-body locomotion: 68 assertions passed, including warning/recovery motion, immutable dodge geometry, moving-player pursuit, Corvette burst/retreat, polar approaches and overlap. Starting 600 m away and using normal attack timers for 24 seconds, Corvette completed five bursts, Sporeling eight strikes and Probe five pulses; all three damaged the stationary test player. This checks that sustained orbits do not starve their attack-range gates.
+- Separation: 115 checks passed, including 100 combatants; crowd peak speed 217.4 m/s and warmed proximity scans approximately 1.216 ms. Its former fixed 180 m/s Corvette test bound now follows authored cruise plus one maximum pulse and margin, checked every physics frame.
+- Rewards: 178 assertions passed across all factions, early/late intensities, seeded variance, fallback paths, unchanged target rewards and real pickup multipliers.
+- Quantity progression: 644 assertions passed. Purchasing/delivery: 26,008 assertions passed; 120 units delivered in approximately eight seconds.
+- Merc regular/attack/capital/Flagship: 38/24/90/86 checks passed. Bug regular/Matron/advanced/First Queen: 82/113/166/105 passed. Grey regular/Witness/status/advanced/Veiled Mind: 91/94/56/128/220 passed. All three complete six-wave Practice runs passed, including boss victory, return to menu and restart.
+- Durability: 412 assertions passed. Gateways: 1,041 checks passed across all four factions and both routes. Stage modifiers: 76 checks passed. Successful runs contained no engine errors, warnings or leaked objects; saves were isolated from player progress.
+
+Playtest the three light fighters against the same loadout, including during their attacks, then compare Bug/Grey ordinary waves and both Practice bosses. Check enlarged overlapping Grey patterns for readable escape paths. Compare currency earned at the same sector/wave and approximate kill count; lower per-kill payouts do not alone establish final run economy balance. Headless measurements do not establish visual feel or full CPU/GPU frame times. No version increment or release build accompanies this tuning.

@@ -17,6 +17,10 @@ enum Mode { SPORELING, CARAPACE, BROODMOTHER, DEVOURER, HIVE_QUEEN }
 @export_range(0.1, 10.0, 0.1) var steering_response: float = 2.4
 ## Fraction of preferred speed spent circling within the combat band.
 @export_range(0.0, 1.0, 0.05) var orbit_strength: float = 0.15
+## Sporeling orbit-axis change period; larger Bugs keep committed locomotion.
+@export_range(0.25, 10.0, 0.05) var jink_interval_sec: float = 1.7
+## Sporeling orbit-plane tilt, including throughout its locked spore warning.
+@export_range(0.0, 1.0, 0.05) var jink_strength: float = 0.85
 
 @export_group("Committed Attack")
 ## Minimum time between the previous attack resolving and another windup.
@@ -25,7 +29,7 @@ enum Mode { SPORELING, CARAPACE, BROODMOTHER, DEVOURER, HIVE_QUEEN }
 @export_range(0.2, 8.0, 0.05) var attack_windup_sec: float = 0.75
 ## Radius of the locked sphere or half-width of the Carapace corridor.
 @export_range(1.0, 200.0, 1.0) var attack_radius: float = 26.0
-## Vulnerable pause after the strike, during which pursuit is suspended.
+## Weapon recovery after a strike; Sporelings keep strafing during this window.
 @export_range(0.1, 8.0, 0.05) var attack_recovery_sec: float = 0.55
 
 @export_group("Brood Release")
