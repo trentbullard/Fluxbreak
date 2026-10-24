@@ -1,22 +1,29 @@
 extends Node
 class_name BudgetBuyer
 
+## Catalog containing the ordinary enemies available for card purchases.
 @export var enemy_catalog_path: NodePath
+## Catalog containing passive target purchases.
 @export var target_catalog_path: NodePath
+## Recent anchor choices avoided while another affordable anchor is available.
 @export var recent_primary_memory: int = 3
-@export_range(0.1, 1.0, 0.01) var secondary_share_fallback: float = 0.25
-@export_range(0.1, 1.0, 0.01) var support_share_fallback: float = 0.15
 
 var _ec: EnemyCatalog
 var _tc: TargetCatalog
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _recent_primary_enemy_ids: Array[String] = []
 var _last_wave_plan: Dictionary = {}
+var _seed_configured: bool = false
 
 func _ready() -> void:
 	_ec = get_node_or_null(enemy_catalog_path) as EnemyCatalog
 	_tc = get_node_or_null(target_catalog_path) as TargetCatalog
-	_rng.randomize()
+	if not _seed_configured:
+		_rng.randomize()
+
+func set_seed(value: int) -> void:
+	_seed_configured = true
+	_rng.seed = value
 
 func clear_history() -> void:
 	_recent_primary_enemy_ids.clear()
@@ -41,6 +48,14 @@ func buy_wave(
 		"card_name": safe_card.get_display_name_or_default(),
 		"faction_bias_id": _faction_debug_id(safe_card.faction_bias),
 		"enemy_points": max(enemy_points, 0),
+		"enemy_points_spent": 0,
+		"enemy_points_remainder": max(enemy_points, 0),
+		"remainder_reason": "no_enemy_budget" if enemy_points <= 0 else "enemy_catalog_unavailable",
+		"requested_formation_count": 0,
+		"formation_count": 0,
+		"capital_points_spent": 0,
+		"capital_point_allowance": 0,
+		"planned_enemy_units": 0,
 		"target_points": max(target_points, 0),
 		"primary_enemy_id": "",
 		"packages": [],
@@ -63,201 +78,291 @@ func _build_enemy_requests(
 	stage_index: int,
 	elapsed_sec: float
 ) -> void:
-	var e_pool: Array[EnemyDef] = _ec.get_pool(card.faction_bias, null, max_enemy_tier)
-	if e_pool.is_empty():
-		return
-
-	var role_biases: Array[EnemyRoleDef] = card.get_role_biases()
-	if role_biases.is_empty():
-		role_biases = _ec.get_unique_roles(card.faction_bias, max_enemy_tier)
-
-	var primary_role: EnemyRoleDef = role_biases[0] if role_biases.size() > 0 else null
-	var secondary_role: EnemyRoleDef = role_biases[1] if role_biases.size() > 1 else null
-	var support_role: EnemyRoleDef = role_biases[2] if role_biases.size() > 2 else null
-
-	var anchor_pool: Array[EnemyDef] = []
-	for candidate: EnemyDef in e_pool:
-		if candidate.tier >= card.min_primary_enemy_tier:
-			anchor_pool.append(candidate)
-	var primary_pool: Array[EnemyDef] = _resolve_role_pool(anchor_pool, primary_role)
-	var primary_pick: EnemyDef = _pick_enemy_for_package(
-		primary_pool,
-		enemy_points,
-		enemy_points,
-		card,
-		{},
-		_recent_primary_enemy_ids,
-		true
+	var pool: Array[EnemyDef] = []
+	for entry: EnemyDef in _ec.get_pool(card.faction_bias, null, max_enemy_tier):
+		if entry != null and not entry is EnemyBossDef and entry.threat_cost > 0:
+			pool.append(entry)
+	var requested_count: int = clampi(
+		2 + int(enemy_points / 12),
+		maxi(card.package_count_min, 1),
+		maxi(card.package_count_max, maxi(card.package_count_min, 1))
 	)
-	if primary_pick == null:
-		primary_pick = _pick_enemy_for_package(anchor_pool, enemy_points, enemy_points, card, {}, [], true)
-	if primary_pick == null and card.min_primary_enemy_tier > 1:
-		# Adaptive budgets may briefly lag behind tier unlocks. Keep a playable
-		# lower-tier screen until the authored capital anchor becomes affordable.
-		primary_pick = _pick_enemy_for_package(e_pool, enemy_points, enemy_points, card, {}, [], true)
-	if primary_pick == null:
+	_last_wave_plan["requested_formation_count"] = requested_count
+	if pool.is_empty():
+		_last_wave_plan["remainder_reason"] = "no_eligible_enemies"
 		return
 
+	var roles: Array[EnemyRoleDef] = card.get_role_biases()
+	if roles.is_empty():
+		roles = _ec.get_unique_roles(card.faction_bias, max_enemy_tier)
+	var primary_role: EnemyRoleDef = roles[0] if not roles.is_empty() else null
+	var secondary_role: EnemyRoleDef = card.secondary_role_bias
+	var support_role: EnemyRoleDef = card.support_role_bias
+	var primary_pick: EnemyDef = _choose_primary(pool, primary_role, enemy_points, card)
+	if primary_pick == null:
+		_last_wave_plan["remainder_reason"] = "no_affordable_enemy"
+		return
 	_last_wave_plan["primary_enemy_id"] = primary_pick.id
-	_remember_primary_enemy(primary_pick.id)
 
 	var shares: Array[float] = card.get_budget_shares()
-	var primary_budget: int = max(int(round(float(enemy_points) * shares[0])), primary_pick.threat_cost)
-	var secondary_budget: int = int(round(float(enemy_points) * shares[1]))
-	var support_budget: int = int(round(float(enemy_points) * shares[2]))
+	# One ledger owns the entire purchase. Role and formation slices are soft
+	# allocation goals; their unspent points always return to this ledger.
+	var ledger: Dictionary = {
+		"remaining": enemy_points,
+		"capital_spent": 0,
+		"capital_allowance": int(floor(float(enemy_points) * shares[0])),
+		"primary_count": 0,
+		"chosen_primary_spent": 0,
+		"chosen_primary_allowance": maxi(int(round(float(enemy_points) * card.max_primary_budget_share)), primary_pick.threat_cost),
+		"spent_by_id": {},
+		"units": 0,
+	}
+	var first_formation: Dictionary = _new_formation(0)
+	_record_purchase(first_formation, primary_pick, _purchase_label(primary_pick, primary_role, secondary_role, support_role, card), ledger, primary_role, primary_pick, card)
 
-	if secondary_role == null and shares[1] > 0.0:
-		secondary_budget = int(round(float(enemy_points) * secondary_share_fallback))
-	if support_role == null and shares[2] > 0.0:
-		support_budget = int(round(float(enemy_points) * support_share_fallback))
+	# Reserve a real affordable seed for each additional formation before
+	# dividing the budget. A required expensive anchor cannot starve the others.
+	var simulated_ledger: Dictionary = ledger.duplicate(true)
+	var seeds: Array[EnemyDef] = []
+	while seeds.size() + 1 < requested_count:
+		var seed: EnemyDef = _cheapest_formation_seed(pool, roles, simulated_ledger, primary_role, primary_pick, card)
+		if seed == null:
+			break
+		seeds.append(seed)
+		_spend_points(seed, simulated_ledger, primary_role, primary_pick, card)
+	var formations: Array[Dictionary] = [first_formation]
+	for seed_index: int in seeds.size():
+		var formation: Dictionary = _new_formation(seed_index + 1)
+		var seed: EnemyDef = seeds[seed_index]
+		_record_purchase(formation, seed, _purchase_label(seed, primary_role, secondary_role, support_role, card), ledger, primary_role, primary_pick, card)
+		formations.append(formation)
 
-	if primary_pick.threat_cost >= max(card.anchor_support_cost_threshold, 1):
-		support_budget = max(support_budget, min(primary_pick.threat_cost / 2, enemy_points))
-	# Rounding, a costly leader, or anchor escorts may not create extra points.
-	primary_budget = clampi(primary_budget, 0, enemy_points)
-	secondary_budget = clampi(secondary_budget, 0, enemy_points - primary_budget)
-	support_budget = clampi(support_budget, 0, enemy_points - primary_budget - secondary_budget)
+	# Split the remaining allocation evenly after guaranteeing every group a
+	# member. Each formation can contain all three authored purchasing roles.
+	var flex_points: int = int(ledger["remaining"])
+	var split: int = int(flex_points / formations.size())
+	var extra: int = flex_points % formations.size()
+	for formation_index: int in formations.size():
+		var formation: Dictionary = formations[formation_index]
+		formation["initial_budget"] = int(formation["spent_points"]) + split + (1 if formation_index < extra else 0)
+		var formation_budget: int = int(formation["initial_budget"])
+		_fill_role_budget(formation, pool, primary_role, "primary", int(round(float(formation_budget) * shares[0])), ledger, primary_role, primary_pick, card)
+		_fill_role_budget(formation, pool, secondary_role, "secondary", int(round(float(formation_budget) * shares[1])), ledger, primary_role, primary_pick, card)
+		_fill_role_budget(formation, pool, support_role, "support", int(round(float(formation_budget) * shares[2])), ledger, primary_role, primary_pick, card)
 
-	var reserved_budget: int = primary_budget + secondary_budget + support_budget
-	var flex_budget: int = max(enemy_points - reserved_budget, 0)
+	# Recycle all role/formation leftovers. Prefer noncapital escorts in the
+	# card's roles, then the faction's other escorts, before further capitals.
+	var next_formation: int = 0
+	while int(ledger["remaining"]) > 0:
+		var recycle_pool: Array[EnemyDef] = _recycle_pool(pool, roles, ledger, primary_role, primary_pick, card)
+		if recycle_pool.is_empty():
+			break
+		var pick: EnemyDef = _pick_weighted_enemy(recycle_pool, int(ledger["remaining"]), enemy_points, ledger["spent_by_id"], false)
+		if pick == null:
+			break
+		var formation: Dictionary = formations[next_formation]
+		_record_purchase(formation, pick, _purchase_label(pick, primary_role, secondary_role, support_role, card), ledger, primary_role, primary_pick, card)
+		next_formation = (next_formation + 1) % formations.size()
 
-	var desired_packages: int = clampi(
-		2 + int(enemy_points / 12),
-		max(card.package_count_min, 1),
-		max(card.package_count_max, card.package_count_min)
-	)
+	var debug_packages: Array = []
+	for formation: Dictionary in formations:
+		var purchased_units: Array = formation["purchases"]
+		var debug_units: Array[String] = []
+		for purchase: Dictionary in purchased_units:
+			var pick: EnemyDef = purchase["enemy"] as EnemyDef
+			var copies: int = int(purchase["count"])
+			_append_enemy_request(reqs, pick, copies, card, wave_index, stage_index, elapsed_sec, String(formation["package_id"]), String(purchase["label"]), int(formation["spent_points"]))
+			debug_units.append("%s x%d" % [_enemy_display_name(pick), copies])
+		debug_packages.append({
+			"package_id": formation["package_id"],
+			"label": formation["label"],
+			"role_id": _role_debug_id(primary_role),
+			"budget": formation["spent_points"],
+			"initial_budget": formation["initial_budget"],
+			"spent_points": formation["spent_points"],
+			"units": debug_units,
+		})
+	_last_wave_plan["packages"] = debug_packages
+	_last_wave_plan["enemy_points_spent"] = enemy_points - int(ledger["remaining"])
+	_last_wave_plan["enemy_points_remainder"] = int(ledger["remaining"])
+	_last_wave_plan["remainder_reason"] = _remainder_reason(pool, ledger, primary_role, primary_pick, card)
+	_last_wave_plan["formation_count"] = formations.size()
+	_last_wave_plan["capital_points_spent"] = int(ledger["capital_spent"])
+	_last_wave_plan["capital_point_allowance"] = int(ledger["capital_allowance"])
+	_last_wave_plan["planned_enemy_units"] = int(ledger["units"])
+	_remember_primary_enemy(primary_pick.id)
 
-	var packages: Array[Dictionary] = []
-	packages.append({"label": "primary", "role": primary_role, "budget": primary_budget, "leader": primary_pick})
-	if secondary_budget > 0:
-		packages.append({"label": "secondary", "role": secondary_role, "budget": secondary_budget})
-	if support_budget > 0:
-		packages.append({"label": "support", "role": support_role, "budget": support_budget})
+func _new_formation(index: int) -> Dictionary:
+	return {
+		"package_id": "pkg_%d_formation" % index,
+		"label": "formation_%d" % (index + 1),
+		"spent_points": 0,
+		"role_spent": {},
+		"purchases": [],
+	}
 
-	while packages.size() < desired_packages and flex_budget > 0:
-		var role_index: int = packages.size() % max(role_biases.size(), 1)
-		var flex_role: EnemyRoleDef = role_biases[role_index] if role_biases.size() > 0 else null
-		var remaining_slots: int = desired_packages - packages.size()
-		var split_budget: int = max(int(round(float(flex_budget) / float(max(remaining_slots, 1)))), 1)
-		packages.append({"label": "flex_%d" % packages.size(), "role": flex_role, "budget": split_budget})
-		flex_budget = max(flex_budget - split_budget, 0)
+func _choose_primary(pool: Array[EnemyDef], role: EnemyRoleDef, budget: int, card: WaveCard) -> EnemyDef:
+	var qualified: Array[EnemyDef] = []
+	for entry: EnemyDef in pool:
+		if entry.tier >= card.min_primary_enemy_tier and entry.threat_cost <= budget:
+			qualified.append(entry)
+	var candidates: Array[EnemyDef] = _resolve_role_pool(qualified, role)
+	if candidates.is_empty():
+		# An adaptive allocation may not yet afford its unlocked anchor. Prefer
+		# the same role at lower tier, then a legal faction screen.
+		candidates = _resolve_role_pool(_ec.get_affordable_pool(pool, budget), role)
+	var fresh: Array[EnemyDef] = []
+	for entry: EnemyDef in candidates:
+		if not _recent_primary_enemy_ids.has(entry.id):
+			fresh.append(entry)
+	if not fresh.is_empty():
+		candidates = fresh
+	return _pick_weighted_enemy(candidates, budget, budget, {}, true)
 
-	if flex_budget > 0:
-		packages[0]["budget"] = int(packages[0].get("budget", 0)) + flex_budget
-
-	var spent_by_id: Dictionary = {}
-	var package_serial: int = 0
-	for package in packages:
-		var package_label: String = String(package.get("label", "package"))
-		var package_role: EnemyRoleDef = package.get("role", null) as EnemyRoleDef
-		var package_budget: int = max(int(package.get("budget", 0)), 0)
-		var leader: EnemyDef = package.get("leader", null) as EnemyDef
-		if package_budget <= 0:
-			continue
-		var package_id: String = "pkg_%d_%s" % [package_serial, package_label]
-		package_serial += 1
-
-		var package_debug: Dictionary = {
-			"label": package_label,
-			"package_id": package_id,
-			"role_id": _role_debug_id(package_role),
-			"budget": package_budget,
-			"units": [],
-		}
-		var package_pool: Array[EnemyDef] = _resolve_role_pool(e_pool, package_role)
-		var points_left: int = package_budget
-		var max_picks: int = 1 if package_label == "support" else 2
-		var package_count_limit: int = card.primary_count_max if package_label == "primary" else 0
-		var purchased_count: int = 0
-
-		if leader != null:
-			var leader_copies: int = _determine_copies_for_pick(
-				leader,
-				points_left,
-				enemy_points,
-				spent_by_id,
-				card,
-				package_label == "primary"
-			)
-			if package_count_limit > 0:
-				leader_copies = mini(leader_copies, package_count_limit)
-			if leader_copies > 0:
-				_append_enemy_request(
-					reqs,
-					leader,
-					leader_copies,
-					card,
-					wave_index,
-					stage_index,
-					elapsed_sec,
-					package_id,
-					package_label,
-					package_budget
-				)
-				var leader_points: int = leader_copies * leader.threat_cost
-				purchased_count += leader_copies
-				points_left = max(points_left - leader_points, 0)
-				spent_by_id[leader.id] = int(spent_by_id.get(leader.id, 0)) + leader_points
-				var units: Array = package_debug.get("units", [])
-				units.append("%s x%d" % [_enemy_display_name(leader), leader_copies])
-				package_debug["units"] = units
-			max_picks -= 1
-
-		var blocked_ids: Dictionary = {}
-		if leader != null and not card.allow_swarm_primary:
-			blocked_ids[leader.id] = true
-
-		while points_left > 0 and max_picks > 0 and (package_count_limit == 0 or purchased_count < package_count_limit):
-			var pick: EnemyDef = _pick_enemy_for_package(
-				package_pool,
-				points_left,
-				enemy_points,
-				card,
-				spent_by_id,
-				_dictionary_keys_to_array(blocked_ids),
-				false
-			)
-			if pick == null:
-				break
-			var copies: int = _determine_copies_for_pick(
-				pick,
-				points_left,
-				enemy_points,
-				spent_by_id,
-				card,
-				package_label == "primary"
-			)
-			if package_count_limit > 0:
-				copies = mini(copies, package_count_limit - purchased_count)
-			if copies <= 0:
-				blocked_ids[pick.id] = true
-				max_picks -= 1
+func _fill_role_budget(
+	formation: Dictionary,
+	pool: Array[EnemyDef],
+	role: EnemyRoleDef,
+	label: String,
+	role_budget: int,
+	ledger: Dictionary,
+	primary_role: EnemyRoleDef,
+	primary_pick: EnemyDef,
+	card: WaveCard
+) -> void:
+	if role_budget <= 0 or role == null:
+		return
+	while true:
+		var spent_by_role: Dictionary = formation["role_spent"]
+		var available: int = mini(role_budget - int(spent_by_role.get(label, 0)), int(formation["initial_budget"]) - int(formation["spent_points"]))
+		available = mini(available, int(ledger["remaining"]))
+		if available <= 0:
+			return
+		var candidates: Array[EnemyDef] = []
+		for entry: EnemyDef in pool:
+			if not _matches_role_ref(entry, role):
 				continue
-			_append_enemy_request(
-				reqs,
-				pick,
-				copies,
-				card,
-				wave_index,
-				stage_index,
-				elapsed_sec,
-				package_id,
-				package_label,
-				package_budget
-			)
-			var spent_points: int = copies * pick.threat_cost
-			purchased_count += copies
-			points_left = max(points_left - spent_points, 0)
-			spent_by_id[pick.id] = int(spent_by_id.get(pick.id, 0)) + spent_points
-			var package_units: Array = package_debug.get("units", [])
-			package_units.append("%s x%d" % [_enemy_display_name(pick), copies])
-			package_debug["units"] = package_units
-			blocked_ids[pick.id] = true
-			max_picks -= 1
+			if label == "primary" and not _is_primary_enemy(entry, primary_role, card):
+				continue
+			if entry.threat_cost <= available and _can_buy_enemy(entry, ledger, primary_role, primary_pick, card):
+				candidates.append(entry)
+		var pick: EnemyDef = _pick_weighted_enemy(candidates, available, int(_last_wave_plan["enemy_points"]), ledger["spent_by_id"], false)
+		if pick == null:
+			return
+		_record_purchase(formation, pick, label, ledger, primary_role, primary_pick, card)
 
-		var debug_packages: Array = _last_wave_plan["packages"]
-		debug_packages.append(package_debug)
-		_last_wave_plan["packages"] = debug_packages
+func _cheapest_formation_seed(pool: Array[EnemyDef], roles: Array[EnemyRoleDef], ledger: Dictionary, primary_role: EnemyRoleDef, primary_pick: EnemyDef, card: WaveCard) -> EnemyDef:
+	var cheapest_escort: EnemyDef = null
+	var cheapest_capital: EnemyDef = null
+	for entry: EnemyDef in pool:
+		if not _can_buy_enemy(entry, ledger, primary_role, primary_pick, card):
+			continue
+		if _is_capital(entry, card):
+			if cheapest_capital == null or entry.threat_cost < cheapest_capital.threat_cost:
+				cheapest_capital = entry
+		elif cheapest_escort == null or entry.threat_cost < cheapest_escort.threat_cost:
+			cheapest_escort = entry
+		elif entry.threat_cost == cheapest_escort.threat_cost:
+			for role: EnemyRoleDef in roles:
+				if _matches_role_ref(entry, role) and not _matches_role_ref(cheapest_escort, role):
+					cheapest_escort = entry
+					break
+	return cheapest_escort if cheapest_escort != null else cheapest_capital
+
+func _recycle_pool(pool: Array[EnemyDef], roles: Array[EnemyRoleDef], ledger: Dictionary, primary_role: EnemyRoleDef, primary_pick: EnemyDef, card: WaveCard) -> Array[EnemyDef]:
+	var preferred_escorts: Array[EnemyDef] = []
+	var faction_escorts: Array[EnemyDef] = []
+	var preferred_capitals: Array[EnemyDef] = []
+	var faction_capitals: Array[EnemyDef] = []
+	for entry: EnemyDef in pool:
+		if not _can_buy_enemy(entry, ledger, primary_role, primary_pick, card):
+			continue
+		var preferred: bool = roles.is_empty()
+		for role: EnemyRoleDef in roles:
+			if _matches_role_ref(entry, role):
+				preferred = true
+				break
+		if _is_capital(entry, card):
+			faction_capitals.append(entry)
+			if preferred:
+				preferred_capitals.append(entry)
+		else:
+			faction_escorts.append(entry)
+			if preferred:
+				preferred_escorts.append(entry)
+	if not preferred_escorts.is_empty():
+		return preferred_escorts
+	if not faction_escorts.is_empty():
+		return faction_escorts
+	if not preferred_capitals.is_empty():
+		return preferred_capitals
+	return faction_capitals
+
+func _can_buy_enemy(entry: EnemyDef, ledger: Dictionary, primary_role: EnemyRoleDef, primary_pick: EnemyDef, card: WaveCard) -> bool:
+	if entry == null or entry.threat_cost <= 0 or entry.threat_cost > int(ledger["remaining"]):
+		return false
+	if _is_primary_enemy(entry, primary_role, card) and card.primary_count_max > 0 and int(ledger["primary_count"]) >= card.primary_count_max:
+		return false
+	if _is_capital(entry, card) and int(ledger["capital_spent"]) + entry.threat_cost > int(ledger["capital_allowance"]):
+		return false
+	if entry.id == primary_pick.id and not card.allow_swarm_primary and int(ledger["chosen_primary_spent"]) + entry.threat_cost > int(ledger["chosen_primary_allowance"]):
+		return false
+	return true
+
+func _is_capital(entry: EnemyDef, card: WaveCard) -> bool:
+	return entry.tier >= 4 or entry.threat_cost >= maxi(card.anchor_support_cost_threshold, 1)
+
+func _is_primary_enemy(entry: EnemyDef, primary_role: EnemyRoleDef, card: WaveCard) -> bool:
+	return entry.tier >= card.min_primary_enemy_tier and (primary_role == null or _matches_role_ref(entry, primary_role))
+
+func _purchase_label(entry: EnemyDef, primary_role: EnemyRoleDef, secondary_role: EnemyRoleDef, support_role: EnemyRoleDef, card: WaveCard) -> String:
+	if _is_primary_enemy(entry, primary_role, card):
+		return "primary"
+	if secondary_role != null and _matches_role_ref(entry, secondary_role):
+		return "secondary"
+	if support_role != null and _matches_role_ref(entry, support_role):
+		return "support"
+	return "escort"
+
+func _record_purchase(formation: Dictionary, entry: EnemyDef, label: String, ledger: Dictionary, primary_role: EnemyRoleDef, primary_pick: EnemyDef, card: WaveCard) -> void:
+	_spend_points(entry, ledger, primary_role, primary_pick, card)
+	formation["spent_points"] = int(formation["spent_points"]) + entry.threat_cost
+	var role_spent: Dictionary = formation["role_spent"]
+	role_spent[label] = int(role_spent.get(label, 0)) + entry.threat_cost
+	var purchases: Array = formation["purchases"]
+	for purchase: Dictionary in purchases:
+		var existing: EnemyDef = purchase["enemy"] as EnemyDef
+		if existing.id == entry.id and String(purchase["label"]) == label:
+			purchase["count"] = int(purchase["count"]) + 1
+			return
+	purchases.append({"enemy": entry, "label": label, "count": 1})
+
+func _spend_points(entry: EnemyDef, ledger: Dictionary, primary_role: EnemyRoleDef, primary_pick: EnemyDef, card: WaveCard) -> void:
+	ledger["remaining"] = int(ledger["remaining"]) - entry.threat_cost
+	ledger["units"] = int(ledger["units"]) + 1
+	if _is_capital(entry, card):
+		ledger["capital_spent"] = int(ledger["capital_spent"]) + entry.threat_cost
+	if _is_primary_enemy(entry, primary_role, card):
+		ledger["primary_count"] = int(ledger["primary_count"]) + 1
+	if entry.id == primary_pick.id:
+		ledger["chosen_primary_spent"] = int(ledger["chosen_primary_spent"]) + entry.threat_cost
+	var spent_by_id: Dictionary = ledger["spent_by_id"]
+	spent_by_id[entry.id] = int(spent_by_id.get(entry.id, 0)) + entry.threat_cost
+
+func _remainder_reason(pool: Array[EnemyDef], ledger: Dictionary, primary_role: EnemyRoleDef, primary_pick: EnemyDef, card: WaveCard) -> String:
+	if int(ledger["remaining"]) <= 0:
+		return "budget_fully_spent"
+	var constraints: Array[String] = []
+	for entry: EnemyDef in pool:
+		if entry.threat_cost > int(ledger["remaining"]):
+			continue
+		if _is_primary_enemy(entry, primary_role, card) and card.primary_count_max > 0 and int(ledger["primary_count"]) >= card.primary_count_max and not constraints.has("primary_count_max"):
+			constraints.append("primary_count_max")
+		if _is_capital(entry, card) and int(ledger["capital_spent"]) + entry.threat_cost > int(ledger["capital_allowance"]) and not constraints.has("capital_budget_share"):
+			constraints.append("capital_budget_share")
+		if entry.id == primary_pick.id and not card.allow_swarm_primary and int(ledger["chosen_primary_spent"]) + entry.threat_cost > int(ledger["chosen_primary_allowance"]) and not constraints.has("primary_species_share"):
+			constraints.append("primary_species_share")
+	return "no_affordable_enemy" if constraints.is_empty() else ", ".join(constraints)
 
 func _build_target_requests(reqs: Array[SpawnRequest], target_points: int, card: WaveCard) -> void:
 	var t_pool: Array[TargetDef] = _tc.get_pool(max(card.target_size_band_max, 0))
@@ -301,61 +406,38 @@ func _resolve_role_pool(pool: Array[EnemyDef], role: EnemyRoleDef) -> Array[Enem
 		return pool.duplicate()
 	return out
 
-func _pick_enemy_for_package(
+func _pick_weighted_enemy(
 	pool: Array[EnemyDef],
-	package_budget: int,
+	budget: int,
 	total_enemy_points: int,
-	card: WaveCard,
 	spent_by_id: Dictionary,
-	blocked_ids: Array[String],
 	prefer_anchor: bool
 ) -> EnemyDef:
-	var affordable: Array[EnemyDef] = _ec.get_affordable_pool(pool, max(package_budget, 1))
-	if affordable.is_empty():
+	if pool.is_empty():
 		return null
-
-	var candidates: Array[EnemyDef] = []
-	for entry in affordable:
-		if entry == null:
-			continue
-		if blocked_ids.has(entry.id):
-			continue
-		if not _can_spend_more_on_enemy(entry, total_enemy_points, spent_by_id, card):
-			continue
-		candidates.append(entry)
-
-	if candidates.is_empty():
-		for entry in affordable:
-			if entry != null and not blocked_ids.has(entry.id):
-				candidates.append(entry)
-	if candidates.is_empty():
-		return null
-
 	var total_weight: float = 0.0
 	var candidate_weights: Array[float] = []
-	for entry in candidates:
-		var fit_ratio: float = float(entry.threat_cost) / float(max(package_budget, 1))
-		var fit_score: float = max(1.0 - abs(1.0 - fit_ratio), 0.0)
+	for entry: EnemyDef in pool:
+		var fit_ratio: float = float(entry.threat_cost) / float(maxi(budget, 1))
+		var fit_score: float = maxf(1.0 - absf(1.0 - fit_ratio), 0.0)
 		var weight: float = 0.25 + fit_score * 0.85 + float(entry.tier) * 0.06
 		if prefer_anchor and entry.threat_cost >= 4:
 			weight += 0.20
-		if _recent_primary_enemy_ids.has(entry.id):
+		if prefer_anchor and _recent_primary_enemy_ids.has(entry.id):
 			weight *= 0.45
-		var spent_share: float = float(int(spent_by_id.get(entry.id, 0))) / float(max(total_enemy_points, 1))
-		weight *= clamp(1.0 - spent_share, 0.30, 1.0)
+		var spent_share: float = float(int(spent_by_id.get(entry.id, 0))) / float(maxi(total_enemy_points, 1))
+		weight *= clampf(1.0 - spent_share, 0.30, 1.0)
 		candidate_weights.append(weight)
 		total_weight += weight
-
 	if total_weight <= 0.0:
-		return candidates[0]
-
+		return pool[0]
 	var roll: float = _rng.randf_range(0.0, total_weight)
 	var cursor: float = 0.0
-	for index in candidates.size():
+	for index: int in pool.size():
 		cursor += candidate_weights[index]
 		if roll <= cursor:
-			return candidates[index]
-	return candidates[candidates.size() - 1]
+			return pool[index]
+	return pool[pool.size() - 1]
 
 func _pick_target_for_budget(pool: Array[TargetDef], budget: int) -> TargetDef:
 	var affordable: Array[TargetDef] = _tc.get_affordable_pool(pool, max(budget, 1))
@@ -379,45 +461,6 @@ func _pick_target_for_budget(pool: Array[TargetDef], budget: int) -> TargetDef:
 		if roll <= cursor:
 			return affordable[index]
 	return affordable[affordable.size() - 1]
-
-func _determine_copies_for_pick(
-	pick: EnemyDef,
-	budget: int,
-	total_enemy_points: int,
-	spent_by_id: Dictionary,
-	card: WaveCard,
-	primary_package: bool
-) -> int:
-	if pick == null:
-		return 0
-	var max_copies_from_budget: int = max(1, budget / max(pick.threat_cost, 1))
-	var share_cap_points: int = total_enemy_points
-	if not card.allow_swarm_primary:
-		share_cap_points = max(int(round(float(total_enemy_points) * card.max_primary_budget_share)), pick.threat_cost)
-	elif not primary_package:
-		share_cap_points = max(int(round(float(total_enemy_points) * 0.65)), pick.threat_cost)
-
-	var used_points: int = int(spent_by_id.get(pick.id, 0))
-	var remaining_share_points: int = max(share_cap_points - used_points, 0)
-	var max_copies_from_share: int = max(remaining_share_points / max(pick.threat_cost, 1), 0)
-	if used_points == 0 and max_copies_from_share <= 0:
-		max_copies_from_share = 1
-
-	var copies: int = min(max_copies_from_budget, max(max_copies_from_share, 1))
-	if not primary_package:
-		copies = min(copies, 2)
-	elif not card.allow_swarm_primary:
-		copies = min(copies, max(1, int(ceil(float(max_copies_from_budget) * 0.6))))
-	return max(copies, 0)
-
-func _can_spend_more_on_enemy(entry: EnemyDef, total_enemy_points: int, spent_by_id: Dictionary, card: WaveCard) -> bool:
-	if entry == null:
-		return false
-	if card.allow_swarm_primary:
-		return true
-	var limit_points: int = max(int(round(float(total_enemy_points) * card.max_primary_budget_share)), entry.threat_cost)
-	var used_points: int = int(spent_by_id.get(entry.id, 0))
-	return used_points + entry.threat_cost <= limit_points or used_points == 0
 
 func _append_enemy_request(
 	reqs: Array[SpawnRequest],
@@ -456,12 +499,6 @@ func _remember_primary_enemy(enemy_id: String) -> void:
 	_recent_primary_enemy_ids.append(trimmed)
 	while _recent_primary_enemy_ids.size() > max(recent_primary_memory, 1):
 		_recent_primary_enemy_ids.remove_at(0)
-
-func _dictionary_keys_to_array(source: Dictionary) -> Array[String]:
-	var out: Array[String] = []
-	for key in source.keys():
-		out.append(String(key))
-	return out
 
 func _enemy_display_name(entry: EnemyDef) -> String:
 	if entry == null:

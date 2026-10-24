@@ -65,7 +65,7 @@ Combat targeting and firing are handled automatically by the ship's weapon syste
 
 - Engine: Godot 4.7.2
 - Language: typed GDScript
-- Project version: `0.4.1`
+- Project version: `0.4.2`
 
 ## Running The Project
 

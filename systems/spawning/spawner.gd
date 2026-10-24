@@ -28,10 +28,6 @@ var spawn_mode: int = 0
 @export var pack_anchor_attempts: int = 10
 @export var enemy_warp_stagger_sec: float = 0.04
 @export var enemy_warp_stagger_max_sec: float = 0.12
-@export_group("Legacy Caps")
-@export var max_alive_total: int = 30
-@export var max_enemies_alive: int = 10
-@export var max_targets_alive: int = 3
 @export var maintain_target_floor: bool = false
 @export var target_floor_alive: int = 2
 @export var target_topup_interval: float = 10.0
@@ -243,12 +239,6 @@ func spawn_burst(kind: int, count: int) -> int:
 			break
 		spawned += 1
 	return spawned
-
-func set_max_alive(new_max: int) -> void:
-	max_enemies_alive = new_max
-
-func set_max_alive_total(n: int) -> void:
-	max_alive_total = max(n, 0)
 
 func _maintain_targets() -> void:
 	if not maintain_target_floor:

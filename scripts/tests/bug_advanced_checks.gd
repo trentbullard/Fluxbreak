@@ -35,8 +35,6 @@ func _run_checks() -> void:
 	_spawner.enemy_scene = ENEMY_SCENE
 	_spawner.directed_mode = true
 	_spawner.min_distance_from_ship = 0.0
-	_spawner.max_alive_total = 100
-	_spawner.max_enemies_alive = 100
 	add_child(_spawner)
 	_test_shipped_actors()
 	await _clear_enemies()

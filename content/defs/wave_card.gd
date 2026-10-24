@@ -9,12 +9,13 @@ class_name WaveCard
 @export_range(1, 5, 1) var min_enemy_tier: int = 1
 ## Preferred minimum anchor tier when affordable; escorts keep lower tiers.
 @export_range(1, 5, 1) var min_primary_enemy_tier: int = 1
-## Maximum purchased units in the primary package; zero keeps normal limits.
+## Maximum qualifying primary anchors across all purchased formations; zero is unlimited.
 @export_range(0, 8, 1) var primary_count_max: int = 0
 @export var faction_bias: FactionDef
 @export var primary_role_bias: EnemyRoleDef
 @export var secondary_role_bias: EnemyRoleDef
 @export var support_role_bias: EnemyRoleDef
+## Normalized primary allocation per formation and combined capital share per purchase.
 @export_range(0.0, 1.0, 0.01) var primary_budget_share: float = 0.60
 @export_range(0.0, 1.0, 0.01) var secondary_budget_share: float = 0.25
 @export_range(0.0, 1.0, 0.01) var support_budget_share: float = 0.15
@@ -23,14 +24,19 @@ class_name WaveCard
 @export var pressure_enemy_point_budget: int = 2
 @export var pressure_target_point_budget: int = 0
 @export var target_size_band_max: int = 2
+## Preferred minimum spatial formations, reduced only when unaffordable.
 @export var package_count_min: int = 2
+## Maximum spatial formations; each can contain primary, secondary, and support ships.
 @export var package_count_max: int = 4
 @export var batch_size_min: int = 2
 @export var batch_size_max: int = 4
 @export var inter_batch_sec: float = 0.7
 @export var enemy_first_bias: float = 0.65      # 0..1
+## Chosen primary species' point ceiling, relaxed by allow_swarm_primary.
 @export_range(0.2, 1.0, 0.01) var max_primary_budget_share: float = 0.55
+## Units at this cost, or tier 4+, count against the combined capital allowance.
 @export var anchor_support_cost_threshold: int = 8
+## Allow the primary species to fill its role without the species share ceiling.
 @export var allow_swarm_primary: bool = false
 @export var allow_pressure_spikes: bool = true
 @export var primary_repeat_cooldown: int = 2
