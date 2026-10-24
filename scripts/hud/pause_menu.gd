@@ -1,4 +1,4 @@
-# scripts/hud/pause_menu.gd (godot 4.6.3)
+# scripts/hud/pause_menu.gd (Godot 4.7.2)
 extends CanvasLayer
 class_name PauseMenu
 
@@ -8,6 +8,7 @@ class_name PauseMenu
 @onready var btn_menu: Button = $ScreenRoot/CenterContainer/VBox/MainMenu
 @onready var btn_quit: Button = $ScreenRoot/CenterContainer/VBox/Quit
 @onready var stat_panel: StatPanel = $ScreenRoot/StatPanel
+@onready var run_modifiers_panel: RunModifiersPanel = $ScreenRoot/RunModifiersPanel
 @onready var btn_camera: Button = $ScreenRoot/CenterContainer/VBox/CameraSettings
 @onready var camera_settings_panel: CameraSettingsPanel = $ScreenRoot/CameraSettingsPanel
 
@@ -33,6 +34,8 @@ func _on_paused_changed(is_paused: bool) -> void:
 		btn_resume.grab_focus()
 		if stat_panel != null:
 			stat_panel.refresh()
+		if run_modifiers_panel != null:
+			run_modifiers_panel.refresh()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible or camera_settings_panel.visible:
@@ -47,11 +50,36 @@ func _unhandled_input(event: InputEvent) -> void:
 func _input(event: InputEvent) -> void:
 	if not visible or camera_settings_panel.visible:
 		return
+	var focused: Control = get_viewport().gui_get_focus_owner()
+	var controls: Array[Control] = [btn_resume, btn_camera, btn_restart, btn_menu, btn_quit]
+	var focused_panel: ScrollContainer = _get_focused_panel(focused)
+	if focused_panel != null:
+		if _navigation_pressed(event, KEY_UP, "ui_up") or _navigation_pressed(event, KEY_DOWN, "ui_down"):
+			var direction: int = -1 if _navigation_pressed(event, KEY_UP, "ui_up") else 1
+			focused_panel.scroll_vertical += direction * 48
+			get_viewport().set_input_as_handled()
+			return
+		var return_to_buttons: bool = (
+			(focused_panel == stat_panel and _navigation_pressed(event, KEY_RIGHT, "ui_right"))
+			or (focused_panel == run_modifiers_panel and _navigation_pressed(event, KEY_LEFT, "ui_left"))
+		)
+		if return_to_buttons:
+			btn_resume.grab_focus()
+			get_viewport().set_input_as_handled()
+			return
+	elif focused in controls:
+		if _navigation_pressed(event, KEY_LEFT, "ui_left"):
+			stat_panel.grab_focus()
+			get_viewport().set_input_as_handled()
+			return
+		if _navigation_pressed(event, KEY_RIGHT, "ui_right"):
+			run_modifiers_panel.grab_focus()
+			get_viewport().set_input_as_handled()
+			return
 	var key_event: InputEventKey = event as InputEventKey
 	if key_event != null and key_event.pressed:
 		var key: Key = key_event.physical_keycode if key_event.physical_keycode != 0 else key_event.keycode
-		if key == KEY_UP or key == KEY_DOWN or key == KEY_TAB:
-			var controls: Array[Control] = [btn_resume, btn_camera, btn_restart, btn_menu, btn_quit]
+		if key == KEY_TAB or ((key == KEY_UP or key == KEY_DOWN) and focused_panel == null):
 			var index: int = controls.find(get_viewport().gui_get_focus_owner())
 			var backwards: bool = key == KEY_UP or (key == KEY_TAB and key_event.shift_pressed)
 			index = posmod(index + (-1 if backwards else 1), controls.size())
@@ -69,6 +97,21 @@ func _input(event: InputEvent) -> void:
 	if get_viewport().gui_get_focus_owner() != null:
 		return
 	btn_resume.grab_focus()
+
+func _get_focused_panel(focused: Control) -> ScrollContainer:
+	if focused == null:
+		return null
+	for panel: ScrollContainer in [stat_panel, run_modifiers_panel]:
+		if focused == panel or panel.is_ancestor_of(focused):
+			return panel
+	return null
+
+func _navigation_pressed(event: InputEvent, key: Key, action: StringName) -> bool:
+	var key_event: InputEventKey = event as InputEventKey
+	if key_event != null:
+		var pressed_key: Key = key_event.physical_keycode if key_event.physical_keycode != 0 else key_event.keycode
+		return key_event.pressed and pressed_key == key
+	return event.is_action_pressed(action, true)
 
 func open_camera_settings() -> void:
 	if not visible or not PauseManager.is_paused:

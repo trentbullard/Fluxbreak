@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://bapsjbior1dq4" path="res://scripts/hud/pause_menu.gd" id="1_xxxx0"]
 [ext_resource type="FontFile" uid="uid://dtkmmkanjxyxd" path="res://assets/fonts/Orbitron/Orbitron-Regular.ttf" id="2_5h01g"]
 [ext_resource type="Script" uid="uid://n8f7g08pbmb5" path="res://scripts/hud/stat_panel.gd" id="2_stat_panel"]
+[ext_resource type="Script" path="res://scripts/hud/run_modifiers_panel.gd" id="run_modifiers_panel"]
 [ext_resource type="PackedScene" path="res://scenes/settings/camera_settings_panel.tscn" id="camera_settings"]
 
 [sub_resource type="Theme" id="Theme_wiae1"]
@@ -80,6 +81,7 @@ layout_mode = 2
 [node name="Resume" type="Button" parent="ScreenRoot/CenterContainer/VBox" unique_id=376462362]
 layout_mode = 2
 focus_neighbor_left = NodePath("../../../StatPanel")
+focus_neighbor_right = NodePath("../../../RunModifiersPanel")
 focus_neighbor_bottom = NodePath("../CameraSettings")
 focus_next = NodePath("../CameraSettings")
 theme = SubResource("Theme_wiae1")
@@ -88,6 +90,7 @@ text = "Resume"
 [node name="CameraSettings" type="Button" parent="ScreenRoot/CenterContainer/VBox"]
 layout_mode = 2
 focus_neighbor_left = NodePath("../../../StatPanel")
+focus_neighbor_right = NodePath("../../../RunModifiersPanel")
 focus_neighbor_top = NodePath("../Resume")
 focus_neighbor_bottom = NodePath("../Restart")
 focus_next = NodePath("../Restart")
@@ -98,6 +101,7 @@ text = "Camera Settings"
 [node name="Restart" type="Button" parent="ScreenRoot/CenterContainer/VBox" unique_id=1032932810]
 layout_mode = 2
 focus_neighbor_left = NodePath("../../../StatPanel")
+focus_neighbor_right = NodePath("../../../RunModifiersPanel")
 focus_neighbor_top = NodePath("../CameraSettings")
 focus_neighbor_bottom = NodePath("../MainMenu")
 focus_next = NodePath("../MainMenu")
@@ -108,6 +112,7 @@ text = "Restart"
 [node name="MainMenu" type="Button" parent="ScreenRoot/CenterContainer/VBox" unique_id=740124507]
 layout_mode = 2
 focus_neighbor_left = NodePath("../../../StatPanel")
+focus_neighbor_right = NodePath("../../../RunModifiersPanel")
 focus_neighbor_top = NodePath("../Restart")
 focus_neighbor_bottom = NodePath("../Quit")
 focus_next = NodePath("../Quit")
@@ -118,6 +123,7 @@ text = "Main Menu"
 [node name="Quit" type="Button" parent="ScreenRoot/CenterContainer/VBox" unique_id=913799529]
 layout_mode = 2
 focus_neighbor_left = NodePath("../../../StatPanel")
+focus_neighbor_right = NodePath("../../../RunModifiersPanel")
 focus_neighbor_top = NodePath("../MainMenu")
 focus_previous = NodePath("../MainMenu")
 theme = SubResource("Theme_46l5v")
@@ -147,5 +153,33 @@ script = ExtResource("2_stat_panel")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+
+[node name="RunModifiersPanel" type="ScrollContainer" parent="ScreenRoot"]
+layout_mode = 1
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -380.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 0
+grow_vertical = 2
+focus_neighbor_left = NodePath("../CenterContainer/VBox/Resume")
+focus_mode = 2
+focus_behavior_recursive = 2
+mouse_filter = 0
+mouse_force_pass_scroll_events = false
+theme_override_styles/panel = SubResource("StyleBoxFlat_statpanel")
+theme_override_styles/focus = SubResource("StyleBoxFlat_5h01g")
+draw_focus_border = true
+horizontal_scroll_mode = 0
+script = ExtResource("run_modifiers_panel")
+
+[node name="Entries" type="VBoxContainer" parent="ScreenRoot/RunModifiersPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 5
 
 [node name="CameraSettingsPanel" parent="ScreenRoot" instance=ExtResource("camera_settings")]

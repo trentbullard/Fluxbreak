@@ -31,6 +31,7 @@ enum State { IN_WAVE, DOWNTIME, GATEWAY_HOLD }
 var run_state: State = State.DOWNTIME
 var run_score: int = 0
 var _purchased_upgrade_ids: Array[String] = []
+var _purchased_upgrade_entries: Array[Dictionary] = []
 var _purchased_family_counts_by_poi_type: Dictionary = {}
 var _purchased_family_unique_by_poi_type: Dictionary = {}
 var _purchased_family_total_by_poi_type: Dictionary = {}
@@ -59,11 +60,18 @@ func get_weapon_cost(base_cost: int) -> int:
 	# Progressive pricing: base_cost * (multiplier ^ weapons_purchased)
 	return int(round(base_cost * pow(weapon_price_multiplier, weapons_purchased)))
 
-func record_upgrade_purchase(upgrade_id: String) -> void:
+func record_upgrade_purchase(upgrade_id: String, upgrade: Upgrade = null) -> void:
 	var id: String = upgrade_id.strip_edges().to_lower()
 	if id == "":
 		return
 	_purchased_upgrade_ids.append(id)
+	# Capture the choice's text once; repeated purchases remain separate entries.
+	var display_name: String = upgrade.display_name.strip_edges() if upgrade != null else ""
+	_purchased_upgrade_entries.append({
+		"id": id,
+		"name": display_name if display_name != "" else id.replace("_", " ").capitalize(),
+		"description": upgrade.descripton.strip_edges() if upgrade != null else "",
+	})
 	upgrade_purchased.emit(id)
 
 func record_upgrade_purchase_for_poi(upgrade_id: String, family_id: String, poi_type: int) -> void:
@@ -86,12 +94,19 @@ func record_upgrade_purchase_for_poi(upgrade_id: String, family_id: String, poi_
 
 func reset_upgrades_purchased() -> void:
 	_purchased_upgrade_ids.clear()
+	_purchased_upgrade_entries.clear()
 	_purchased_family_counts_by_poi_type.clear()
 	_purchased_family_unique_by_poi_type.clear()
 	_purchased_family_total_by_poi_type.clear()
 
 func get_purchased_upgrade_ids() -> Array[String]:
 	return _purchased_upgrade_ids.duplicate()
+
+## Current-run choices, newest first, isolated from caller/UI mutation.
+func get_purchased_upgrade_entries() -> Array[Dictionary]:
+	var entries: Array[Dictionary] = _purchased_upgrade_entries.duplicate(true)
+	entries.reverse()
+	return entries
 
 func get_purchased_family_counts_for_poi_type(poi_type: int) -> Dictionary:
 	var counts: Dictionary = _purchased_family_counts_by_poi_type.get(poi_type, {})

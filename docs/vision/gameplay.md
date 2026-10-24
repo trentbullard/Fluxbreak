@@ -45,3 +45,9 @@ Their larger cloud retains the original moving 1,000-particle swarm. Brighter bl
 ## Current Camera Settings
 
 The original follow camera remains the only flight view. Main-menu Settings → Flight Camera and Pause → Camera Settings expose field of view, hull-relative distance and height, follow tightness, look ahead and acceleration pullback. Reset defaults preserve its original follow calculation. There are no screen/HUD framing corrections or alternate camera-led controls. Preferences persist across runs and ship selection; paused adjustments preview without advancing gameplay. These settings do not alter flight handling, pilot g-force limits or input sensitivity. See [camera settings](../plans/camera_settings.md).
+
+## Pause Run Modifiers
+
+The pause menu pairs its left-side stats with a right-side scrollable modifier panel. Map modifiers and faction modifiers have separate sections above the run's chosen upgrades. Each purchase retains its name and stat description, with the most recent choice first and repeated purchases shown individually. This history follows the player across sectors and resets with a new run. It records in-run upgrade choices; persistent meta upgrades remain in the existing stats panel.
+
+Map entries reflect the current sector's actual modifier resources. The faction section identifies the active faction and reports no active faction modifiers while that gameplay layer remains empty. The panel refreshes on pause, and keyboard/controller focus supports scrolling either side panel and returning to the center buttons.

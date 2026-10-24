@@ -630,7 +630,7 @@ func _on_button_pressed(index: int) -> void:
 		if offer_cost > _current_nanobots:
 			return  # Can't afford
 		_spend_nanobots(offer_cost)
-		RunState.record_upgrade_purchase(upgrade.id)
+		RunState.record_upgrade_purchase(upgrade.id, upgrade)
 		if _current_poi != null and _current_poi.poi_def != null and RunState.has_method("record_upgrade_purchase_for_poi"):
 			RunState.record_upgrade_purchase_for_poi(upgrade.id, _get_upgrade_family(upgrade), int(_current_poi.poi_def.poi_type))
 		_apply_upgrade(upgrade)
