@@ -71,6 +71,10 @@ func _physics_process(delta: float) -> void:
 			_tick_harbinger()
 		GreyBehaviorDef.Mode.MOTHERSHIP:
 			_tick_mothership()
+	_apply_separation_pulse()
+
+func is_separation_locked() -> bool:
+	return is_instance_valid(_active_attack) or is_instance_valid(_displacement) or is_instance_valid(_tether) or _recovery_left > 0.0 or _rupture_pulses_remaining == 1 or _post_displacement_pulse
 
 func get_tactical_state() -> String:
 	if is_instance_valid(_displacement):

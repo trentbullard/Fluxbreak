@@ -28,6 +28,7 @@ The game is built around auto-combat rather than manual aiming. Your job is to s
 - Home opens Play, Hangar, Upgrades, Settings, or Exit. Play shows the current loadout and offers Change Loadout; Hangar offers selection details and Continue To Play. Back or Escape returns to Home, and closing Upgrades returns to the page that opened it.
 - The passive 3D hangar displays existing ships and placeholder pilot stand-ins, with a smooth camera moving between selection bays. Settings includes master volume, fullscreen, control instructions, and Animate Hangar, which can be disabled to reduce motion.
 - Campaign keeps two played stages. Its first boss opens a cyan hexagonal Salvage Corridor gateway and an amber chevron Assault Lane gateway. The briefing supports mouse, keyboard, and controller confirmation; Escape, Back, or Not yet returns to flight. Your faction, ship, upgrades, and nanobots carry forward. Practice retains its existing short encounter.
+- Enemies and bosses use occasional lateral spacing pulses away from the nearest crowded ship or target. Tight overlaps use stable escape directions; committed attacks retain their original movement. POIs are excluded from spacing.
 - Pilots include `Rookie`, `Ace`, and `Technician`
 - Ships include `Fighter Mk1`, `Heavy Bruiser`, and `Drone Carrier`
 - Weapons currently include pulse, laser, and drone-based loadout pieces
@@ -64,7 +65,7 @@ Combat targeting and firing are handled automatically by the ship's weapon syste
 
 - Engine: Godot 4.7.2
 - Language: typed GDScript
-- Project version: `0.4.0`
+- Project version: `0.4.1`
 
 ## Running The Project
 

@@ -70,6 +70,7 @@ var _warp_model_root: Node3D = null
 var _warp_original_model_scale: Vector3 = Vector3.ONE
 var _visual_model_root_error_logged: bool = false
 var _visual_muzzle_socket_error_logged: bool = false
+var _separation_manager: EnemySeparation = null
 
 func configure_enemy(d: EnemyDef, spawn_context: EnemySpawnContext = null) -> void:
 	if d == null: return
@@ -249,6 +250,10 @@ func _ready() -> void:
 
 	hull = eff_max_hull
 	shield = eff_max_shield
+	# Cache full-size geometry before the spawner begins the temporary warp scale.
+	_separation_manager = get_tree().get_first_node_in_group("enemy_separation") as EnemySeparation
+	if _separation_manager != null:
+		_separation_manager.get_clearance_radius(self)
 	
 	# --- shield regen timer ---
 	_regen_timer = Timer.new()
@@ -265,6 +270,29 @@ func _physics_process(delta: float) -> void:
 	if player_ship != null:
 		_face_target(player_ship.global_position)
 		_orbit_target(player_ship.global_position)
+	_apply_separation_pulse()
+
+## A held warning or committed trajectory must keep its original locomotion.
+func is_separation_locked() -> bool:
+	return false
+
+func _apply_separation_pulse() -> void:
+	if not is_instance_valid(_separation_manager):
+		_separation_manager = get_tree().get_first_node_in_group("enemy_separation") as EnemySeparation
+	if _separation_manager == null:
+		return
+	# Consume even during a hold, so an old request cannot fire after recovery.
+	var pulse: Vector3 = _separation_manager.take_pulse(self)
+	if pulse.is_zero_approx() or _dead or freeze or is_separation_locked():
+		return
+	if not is_instance_valid(player_ship) or not player_ship.visible or not player_ship.is_alive():
+		return
+	var speed: float = pulse.length()
+	var direction: Vector3 = pulse / speed
+	var addition: float = maxf(speed - maxf(linear_velocity.dot(direction), 0.0), 0.0)
+	if addition > 0.0:
+		# Mass scaling makes this a small velocity nudge, with no angular impulse.
+		apply_central_impulse(direction * addition * mass)
 
 func _process(_delta: float) -> void:
 	if is_inside_tree():

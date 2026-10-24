@@ -1,5 +1,5 @@
 #define AppName "Fluxbreak"
-#define AppVersion "0.4.0"
+#define AppVersion "0.4.1"
 #define AppPublisher "p4ndepravitygaming"
 #define AppURL "https://www.youtube.com/@p4ndepravitygaming"
 #define AppExeName "Fluxbreak.exe"

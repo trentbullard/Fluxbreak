@@ -107,6 +107,10 @@ func _physics_process(delta: float) -> void:
 			_tick_devourer(delta)
 		BugBehaviorDef.Mode.HIVE_QUEEN:
 			_tick_hive_queen(delta)
+	_apply_separation_pulse()
+
+func is_separation_locked() -> bool:
+	return is_instance_valid(_active_attack) or _charge_time_left > 0.0 or _brood_windup_left > 0.0 or is_instance_valid(_active_zone) or _recovery_left > 0.0
 
 func get_tactical_state() -> String:
 	if _charge_time_left > 0.0:

@@ -42,6 +42,11 @@ func _physics_process(delta: float) -> void:
 	_update_tracking(target_position, delta)
 	_update_movement(target_position, delta)
 	_update_weapons(player_ship, delta)
+	_apply_separation_pulse()
+
+func is_separation_locked() -> bool:
+	# The newer encounters own fixed warning, charge, relocation and recovery states.
+	return has_method("get_attack_state") and StringName(call("get_attack_state")) != &"cadence"
 
 func _exit_tree() -> void:
 	for socket in _weapon_sockets:

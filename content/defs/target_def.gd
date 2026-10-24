@@ -18,6 +18,9 @@ class_name TargetDef
 @export var angular_spin: Vector3
 @export var drift: Vector3
 
+## Clearance radius in world meters. Zero caches the target's visual mesh bounds.
+@export var separation_radius: float = 0.0
+
 # --- visuals (optional) ---
 @export var model_scene: PackedScene         # swap mesh for specific target types
 @export var material: StandardMaterial3D     # one-and-done override for all meshes

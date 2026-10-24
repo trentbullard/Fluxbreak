@@ -23,6 +23,10 @@ class_name EnemyDef
 @export var evasion: float = 0.10
 @export var thrust: float = 40.0
 
+@export_group("Spacing")
+## Clearance radius in world meters. Zero caches the actor's visual mesh bounds.
+@export var separation_radius: float = 0.0
+
 @export_group("Offense")
 @export var weapon: WeaponDef
 @export var team_id: int = 1              # optional, for IFF/targeting groups

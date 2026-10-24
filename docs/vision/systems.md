@@ -38,6 +38,12 @@ Sector conditions apply through a temporary layer separate from purchased upgrad
 
 Campaign's Salvage route fixes Salvage Tide plus Sensor Static; its Assault route fixes Thruster Corridors plus Armored Patrols. These stat effects do not imply an environmental damage-hazard system. Practice retains its existing encounter settings.
 
+### Current Enemy Spacing
+
+One shared proximity check runs roughly every half-second. Each enemy can receive a small lateral velocity pulse away from its closest nearby enemy, boss, or target, using cached visual clearance bounds or an authored radius override. Crowding strengthens the pulse; tight or exact overlaps use a stable pair-based escape direction. Existing orbit, pursuit, retreat, escort and boss locomotion continue to control normal flight.
+
+Pulses are suppressed during committed warnings, charges, relocations and held recovery states. Those ships remain obstacles for other enemies. Target objects retain their existing motion, and the player, POIs and gateways are excluded. This is soft dispersion rather than a physical collision constraint.
+
 ## Meta-Progression
 
 Outside active runs, the player gains access to persistent progression through meta-currency earned over time.

@@ -97,6 +97,10 @@ func _physics_process(delta: float) -> void:
 			_tick_cruiser(delta)
 		MercBehaviorDef.Mode.CARRIER:
 			_tick_carrier(delta)
+	_apply_separation_pulse()
+
+func is_separation_locked() -> bool:
+	return is_instance_valid(_active_attack) or _broadside_shots_left > 0 or _escort_windup_left > 0.0
 
 func get_tactical_state() -> String:
 	match _behavior.mode:

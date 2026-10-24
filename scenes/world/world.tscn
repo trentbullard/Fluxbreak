@@ -72,6 +72,7 @@
 [ext_resource type="Resource" path="res://content/data/enemies/grey_vessel_mk1.tres" id="grey_vessel"]
 [ext_resource type="Resource" path="res://content/data/enemies/grey_harbinger_mk1.tres" id="grey_harbinger"]
 [ext_resource type="Resource" path="res://content/data/enemies/grey_mothership_mk1.tres" id="grey_mothership"]
+[ext_resource type="Script" path="res://scripts/enemy/enemy_separation.gd" id="enemy_separation_script"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_sar2w"]
 panorama = ExtResource("1_dphjl")
@@ -204,6 +205,9 @@ script = ExtResource("1_ovomx")
 ship_scene = ExtResource("2_6m72w")
 
 [node name="StageRoot" type="Node3D" parent="." unique_id=1201436595]
+
+[node name="EnemySeparation" type="Node" parent="StageRoot"]
+script = ExtResource("enemy_separation_script")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="StageRoot" unique_id=1344664443]
 environment = SubResource("Environment_v5dby")
