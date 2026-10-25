@@ -1,6 +1,11 @@
 [gd_scene format=3 uid="uid://icnhxdf4gt2c"]
 
 [ext_resource type="FontFile" uid="uid://b2akoj58tcs10" path="res://assets/fonts/Oxanium/Oxanium-Light.ttf" id="1_wligs"]
+[ext_resource type="Script" path="res://scripts/hud/target_nameplate.gd" id="2_nameplate"]
+
+[sub_resource type="Theme" id="Theme_nameplate"]
+default_font = ExtResource("1_wligs")
+default_font_size = 12
 
 [sub_resource type="LabelSettings" id="LabelSettings_wligs"]
 font = ExtResource("1_wligs")
@@ -12,17 +17,117 @@ outline_color = Color(0, 0, 0, 1)
 offset_right = 1.0
 offset_bottom = 19.0
 mouse_filter = 2
+theme = SubResource("Theme_nameplate")
+script = ExtResource("2_nameplate")
 
 [node name="HBox" type="HBoxContainer" parent="." unique_id=1231360185]
 layout_mode = 2
+mouse_filter = 2
 theme_override_constants/separation = 6
 
 [node name="StateIndicator" type="ColorRect" parent="HBox" unique_id=330526878]
 visible = false
 custom_minimum_size = Vector2(8, 8)
 layout_mode = 2
+mouse_filter = 2
 color = Color(0.2, 0.95, 1, 1)
 
 [node name="Label" type="Label" parent="HBox" unique_id=399292766]
 layout_mode = 2
+mouse_filter = 2
 label_settings = SubResource("LabelSettings_wligs")
+
+[node name="Combat" type="VBoxContainer" parent="."]
+visible = false
+custom_minimum_size = Vector2(196, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 1
+
+[node name="Header" type="HBoxContainer" parent="Combat"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="Faction" type="Label" parent="Combat/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.59, 0.83, 0.98, 1)
+theme_override_colors/font_outline_color = Color(0.005, 0.01, 0.02, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 12
+text = "FACTION"
+uppercase = true
+text_overrun_behavior = 3
+
+[node name="Distance" type="Label" parent="Combat/Header"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.73, 0.8, 0.88, 1)
+theme_override_colors/font_outline_color = Color(0.005, 0.01, 0.02, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 12
+text = "1.0 km"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="Identity" type="HBoxContainer" parent="Combat"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="Name" type="Label" parent="Combat/Identity"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.96, 0.98, 1, 1)
+theme_override_colors/font_outline_color = Color(0.005, 0.01, 0.02, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 18
+text = "Enemy name"
+text_overrun_behavior = 3
+
+[node name="Shield" type="Control" parent="Combat"]
+custom_minimum_size = Vector2(0, 16)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Caption" type="Label" parent="Combat/Shield"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_right = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.98, 0.99, 1, 1)
+theme_override_colors/font_outline_color = Color(0.005, 0.01, 0.02, 1)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 12
+text = "SHLD  100 / 100"
+vertical_alignment = 1
+
+[node name="Hull" type="Control" parent="Combat"]
+custom_minimum_size = Vector2(0, 16)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Caption" type="Label" parent="Combat/Hull"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_right = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.97, 0.97, 1)
+theme_override_colors/font_outline_color = Color(0.005, 0.01, 0.02, 1)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 12
+text = "HULL  100 / 100"
+vertical_alignment = 1

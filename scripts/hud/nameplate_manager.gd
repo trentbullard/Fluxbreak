@@ -1,30 +1,38 @@
-# nameplate_manager.gd  (Godot 4.6.3)
+# Screen-space identities and live durability for visible combatants and salvage.
 extends Control
 class_name NameplateManager
 
+## Pooled view shared by combat, POI and gateway nameplates.
 @export var nameplate_scene: PackedScene
+## Maximum range at which a nameplate can be displayed.
 @export var show_within_meters: int = 30000
+## Gap between the projected object position and its nameplate's lower edge.
 @export var pixel_offset_up: int = 35
+## Combat plates retain their normal size within this camera-relative distance.
+@export_range(1.0, 5000.0, 25.0) var combat_full_size_distance: float = 400.0
+## Small distant plates retain health awareness without filling the screen.
+@export_range(0.05, 1.0, 0.05) var combat_min_scale: float = 0.2
+## Existing docking state used to distinguish visited POIs.
 @export var docking_manager_path: NodePath
 
 const POI_UNVISITED_COLOR: Color = Color(0.2, 0.95, 1.0, 1.0)
 const POI_VISITED_COLOR: Color = Color(1.0, 0.72, 0.2, 1.0)
-const GATEWAY_COLOR: Color = Color(0.35, 1.0, 0.95, 1.0)
 
 var _camera: Camera3D
 var _ship: Node3D
 var _docking_manager: DockingManager
-var _pool: Array[Control] = []
-var _map: Dictionary[Node3D, Control] = {}
+var _pool: Array[TargetNameplate] = []
+var _map: Dictionary[Node3D, TargetNameplate] = {}
 
 func _ready() -> void:
 	_resolve_docking_manager()
 
 func _exit_tree() -> void:
-	# Pooled labels are detached from the tree and need explicit ownership
-	# cleanup when a practice run returns to the menu.
+	for target: Node3D in _map:
+		_disconnect_target(target)
 	_map.clear()
-	for ui: Control in _pool:
+	# Views still attached to this manager are freed with their parent.
+	for ui: TargetNameplate in _pool:
 		if is_instance_valid(ui):
 			ui.free()
 	_pool.clear()
@@ -35,176 +43,134 @@ func init(cam: Camera3D, ship: Node3D) -> void:
 	_resolve_docking_manager()
 
 func _process(_dt: float) -> void:
-	if _camera == null or nameplate_scene == null:
+	if not is_instance_valid(_camera) or nameplate_scene == null:
 		return
 	_sync_targets()
 
 func _sync_targets() -> void:
-	var targets: Array = get_tree().get_nodes_in_group("targets")
-	var pois: Array = get_tree().get_nodes_in_group("pois")
-	var gateways: Array = get_tree().get_nodes_in_group("boss_gateways")
-	targets.append_array(pois)
-	targets.append_array(gateways)
-	
-	for t in targets:
-		var target: Node3D = t
-		if target == null:
-			continue
-		if not _map.has(target):
-			var ui: Control = _pool_take()
-			if ui.get_parent() != self:
-				if ui.get_parent() != null:
-					ui.get_parent().remove_child(ui)
-				add_child(ui)
-			_map[target] = ui
-			
-			var tracked: Node3D = target
-			target.tree_exited.connect(func() -> void:
-				if _map.has(tracked):
-					_pool_release(_map[tracked])
-					_map.erase(tracked)
-			)
-
+	if not is_instance_valid(_camera) or nameplate_scene == null:
+		return
+	var candidates: Array[Node] = get_tree().get_nodes_in_group("targets")
+	candidates.append_array(get_tree().get_nodes_in_group("pois"))
+	candidates.append_array(get_tree().get_nodes_in_group("boss_gateways"))
+	var visible_targets: Dictionary[Node3D, float] = {}
 	var vp_size: Vector2 = get_viewport().get_visible_rect().size
-	for target in _map.keys():
-		var ui: Control = _map[target]
+	var ship_pos: Vector3 = _ship.global_position if is_instance_valid(_ship) else _camera.global_position
+	var range_m: float = float(maxi(show_within_meters, 0))
+	for candidate: Node in candidates:
+		var target: Node3D = candidate as Node3D
+		if target == null or target.is_queued_for_deletion() or not target.is_visible_in_tree() or visible_targets.has(target):
+			continue
 		var pos3: Vector3 = target.global_position
-
-		var ship_pos: Vector3 = _ship.global_transform.origin if (_ship != null) else _camera.global_position
 		var distance_sq: float = pos3.distance_squared_to(ship_pos)
-		var visible_now: bool = (
-			distance_sq <= float(show_within_meters * show_within_meters)
-			and _camera.is_position_in_frustum(pos3)
-		)
+		if distance_sq > range_m * range_m or not _camera.is_position_in_frustum(pos3):
+			continue
+		visible_targets[target] = distance_sq
+	# Recycle departing views before allocating arrivals, even during a full turn.
+	for target: Node3D in _map.keys():
+		if not visible_targets.has(target):
+			_release_target(target)
+	for target: Node3D in visible_targets:
+		if not _map.has(target):
+			var created: TargetNameplate = _pool_take()
+			if created == null:
+				continue
+			add_child(created)
+			_map[target] = created
+			target.tree_exited.connect(_on_target_tree_exited.bind(target), CONNECT_ONE_SHOT)
+		var ui: TargetNameplate = _map[target]
+		_update_nameplate(ui, target, HudDistanceFormatter.format_distance(sqrt(visible_targets[target])))
+		var view_scale: float = 1.0
+		if target is Enemy or target is TargetObject:
+			view_scale = _combat_scale_for_distance_squared(target.global_position.distance_squared_to(_camera.global_position))
+		ui.pivot_offset = Vector2.ZERO
+		ui.scale = Vector2.ONE * view_scale
+		ui.show()
+		_place_center_bottom(ui, _camera.unproject_position(target.global_position), vp_size)
 
-		if visible_now:
-			var d: float = sqrt(distance_sq)
-			var sp: Vector2 = _camera.unproject_position(pos3)
-			ui.visible = true
+func _update_nameplate(ui: TargetNameplate, target: Node3D, distance_text: String) -> void:
+	if target is Enemy:
+		var enemy: Enemy = target as Enemy
+		var faction_name: String = enemy.get_faction_display_name().strip_edges()
+		if faction_name.is_empty():
+			faction_name = String(enemy.get_faction_id()).replace("_", " ").capitalize()
+		if faction_name.is_empty():
+			faction_name = "Unknown"
+		ui.show_combat(faction_name, enemy.display_name if not enemy.display_name.is_empty() else "Enemy", distance_text, enemy.hull, enemy.eff_max_hull, enemy.shield, enemy.eff_max_shield)
+	elif target is TargetObject:
+		var salvage: TargetObject = target as TargetObject
+		ui.show_combat("Neutral", salvage.display_name if not salvage.display_name.is_empty() else "Target", distance_text, salvage.hull, salvage.max_hull, salvage.shield, salvage.max_shield)
+	elif target is PoiInstance:
+		var poi: PoiInstance = target as PoiInstance
+		ui.show_auxiliary("%s [%s]\n%s" % [poi.display_name, _get_poi_type_tag(poi), distance_text], _poi_indicator_color(poi))
+	elif target is BossGateway:
+		var gateway: BossGateway = target as BossGateway
+		ui.show_auxiliary("%s\n%s  •  Dock to inspect" % [gateway.get_display_name(), distance_text], gateway.get_marker_color())
+	else:
+		ui.show_auxiliary("%s\n%s" % [target.name, distance_text], Color.WHITE, false)
 
-			var label: Label = ui.get_node("HBox/Label") as Label
-			var distance_text: String = HudDistanceFormatter.format_distance(d)
-			if label != null:
-				var kind: String = _kind_of(target)
-				_reset_poi_indicator(ui)
-				if kind == "enemy":
-					label.text = "%s (%s)\n%s  •  HP: %d | S: %d" % [
-						target.display_name,
-						target.get_faction_display_name(),
-						distance_text,
-						int(round(max(target.hull, 0.0))),
-						int(round(max(target.shield, 0.0)))
-					]
-				elif kind == "target":
-					label.text = "%s\n%s  •  HP: %d" % [
-						target.display_name,
-						distance_text,
-						int(round(max(target.hull, 0.0)))
-					]
-				elif kind.contains("poi"):
-					var type_tag: String = _get_poi_type_tag(target)
-					_apply_poi_indicator(ui, target)
-					label.text = "%s [%s]\n%s" % [
-						target.display_name,
-						type_tag,
-						distance_text
-					]
-				elif kind == "boss_gateway":
-					_apply_gateway_indicator(ui, target)
-					label.text = "%s\n%s  •  Dock to inspect" % [
-						_gateway_display_name(target),
-						distance_text
-					]
-
-			_place_center_bottom(ui, sp, vp_size)
-		else:
-			_pool_release(ui)
-			_map.erase(target)
-
-func _pool_take() -> Control:
+func _pool_take() -> TargetNameplate:
 	if _pool.is_empty():
-		return nameplate_scene.instantiate() as Control
+		return nameplate_scene.instantiate() as TargetNameplate
 	return _pool.pop_back()
 
-func _pool_release(ui: Control) -> void:
-	_reset_poi_indicator(ui)
-	ui.visible = false
+func _pool_release(ui: TargetNameplate) -> void:
+	ui.reset_display()
+	ui.hide()
 	if ui.get_parent() != null:
 		ui.get_parent().remove_child(ui)
 	_pool.push_back(ui)
 
+func _on_target_tree_exited(target: Node3D) -> void:
+	_release_target(target)
+
+func _disconnect_target(target: Node3D) -> void:
+	if not is_instance_valid(target):
+		return
+	var callback: Callable = _on_target_tree_exited.bind(target)
+	if target.tree_exited.is_connected(callback):
+		target.tree_exited.disconnect(callback)
+
+func _release_target(target: Node3D) -> void:
+	if not _map.has(target):
+		return
+	var ui: TargetNameplate = _map[target]
+	_map.erase(target)
+	_disconnect_target(target)
+	_pool_release(ui)
+
 func _place_center_bottom(ui: Control, screen_pos: Vector2, vp_size: Vector2) -> void:
 	ui.size = ui.get_combined_minimum_size()
-	var s: Vector2 = ui.size
-	var pos: Vector2 = screen_pos - Vector2(s.x * 0.5, s.y) - Vector2(0.0, float(pixel_offset_up))
-	pos.x = clamp(pos.x, 0.0, vp_size.x - s.x)
-	pos.y = clamp(pos.y, 0.0, vp_size.y - s.y)
+	var s: Vector2 = ui.size * ui.scale
+	var pos: Vector2 = screen_pos - Vector2(s.x * 0.5, s.y) - Vector2(0.0, float(pixel_offset_up) * ui.scale.y)
+	pos.x = clampf(pos.x, 0.0, maxf(vp_size.x - s.x, 0.0))
+	pos.y = clampf(pos.y, 0.0, maxf(vp_size.y - s.y, 0.0))
 	ui.position = pos
 
-func _kind_of(node: Object) -> String:
-	if not is_instance_valid(node):
-		return "unknown"
-	# Check POI first (before meta) to ensure proper type detection
-	if node is Enemy:
-		return "enemy"
-	if node is TargetObject:
-		return "target"
-	if node is PoiInstance:
-		return "poi"
-	if node is BossGateway:
-		return "boss_gateway"
-	if node.has_meta("kind"):
-		var kind_meta: String = String(node.get_meta("kind"))
-		if kind_meta != "":
-			return kind_meta
-	return "unknown"
+func _combat_scale_for_distance_squared(distance_sq: float) -> float:
+	var near_distance: float = maxf(combat_full_size_distance, 1.0)
+	var minimum: float = clampf(combat_min_scale, 0.05, 1.0)
+	if distance_sq <= near_distance * near_distance:
+		return 1.0
+	var floor_distance: float = near_distance / minimum
+	if distance_sq >= floor_distance * floor_distance:
+		return minimum
+	return near_distance / sqrt(distance_sq)
 
-
-func _get_poi_type_tag(poi: Node3D) -> String:
-	if poi is PoiInstance:
-		var p: PoiInstance = poi as PoiInstance
-		match p.poi_type:
-			PoiDef.PoiType.OFFENSE:
-				return "ATK"
-			PoiDef.PoiType.DEFENSE:
-				return "DEF"
-			PoiDef.PoiType.UTILITY:
-				return "UTL"
+func _get_poi_type_tag(poi: PoiInstance) -> String:
+	match poi.poi_type:
+		PoiDef.PoiType.OFFENSE:
+			return "ATK"
+		PoiDef.PoiType.DEFENSE:
+			return "DEF"
+		PoiDef.PoiType.UTILITY:
+			return "UTL"
 	return "POI"
 
-
 func _resolve_docking_manager() -> void:
-	if docking_manager_path == NodePath(""):
-		return
-	_docking_manager = get_node_or_null(docking_manager_path) as DockingManager
+	if docking_manager_path != NodePath(""):
+		_docking_manager = get_node_or_null(docking_manager_path) as DockingManager
 
-
-func _apply_poi_indicator(ui: Control, poi: Node3D) -> void:
-	var indicator: ColorRect = ui.get_node_or_null("HBox/StateIndicator") as ColorRect
-	if indicator == null:
-		return
-
-	indicator.visible = true
-	var poi_instance: PoiInstance = poi as PoiInstance
-	var is_visited: bool = _docking_manager != null and poi_instance != null and _docking_manager.is_poi_visited(poi_instance)
-	indicator.color = POI_VISITED_COLOR if is_visited else POI_UNVISITED_COLOR
-
-
-func _reset_poi_indicator(ui: Control) -> void:
-	var indicator: ColorRect = ui.get_node_or_null("HBox/StateIndicator") as ColorRect
-	if indicator == null:
-		return
-	indicator.visible = false
-	indicator.color = POI_UNVISITED_COLOR
-
-func _apply_gateway_indicator(ui: Control, gateway: Node3D) -> void:
-	var indicator: ColorRect = ui.get_node_or_null("HBox/StateIndicator") as ColorRect
-	if indicator == null:
-		return
-	indicator.visible = true
-	indicator.color = (gateway as BossGateway).get_marker_color() if gateway is BossGateway else GATEWAY_COLOR
-
-func _gateway_display_name(gateway: Node3D) -> String:
-	if gateway is BossGateway:
-		return (gateway as BossGateway).get_display_name()
-	return gateway.name
+func _poi_indicator_color(poi: PoiInstance) -> Color:
+	var is_visited: bool = is_instance_valid(_docking_manager) and _docking_manager.is_poi_visited(poi)
+	return POI_VISITED_COLOR if is_visited else POI_UNVISITED_COLOR
