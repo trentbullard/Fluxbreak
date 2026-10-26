@@ -99,7 +99,8 @@ static func _entry(entry_id: StringName, display_name: String, subtitle: String)
 static func _locked_entry(entry: Dictionary, unlock_text: String) -> Dictionary:
 	entry["subtitle"] = "Locked"
 	entry["placeholder"] = "?"
-	entry["sections"] = [{"title": "Unlock requirements", "text": unlock_text if not unlock_text.strip_edges().is_empty() else "Unlock this starting option through the Hangar's progression requirements."}]
+	var requirements: String = unlock_text if not unlock_text.strip_edges().is_empty() else "Unlock this starting option through the Hangar's progression requirements."
+	entry["sections"] = [{"title": "Unlock requirements", "text": "Earn unlock progress in Campaign. Practice does not count.\n\n" + requirements}]
 	return entry
 
 static func _weapon_stats(definition: WeaponDef) -> Array[Dictionary]:

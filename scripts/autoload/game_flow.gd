@@ -395,11 +395,18 @@ func _finalize_run_end(count_as_death: bool) -> bool:
 		return false
 	_run_end_in_progress = true
 	_finalize_run_stats(count_as_death)
-	_clear_run_progression()
+	# Check while the finished run's mode is still available.
 	check_and_update_high_score(RunState.run_score)
+	_clear_run_progression()
 	return true
 
+## Practice keeps its temporary combat state but cannot change saved progression.
+func _run_allows_progression() -> bool:
+	return _active_run_definition == null or _active_run_definition.run_mode != RunDefinition.RunMode.PRACTICE
+
 func check_and_update_high_score(final_run_score: int) -> void:
+	if not _run_allows_progression():
+		return
 	if final_run_score > high_score:
 		var old: int = high_score
 		high_score = final_run_score
@@ -1370,6 +1377,9 @@ func _finalize_run_stats(count_as_death: bool) -> void:
 	if not _run_active:
 		return
 	_run_active = false
+	if not _run_allows_progression():
+		_last_flux_anchor_reward_breakdown.clear()
+		return
 
 	var pilot_id: StringName = _run_pilot_id
 	if pilot_id == &"":

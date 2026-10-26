@@ -476,6 +476,7 @@ layout_mode = 2
 [node name="MercPractice" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/MercPracticeContainer" unique_id=187820318]
 custom_minimum_size = Vector2(334, 43)
 layout_mode = 2
+tooltip_text = "Short encounter with the selected faction. Practice earns no Flux Anchors, records, lifetime stats or unlock progress."
 text = "Practice"
 alignment = 0
 
