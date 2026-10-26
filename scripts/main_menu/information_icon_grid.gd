@@ -63,6 +63,28 @@ func _set_icon_state(button: Button, known: bool, display_name: String, hidden_n
 	button.tooltip_text = display_name if known else hidden_name
 	button.add_theme_color_override("font_color", COLOR_KNOWN if known else COLOR_UNKNOWN)
 
+## One cached visual-only preview per known entry; missing models keep the marker.
+func _set_model_preview(button: Button, model_scene: PackedScene, known: bool) -> void:
+	var preview: EnemyIconPreview = button.get_node_or_null("ModelPreview") as EnemyIconPreview
+	if not known:
+		if preview != null:
+			preview.hide()
+		return
+	if preview == null:
+		preview = EnemyIconPreview.new()
+		preview.name = "ModelPreview"
+		button.add_child(preview)
+		preview.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		preview.offset_left = 4.0
+		preview.offset_top = 4.0
+		preview.offset_right = -4.0
+		preview.offset_bottom = -4.0
+	preview.show()
+	if preview.set_model(model_scene):
+		button.text = ""
+	else:
+		preview.hide()
+
 func _add_empty_message(message: String) -> void:
 	var label: Label = Label.new()
 	label.text = message

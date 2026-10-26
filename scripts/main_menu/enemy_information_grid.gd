@@ -49,6 +49,7 @@ func refresh() -> void:
 		var killed: bool = GameFlow.get_meta_stat_value(GameFlow.META_STAT_KILLS, &"", key) > 0
 		button.set_meta(&"killed", killed)
 		_set_icon_state(button, killed, definition.get_display_name_or_default(), "Unknown enemy")
+		_set_model_preview(button, definition.model_scene, killed)
 	_reset_scroll()
 
 func _build_entries() -> void:
