@@ -405,6 +405,55 @@ layout_mode = 2
 text = "UPGRADES"
 alignment = 0
 
+[node name="InformationContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer"]
+layout_mode = 2
+
+[node name="Information" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/InformationContainer"]
+custom_minimum_size = Vector2(334, 43)
+layout_mode = 2
+text = "INFORMATION"
+alignment = 0
+
+[node name="EnemiesContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer"]
+visible = false
+layout_mode = 2
+
+[node name="Enemies" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/EnemiesContainer"]
+custom_minimum_size = Vector2(334, 43)
+layout_mode = 2
+text = "ENEMIES"
+alignment = 0
+
+[node name="WeaponsContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer"]
+visible = false
+layout_mode = 2
+
+[node name="Weapons" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/WeaponsContainer"]
+custom_minimum_size = Vector2(334, 43)
+layout_mode = 2
+text = "WEAPONS"
+alignment = 0
+
+[node name="ShipsContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer"]
+visible = false
+layout_mode = 2
+
+[node name="Ships" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/ShipsContainer"]
+custom_minimum_size = Vector2(334, 43)
+layout_mode = 2
+text = "SHIPS"
+alignment = 0
+
+[node name="PilotsContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer"]
+visible = false
+layout_mode = 2
+
+[node name="Pilots" type="Button" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/PilotsContainer"]
+custom_minimum_size = Vector2(334, 43)
+layout_mode = 2
+text = "PILOTS"
+alignment = 0
+
 [node name="PracticeContainer" type="CenterContainer" parent="CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer" unique_id=1573180351]
 visible = false
 layout_mode = 2

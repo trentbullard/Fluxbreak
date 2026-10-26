@@ -31,6 +31,11 @@ signal selection_changed
 @onready var _buttons: VBoxContainer = $CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer
 @onready var _play_button: Button = _buttons.get_node("PlayContainer/Play")
 @onready var _hangar_button: Button = _buttons.get_node("HangarContainer/Hangar")
+@onready var _information_button: Button = _buttons.get_node("InformationContainer/Information")
+@onready var _enemies_button: Button = _buttons.get_node("EnemiesContainer/Enemies")
+@onready var _weapons_button: Button = _buttons.get_node("WeaponsContainer/Weapons")
+@onready var _ships_button: Button = _buttons.get_node("ShipsContainer/Ships")
+@onready var _pilots_button: Button = _buttons.get_node("PilotsContainer/Pilots")
 @onready var _change_loadout: Button = _buttons.get_node("ChangeLoadoutContainer/ChangeLoadout")
 @onready var _continue_button: Button = _buttons.get_node("ContinueContainer/ContinueToPlay")
 @onready var _back_button: Button = _buttons.get_node("BackContainer/Back")
@@ -53,7 +58,8 @@ signal selection_changed
 
 const MENU_SETTINGS_PATH: String = "user://menu_settings.cfg"
 const PAGE_ROWS: Dictionary = {
-	&"home": ["PlayContainer", "HangarContainer", "UpgradesContainer", "SettingsContainer", "ExitContainer"],
+	&"home": ["PlayContainer", "HangarContainer", "UpgradesContainer", "InformationContainer", "SettingsContainer", "ExitContainer"],
+	&"information": ["EnemiesContainer", "WeaponsContainer", "ShipsContainer", "PilotsContainer", "BackContainer"],
 	&"play": ["LoadoutSummary", "ChangeLoadoutContainer", "FactionContainer", "FactionSummary", "PracticeContainer", "MercPracticeContainer", "BackContainer"],
 	&"hangar": ["PilotContainer", "ShipContainer", "WeaponContainer", "HangarDetails", "ContinueContainer", "BackContainer"],
 	&"settings": ["SettingsControls", "ControlsHelp", "BackContainer"],
@@ -71,6 +77,8 @@ static var _remembered_practice_faction_id: StringName = &"random"
 func _ready() -> void:
 	_play_button.pressed.connect(show_page.bind(&"play"))
 	_hangar_button.pressed.connect(show_page.bind(&"hangar"))
+	_information_button.pressed.connect(show_page.bind(&"information"))
+	# Reference category buttons stay unconnected until their pages are authored.
 	_change_loadout.pressed.connect(show_page.bind(&"hangar"))
 	_continue_button.pressed.connect(show_page.bind(&"play"))
 	_back_button.pressed.connect(show_page.bind(&"home"))
@@ -204,6 +212,9 @@ func show_page(page: StringName) -> void:
 		&"settings":
 			_section_title.text = "SETTINGS"
 			_section_description.text = "Display, audio, flight camera and hangar motion."
+		&"information":
+			_section_title.text = "INFORMATION"
+			_section_description.text = "Enemies, weapons, ships and pilots."
 		_:
 			_section_title.text = "READY FOR DEPARTURE"
 			_section_description.text = "Choose your loadout. Find your edge. Break through."
@@ -263,7 +274,9 @@ func _get_page_controls() -> Array[Control]:
 			return [pilot_picker, ship_picker, weapon_picker, _continue_button, _back_button]
 		&"settings":
 			return [_master_volume, _fullscreen, _motion, _camera_settings_button, _back_button]
-	return [_play_button, _hangar_button, btn_upgrades, btn_settings, btn_exit]
+		&"information":
+			return [_enemies_button, _weapons_button, _ships_button, _pilots_button, _back_button]
+	return [_play_button, _hangar_button, btn_upgrades, _information_button, btn_settings, btn_exit]
 
 func _wire_page_focus() -> void:
 	var controls: Array[Control] = []
@@ -721,7 +734,7 @@ func _set_focus_modes() -> void:
 	btn_merc_practice.focus_mode = Control.FOCUS_ALL
 	btn_settings.focus_mode = Control.FOCUS_ALL
 	btn_exit.focus_mode = Control.FOCUS_ALL
-	for control: Control in [_play_button, _hangar_button, _change_loadout, _continue_button, _back_button, _master_volume, _fullscreen, _motion, _camera_settings_button]:
+	for control: Control in [_play_button, _hangar_button, _information_button, _enemies_button, _weapons_button, _ships_button, _pilots_button, _change_loadout, _continue_button, _back_button, _master_volume, _fullscreen, _motion, _camera_settings_button]:
 		control.focus_mode = Control.FOCUS_ALL
 
 func _focus_default_control() -> void:
