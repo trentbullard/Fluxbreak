@@ -94,7 +94,8 @@ func _launch_campaign() -> void:
 	(menu.get_node(MENU_BUTTONS + "PracticeContainer/Practice") as Button).pressed.emit()
 	await _wait_frames(4)
 	_check(not menu.visible and not get_tree().paused, "The actual Campaign button starts the run")
-	_check(GameFlow.get_run_faction() != null and GameFlow.get_run_faction().get_faction_id() == &"greys", "The selected faction remains attached to the run")
+	_check(GameFlow.get_run_faction() != null, "Campaign resolves a faction before the pause panel reads its context")
+	_check(menu.call("get_practice_faction_id") == &"greys", "Campaign launch preserves the separate Practice faction preference")
 	_ship.freeze = true
 	_ship.set_physics_process(false)
 	_ship.get_node("MouseFlightController").process_mode = Node.PROCESS_MODE_DISABLED

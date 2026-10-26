@@ -52,10 +52,15 @@ func _launch_campaign(faction_id: StringName) -> void:
 	(menu.get_node(BUTTONS + "PlayContainer/Play") as Button).pressed.emit()
 	await _wait_frames(2)
 	_check(menu.call("get_current_page") == &"play", "Actual Home Play button opens campaign configuration")
-	(menu.get_node(BUTTONS + "PracticeContainer/Practice") as Button).pressed.emit()
+	# Exercise each faction's gateway rules with an explicit fixture. The live
+	# Campaign button chooses randomly, independently of the Practice selector.
+	var run: RunDefinition = PracticeRunFactory.create_run(faction_id, false)
+	_check(run != null and run.run_mode == RunDefinition.RunMode.STORY, "Gateway fixture creates an explicit full Campaign")
+	_world.call("_start_run", run)
 	await _wait_frames(2)
-	_check(not menu.visible and not get_tree().paused, "Actual Campaign button launches flight")
-	_check(GameFlow.get_run_faction().get_faction_id() == faction_id and GameFlow.get_active_stage_index() == 0, "Actual Campaign launch retains its selected faction and approach stage")
+	_check(not menu.visible and not get_tree().paused, "The Campaign fixture uses the real world launch path")
+	_check(GameFlow.get_run_faction().get_faction_id() == faction_id and GameFlow.get_active_stage_index() == 0, "The Campaign fixture retains its requested faction and approach stage")
+	_check(menu.call("get_practice_faction_id") == faction_id, "Launching a Campaign fixture leaves the Practice preference intact")
 	_ship = _world.get_node("Ship") as Ship
 	_ship.freeze = true
 	_ship.set_physics_process(false)
@@ -357,6 +362,8 @@ func _add_cleanup_fixture(gateway: BossGateway) -> Enemy:
 	source.explosion_scene = null
 	_world.add_child(source)
 	var definition: EnemyDef = EnemyDef.new()
+	# The real tether presentation requires a Grey owner, as it does in combat.
+	definition.faction = load("res://content/data/factions/greys.tres") as FactionDef
 	definition.weapon = load("res://content/data/weapons/pulse_mk1.tres") as WeaponDef
 	source.configure_enemy(definition)
 	source.global_position = _ship.global_position + Vector3.RIGHT * 5.0

@@ -189,7 +189,7 @@ func _create_world() -> Node3D:
 
 func _check_selected_faction(faction_def: PracticeFactionDef, short_practice: bool) -> void:
 	var initial_failure_count: int = _failures.size()
-	var faction_id: StringName = faction_def.faction.get_faction_id()
+	var selected_faction_id: StringName = faction_def.faction.get_faction_id()
 	var world: Node3D = _create_world()
 	await get_tree().process_frame
 	var menu: Control = world.get_node("MainMenuOverlay") as Control
@@ -199,34 +199,46 @@ func _check_selected_faction(faction_def: PracticeFactionDef, short_practice: bo
 	_check(picker.item_count == 5, "The faction picker must expose Random and all four playable factions.")
 	var selected_index: int = -1
 	for item_index in picker.item_count:
-		if StringName(picker.get_item_metadata(item_index)) == faction_id:
+		if StringName(picker.get_item_metadata(item_index)) == selected_faction_id:
 			selected_index = item_index
-	_check(selected_index >= 0, "The actual picker omits %s." % faction_id)
+	_check(selected_index >= 0, "The actual picker omits %s." % selected_faction_id)
 	if selected_index >= 0:
 		picker.select(selected_index)
 		picker.item_selected.emit(selected_index)
-	_check(menu.call("get_practice_faction_id") == faction_id, "Practice selector failed to select %s." % faction_id)
+	_check(menu.call("get_practice_faction_id") == selected_faction_id, "Practice selector failed to select %s." % selected_faction_id)
 	var button: Button = menu.get_node(SHORT_BUTTON if short_practice else FULL_BUTTON) as Button
 	_check(not button.disabled, "Selected practice run must launch with the default unlocked loadout.")
 	_completed_count = 0
 	button.pressed.emit()
 	_protect_routing_ship()
 	var active_run: RunDefinition = GameFlow.get_active_run_definition()
-	_check(active_run != null and active_run.enemy_faction == faction_def.faction, "Actual menu button routed to the wrong faction.")
-	_check(GameFlow.get_run_faction() == faction_def.faction, "GameFlow failed to preserve the resolved faction.")
+	var resolved_faction: PracticeFactionDef = null
+	for candidate: PracticeFactionDef in PracticeRunFactory.get_factions():
+		if active_run != null and active_run.enemy_faction == candidate.faction:
+			resolved_faction = candidate
+			break
+	_check(resolved_faction != null, "Actual menu button must resolve an available faction before launch.")
+	if active_run == null or resolved_faction == null:
+		await _dispose_world(world)
+		return
+	var faction_id: StringName = resolved_faction.faction.get_faction_id()
+	if short_practice:
+		_check(faction_id == selected_faction_id, "Practice must launch the explicitly selected faction.")
+	_check(menu.call("get_practice_faction_id") == selected_faction_id, "Launching either mode must preserve the separate Practice preference.")
+	_check(GameFlow.get_run_faction() == resolved_faction.faction, "GameFlow failed to preserve the resolved faction.")
 	_check(active_run.get_stage_count() == (1 if short_practice else 2), "Actual menu button routed to the wrong run length.")
 	var director: WaveDirector = world.get_node("StageRoot/WaveDirector") as WaveDirector
 	var buyer: BudgetBuyer = world.get_node("StageRoot/BudgetBuyer") as BudgetBuyer
 	var catalog: EnemyCatalog = world.get_node("StageRoot/EnemyCatalog") as EnemyCatalog
-	_check_deck_budgets(faction_def, buyer, catalog)
+	_check_deck_budgets(resolved_faction, buyer, catalog)
 	if not short_practice:
 		_check_card_selection(director)
-		_check_authored_deck_selection(director, faction_def)
+		_check_authored_deck_selection(director, resolved_faction)
 	var final_survivors: Dictionary = {}
 	for stage_index in active_run.get_stage_count():
 		var stage: StageDef = GameFlow.get_current_stage()
 		_check(stage == active_run.get_stage(stage_index), "Gateway selected a stage outside the active cloned run.")
-		_check(GameFlow.get_run_faction() == faction_def.faction, "Stage transition re-rolled the run faction.")
+		_check(GameFlow.get_run_faction() == resolved_faction.faction, "Stage transition re-rolled the run faction.")
 		# Use the actual request/boss machinery while skipping long combat timers.
 		director._next_wave()
 		await _wait_frames(35)
@@ -296,11 +308,21 @@ func _check_selected_faction(faction_def: PracticeFactionDef, short_practice: bo
 		# Full cleanup is required after the old world is actually removed.
 		_check_no_stale_abilities()
 		var returned_menu: Control = returned_world.get_node("MainMenuOverlay") as Control
-		_check(returned_menu.call("get_practice_faction_id") == faction_id, "Victory lost the player's explicit practice faction selection.")
+		_check(returned_menu.call("get_practice_faction_id") == selected_faction_id, "Victory lost the player's explicit practice faction selection.")
 		var restart_run: RunDefinition = returned_menu.call("build_practice_run", short_practice) as RunDefinition
-		_check(restart_run != null and restart_run != active_run and restart_run.enemy_faction == faction_def.faction, "Returned menu failed to build a fresh run for the selected faction.")
+		_check(restart_run != null and restart_run != active_run and restart_run.enemy_faction != null, "Returned menu failed to build an independent run with a resolved faction.")
+		if restart_run != null and restart_run.enemy_faction != null:
+			var restart_faction_id: StringName = restart_run.enemy_faction.get_faction_id()
+			if short_practice:
+				_check(restart_faction_id == selected_faction_id, "Restarted Practice must retain the selected faction.")
+			_check(restart_run.get_stage_count() == (1 if short_practice else 2), "Restarted run must retain its selected mode's stage count.")
+			for restart_stage: StageDef in restart_run.get_stages():
+				_check_stage_bosses(restart_stage, restart_faction_id)
+				for card: WaveCard in restart_stage.get_wave_cards():
+					_check(card.get_faction_bias_id() == restart_faction_id, "Restarted run mixes cards from different factions.")
+		_check(returned_menu.call("get_practice_faction_id") == selected_faction_id, "Building a fresh Campaign or Practice must not change the Practice preference.")
 		await _dispose_world(returned_world)
-	print("PRACTICE ROUTE: %s %s %s" % [String(faction_id), "short" if short_practice else "main", "PASS" if _failures.size() == initial_failure_count else "FAIL"])
+	print("PRACTICE ROUTE: selected %s / resolved %s %s %s" % [String(selected_faction_id), String(faction_id), "short" if short_practice else "main", "PASS" if _failures.size() == initial_failure_count else "FAIL"])
 
 func _seed_boss_survivors(world: Node3D) -> Dictionary:
 	var spawner: Spawner = world.get_node("StageRoot/Spawner") as Spawner

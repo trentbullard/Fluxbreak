@@ -74,7 +74,7 @@ const PAGE_ROWS: Dictionary = {
 	&"weapons": INFORMATION_ROWS,
 	&"ships": INFORMATION_ROWS,
 	&"pilots": INFORMATION_ROWS,
-	&"play": ["LoadoutSummary", "ChangeLoadoutContainer", "FactionContainer", "FactionSummary", "PracticeContainer", "MercPracticeContainer", "BackContainer"],
+	&"play": ["LoadoutSummary", "ChangeLoadoutContainer", "PracticeContainer", "FactionContainer", "FactionSummary", "MercPracticeContainer", "BackContainer"],
 	&"hangar": ["PilotContainer", "ShipContainer", "WeaponContainer", "HangarDetails", "ContinueContainer", "BackContainer"],
 	&"settings": ["SettingsControls", "ControlsHelp", "BackContainer"],
 }
@@ -416,7 +416,7 @@ func _update_responsive_layout() -> void:
 func _get_page_controls() -> Array[Control]:
 	match _current_page:
 		&"play":
-			return [_change_loadout, faction_picker, btn_practice, btn_merc_practice, _back_button]
+			return [_change_loadout, btn_practice, faction_picker, btn_merc_practice, _back_button]
 		&"hangar":
 			return [pilot_picker, ship_picker, weapon_picker, _continue_button, _back_button]
 		&"settings":
@@ -551,7 +551,8 @@ func get_practice_faction_id() -> StringName:
 
 func build_practice_run(short_practice: bool = false) -> RunDefinition:
 	# Build once when launching, so Random cannot change between stages.
-	var run_definition: RunDefinition = PracticeRunFactory.create_run(get_practice_faction_id(), short_practice)
+	var faction_id: StringName = get_practice_faction_id() if short_practice else &"random"
+	var run_definition: RunDefinition = PracticeRunFactory.create_run(faction_id, short_practice)
 	if run_definition == null and short_practice:
 		return merc_practice_run
 	return run_definition
@@ -586,9 +587,9 @@ func _on_faction_selected(index: int) -> void:
 
 func _update_practice_faction_summary() -> void:
 	if get_practice_faction_id() == &"random":
-		faction_summary.text = "Random chooses one faction for the entire run."
+		faction_summary.text = "Practice: one random faction for the entire run."
 	else:
-		faction_summary.text = "%s for the entire run." % faction_picker.get_item_text(faction_picker.get_selected())
+		faction_summary.text = "Practice: %s for the entire run." % faction_picker.get_item_text(faction_picker.get_selected())
 
 func _on_settings_pressed() -> void:
 	show_page(&"settings")

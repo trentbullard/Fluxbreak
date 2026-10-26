@@ -147,6 +147,7 @@ func _check_navigation_and_focus() -> void:
 	_check(_menu.call("get_current_page") == &"play", "Play button opens run configuration")
 	_check(_picker("FactionContainer/Row/FactionPicker").is_visible_in_tree(), "Play exposes the faction selector")
 	_check(_button("PracticeContainer/Practice").is_visible_in_tree() and _button("MercPracticeContainer/MercPractice").is_visible_in_tree(), "Play exposes Campaign and Practice")
+	_check(_button("PracticeContainer/Practice").get_global_rect().end.y <= _picker("FactionContainer/Row/FactionPicker").get_global_rect().position.y, "Campaign appears above the Practice-only faction selector")
 	_check(not _picker("PilotContainer/Row/PilotPicker").is_visible_in_tree(), "Play keeps pilot editing in Hangar")
 	_assert_focus_visible("Play focuses a visible enabled control")
 	var faction_picker: OptionButton = _picker("FactionContainer/Row/FactionPicker")
@@ -315,12 +316,14 @@ func _check_launch_signals_and_factions() -> void:
 	_button("MercPracticeContainer/MercPractice").pressed.emit()
 	_check(_practice_signals == practice_before + 1 and _campaign_signals == campaign_before + 1, "Practice retains its existing typed run signal")
 	_check(_emitted_practice_run != null and _emitted_practice_run.run_mode == RunDefinition.RunMode.PRACTICE and _emitted_practice_run.get_stage_count() == 1, "Practice emits the shorter run definition")
+	_check(_emitted_practice_run != null and _emitted_practice_run.enemy_faction.get_faction_id() == &"bugs", "Only Practice uses the selected faction")
+	_check(_menu.call("get_practice_faction_id") == &"bugs", "Campaign randomization preserves the Practice preference")
 	for run: RunDefinition in [campaign, _emitted_practice_run]:
 		if run != null:
-			_check(run.enemy_faction.get_faction_id() == &"bugs", "Launch preserves the selected faction")
+			_check(run.enemy_faction != null, "Launch resolves one faction before play begins")
 			for stage: StageDef in run.get_stages():
 				for card: WaveCard in stage.get_wave_cards():
-					_check(card.get_faction_bias_id() == &"bugs", "Launch decks keep one faction across every stage")
+					_check(card.get_faction_bias_id() == run.enemy_faction.get_faction_id(), "Launch decks keep one faction across every stage")
 	_menu.call("set_practice_faction_id", &"random")
 	var random_run: RunDefinition = _menu.call("build_practice_run", false) as RunDefinition
 	_check(random_run != null and random_run.enemy_faction != null, "Random resolves its faction before launch")
@@ -369,7 +372,8 @@ func _check_world_launch(short_practice: bool) -> void:
 	launch_button.pressed.emit()
 	var run: RunDefinition = GameFlow.get_active_run_definition()
 	_check(run != null and run.get_stage_count() == (1 if short_practice else 2), "Actual %s button launches the correct run length" % ("Practice" if short_practice else "Campaign"))
-	_check(run != null and run.enemy_faction.get_faction_id() == &"greys", "Actual launch retains the selected Grey faction")
+	_check(run != null and run.enemy_faction != null and (not short_practice or run.enemy_faction.get_faction_id() == &"greys"), "Actual Campaign resolves a random faction while Practice uses the selected Greys")
+	_check(menu.call("get_practice_faction_id") == &"greys", "Actual launch preserves the Practice selector preference")
 	_check(not menu.visible and not get_tree().paused and (world.get_node("Ship") as Ship).visible, "Actual launch hides the menu and enables the playing ship")
 	_check((world.get_node("HUD") as CanvasLayer).visible, "Actual launch enables the gameplay HUD")
 	_check(not menu.get_node(PREVIEW_PATH).is_processing(), "Launching a run stops the hidden hangar preview")
