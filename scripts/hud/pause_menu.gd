@@ -11,6 +11,7 @@ class_name PauseMenu
 @onready var run_modifiers_panel: RunModifiersPanel = $ScreenRoot/RunModifiersPanel
 @onready var btn_camera: Button = $ScreenRoot/CenterContainer/VBox/CameraSettings
 @onready var camera_settings_panel: CameraSettingsPanel = $ScreenRoot/CameraSettingsPanel
+@onready var run_help: Label = $ScreenRoot/RunHelp
 
 func _ready() -> void:
 	visible = false
@@ -25,17 +26,42 @@ func _ready() -> void:
 	btn_quit.pressed.connect(_on_quit_clicked)
 	
 	PauseManager.paused_changed.connect(_on_paused_changed)
+	get_viewport().size_changed.connect(_queue_run_help_layout)
+	stat_panel.resized.connect(_queue_run_help_layout)
+	run_modifiers_panel.resized.connect(_queue_run_help_layout)
 
 func _on_paused_changed(is_paused: bool) -> void:
 	visible = is_paused
 	if not is_paused:
 		camera_settings_panel.close_panel()
 	if is_paused:
+		_refresh_run_help()
 		btn_resume.grab_focus()
 		if stat_panel != null:
 			stat_panel.refresh()
 		if run_modifiers_panel != null:
 			run_modifiers_panel.refresh()
+
+func _refresh_run_help() -> void:
+	var stage: StageDef = GameFlow.get_current_stage()
+	run_help.text = stage.combat_hint if stage != null else ""
+	run_help.visible = not run_help.text.strip_edges().is_empty()
+	_queue_run_help_layout()
+
+func _queue_run_help_layout() -> void:
+	_layout_run_help.call_deferred()
+
+func _layout_run_help() -> void:
+	# Keep the stage hint centered, with room for both scrollable side panels.
+	var center_x: float = root.get_global_rect().get_center().x
+	var left_edge: float = stat_panel.get_global_rect().end.x + 16.0
+	var right_edge: float = run_modifiers_panel.get_global_rect().position.x - 16.0
+	var half_width: float = clampf(minf(center_x - left_edge, right_edge - center_x), 16.0, 380.0)
+	run_help.offset_left = -half_width
+	run_help.offset_right = half_width
+	# Taller wrapped hints move upward in shorter windows, clear of Resume.
+	var available_bottom: float = btn_resume.get_global_rect().position.y - root.global_position.y - 16.0
+	run_help.offset_top = clampf(available_bottom - run_help.get_minimum_size().y, 20.0, 86.0)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible or camera_settings_panel.visible:

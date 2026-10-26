@@ -1,6 +1,9 @@
 # hud_manager.gd (Godot 4.6.3)
 extends CanvasLayer
 
+const STAGE_HINT_DURATION_SEC: float = 30.0
+const STAGE_HINT_FADE_SEC: float = 1.0
+
 @export var camera_path: NodePath    # optional; leave empty to auto-detect
 @export var ship_path: NodePath
 @export var wave_director_path: NodePath
@@ -32,6 +35,7 @@ var _alive_label: Label = null
 var _run_details_label: Label = null
 var _stage_details_label: Label = null
 var _stage_hint_label: Label = null
+var _stage_hint_remaining_sec: float = STAGE_HINT_DURATION_SEC
 var _attack_warning_label: Label = null
 var _stage_modifiers_label: Label = null
 var _victory_label: Label = null
@@ -93,16 +97,34 @@ func _ready() -> void:
 		GameFlow.run_completed.connect(_on_game_flow_run_completed)
 	if not GameFlow.run_victory_started.is_connected(_on_game_flow_run_victory_started):
 		GameFlow.run_victory_started.connect(_on_game_flow_run_victory_started)
+	PauseManager.paused_changed.connect(_on_pause_changed)
 
 	_refresh_run_details()
 	_refresh_stage_details()
 
-func _process(_dt: float) -> void:
+func _process(dt: float) -> void:
 	# If the camera changes (e.g., switch to cockpit or different scene), refresh
 	if camera == null or not is_instance_valid(camera) or not camera.current:
 		_refresh_camera()
 	_refresh_timer_readouts()
 	_refresh_attack_warning()
+	_update_stage_hint(dt)
+
+func _update_stage_hint(delta: float) -> void:
+	if _stage_hint_label == null or not _stage_hint_label.visible:
+		return
+	# HUD processing pauses with gameplay, including docking/upgrade briefings.
+	_stage_hint_remaining_sec = maxf(_stage_hint_remaining_sec - delta, 0.0)
+	_refresh_stage_hint_visibility()
+
+func _on_pause_changed(_is_paused: bool) -> void:
+	_refresh_stage_hint_visibility()
+
+func _refresh_stage_hint_visibility() -> void:
+	if _stage_hint_label == null:
+		return
+	_stage_hint_label.modulate.a = clampf(_stage_hint_remaining_sec / STAGE_HINT_FADE_SEC, 0.0, 1.0)
+	_stage_hint_label.visible = not PauseManager.is_paused and not _stage_hint_label.text.is_empty() and _stage_hint_remaining_sec > 0.0
 
 func _refresh_attack_warning() -> void:
 	if _attack_warning_label == null:
@@ -133,6 +155,7 @@ func _on_alive_counts_changed(enemies: int, targets: int, total: int) -> void:
 		_alive_label.text = "Enemies: %d Targets: %d Total: %d" % [enemies, targets, total]
 
 func _on_game_flow_stage_changed(_stage: StageDef, _stage_index: int) -> void:
+	_stage_hint_remaining_sec = STAGE_HINT_DURATION_SEC
 	_refresh_run_details()
 	_refresh_stage_details()
 
@@ -171,7 +194,7 @@ func _refresh_stage_details() -> void:
 	var stage: StageDef = GameFlow.get_current_stage()
 	if _stage_hint_label != null:
 		_stage_hint_label.text = stage.combat_hint if stage != null else ""
-		_stage_hint_label.visible = not _stage_hint_label.text.is_empty()
+		_refresh_stage_hint_visibility()
 	if _stage_details_label == null:
 		return
 
