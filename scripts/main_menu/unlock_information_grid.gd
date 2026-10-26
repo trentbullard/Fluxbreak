@@ -1,6 +1,8 @@
 extends InformationIconGrid
 class_name UnlockInformationGrid
 
+signal entry_selected(category: StringName, record: Dictionary, source: Button)
+
 ## Lift dark hulls only in ship thumbnails, preserving other categories' exposure.
 const SHIP_PREVIEW_EXPOSURE: float = 2.5
 
@@ -11,6 +13,7 @@ func refresh(category: StringName, roster: PilotRoster) -> void:
 	var pilots: Array[PilotDef] = roster.get_pilots() if roster != null else GameFlow.get_all_pilots()
 	var records: Array[Dictionary] = []
 	var by_id: Dictionary = {}
+	var names: Dictionary = _get_identity_names(pilots)
 	for pilot: PilotDef in pilots:
 		var pilot_unlocked: bool = GameFlow.is_pilot_unlocked(pilot)
 		if category == &"pilots":
@@ -20,11 +23,11 @@ func refresh(category: StringName, roster: PilotRoster) -> void:
 			var ship_unlocked: bool = pilot_unlocked and GameFlow.is_ship_option_unlocked(ship_option)
 			if category == &"ships":
 				var model_scene: PackedScene = ship_option.ship.visuals.model_scene if ship_option.ship.visuals != null else null
-				_record(records, by_id, ship_option.get_ship_id(), ship_option.ship.get_display_name_or_default(), ship_unlocked, model_scene)
+				_record(records, by_id, ship_option.get_ship_id(), ship_option.ship.get_display_name_or_default(), ship_unlocked, model_scene, ship_option.ship, InformationUnlockText.for_path(pilot, ship_option, null, names))
 			elif category == &"weapons":
 				for weapon_option: ShipStarterWeaponOptionDef in GameFlow.get_starter_weapon_options(ship_option.ship):
 					var weapon_unlocked: bool = ship_unlocked and GameFlow.is_weapon_option_unlocked(weapon_option)
-					_record(records, by_id, weapon_option.get_weapon_id(), weapon_option.weapon.get_display_name_or_default(), weapon_unlocked, weapon_option.weapon.visual_scene)
+					_record(records, by_id, weapon_option.get_weapon_id(), weapon_option.weapon.get_display_name_or_default(), weapon_unlocked, weapon_option.weapon.visual_scene, weapon_option.weapon, InformationUnlockText.for_path(pilot, ship_option, weapon_option, names))
 	var singular: String = "weapon" if category == &"weapons" else ("ship" if category == &"ships" else "pilot")
 	if records.is_empty():
 		_add_empty_message("No %s available." % String(category))
@@ -38,11 +41,13 @@ func refresh(category: StringName, roster: PilotRoster) -> void:
 			button.set_meta(&"unlocked", unlocked)
 			_set_icon_state(button, unlocked, String(record["name"]), "Locked " + singular)
 			if category == &"weapons" or category == &"ships":
+				record["unlock_text"] = "Unlock through any one of these loadout routes:\n\n" + "\n\n".join(record["paths"])
+				button.pressed.connect(_on_entry_pressed.bind(category, record, button))
 				var exposure: float = SHIP_PREVIEW_EXPOSURE if category == &"ships" else 1.0
 				_set_model_preview(button, record.get("model_scene") as PackedScene, unlocked, exposure)
 	_reset_scroll()
 
-func _record(records: Array[Dictionary], by_id: Dictionary, entry_id: StringName, display_name: String, unlocked: bool, model_scene: PackedScene = null) -> void:
+func _record(records: Array[Dictionary], by_id: Dictionary, entry_id: StringName, display_name: String, unlocked: bool, model_scene: PackedScene = null, definition: Resource = null, unlock_path: String = "") -> void:
 	if entry_id == &"":
 		return
 	if by_id.has(entry_id):
@@ -50,6 +55,25 @@ func _record(records: Array[Dictionary], by_id: Dictionary, entry_id: StringName
 		existing["unlocked"] = bool(existing["unlocked"]) or unlocked
 		if existing.get("model_scene") == null and model_scene != null:
 			existing["model_scene"] = model_scene
+		if not unlock_path.is_empty() and not (existing["paths"] as Array[String]).has(unlock_path):
+			(existing["paths"] as Array[String]).append(unlock_path)
 		return
 	by_id[entry_id] = records.size()
-	records.append({"id": entry_id, "name": display_name, "unlocked": unlocked, "model_scene": model_scene})
+	var paths: Array[String] = []
+	if not unlock_path.is_empty():
+		paths.append(unlock_path)
+	records.append({"id": entry_id, "name": display_name, "unlocked": unlocked, "model_scene": model_scene, "definition": definition, "paths": paths})
+
+func _on_entry_pressed(category: StringName, record: Dictionary, button: Button) -> void:
+	if button.is_visible_in_tree():
+		entry_selected.emit(category, record, button)
+
+func _get_identity_names(pilots: Array[PilotDef]) -> Dictionary:
+	var names: Dictionary = {}
+	for pilot: PilotDef in pilots:
+		names[pilot.get_pilot_id()] = pilot.get_display_name_or_default()
+		for option: PilotStarterShipOptionDef in GameFlow.get_starter_ship_options(pilot):
+			names[option.get_ship_id()] = option.ship.get_display_name_or_default()
+			for weapon: ShipStarterWeaponOptionDef in GameFlow.get_starter_weapon_options(option.ship):
+				names[weapon.get_weapon_id()] = weapon.weapon.get_display_name_or_default()
+	return names

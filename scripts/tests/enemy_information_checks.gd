@@ -6,6 +6,8 @@ const BUTTONS: String = "CenterContainer/MainMenuContainer/ButtonPanel/ButtonMar
 const ENEMY_PANEL: String = "EnemyInformationPanel"
 const ENEMY_GRID: String = "EnemyInformationPanel/Margin/Content/EnemyGrid"
 const PANEL_CLOSE: String = "EnemyInformationPanel/Margin/Content/Header/Close"
+const PANEL_BACK: String = "EnemyInformationPanel/Margin/Content/Header/Back"
+const DETAILS: String = "EnemyInformationPanel/Margin/Content/Details"
 const KNOWN_IDS: Array[String] = ["machine_drone_mk1", "bug_sporeling_mk1", "grey_witness_mk1"]
 const DRONE: EnemyDef = preload("res://content/data/enemies/machine_drone_mk1.tres")
 const PRACTICE_BOSS: EnemyBossDef = preload("res://content/data/enemies/grey_witness_practice.tres")
@@ -55,6 +57,7 @@ func _run_checks() -> void:
 	_check_saved_markers()
 	await _check_drone_model_preview()
 	await _check_navigation_and_inert_icons()
+	await _check_drone_details()
 	await _capture("enemies_saved_history_720p.png")
 	await _check_new_kill_persistence()
 	await _check_all_enemy_model_previews()
@@ -250,8 +253,10 @@ func _check_navigation_and_inert_icons() -> void:
 	var stats_before: Dictionary = GameFlow._meta_stats_global.duplicate(true)
 	var saved_before: String = FileAccess.get_file_as_string(GameFlow.SAVE_PATH)
 	for button: Button in buttons:
+		if bool(button.get_meta("killed", false)):
+			continue
 		button.pressed.emit()
-		_expect(_menu.call("get_current_page") == &"enemies", "Icon activation opens no detail page")
+		_expect(_menu.call("get_current_page") == &"enemies" and _grid.is_visible_in_tree(), "Unknown enemy icons do not expose their details")
 	_expect(GameFlow._meta_stats_global == stats_before and FileAccess.get_file_as_string(GameFlow.SAVE_PATH) == saved_before, "Browsing and activating icons never writes progression")
 	buttons[-1].grab_focus()
 	await _frames(4)
@@ -283,6 +288,135 @@ func _check_navigation_and_inert_icons() -> void:
 	_button("EnemiesContainer/Enemies").pressed.emit()
 	await _frames(3)
 	_check_first_header_visible("Reopening a previously scrolled roster restores its first faction heading")
+
+func _check_drone_details() -> void:
+	var details: ScrollContainer = _menu.get_node(DETAILS) as ScrollContainer
+	var back: Button = _menu.get_node(PANEL_BACK) as Button
+	var close: Button = _menu.get_node(PANEL_CLOSE) as Button
+	var legend: Control = _menu.get_node("EnemyInformationPanel/Margin/Content/Legend") as Control
+	var stats_before: Dictionary = GameFlow._meta_stats_global.duplicate(true)
+	var saved_before: String = FileAccess.get_file_as_string(GameFlow.SAVE_PATH)
+	_expect(not details.visible and not back.visible, "Grid browsing keeps the details view and back arrow hidden")
+	_grid.scroll_vertical = 8
+	await _frames(3)
+	var grid_scroll: int = _grid.scroll_vertical
+	_entry(DRONE.id).pressed.emit()
+	await _frames(8)
+	_expect(_menu.call("get_current_page") == &"enemies" and details.is_visible_in_tree() and not _grid.visible and not legend.visible, "Clicking a known Machine Drone replaces the grid with its details inside the same panel")
+	_expect(back.is_visible_in_tree() and close.is_visible_in_tree(), "Details retain the shared close X and expose a separate back arrow")
+	_expect(get_viewport().gui_get_focus_owner() == back, "Opening details focuses the return-to-grid arrow")
+	var preview: EnemyIconPreview = details.get_node("Entries/PreviewCenter/ModelPreview") as EnemyIconPreview
+	var name_label: Label = details.get_node("Entries/Name") as Label
+	var subtitle: Label = details.get_node("Entries/Subtitle") as Label
+	_expect(name_label.text == DRONE.get_display_name_or_default(), "Details use the authored enemy name")
+	_expect(subtitle.text.to_lower().contains(DRONE.get_faction_display_name().to_lower()) and subtitle.text.to_lower().contains(DRONE.get_role_display_name().to_lower()), "Details identify the enemy's faction and class")
+	_check_drone_details_content(details)
+	_expect(preview != null and preview.texture != null and preview.is_active(), "Details show an active rotating 3D preview")
+	if preview == null:
+		return
+	_expect(preview.get_viewport_3d().size.x > 128 and preview.get_viewport_3d().size.x <= 512, "The larger details portrait uses a bounded resolution independent of grid thumbnails")
+	_check_authored_model(DRONE, preview)
+	_check_model_framing(DRONE, preview)
+	_check_all_portraits_sleep("Opening details")
+	var initial_basis: Basis = preview.get_model_root().basis
+	await _frames(20)
+	_expect(not initial_basis.is_equal_approx(preview.get_model_root().basis), "The details model rotates while visible")
+	get_tree().paused = true
+	initial_basis = preview.get_model_root().basis
+	await _frames(20)
+	_expect(preview.is_active() and not initial_basis.is_equal_approx(preview.get_model_root().basis), "Details animation continues while the menu tree is paused")
+	get_tree().paused = false
+	_menu.hide()
+	await _frames(6)
+	_expect(not preview.is_active() and preview.get_viewport_3d().render_target_update_mode == SubViewport.UPDATE_DISABLED, "Hiding the menu stops the details preview")
+	_menu.show()
+	await _frames(6)
+	_expect(preview.is_active(), "Showing the menu resumes the visible details preview")
+	await _check_details_layout(details, preview, name_label)
+	back.pressed.emit()
+	await _frames(6)
+	_expect(_grid.is_visible_in_tree() and legend.visible and not details.visible and not back.visible, "Details back arrow restores the enemy grid and legend")
+	_expect(_grid.scroll_vertical == grid_scroll and get_viewport().gui_get_focus_owner() == _entry(DRONE.id), "Returning preserves the grid position and restores the selected icon's focus")
+	_expect(not preview.is_active() and preview.get_viewport_3d().render_target_update_mode == SubViewport.UPDATE_DISABLED, "Returning to the grid stops details rendering")
+	await _action(&"ui_accept")
+	_expect(details.is_visible_in_tree(), "Keyboard/controller accept opens the selected Machine Drone details")
+	await _action(&"ui_down")
+	_expect(get_viewport().gui_get_focus_owner() == details, "Down from the back arrow focuses the details body for controller scrolling")
+	await _action(&"ui_down")
+	_expect(details.scroll_vertical > 0, "Controller down scrolls the information body")
+	await _action(&"ui_cancel")
+	_expect(_grid.is_visible_in_tree() and not details.visible and get_viewport().gui_get_focus_owner() == _entry(DRONE.id), "Escape/controller cancel returns from details to the selected grid icon")
+	_entry(DRONE.id).pressed.emit()
+	await _frames(5)
+	_button("BackContainer/Back").pressed.emit()
+	await _frames(5)
+	_expect(_grid.is_visible_in_tree() and not details.visible, "The left menu Back action also returns details to their grid")
+	_entry(DRONE.id).pressed.emit()
+	await _frames(5)
+	close.grab_focus()
+	await _action(&"ui_accept")
+	_expect(_menu.call("get_current_page") == &"information" and not (_menu.get_node(ENEMY_PANEL) as Control).visible, "Details close X closes the whole panel directly to Information")
+	_expect(get_viewport().gui_get_focus_owner() == _button("EnemiesContainer/Enemies") and not preview.is_active(), "Details close restores the category button's focus and stops its preview")
+	_button("EnemiesContainer/Enemies").pressed.emit()
+	await _frames(5)
+	_expect(_grid.is_visible_in_tree() and not details.visible and not back.visible, "Reopening Enemies starts with the grid after closing details")
+	_entry(DRONE.id).pressed.emit()
+	await _frames(5)
+	_button("WeaponsContainer/Weapons").pressed.emit()
+	await _frames(5)
+	_expect(_menu.call("get_current_page") == &"weapons" and not details.visible and not preview.is_active() and not back.visible, "Changing categories clears the details view and stops its preview")
+	_button("EnemiesContainer/Enemies").pressed.emit()
+	await _frames(5)
+	_expect(_grid.is_visible_in_tree() and not details.visible, "Returning from another category restores the enemy grid")
+	_expect(GameFlow._meta_stats_global == stats_before and FileAccess.get_file_as_string(GameFlow.SAVE_PATH) == saved_before, "Opening, navigating and closing details never changes saved progression")
+
+func _check_drone_details_content(details: ScrollContainer) -> void:
+	var headings: Array[String] = []
+	var stats: Dictionary = {}
+	for section: Node in details.get_node("Entries/Sections").get_children():
+		var title: Label = section.get_child(0) as Label
+		var body: Label = section.get_child(1) as Label if section.get_child_count() > 1 else null
+		if title != null:
+			headings.append(title.text)
+			_expect(body != null and not body.text.strip_edges().is_empty(), "Authored details section has readable content: " + title.text)
+		for child: Node in section.get_children():
+			if not child is GridContainer:
+				continue
+			for index: int in range(0, child.get_child_count(), 2):
+				var label: Label = child.get_child(index) as Label
+				var value: Label = child.get_child(index + 1) as Label
+				if label != null and value != null:
+					stats[label.text] = value.text
+	_expect(headings == ["LORE", "ROLE", "ATTACK PATTERN", "BASE STATS"], "Reusable details present lore, role, attacks and base statistics in order")
+	_expect(stats.get("Hull", "") == String.num(DRONE.max_hull, 2) and stats.get("Shield", "") == String.num(DRONE.max_shield, 2), "Displayed durability comes from the canonical Drone definition")
+	_expect(stats.get("Shield regeneration", "") == String.num(DRONE.shield_regen, 2) + " / s" and stats.get("Evasion", "") == String.num(DRONE.evasion * 100.0, 2) + "%", "Displayed regeneration and evasion match the enemy's unscaled base data")
+	_expect(stats.get("Weapon", "") == "Laser turret" and stats.get("Damage per shot", "") == String.num(DRONE.weapon.damage_min, 2) + "–" + String.num(DRONE.weapon.damage_max, 2), "Details identify the laser weapon and its authored damage range")
+	_expect(stats.get("Shot interval", "") == String.num(DRONE.weapon.fire_rate, 2) + " s" and stats.get("Weapon range", "") == String.num(DRONE.weapon.base_range, 2) + " m", "Details correctly present firing interval in seconds and targeting range in metres")
+	_expect(stats.get("Base accuracy", "") == String.num(DRONE.weapon.base_accuracy * 100.0, 2) + "%", "Details read weapon base accuracy rather than promising a guaranteed hit rate")
+
+func _check_details_layout(details: ScrollContainer, preview: EnemyIconPreview, name_label: Label) -> void:
+	var original_size: Vector2i = get_tree().root.size
+	for resolution: Vector2i in [Vector2i(1280, 720), Vector2i(1920, 1080)]:
+		get_tree().root.size = resolution
+		details.scroll_vertical = 0
+		await _frames(8)
+		var panel: Rect2 = (_menu.get_node(ENEMY_PANEL) as Control).get_global_rect()
+		_expect(get_viewport().get_visible_rect().encloses(panel) and panel.encloses(details.get_global_rect()), "Details fit the existing right panel at %s" % resolution)
+		_expect(details.get_global_rect().encloses(preview.get_global_rect()) and preview.get_global_rect().end.y <= name_label.get_global_rect().position.y, "Details place the fully visible 3D model above its name at %s" % resolution)
+		_expect(panel.encloses((_menu.get_node(PANEL_BACK) as Control).get_global_rect()) and panel.encloses((_menu.get_node(PANEL_CLOSE) as Control).get_global_rect()), "Details Back and Close remain visible at %s" % resolution)
+		_expect(details.horizontal_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED, "Details wrap their text without horizontal scrolling at %s" % resolution)
+		await _capture("machine_drone_details_%s.png" % ("720p" if resolution.y == 720 else "1080p"))
+		if resolution.y == 720:
+			var bar: VScrollBar = details.get_v_scroll_bar()
+			_expect(bar.max_value > bar.page, "Long enemy information scrolls below the portrait at 720p")
+			details.scroll_vertical = int(bar.max_value - bar.page)
+			await _frames(8)
+			_expect(details.scroll_vertical > 0, "Details allow scrolling through the lower information sections")
+			_expect(not preview.is_active(), "A fully scrolled-out details portrait stops rendering")
+			await _capture("machine_drone_details_stats_720p.png")
+	get_tree().root.size = original_size
+	details.scroll_vertical = 0
+	await _frames(8)
 
 func _check_panel_layout() -> void:
 	var original_size: Vector2i = get_tree().root.size
@@ -372,9 +506,37 @@ func _check_all_enemy_model_previews() -> void:
 	await _capture_all_factions(definitions)
 	var stats_before: Dictionary = GameFlow._meta_stats_global.duplicate(true)
 	var file_before: String = FileAccess.get_file_as_string(GameFlow.SAVE_PATH)
-	for button: Button in _grid.get_entry_buttons():
+	var details: InformationDetailsView = _menu.get_node(DETAILS) as InformationDetailsView
+	var detail_view_identity: int = details.get_instance_id()
+	for definition: EnemyDef in definitions:
+		var button: Button = _entry(definition.id)
+		button.grab_focus()
+		await _frames(3)
+		var grid_scroll: int = _grid.scroll_vertical
 		button.pressed.emit()
-	_expect(_menu.call("get_current_page") == &"enemies" and GameFlow._meta_stats_global == stats_before and FileAccess.get_file_as_string(GameFlow.SAVE_PATH) == file_before, "Activating every 3D portrait keeps details inactive and never writes progression")
+		await _frames(4)
+		_expect(details.is_visible_in_tree() and details.get_entry_id() == StringName(definition.id) and not _grid.visible, "Known enemy opens its canonical details: " + definition.id)
+		_expect(details.get_instance_id() == detail_view_identity and (details.get_node("Entries/Name") as Label).text == definition.get_display_name_or_default(), "Every enemy reuses the same named details view: " + definition.id)
+		var section_names: Array[String] = []
+		var displayed: Dictionary = _read_detail_stats(details, section_names)
+		_expect(section_names.has("LORE") and section_names.has("ROLE") and section_names.has("ATTACK PATTERN") and section_names.has("BASE STATS"), "Enemy reference includes lore, role, attack pattern and stats: " + definition.id)
+		_expect(displayed.get("Hull", "") == String.num(definition.max_hull, 2) and displayed.get("Shield", "") == String.num(definition.max_shield, 2), "Every enemy's durability uses its current definition: " + definition.id)
+		var detail_preview: EnemyIconPreview = details.get_preview()
+		_expect(detail_preview.is_active() and detail_preview.get_camera_3d().attributes == null, "Enemy details retain neutral portrait exposure: " + definition.id)
+		_check_authored_model(definition, detail_preview)
+		_check_model_framing(definition, detail_preview)
+		var grid_sleeping: bool = true
+		for grid_button: Button in _grid.get_entry_buttons():
+			var grid_preview: EnemyIconPreview = grid_button.get_node_or_null("ModelPreview") as EnemyIconPreview
+			grid_sleeping = grid_sleeping and (grid_preview == null or not grid_preview.is_active())
+		_expect(grid_sleeping, "Details disable every hidden grid portrait: " + definition.id)
+		if definition.id in ["machine_boss_1_mk1", "merc_carrier_mk1", "bug_first_queen_mk1", "grey_veiled_mind_mk1"]:
+			await _capture("enemy_details_" + definition.id + "_720p.png")
+		(_menu.get_node(PANEL_BACK) as Button).pressed.emit()
+		await _frames(4)
+		_expect(_grid.is_visible_in_tree() and not details.visible and get_viewport().gui_get_focus_owner() == button and _grid.scroll_vertical == grid_scroll, "Back restores the exact enemy grid position and selected icon: " + definition.id)
+		_expect(not detail_preview.is_active(), "Returning to the grid stops its details portrait: " + definition.id)
+	_expect(_menu.call("get_current_page") == &"enemies" and _grid.is_visible_in_tree() and GameFlow._meta_stats_global == stats_before and FileAccess.get_file_as_string(GameFlow.SAVE_PATH) == file_before, "Browsing every enemy details page never writes progression")
 	_menu.call("show_page", &"ships")
 	await _frames(5)
 	_check_all_portraits_sleep("Changing categories")
@@ -400,6 +562,20 @@ func _collect_source_meshes(node: Node, meshes: Array[Mesh], inherited_visible: 
 		meshes.append(visual.mesh)
 	for child: Node in node.get_children():
 		_collect_source_meshes(child, meshes, shown)
+
+func _read_detail_stats(details: InformationDetailsView, headings: Array[String]) -> Dictionary:
+	var stats: Dictionary = {}
+	for section: Node in details.get_node("Entries/Sections").get_children():
+		var heading: Label = section.get_child(0) as Label
+		if heading != null:
+			headings.append(heading.text)
+		var body: Label = section.get_child(1) as Label if section.get_child_count() > 1 else null
+		_expect(body != null and not body.text.strip_edges().is_empty(), "Every authored enemy section has readable text")
+		for child: Node in section.get_children():
+			if child is GridContainer:
+				for index: int in range(0, child.get_child_count(), 2):
+					stats[(child.get_child(index) as Label).text] = (child.get_child(index + 1) as Label).text
+	return stats
 
 func _check_authored_model(definition: EnemyDef, preview: EnemyIconPreview) -> void:
 	var source_meshes: Array[Mesh] = []
@@ -483,6 +659,9 @@ func _check_empty_history() -> void:
 	await _frames(8)
 	for button: Button in _grid.get_entry_buttons():
 		_expect(button.text == "?" and not bool(button.get_meta("killed", true)), "Absent saved kill record safely remains unknown")
+		button.pressed.emit()
+		_expect(_grid.is_visible_in_tree() and not (_menu.get_node(DETAILS) as Control).is_visible_in_tree(), "An unknown enemy cannot expose its details")
+	await _frames(4)
 	for button: Button in _grid.get_entry_buttons():
 		var preview: EnemyIconPreview = button.get_node_or_null("ModelPreview") as EnemyIconPreview
 		_expect(preview == null or (not preview.visible and not preview.is_active() and preview.get_viewport_3d().render_target_update_mode == SubViewport.UPDATE_DISABLED), "A missing saved kill never exposes or renders its retained model: " + String(button.get_meta("enemy_id", "")))

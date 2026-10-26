@@ -42,6 +42,8 @@ signal selection_changed
 @onready var _information_panel_close: Button = $EnemyInformationPanel/Margin/Content/Header/Close
 @onready var _information_title: Label = $EnemyInformationPanel/Margin/Content/Header/Title
 @onready var _information_legend: Label = $EnemyInformationPanel/Margin/Content/Legend
+@onready var _information_details: InformationDetailsView = $EnemyInformationPanel/Margin/Content/Details
+@onready var _information_details_back: Button = $EnemyInformationPanel/Margin/Content/Header/Back
 @onready var _change_loadout: Button = _buttons.get_node("ChangeLoadoutContainer/ChangeLoadout")
 @onready var _continue_button: Button = _buttons.get_node("ContinueContainer/ContinueToPlay")
 @onready var _back_button: Button = _buttons.get_node("BackContainer/Back")
@@ -84,6 +86,8 @@ var _music_tween: Tween
 var _suppress_picker_callbacks: bool = false
 var _current_page: StringName = &"home"
 var _menu_initialized: bool = false
+var _details_source_button: Button = null
+var _details_grid_scroll: int = 0
 static var _remembered_practice_faction_id: StringName = &"random"
 
 func _ready() -> void:
@@ -94,7 +98,10 @@ func _ready() -> void:
 	_weapons_button.pressed.connect(show_page.bind(&"weapons"))
 	_ships_button.pressed.connect(show_page.bind(&"ships"))
 	_pilots_button.pressed.connect(show_page.bind(&"pilots"))
-	_information_panel_close.pressed.connect(_go_back)
+	_information_panel_close.pressed.connect(_close_information_panel)
+	_information_details_back.pressed.connect(_return_to_information_grid)
+	_enemy_grid.entry_selected.connect(_show_enemy_details)
+	_unlock_grid.entry_selected.connect(_show_loadout_details)
 	_change_loadout.pressed.connect(show_page.bind(&"hangar"))
 	_continue_button.pressed.connect(show_page.bind(&"play"))
 	_back_button.pressed.connect(_go_back)
@@ -218,12 +225,77 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _go_back() -> void:
+	if _information_details.visible:
+		_return_to_information_grid()
+		return
 	var previous_page: StringName = _current_page
 	if REFERENCE_PAGES.has(previous_page):
 		show_page(&"information")
 		_focus_information_button.call_deferred(previous_page)
 	else:
 		show_page(&"home")
+
+func _close_information_panel() -> void:
+	var previous_page: StringName = _current_page
+	show_page(&"information")
+	_focus_information_button.call_deferred(previous_page)
+
+func _show_enemy_details(definition: EnemyDef) -> void:
+	if _current_page != &"enemies" or not _enemy_grid.is_visible_in_tree():
+		return
+	var key: String = "kills|enemy|" + definition.id
+	if GameFlow.get_meta_stat_value(GameFlow.META_STAT_KILLS, &"", key) <= 0:
+		return
+	var entry: Dictionary = EnemyInformationDetails.for_enemy(definition)
+	if entry.is_empty():
+		return
+	for button: Button in _enemy_grid.get_entry_buttons():
+		if String(button.get_meta(&"enemy_id", "")) == definition.id:
+			_show_information_details(entry, button, "ENEMY DETAILS")
+			return
+
+func _show_loadout_details(category: StringName, record: Dictionary, source: Button) -> void:
+	if category != _current_page or not _unlock_grid.is_visible_in_tree():
+		return
+	var entry: Dictionary = {}
+	var unlocked: bool = bool(record.get("unlocked", false))
+	var unlock_text: String = String(record.get("unlock_text", ""))
+	if category == &"weapons":
+		entry = LoadoutInformationDetails.for_weapon(record.get("definition") as WeaponDef, unlocked, unlock_text)
+	elif category == &"ships":
+		entry = LoadoutInformationDetails.for_ship(record.get("definition") as ShipDef, unlocked, unlock_text)
+	if not entry.is_empty():
+		_show_information_details(entry, source, "WEAPON DETAILS" if category == &"weapons" else "SHIP DETAILS")
+
+func _show_information_details(entry: Dictionary, source: Button, title: String) -> void:
+	_details_source_button = source
+	_details_grid_scroll = _get_information_grid().scroll_vertical
+	_information_details.show_entry(entry)
+	_get_information_grid().hide()
+	_information_legend.hide()
+	_information_title.text = title
+	_information_details_back.show()
+	_information_details.show()
+	_wire_page_focus()
+	_information_details_back.grab_focus()
+
+func _return_to_information_grid() -> void:
+	if not _information_details.visible:
+		return
+	_information_details.hide()
+	_information_details_back.hide()
+	_information_legend.show()
+	_information_title.text = String(_current_page).to_upper()
+	_get_information_grid().show()
+	_wire_page_focus()
+	_restore_details_source_focus.call_deferred()
+
+func _restore_details_source_focus() -> void:
+	if not _information_panel.is_visible_in_tree() or _information_details.visible:
+		return
+	_get_information_grid().scroll_vertical = _details_grid_scroll
+	if is_instance_valid(_details_source_button) and _details_source_button.is_visible_in_tree():
+		_details_source_button.grab_focus()
 
 func _get_information_button(page: StringName) -> Button:
 	match page:
@@ -251,6 +323,10 @@ func show_page(page: StringName) -> void:
 	_current_page = page
 	if not is_node_ready():
 		return
+	_information_details.hide()
+	_information_details_back.hide()
+	_information_legend.show()
+	_details_source_button = null
 	var rows: Array = PAGE_ROWS[page]
 	for child: Node in _buttons.get_children():
 		var control: Control = child as Control
@@ -349,7 +425,10 @@ func _get_page_controls() -> Array[Control]:
 			return [_enemies_button, _weapons_button, _ships_button, _pilots_button, _back_button]
 		&"enemies", &"weapons", &"ships", &"pilots":
 			var controls: Array[Control] = []
-			controls.assign(_get_information_grid().get_entry_buttons())
+			if _information_details.visible:
+				controls.assign([_information_details_back, _information_details])
+			else:
+				controls.assign(_get_information_grid().get_entry_buttons())
 			controls.append_array([_information_panel_close, _enemies_button, _weapons_button, _ships_button, _pilots_button, _back_button])
 			return controls
 	return [_play_button, _hangar_button, btn_upgrades, _information_button, btn_settings, btn_exit]
@@ -375,6 +454,11 @@ func _wire_page_focus() -> void:
 		control.focus_neighbor_right = NodePath("")
 	if REFERENCE_PAGES.has(_current_page):
 		var category_button: Button = _get_information_button(_current_page)
+		if _information_details.visible:
+			_information_details.wire_focus(_information_details_back, _information_panel_close, category_button)
+			for control: Control in controls:
+				control.focus_neighbor_right = control.get_path_to(_information_details_back)
+			return
 		for property_name: StringName in [&"focus_neighbor_top", &"focus_neighbor_bottom", &"focus_neighbor_left", &"focus_previous", &"focus_next"]:
 			_information_panel_close.set(property_name, _information_panel_close.get_path_to(category_button))
 		_information_panel_close.focus_neighbor_right = _information_panel_close.get_path_to(_information_panel_close)
@@ -826,7 +910,7 @@ func _set_focus_modes() -> void:
 	btn_merc_practice.focus_mode = Control.FOCUS_ALL
 	btn_settings.focus_mode = Control.FOCUS_ALL
 	btn_exit.focus_mode = Control.FOCUS_ALL
-	for control: Control in [_play_button, _hangar_button, _information_button, _enemies_button, _weapons_button, _ships_button, _pilots_button, _information_panel_close, _change_loadout, _continue_button, _back_button, _master_volume, _fullscreen, _motion, _camera_settings_button]:
+	for control: Control in [_play_button, _hangar_button, _information_button, _enemies_button, _weapons_button, _ships_button, _pilots_button, _information_panel_close, _information_details_back, _change_loadout, _continue_button, _back_button, _master_volume, _fullscreen, _motion, _camera_settings_button]:
 		control.focus_mode = Control.FOCUS_ALL
 
 func _focus_default_control() -> void:

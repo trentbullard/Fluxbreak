@@ -14,6 +14,7 @@
 [ext_resource type="PackedScene" path="res://scenes/settings/camera_settings_panel.tscn" id="camera_settings"]
 [ext_resource type="Script" path="res://scripts/main_menu/enemy_information_grid.gd" id="enemy_information"]
 [ext_resource type="Script" path="res://scripts/main_menu/unlock_information_grid.gd" id="unlock_information"]
+[ext_resource type="PackedScene" path="res://scenes/main_menu/information_details_view.tscn" id="information_details"]
 
 [sub_resource type="StyleBoxFlat" id="disabled"]
 content_margin_left = 14.0
@@ -626,6 +627,16 @@ theme_override_constants/separation = 14
 [node name="Header" type="HBoxContainer" parent="EnemyInformationPanel/Margin/Content"]
 layout_mode = 2
 
+[node name="Back" type="Button" parent="EnemyInformationPanel/Margin/Content/Header"]
+visible = false
+custom_minimum_size = Vector2(52, 52)
+layout_mode = 2
+size_flags_vertical = 4
+tooltip_text = "Back to grid"
+theme_override_font_sizes/font_size = 30
+text = "←"
+flat = true
+
 [node name="Title" type="Label" parent="EnemyInformationPanel/Margin/Content/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -674,6 +685,8 @@ script = ExtResource("unlock_information")
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 12
+
+[node name="Details" parent="EnemyInformationPanel/Margin/Content" instance=ExtResource("information_details")]
 
 [node name="HighScoreContainer" type="Control" parent="." unique_id=1782047470]
 anchors_preset = 0

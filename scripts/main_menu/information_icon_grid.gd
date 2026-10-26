@@ -51,7 +51,7 @@ func _append_icon(entry_id: StringName) -> Button:
 	button.focus_mode = Control.FOCUS_ALL
 	button.add_theme_font_size_override("font_size", 36)
 	button.set_meta(&"entry_id", entry_id)
-	# Activation remains empty until reference details and portraits are authored.
+	# Categories opt into authored details without changing shared icon behavior.
 	_section_grid.add_child(button)
 	_entry_buttons.append(button)
 	_rows[_rows.size() - 1].append(button)

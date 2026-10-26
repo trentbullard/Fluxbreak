@@ -1,6 +1,8 @@
 extends InformationIconGrid
 class_name EnemyInformationGrid
 
+signal entry_selected(definition: EnemyDef)
+
 const COLOR_KILLED: Color = COLOR_KNOWN
 
 ## Authored reference order, with one canonical definition per saved enemy ID.
@@ -61,3 +63,8 @@ func _build_entries() -> void:
 			previous_faction = faction
 		var button: Button = _append_icon(StringName(definition.id))
 		button.set_meta(&"enemy_id", definition.id)
+		button.pressed.connect(_on_entry_pressed.bind(definition, button))
+
+func _on_entry_pressed(definition: EnemyDef, button: Button) -> void:
+	if button.is_visible_in_tree() and bool(button.get_meta(&"killed", false)):
+		entry_selected.emit(definition)

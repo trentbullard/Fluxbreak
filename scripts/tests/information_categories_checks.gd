@@ -20,6 +20,8 @@ const PANEL: String = "EnemyInformationPanel"
 const GRID: String = "EnemyInformationPanel/Margin/Content/UnlockGrid"
 const ENEMY_GRID: String = "EnemyInformationPanel/Margin/Content/EnemyGrid"
 const CLOSE: String = "EnemyInformationPanel/Margin/Content/Header/Close"
+const DETAILS: String = "EnemyInformationPanel/Margin/Content/Details"
+const DETAILS_BACK: String = "EnemyInformationPanel/Margin/Content/Header/Back"
 
 var _menu: Control
 var _grid: UnlockInformationGrid
@@ -74,6 +76,7 @@ func _run_checks() -> void:
 	_button("InformationContainer/Information").pressed.emit()
 	await _frames(3)
 	await _check_categories_and_navigation()
+	_check_unlock_requirement_descriptions()
 	await _check_saved_unlock_progress()
 	await _check_authored_weapon_previews()
 	await _check_authored_ship_previews()
@@ -182,8 +185,12 @@ func _check_categories_and_navigation() -> void:
 			var id: StringName = StringName(entry.get_meta("entry_id", &""))
 			_expect(id != &"" and not ids.has(id) and StringName(entry.get_meta("entry_type", &"")) == category, "Each icon has one typed canonical identity")
 			ids[id] = true
-			entry.pressed.emit()
-			_expect(_menu.call("get_current_page") == category, "Placeholder activation opens no details")
+			if category == &"pilots":
+				entry.pressed.emit()
+				_expect((_menu.get_node(DETAILS) as Control).visible == false and _grid.is_visible_in_tree(), "Pilot placeholders retain their current inactive behavior")
+			else:
+				await _check_entry_details(entry, category, _fixture_definition(id))
+		buttons[0].grab_focus()
 		_expect(get_viewport().gui_get_focus_owner() == buttons[0], "Opening focuses the first visible icon")
 		await _action(&"ui_left")
 		var name: String = String(category).capitalize()
@@ -194,6 +201,7 @@ func _check_categories_and_navigation() -> void:
 		await _capture(String(category) + "_placeholders_720p.png")
 	_expect(GameFlow.selected_pilot == selected_pilot and GameFlow.get_selected_ship() == selected_ship and GameFlow.get_selected_weapon() == selected_weapon, "Browsing cannot change the selected pilot, ship, or starting weapon")
 	_expect(FileAccess.get_file_as_string(GameFlow.SAVE_PATH) == saved_before, "Browsing and inert activation never write saved progression")
+	await _check_details_navigation()
 	await _open(&"weapons")
 	_check_state(_weapon_a.get_weapon_id(), true)
 	_check_state(_weapon_b.get_weapon_id(), false)
@@ -313,8 +321,9 @@ func _check_authored_weapon_previews() -> void:
 		_expect(not poses[index].is_equal_approx(previews[index].get_model_root().global_basis), "Each visible weapon portrait rotates")
 	await _capture("weapons_models_720p.png")
 	for button: Button in buttons:
-		button.pressed.emit()
-	_expect(_menu.call("get_current_page") == &"weapons", "Activating weapon portraits still opens no details")
+		var weapon: WeaponDef = weapons_by_id[StringName(button.get_meta("entry_id", &""))] as WeaponDef
+		await _check_entry_details(button, &"weapons", weapon, source_meshes[weapon.get_weapon_id()] as Array)
+	_expect(_menu.call("get_current_page") == &"weapons" and _grid.is_visible_in_tree(), "All authored weapon details return to the weapon grid")
 	_expect(GameFlow.selected_pilot == selected_pilot and GameFlow.get_selected_ship() == selected_ship and GameFlow.get_selected_weapon() == selected_weapon and FileAccess.get_file_as_string(GameFlow.SAVE_PATH) == saved, "Weapon previews change neither selected loadout nor saved progress")
 	var originals_unchanged: bool = not materials.is_empty()
 	for resource: Variant in materials.keys():
@@ -346,6 +355,8 @@ func _check_authored_weapon_previews() -> void:
 	buttons = _grid.get_entry_buttons()
 	_expect(buttons.size() == 2 and buttons[0].text == "!" and buttons[0].get_node_or_null("ModelPreview") == null, "An unlocked weapon without a visual safely retains its exclamation marker")
 	_expect(buttons[1].text == "?" and buttons[1].get_node_or_null("ModelPreview") == null, "A locked weapon creates no preview viewport")
+	await _check_entry_details(buttons[0], &"weapons", missing)
+	await _check_entry_details(buttons[1], &"weapons", AUTHORED_WEAPONS[0])
 	_close.pressed.emit()
 	await _frames(3)
 	_expect(not _panel.visible and get_viewport().gui_get_focus_owner() == _button("WeaponsContainer/Weapons"), "Weapon previews retain Close and focus-return behavior")
@@ -391,8 +402,12 @@ func _check_authored_ship_previews() -> void:
 		_expect(not poses[index].is_equal_approx(previews[index].get_model_root().global_basis), "Each visible ship portrait rotates")
 	await _capture("ships_models_720p.png")
 	for button: Button in buttons:
-		button.pressed.emit()
-	_expect(_menu.call("get_current_page") == &"ships", "Activating ship portraits still opens no details")
+		var definition: ShipDef = null
+		for ship: ShipDef in AUTHORED_SHIPS:
+			if ship.get_ship_id() == StringName(button.get_meta("entry_id", &"")):
+				definition = ship
+		await _check_entry_details(button, &"ships", definition, source_meshes.get(definition.get_ship_id(), []) as Array)
+	_expect(_menu.call("get_current_page") == &"ships" and _grid.is_visible_in_tree(), "All authored ship details return to the ship grid")
 	_expect(GameFlow.selected_pilot == selected_pilot and GameFlow.get_selected_ship() == selected_ship and GameFlow.get_selected_weapon() == selected_weapon and FileAccess.get_file_as_string(GameFlow.SAVE_PATH) == saved, "Ship previews change neither the loadout nor saved progress")
 	var originals_unchanged: bool = not materials.is_empty()
 	for resource: Variant in materials.keys():
@@ -429,6 +444,8 @@ func _check_authored_ship_previews() -> void:
 		var entry_id: StringName = StringName(button.get_meta("entry_id", &""))
 		var expected_text: String = "?" if entry_id == locked.get_ship_id() else "!"
 		_expect(button.text == expected_text and button.get_node_or_null("ModelPreview") == null, "Missing ship visuals fall back safely and locked ships create no viewport")
+		var definition: ShipDef = locked if entry_id == locked.get_ship_id() else (missing_visuals if entry_id == missing_visuals.get_ship_id() else missing_model)
+		await _check_entry_details(button, &"ships", definition)
 	_close.pressed.emit()
 	await _frames(3)
 	_expect(not _panel.visible and get_viewport().gui_get_focus_owner() == _button("ShipsContainer/Ships"), "Ship previews retain Close and focus return")
@@ -440,7 +457,11 @@ func _check_preview_geometry(button: Button, source_meshes: Array, description: 
 	if preview == null:
 		return null
 	_expect(preview.is_active() and preview.texture != null and preview.get_viewport_3d().own_world_3d, description + " uses a small isolated viewport")
-	_expect(preview.mouse_filter == Control.MOUSE_FILTER_IGNORE and preview.focus_mode == Control.FOCUS_NONE, description + " leaves input on the inert icon button")
+	_expect(preview.mouse_filter == Control.MOUSE_FILTER_IGNORE and preview.focus_mode == Control.FOCUS_NONE, description + " leaves activation on its icon button")
+	_check_visual_nodes(preview, source_meshes, description)
+	return preview
+
+func _check_visual_nodes(preview: EnemyIconPreview, source_meshes: Array, description: String) -> void:
 	var copied: int = 0
 	var safe: bool = true
 	var actual: bool = true
@@ -458,7 +479,157 @@ func _check_preview_geometry(button: Button, source_meshes: Array, description: 
 	_expect(copied > 0 and copied == source_meshes.size() and actual, description + " uses all authored visible meshes")
 	_expect(safe and compatible, description + " contains no gameplay, physics, audio, thruster, particle or firing behavior")
 	_check_model_framing(preview)
-	return preview
+
+func _fixture_definition(id: StringName) -> Resource:
+	for definition: Resource in [_weapon_a, _weapon_b, _weapon_c, _ship_a, _ship_b]:
+		if definition is WeaponDef and (definition as WeaponDef).get_weapon_id() == id:
+			return definition
+		if definition is ShipDef and (definition as ShipDef).get_ship_id() == id:
+			return definition
+	return null
+
+func _detail_sections(details: InformationDetailsView, headings: Array[String], bodies: Array[String]) -> Dictionary:
+	var stats: Dictionary = {}
+	for section: Node in details.get_node("Entries/Sections").get_children():
+		var heading: Label = section.get_child(0) as Label
+		headings.append(heading.text if heading != null else "")
+		var body: Label = section.get_child(1) as Label if section.get_child_count() > 1 else null
+		if body != null:
+			bodies.append(body.text)
+		for child: Node in section.get_children():
+			if child is GridContainer:
+				for index: int in range(0, child.get_child_count(), 2):
+					stats[(child.get_child(index) as Label).text] = (child.get_child(index + 1) as Label).text
+	return stats
+
+func _check_entry_details(button: Button, category: StringName, definition: Resource, source_meshes: Array = []) -> void:
+	var details: InformationDetailsView = _menu.get_node(DETAILS) as InformationDetailsView
+	var button_identity: int = button.get_instance_id()
+	button.grab_focus()
+	await _frames(2)
+	var grid_scroll: int = _grid.scroll_vertical
+	var entry_id: StringName = StringName(button.get_meta("entry_id", &""))
+	var unlocked: bool = bool(button.get_meta("unlocked", false))
+	button.pressed.emit()
+	await _frames(5)
+	_expect(details.is_visible_in_tree() and details.get_entry_id() == entry_id and not _grid.visible, "Clicking a weapon or ship opens its canonical details: " + String(entry_id))
+	var name_label: Label = details.get_node("Entries/Name") as Label
+	var expected_name: String = (definition as WeaponDef).get_display_name_or_default() if definition is WeaponDef else (definition as ShipDef).get_display_name_or_default()
+	_expect(name_label.text == expected_name, "Locked and unlocked details both show the authored name: " + String(entry_id))
+	_expect((_menu.get_node(DETAILS_BACK) as Button).is_visible_in_tree() and _close.is_visible_in_tree(), "Weapon and ship details retain Back and the same Close X")
+	var headings: Array[String] = []
+	var bodies: Array[String] = []
+	var stats: Dictionary = _detail_sections(details, headings, bodies)
+	var preview: EnemyIconPreview = details.get_preview()
+	var placeholder: Label = details.get_node("Entries/PreviewCenter/Placeholder") as Label
+	if not unlocked:
+		_expect(headings == ["UNLOCK REQUIREMENTS"] and stats.is_empty() and not bodies.is_empty() and not bodies[0].strip_edges().is_empty(), "Locked details expose unlock instructions without lore, attacks or stats")
+		_expect(placeholder.is_visible_in_tree() and placeholder.text == "?" and not preview.visible and not preview.is_active(), "Locked details keep a question mark without rendering the hidden model")
+		if entry_id == _weapon_b.get_weapon_id():
+			_expect(bodies[0].contains("5") and bodies[0].to_lower().contains("enemies"), "Locked weapon instructions describe its actual saved-kill requirement")
+		if entry_id == _ship_b.get_ship_id():
+			_expect(bodies[0].contains("10") and bodies[0].contains("20"), "Shared ship unlock instructions retain the alternative ship and parent-pilot paths")
+		await _capture("locked_" + String(category) + "_" + String(entry_id) + "_720p.png")
+	else:
+		_expect(headings.has("LORE") and headings.has("BASE STATS") and not stats.is_empty(), "Unlocked details include authored lore and current base statistics")
+		var model_available: bool = (definition as WeaponDef).visual_scene != null if definition is WeaponDef else ((definition as ShipDef).visuals != null and (definition as ShipDef).visuals.model_scene != null)
+		_expect((preview.is_active() and not placeholder.visible) if model_available else (not preview.is_active() and placeholder.visible and placeholder.text == "!"), "Unlocked details show their model or a safe missing-model fallback")
+		if definition is ShipDef:
+			var ship: ShipDef = definition as ShipDef
+			_expect(stats.get("Hull", "") == String.num(ship.max_hull, 2) and stats.get("Shield", "") == String.num(ship.max_shield, 2), "Ship durability is read from the current ship definition")
+			_expect(stats.get("Forward speed", "") == String.num(ship.max_speed_forward, 2) + " m/s", "Ship details show actual base forward speed")
+		else:
+			var weapon: WeaponDef = definition as WeaponDef
+			if weapon is DroneBayWeaponDef:
+				var bay: DroneBayWeaponDef = weapon as DroneBayWeaponDef
+				_expect(stats.get("Active drones", "") == str(bay.base_drone_count) and stats.get("Attack charge", "") == String.num(bay.drone_charge_time, 2) + " s", "Drone Bay details expose live drone capacity and charge time")
+			elif weapon is BeamWeaponDef:
+				_expect(stats.get("Damage tick interval", "") == String.num(weapon.get_channel_tick_interval(), 2) + " s" and stats.get("Max ramp stacks", "") == str(weapon.get_ramp_max_stacks()), "Particle Beam details expose real tick timing and ramp capacity")
+			else:
+				_expect(stats.get("Shot interval", "") == String.num(weapon.fire_rate, 2) + " s" and stats.get("Weapon range", "") == String.num(weapon.base_range, 2) + " m", "Weapon details use shot interval seconds and current targeting range")
+			_expect(headings.has("APPLICABLE UPGRADES"), "Weapon details list applicable upgrades")
+		if not source_meshes.is_empty():
+			_expect(preview.is_active() and not placeholder.visible, "Unlocked authored details show their rotating model")
+			_check_visual_nodes(preview, source_meshes, "Detail " + String(entry_id))
+			var attributes: CameraAttributesPractical = preview.get_camera_3d().attributes as CameraAttributesPractical
+			_expect((attributes != null and is_equal_approx(attributes.exposure_multiplier, 2.5)) if category == &"ships" else attributes == null, "Only ship detail portraits receive the brighter exposure")
+			await _capture(String(category) + "_details_" + String(entry_id) + "_720p.png")
+			if entry_id in [&"particle_beam_mk1", &"heavy_bruiser"]:
+				get_tree().root.size = Vector2i(1920, 1080)
+				await _frames(6)
+				_expect(get_viewport().get_visible_rect().encloses(_panel.get_global_rect()) and _panel.get_global_rect().encloses(details.get_global_rect()), "Long weapon and ship details fit the shared panel at 1080p")
+				await _capture(String(category) + "_details_" + String(entry_id) + "_1080p.png")
+				get_tree().root.size = Vector2i(1280, 720)
+				await _frames(6)
+	(_menu.get_node(DETAILS_BACK) as Button).pressed.emit()
+	await _frames(4)
+	_expect(_menu.call("get_current_page") == category and _grid.is_visible_in_tree() and not details.visible and get_viewport().gui_get_focus_owner() == button, "Details Back restores its category and focused icon")
+	_expect(button.get_instance_id() == button_identity and _grid.scroll_vertical == grid_scroll and not preview.is_active(), "Returning reuses the same grid entry and scroll position and stops detail rendering")
+
+func _check_details_navigation() -> void:
+	var details: InformationDetailsView = _menu.get_node(DETAILS) as InformationDetailsView
+	for category: StringName in [&"weapons", &"ships"]:
+		await _open(category)
+		var entry: Button = null
+		for button: Button in _grid.get_entry_buttons():
+			if bool(button.get_meta("unlocked", false)):
+				entry = button
+				break
+		_expect(entry != null, "Details lifecycle fixture includes an unlocked " + String(category) + " entry")
+		if entry == null:
+			continue
+		var entry_id: StringName = StringName(entry.get_meta("entry_id", &""))
+		entry.grab_focus()
+		await _action(&"ui_accept")
+		_expect(details.is_visible_in_tree() and get_viewport().gui_get_focus_owner() == _menu.get_node(DETAILS_BACK), "Controller accept opens details with focus on Back")
+		await _action(&"ui_cancel")
+		_expect(_grid.is_visible_in_tree() and not details.visible and get_viewport().gui_get_focus_owner() == entry, "Controller cancel returns from details to the same weapon or ship icon")
+		entry.pressed.emit()
+		await _frames(4)
+		var detail_preview: EnemyIconPreview = details.get_preview()
+		_menu.hide()
+		await _frames(4)
+		_expect(not detail_preview.is_active(), "Hiding the menu stops weapon and ship details rendering")
+		_menu.show()
+		await _frames(4)
+		_expect(detail_preview.is_active(), "Showing the menu resumes its unlocked weapon or ship details model")
+		_close.pressed.emit()
+		await _frames(4)
+		var category_name: String = String(category).capitalize()
+		_expect(_menu.call("get_current_page") == &"information" and not _panel.visible and get_viewport().gui_get_focus_owner() == _button(category_name + "Container/" + category_name), "Details Close returns directly to Information and focuses the category")
+		await _open(category)
+		for button: Button in _grid.get_entry_buttons():
+			if StringName(button.get_meta("entry_id", &"")) == entry_id:
+				button.pressed.emit()
+				break
+		await _frames(4)
+		await _open(&"pilots")
+		_expect(not details.visible and not details.get_preview().is_active(), "Changing category closes weapon or ship details and stops their preview")
+
+func _check_unlock_requirement_descriptions() -> void:
+	var kills: UnlockRequirement = _requirement(5)
+	var score: UnlockRequirement = UnlockRequirement.new()
+	score.stat = UnlockRequirement.UnlockStat.DAMAGE_DEALT
+	score.minimum_value = 1000
+	score.source_pilot_id = _alpha.get_pilot_id()
+	score.ship_id = _ship_a.get_ship_id()
+	score.weapon_id = _weapon_a.get_weapon_id()
+	score.weapon_context = UnlockRequirement.WeaponContext.EQUIPPED
+	var names: Dictionary = {
+		_alpha.get_pilot_id(): _alpha.get_display_name_or_default(),
+		_ship_a.get_ship_id(): _ship_a.get_display_name_or_default(),
+		_weapon_a.get_weapon_id(): _weapon_a.get_display_name_or_default(),
+	}
+	var all_text: String = InformationUnlockText.describe_requirements([kills, score], true, names)
+	var any_text: String = InformationUnlockText.describe_requirements([kills, score], false, names)
+	_expect(all_text.contains("AND") and not all_text.contains(" OR ") and any_text.contains("OR") and not any_text.contains(" AND "), "Unlock instructions distinguish all requirements from alternative requirements")
+	_expect(all_text.contains("1000") and all_text.contains(_alpha.get_display_name_or_default()) and all_text.contains(_ship_a.get_display_name_or_default()) and all_text.contains("equipped with " + _weapon_a.get_display_name_or_default()), "Unlock descriptions preserve pilot, ship and equipped-weapon scopes using readable names")
+	score.weapon_context = UnlockRequirement.WeaponContext.DIRECT
+	var direct_text: String = InformationUnlockText.describe_requirements([score], true, names)
+	_expect(direct_text.contains("using " + _weapon_a.get_display_name_or_default()) and not direct_text.contains("equipped with"), "Direct weapon progress is distinct from equipped-weapon progress")
+	score.stat = UnlockRequirement.UnlockStat.HIGHEST_SCORE
+	var score_text: String = InformationUnlockText.describe_requirements([score], true, names)
+	_expect(score_text.contains(_alpha.get_display_name_or_default()) and not score_text.contains(_ship_a.get_display_name_or_default()) and not score_text.contains(_weapon_a.get_display_name_or_default()), "Score instructions retain pilot scope but omit equipment filters that GameFlow ignores")
 
 func _collect_visual_meshes(node: Node, inherited_visible: bool, meshes: Array[Mesh], materials: Dictionary) -> void:
 	var shown: bool = inherited_visible

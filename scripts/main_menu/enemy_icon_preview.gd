@@ -7,6 +7,9 @@ const ROTATION_SPEED: float = PI / 6.0
 const CAMERA_POSITION: Vector3 = Vector3(0.0, 1.9, -4.0)
 const FRAME_PADDING: float = 1.08
 
+## Detail portraits can request more resolution while grid thumbnails stay small.
+@export var preview_size: Vector2i = PREVIEW_SIZE
+
 var _viewport: SubViewport = null
 var _model_root: Node3D = null
 var _visual: Node3D = null
@@ -113,7 +116,7 @@ func is_active() -> bool:
 func _build_stage() -> void:
 	_viewport = SubViewport.new()
 	_viewport.name = "ModelViewport"
-	_viewport.size = PREVIEW_SIZE
+	_viewport.size = Vector2i(clampi(preview_size.x, 64, 512), clampi(preview_size.y, 64, 512))
 	_viewport.own_world_3d = true
 	_viewport.transparent_bg = true
 	_viewport.physics_object_picking = false
