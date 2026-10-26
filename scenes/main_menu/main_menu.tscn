@@ -12,6 +12,8 @@
 [ext_resource type="Script" uid="uid://bp86upa6vqbpe" path="res://scripts/main_menu/high_score_container.gd" id="score"]
 [ext_resource type="PackedScene" uid="uid://cx03u4eql62kw" path="res://scenes/main_menu/upgrades_panel.tscn" id="upgrades"]
 [ext_resource type="PackedScene" path="res://scenes/settings/camera_settings_panel.tscn" id="camera_settings"]
+[ext_resource type="Script" path="res://scripts/main_menu/enemy_information_grid.gd" id="enemy_information"]
+[ext_resource type="Script" path="res://scripts/main_menu/unlock_information_grid.gd" id="unlock_information"]
 
 [sub_resource type="StyleBoxFlat" id="disabled"]
 content_margin_left = 14.0
@@ -600,6 +602,78 @@ theme_override_colors/font_color = Color(0.48, 0.79, 0.84, 1)
 theme_override_font_sizes/font_size = 19
 text = "Rookie / Pulse"
 autowrap_mode = 3
+
+[node name="EnemyInformationPanel" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 535.0
+offset_top = 75.0
+offset_right = 1229.0
+offset_bottom = 650.0
+theme_override_styles/panel = SubResource("panel")
+
+[node name="Margin" type="MarginContainer" parent="EnemyInformationPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="Content" type="VBoxContainer" parent="EnemyInformationPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Header" type="HBoxContainer" parent="EnemyInformationPanel/Margin/Content"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="EnemyInformationPanel/Margin/Content/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.3, 0.85, 0.88, 1)
+theme_override_fonts/font = ExtResource("display")
+theme_override_font_sizes/font_size = 21
+text = "ENEMIES"
+vertical_alignment = 1
+
+[node name="Close" type="Button" parent="EnemyInformationPanel/Margin/Content/Header"]
+custom_minimum_size = Vector2(75, 75)
+layout_mode = 2
+tooltip_text = "Close enemy information"
+text = "×"
+flat = true
+
+[node name="Legend" type="Label" parent="EnemyInformationPanel/Margin/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.75, 0.8, 1)
+theme_override_font_sizes/font_size = 17
+text = "? Not yet killed     ! Killed"
+
+[node name="EnemyGrid" type="ScrollContainer" parent="EnemyInformationPanel/Margin/Content"]
+custom_minimum_size = Vector2(0, 260)
+layout_mode = 2
+size_flags_vertical = 3
+follow_focus = true
+horizontal_scroll_mode = 0
+script = ExtResource("enemy_information")
+
+[node name="Entries" type="VBoxContainer" parent="EnemyInformationPanel/Margin/Content/EnemyGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="UnlockGrid" type="ScrollContainer" parent="EnemyInformationPanel/Margin/Content"]
+visible = false
+custom_minimum_size = Vector2(0, 260)
+layout_mode = 2
+size_flags_vertical = 3
+follow_focus = true
+horizontal_scroll_mode = 0
+script = ExtResource("unlock_information")
+
+[node name="Entries" type="VBoxContainer" parent="EnemyInformationPanel/Margin/Content/UnlockGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
 
 [node name="HighScoreContainer" type="Control" parent="." unique_id=1782047470]
 anchors_preset = 0

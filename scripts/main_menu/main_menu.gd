@@ -36,6 +36,12 @@ signal selection_changed
 @onready var _weapons_button: Button = _buttons.get_node("WeaponsContainer/Weapons")
 @onready var _ships_button: Button = _buttons.get_node("ShipsContainer/Ships")
 @onready var _pilots_button: Button = _buttons.get_node("PilotsContainer/Pilots")
+@onready var _information_panel: PanelContainer = $EnemyInformationPanel
+@onready var _enemy_grid: EnemyInformationGrid = $EnemyInformationPanel/Margin/Content/EnemyGrid
+@onready var _unlock_grid: UnlockInformationGrid = $EnemyInformationPanel/Margin/Content/UnlockGrid
+@onready var _information_panel_close: Button = $EnemyInformationPanel/Margin/Content/Header/Close
+@onready var _information_title: Label = $EnemyInformationPanel/Margin/Content/Header/Title
+@onready var _information_legend: Label = $EnemyInformationPanel/Margin/Content/Legend
 @onready var _change_loadout: Button = _buttons.get_node("ChangeLoadoutContainer/ChangeLoadout")
 @onready var _continue_button: Button = _buttons.get_node("ContinueContainer/ContinueToPlay")
 @onready var _back_button: Button = _buttons.get_node("BackContainer/Back")
@@ -57,9 +63,15 @@ signal selection_changed
 @onready var _camera_settings_panel: CameraSettingsPanel = $CameraSettingsPanel
 
 const MENU_SETTINGS_PATH: String = "user://menu_settings.cfg"
+const REFERENCE_PAGES: Array[StringName] = [&"enemies", &"weapons", &"ships", &"pilots"]
+const INFORMATION_ROWS: Array[String] = ["EnemiesContainer", "WeaponsContainer", "ShipsContainer", "PilotsContainer", "BackContainer"]
 const PAGE_ROWS: Dictionary = {
 	&"home": ["PlayContainer", "HangarContainer", "UpgradesContainer", "InformationContainer", "SettingsContainer", "ExitContainer"],
-	&"information": ["EnemiesContainer", "WeaponsContainer", "ShipsContainer", "PilotsContainer", "BackContainer"],
+	&"information": INFORMATION_ROWS,
+	&"enemies": INFORMATION_ROWS,
+	&"weapons": INFORMATION_ROWS,
+	&"ships": INFORMATION_ROWS,
+	&"pilots": INFORMATION_ROWS,
 	&"play": ["LoadoutSummary", "ChangeLoadoutContainer", "FactionContainer", "FactionSummary", "PracticeContainer", "MercPracticeContainer", "BackContainer"],
 	&"hangar": ["PilotContainer", "ShipContainer", "WeaponContainer", "HangarDetails", "ContinueContainer", "BackContainer"],
 	&"settings": ["SettingsControls", "ControlsHelp", "BackContainer"],
@@ -78,10 +90,14 @@ func _ready() -> void:
 	_play_button.pressed.connect(show_page.bind(&"play"))
 	_hangar_button.pressed.connect(show_page.bind(&"hangar"))
 	_information_button.pressed.connect(show_page.bind(&"information"))
-	# Reference category buttons stay unconnected until their pages are authored.
+	_enemies_button.pressed.connect(show_page.bind(&"enemies"))
+	_weapons_button.pressed.connect(show_page.bind(&"weapons"))
+	_ships_button.pressed.connect(show_page.bind(&"ships"))
+	_pilots_button.pressed.connect(show_page.bind(&"pilots"))
+	_information_panel_close.pressed.connect(_go_back)
 	_change_loadout.pressed.connect(show_page.bind(&"hangar"))
 	_continue_button.pressed.connect(show_page.bind(&"play"))
-	_back_button.pressed.connect(show_page.bind(&"home"))
+	_back_button.pressed.connect(_go_back)
 	selection_changed.connect(_refresh_loadout_view)
 	resized.connect(_update_responsive_layout)
 	_center_container.minimum_size_changed.connect(_queue_responsive_layout)
@@ -103,6 +119,7 @@ func _ready() -> void:
 	weapon_picker.item_selected.connect(_on_weapon_selected)
 	faction_picker.item_selected.connect(_on_faction_selected)
 	_set_version_label()
+	_style_information_panel_close()
 	_set_focus_modes()
 	_refresh_practice_faction_picker()
 	_refresh_pilot_picker()
@@ -113,6 +130,18 @@ func _ready() -> void:
 	if visible and _has_connected_controller():
 		call_deferred("_focus_default_control")
 	_upgrades_panel.closed.connect(_on_upgrades_panel_closed)
+
+func _style_information_panel_close() -> void:
+	var reference: Button = _upgrades_panel.btn_close
+	_information_panel_close.flat = reference.flat
+	_information_panel_close.custom_minimum_size = reference.size
+	_information_panel_close.add_theme_font_override("font", reference.get_theme_font("font"))
+	_information_panel_close.add_theme_font_size_override("font_size", reference.get_theme_font_size("font_size"))
+	# Use the meta panel's resolved appearance, including hover and focus states.
+	for style_name: String in ["normal", "hover", "pressed", "disabled", "focus"]:
+		_information_panel_close.add_theme_stylebox_override(style_name, reference.get_theme_stylebox(style_name))
+	for color_name: String in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color", "font_disabled_color", "font_outline_color"]:
+		_information_panel_close.add_theme_color_override(color_name, reference.get_theme_color(color_name))
 
 func _set_version_label() -> void:
 	var configured_version: String = str(ProjectSettings.get_setting("application/config/version", ""))
@@ -185,8 +214,33 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not visible or _upgrades_panel.visible or _camera_settings_panel.visible:
 		return
 	if event.is_action_pressed("ui_cancel") and not event.is_echo() and _current_page != &"home":
-		show_page(&"home")
+		_go_back()
 		get_viewport().set_input_as_handled()
+
+func _go_back() -> void:
+	var previous_page: StringName = _current_page
+	if REFERENCE_PAGES.has(previous_page):
+		show_page(&"information")
+		_focus_information_button.call_deferred(previous_page)
+	else:
+		show_page(&"home")
+
+func _get_information_button(page: StringName) -> Button:
+	match page:
+		&"weapons":
+			return _weapons_button
+		&"ships":
+			return _ships_button
+		&"pilots":
+			return _pilots_button
+	return _enemies_button
+
+func _focus_information_button(page: StringName) -> void:
+	if visible and _current_page == &"information":
+		_get_information_button(page).grab_focus()
+
+func _get_information_grid() -> InformationIconGrid:
+	return _enemy_grid if _current_page == &"enemies" else _unlock_grid
 
 func get_current_page() -> StringName:
 	return _current_page
@@ -212,12 +266,26 @@ func show_page(page: StringName) -> void:
 		&"settings":
 			_section_title.text = "SETTINGS"
 			_section_description.text = "Display, audio, flight camera and hangar motion."
-		&"information":
+		&"information", &"enemies", &"weapons", &"ships", &"pilots":
 			_section_title.text = "INFORMATION"
 			_section_description.text = "Enemies, weapons, ships and pilots."
 		_:
 			_section_title.text = "READY FOR DEPARTURE"
 			_section_description.text = "Choose your loadout. Find your edge. Break through."
+	var reference_open: bool = REFERENCE_PAGES.has(page)
+	_information_panel.visible = reference_open
+	_preview_caption.visible = not reference_open
+	_enemy_grid.visible = page == &"enemies"
+	_unlock_grid.visible = reference_open and page != &"enemies"
+	if reference_open:
+		_information_title.text = String(page).to_upper()
+		_information_panel_close.tooltip_text = "Close %s information" % String(page)
+		if page == &"enemies":
+			_information_legend.text = "? Not yet killed     ! Killed"
+			_enemy_grid.refresh()
+		else:
+			_information_legend.text = "? Locked     ! Unlocked"
+			_unlock_grid.refresh(page, pilot_roster)
 	_refresh_loadout_view()
 	_wire_page_focus()
 	_queue_responsive_layout()
@@ -265,6 +333,9 @@ func _update_responsive_layout() -> void:
 	_center_container.size = Vector2(panel_width, maxf(viewport_size.y - top_margin - 70.0, 480.0))
 	var logo: Sprite2D = column.get_node("TitleContainer/Logo") as Sprite2D
 	logo.position = Vector2(panel_width * 0.5 - 118.0, 37.0)
+	var right_start: float = margin + maxf(panel_width, column.get_combined_minimum_size().x) + 24.0
+	_information_panel.position = Vector2(right_start, top_margin)
+	_information_panel.size = Vector2(maxf(viewport_size.x - margin - right_start, 0.0), maxf(viewport_size.y - top_margin - 70.0, 0.0))
 
 func _get_page_controls() -> Array[Control]:
 	match _current_page:
@@ -276,11 +347,19 @@ func _get_page_controls() -> Array[Control]:
 			return [_master_volume, _fullscreen, _motion, _camera_settings_button, _back_button]
 		&"information":
 			return [_enemies_button, _weapons_button, _ships_button, _pilots_button, _back_button]
+		&"enemies", &"weapons", &"ships", &"pilots":
+			var controls: Array[Control] = []
+			controls.assign(_get_information_grid().get_entry_buttons())
+			controls.append_array([_information_panel_close, _enemies_button, _weapons_button, _ships_button, _pilots_button, _back_button])
+			return controls
 	return [_play_button, _hangar_button, btn_upgrades, _information_button, btn_settings, btn_exit]
 
 func _wire_page_focus() -> void:
 	var controls: Array[Control] = []
-	for control: Control in _get_page_controls():
+	var page_controls: Array[Control] = _get_page_controls()
+	if REFERENCE_PAGES.has(_current_page):
+		page_controls = [_enemies_button, _weapons_button, _ships_button, _pilots_button, _back_button]
+	for control: Control in page_controls:
 		var button: BaseButton = control as BaseButton
 		if control.is_visible_in_tree() and (button == null or not button.disabled):
 			controls.append(control)
@@ -292,6 +371,19 @@ func _wire_page_focus() -> void:
 		control.focus_previous = control.get_path_to(previous)
 		control.focus_neighbor_bottom = control.get_path_to(next)
 		control.focus_next = control.get_path_to(next)
+		control.focus_neighbor_left = NodePath("")
+		control.focus_neighbor_right = NodePath("")
+	if REFERENCE_PAGES.has(_current_page):
+		var category_button: Button = _get_information_button(_current_page)
+		for property_name: StringName in [&"focus_neighbor_top", &"focus_neighbor_bottom", &"focus_neighbor_left", &"focus_previous", &"focus_next"]:
+			_information_panel_close.set(property_name, _information_panel_close.get_path_to(category_button))
+		_information_panel_close.focus_neighbor_right = _information_panel_close.get_path_to(_information_panel_close)
+		var grid: InformationIconGrid = _get_information_grid()
+		grid.wire_focus(_information_panel_close, category_button)
+		var entries: Array[Button] = grid.get_entry_buttons()
+		var first: Button = entries.front() if not entries.is_empty() else _information_panel_close
+		for control: Control in controls:
+			control.focus_neighbor_right = control.get_path_to(first)
 
 func _load_menu_settings() -> void:
 	var config: ConfigFile = ConfigFile.new()
@@ -734,7 +826,7 @@ func _set_focus_modes() -> void:
 	btn_merc_practice.focus_mode = Control.FOCUS_ALL
 	btn_settings.focus_mode = Control.FOCUS_ALL
 	btn_exit.focus_mode = Control.FOCUS_ALL
-	for control: Control in [_play_button, _hangar_button, _information_button, _enemies_button, _weapons_button, _ships_button, _pilots_button, _change_loadout, _continue_button, _back_button, _master_volume, _fullscreen, _motion, _camera_settings_button]:
+	for control: Control in [_play_button, _hangar_button, _information_button, _enemies_button, _weapons_button, _ships_button, _pilots_button, _information_panel_close, _change_loadout, _continue_button, _back_button, _master_volume, _fullscreen, _motion, _camera_settings_button]:
 		control.focus_mode = Control.FOCUS_ALL
 
 func _focus_default_control() -> void:
