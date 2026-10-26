@@ -22,7 +22,7 @@ foreach ($folder in @('assets','content','scenes','scripts','systems','.godot'))
 }
 Write-Output "Isolated validation project: $validationRoot"
 
-foreach ($scene in @('grey_regular_checks','grey_boss_checks','grey_status_checks','grey_advanced_checks','grey_mind_checks','grey_practice_checks')) {
+foreach ($scene in @('grey_field_checks','grey_regular_checks','grey_boss_checks','grey_status_checks','grey_advanced_checks','grey_mind_checks','grey_practice_checks')) {
     & $GodotExe --headless --path $validationRoot --fixed-fps 60 --scene "res://scripts/tests/$scene.tscn"
     if ($LASTEXITCODE -ne 0) { throw "Grey check failed: $scene" }
 }

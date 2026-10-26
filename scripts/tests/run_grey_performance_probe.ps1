@@ -1,6 +1,7 @@
 param(
     [string]$GodotExe = $env:GODOT_EXE,
     [switch]$SkipImport,
+    [switch]$CaptureVisuals,
     [string]$OutputDirectory = '',
     [int]$TimeoutSeconds = 240
 )
@@ -34,6 +35,7 @@ Write-Output "Profiling artifacts: $OutputDirectory"
 $logPath = Join-Path $validationRoot 'grey_performance_probe.log'
 $errorPath = Join-Path $validationRoot 'grey_performance_probe.stderr.log'
 $arguments = @('--path', ('"' + $validationRoot + '"'), '--rendering-method', 'forward_plus', '--rendering-driver', 'vulkan', '--resolution', '1280x720', '--position', '-32000,-32000', '--disable-vsync', '--max-fps', '240', '--scene', 'res://scripts/tests/grey_performance_probe.tscn', '--', ('"--output=' + $OutputDirectory + '"'))
+if ($CaptureVisuals) { $arguments += '--capture-visuals' }
 $process = Start-Process -FilePath $GodotExe -ArgumentList $arguments -WindowStyle Hidden -PassThru -RedirectStandardOutput $logPath -RedirectStandardError $errorPath
 $processHandle = $process.Handle
 if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {

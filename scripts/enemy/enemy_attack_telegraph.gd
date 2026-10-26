@@ -43,6 +43,7 @@ var _progress_mesh: ImmediateMesh = null
 var _wire_material: StandardMaterial3D = null
 var _progress_material: StandardMaterial3D = null
 var _label: Label3D = null
+var _grey_field: GreyAttackField = null
 var _warning_label: String = ""
 var _warning_tint: Color = Color(1.0, 0.62, 0.12, 0.85)
 var _response_hint: String = "MOVE CLEAR"
@@ -143,9 +144,17 @@ func contains_position(world_position: Vector3) -> bool:
 
 func _physics_process(delta: float) -> void:
 	if _has_resolved:
-		if not _companions.is_empty():
-			return
-		_flash_remaining_sec -= delta
+		if _grey_field != null:
+			# A completed member fades independently while its pattern finishes.
+			if _flash_remaining_sec > 0.0:
+				_flash_remaining_sec = maxf(_flash_remaining_sec - delta, 0.0)
+				_grey_field.set_release(_flash_remaining_sec / RELEASE_FLASH_SEC)
+			if not _companions.is_empty():
+				return
+		else:
+			if not _companions.is_empty():
+				return
+			_flash_remaining_sec -= delta
 		if _flash_remaining_sec <= 0.0:
 			queue_free()
 		return
@@ -200,8 +209,11 @@ func _resolve_attack() -> void:
 		if is_instance_valid(turret.shot_sound):
 			turret.shot_sound.pitch_scale = randf_range(0.9, 1.1)
 			turret.shot_sound.play()
-	_wire_material.albedo_color = Color(1.0, 0.85, 0.4, 1.0)
-	_label.text = "FIRE" if did_hit else "CLEAR"
+	if _grey_field != null:
+		_grey_field.set_release(1.0)
+	else:
+		_wire_material.albedo_color = Color(1.0, 0.85, 0.4, 1.0)
+		_label.text = "FIRE" if did_hit else "CLEAR"
 	_pattern_hit = _pattern_hit or did_hit
 	_emit_pattern_resolution()
 
@@ -209,6 +221,16 @@ func _on_source_died(_enemy: Enemy) -> void:
 	cancel()
 
 func _build_visuals() -> void:
+	# The shared host also serves Merc/Bug attacks; only Greys use this field.
+	if _source.get_faction_id() == &"greys":
+		_grey_field = GreyAttackField.new()
+		_grey_field.name = "LockedVolume"
+		add_child(_grey_field)
+		if _corridor:
+			_grey_field.configure_corridor(_locked_origin, _locked_position, _radius)
+		else:
+			_grey_field.configure_sphere(_radius)
+		return
 	_wire_material = _make_material(_warning_tint)
 	_progress_material = _make_material(Color(1.0, 0.2, 0.1, 1.0))
 	_wire_mesh = ImmediateMesh.new()
@@ -275,6 +297,9 @@ func _add_ring(mesh: ImmediateMesh, center: Vector3, axis_a: Vector3, axis_b: Ve
 		mesh.surface_add_vertex(center + (axis_a * cos(angle_b) + axis_b * sin(angle_b)) * radius)
 
 func _update_visuals(progress: float) -> void:
+	if _grey_field != null:
+		_grey_field.set_charge(progress, _elapsed_sec)
+		return
 	_wire_material.albedo_color = _warning_tint.lerp(Color(1.0, 0.12, 0.1, 0.9), progress)
 	_label.text = "%s  %.1f" % [get_attack_label(), maxf(_windup_sec - _elapsed_sec, 0.0)]
 	_progress_mesh.clear_surfaces()

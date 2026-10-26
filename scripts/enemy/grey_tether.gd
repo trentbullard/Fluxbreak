@@ -27,6 +27,8 @@ func start_tether(source: Enemy, target: Ship, windup_sec: float = 1.3, duration
 		set_warning_style("CAPTURE CORRIDOR", Color(0.8, 0.46, 1.0, 0.9))
 		set_response_hint("TURN OUT OF THE LANE")
 	start_attack(source, target, source, windup_sec, radius, directional, corridor_end, corridor_start)
+	if _grey_field != null:
+		_grey_field.set_capture_style()
 	add_to_group("grey_tethers")
 	return _active
 
@@ -65,7 +67,6 @@ func _resolve_attack() -> void:
 	if not _attached:
 		_finish()
 	else:
-		_progress_mesh.clear_surfaces()
 		_update_link()
 
 func _physics_process(delta: float) -> void:
@@ -80,20 +81,12 @@ func _physics_process(delta: float) -> void:
 	if _source.global_position.distance_squared_to(_ship.global_position) > _break_distance * _break_distance:
 		_finish()
 		return
+	_elapsed_sec += delta
 	_update_link()
 
 func _update_link() -> void:
-	_wire_mesh.clear_surfaces()
-	_wire_material.albedo_color = Color(0.5, 0.85, 1.0, 0.95)
-	_wire_mesh.surface_begin(Mesh.PRIMITIVE_LINES, _wire_material)
-	var origin: Vector3 = _source.global_position - global_position
-	var endpoint: Vector3 = _ship.global_position - global_position
-	_wire_mesh.surface_add_vertex(origin)
-	_wire_mesh.surface_add_vertex(endpoint)
-	_wire_mesh.surface_end()
-	_label.position = (origin + endpoint) * 0.5 + Vector3.UP * 52.0
-	_label.modulate = Color(0.6, 0.85, 1.0)
-	_label.text = "TETHER  %.1fs" % _ship.get_tether_time_remaining()
+	_grey_field.configure_link(_source.global_position, _ship.global_position)
+	_grey_field.set_charge(1.0, _elapsed_sec)
 
 func _finish() -> void:
 	if _finished:
