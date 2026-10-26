@@ -16,7 +16,8 @@ func refresh(category: StringName, roster: PilotRoster) -> void:
 		for ship_option: PilotStarterShipOptionDef in GameFlow.get_starter_ship_options(pilot):
 			var ship_unlocked: bool = pilot_unlocked and GameFlow.is_ship_option_unlocked(ship_option)
 			if category == &"ships":
-				_record(records, by_id, ship_option.get_ship_id(), ship_option.ship.get_display_name_or_default(), ship_unlocked)
+				var model_scene: PackedScene = ship_option.ship.visuals.model_scene if ship_option.ship.visuals != null else null
+				_record(records, by_id, ship_option.get_ship_id(), ship_option.ship.get_display_name_or_default(), ship_unlocked, model_scene)
 			elif category == &"weapons":
 				for weapon_option: ShipStarterWeaponOptionDef in GameFlow.get_starter_weapon_options(ship_option.ship):
 					var weapon_unlocked: bool = ship_unlocked and GameFlow.is_weapon_option_unlocked(weapon_option)
@@ -33,7 +34,7 @@ func refresh(category: StringName, roster: PilotRoster) -> void:
 			button.set_meta(&"entry_type", category)
 			button.set_meta(&"unlocked", unlocked)
 			_set_icon_state(button, unlocked, String(record["name"]), "Locked " + singular)
-			if category == &"weapons":
+			if category == &"weapons" or category == &"ships":
 				_set_model_preview(button, record.get("model_scene") as PackedScene, unlocked)
 	_reset_scroll()
 
