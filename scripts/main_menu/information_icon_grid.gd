@@ -66,7 +66,7 @@ func _set_icon_state(button: Button, known: bool, display_name: String, hidden_n
 ## One cached visual-only preview per known entry; missing models keep the marker.
 func _set_model_preview(button: Button, model_scene: PackedScene, known: bool) -> void:
 	var preview: EnemyIconPreview = button.get_node_or_null("ModelPreview") as EnemyIconPreview
-	if not known:
+	if not known or model_scene == null:
 		if preview != null:
 			preview.hide()
 		return

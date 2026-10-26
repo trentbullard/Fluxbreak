@@ -121,13 +121,13 @@ func _build_stage() -> void:
 	_visual.name = "CenteredModel"
 	_model_root.add_child(_visual)
 	var key: DirectionalLight3D = DirectionalLight3D.new()
-	key.rotation_degrees = Vector3(-35.0, -30.0, 0.0)
+	key.rotation_degrees = Vector3(-35.0, 150.0, 0.0)
 	key.light_color = Color(0.9, 0.95, 1.0)
 	key.light_energy = 1.5
 	key.shadow_enabled = false
 	_viewport.add_child(key)
 	var fill: DirectionalLight3D = DirectionalLight3D.new()
-	fill.rotation_degrees = Vector3(20.0, 145.0, 0.0)
+	fill.rotation_degrees = Vector3(20.0, -30.0, 0.0)
 	fill.light_color = Color(0.4, 0.7, 1.0)
 	fill.light_energy = 0.7
 	fill.shadow_enabled = false

@@ -20,7 +20,7 @@ func refresh(category: StringName, roster: PilotRoster) -> void:
 			elif category == &"weapons":
 				for weapon_option: ShipStarterWeaponOptionDef in GameFlow.get_starter_weapon_options(ship_option.ship):
 					var weapon_unlocked: bool = ship_unlocked and GameFlow.is_weapon_option_unlocked(weapon_option)
-					_record(records, by_id, weapon_option.get_weapon_id(), weapon_option.weapon.get_display_name_or_default(), weapon_unlocked)
+					_record(records, by_id, weapon_option.get_weapon_id(), weapon_option.weapon.get_display_name_or_default(), weapon_unlocked, weapon_option.weapon.visual_scene)
 	var singular: String = "weapon" if category == &"weapons" else ("ship" if category == &"ships" else "pilot")
 	if records.is_empty():
 		_add_empty_message("No %s available." % String(category))
@@ -33,14 +33,18 @@ func refresh(category: StringName, roster: PilotRoster) -> void:
 			button.set_meta(&"entry_type", category)
 			button.set_meta(&"unlocked", unlocked)
 			_set_icon_state(button, unlocked, String(record["name"]), "Locked " + singular)
+			if category == &"weapons":
+				_set_model_preview(button, record.get("model_scene") as PackedScene, unlocked)
 	_reset_scroll()
 
-func _record(records: Array[Dictionary], by_id: Dictionary, entry_id: StringName, display_name: String, unlocked: bool) -> void:
+func _record(records: Array[Dictionary], by_id: Dictionary, entry_id: StringName, display_name: String, unlocked: bool, model_scene: PackedScene = null) -> void:
 	if entry_id == &"":
 		return
 	if by_id.has(entry_id):
 		var existing: Dictionary = records[int(by_id[entry_id])]
 		existing["unlocked"] = bool(existing["unlocked"]) or unlocked
+		if existing.get("model_scene") == null and model_scene != null:
+			existing["model_scene"] = model_scene
 		return
 	by_id[entry_id] = records.size()
-	records.append({"id": entry_id, "name": display_name, "unlocked": unlocked})
+	records.append({"id": entry_id, "name": display_name, "unlocked": unlocked, "model_scene": model_scene})

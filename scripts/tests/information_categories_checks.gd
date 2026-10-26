@@ -4,6 +4,12 @@ extends Node
 const MENU_SCENE: PackedScene = preload("res://scenes/main_menu/main_menu.tscn")
 const BASE_SHIP: ShipDef = preload("res://content/data/ships/starter_fighter.tres")
 const BASE_WEAPON: WeaponDef = preload("res://content/data/weapons/pulse_mk1.tres")
+const AUTHORED_WEAPONS: Array[WeaponDef] = [
+	BASE_WEAPON,
+	preload("res://content/data/weapons/laser_bolt_mk1.tres"),
+	preload("res://content/data/weapons/drone_bay_mk1.tres"),
+	preload("res://content/data/weapons/particle_beam_mk1.tres"),
+]
 const BUTTONS: String = "CenterContainer/MainMenuContainer/ButtonPanel/ButtonMargins/ButtonsContainer/"
 const PANEL: String = "EnemyInformationPanel"
 const GRID: String = "EnemyInformationPanel/Margin/Content/UnlockGrid"
@@ -64,6 +70,7 @@ func _run_checks() -> void:
 	await _frames(3)
 	await _check_categories_and_navigation()
 	await _check_saved_unlock_progress()
+	await _check_authored_weapon_previews()
 	await _check_empty_roster()
 	_menu.queue_free()
 	await _frames(5)
@@ -248,8 +255,144 @@ func _check_state(id: StringName, expected: bool) -> void:
 	for button: Button in _grid.get_entry_buttons():
 		if StringName(button.get_meta("entry_id", &"")) == id:
 			found = true
-			_expect(button.text == ("!" if expected else "?") and bool(button.get_meta("unlocked", false)) == expected, "Saved prerequisite path controls icon " + String(id))
+			var weapon_model: bool = expected and StringName(button.get_meta("entry_type", &"")) == &"weapons"
+			var text: String = "" if weapon_model else ("!" if expected else "?")
+			_expect(button.text == text and bool(button.get_meta("unlocked", false)) == expected, "Saved prerequisite path controls icon " + String(id))
+			if weapon_model:
+				var preview: EnemyIconPreview = button.get_node_or_null("ModelPreview") as EnemyIconPreview
+				_expect(preview != null and preview.visible, "Unlocked weapon replaces its marker with the shared model preview")
 	_expect(found, "Roster contains expected identity " + String(id))
+
+func _check_authored_weapon_previews() -> void:
+	var ship: ShipDef = _make_ship(&"information_weapon_visuals", "Weapon Visual Fixture")
+	var materials: Dictionary = {}
+	var source_meshes: Dictionary = {}
+	var weapons_by_id: Dictionary = {}
+	for weapon: WeaponDef in AUTHORED_WEAPONS:
+		weapons_by_id[weapon.get_weapon_id()] = weapon
+		ship.starter_weapon_options.append(_weapon_option(weapon))
+		var source: Node = weapon.visual_scene.instantiate()
+		var meshes: Array[Mesh] = []
+		_collect_weapon_meshes(source, true, meshes, materials)
+		source_meshes[weapon.get_weapon_id()] = meshes
+		source.free()
+	# Shared starting options must still produce one portrait per weapon identity.
+	ship.starter_weapon_options.append(_weapon_option(AUTHORED_WEAPONS[0]))
+	var pilot: PilotDef = PilotDef.new()
+	pilot.id = &"information_weapon_visuals"
+	pilot.ship = ship
+	pilot.starter_ship_options.assign([_ship_option(ship)])
+	var roster: PilotRoster = PilotRoster.new()
+	roster.pilots.assign([pilot])
+	_menu.set("pilot_roster", roster)
+	var selected_pilot: PilotDef = GameFlow.selected_pilot
+	var selected_ship: ShipDef = GameFlow.get_selected_ship()
+	var selected_weapon: WeaponDef = GameFlow.get_selected_weapon()
+	var saved: String = FileAccess.get_file_as_string(GameFlow.SAVE_PATH)
+	await _open(&"weapons")
+	var buttons: Array[Button] = _grid.get_entry_buttons()
+	_expect(buttons.size() == AUTHORED_WEAPONS.size(), "All four authored player weapons have one deduplicated portrait")
+	var previews: Array[EnemyIconPreview] = []
+	var poses: Array[Basis] = []
+	for index: int in buttons.size():
+		var button: Button = buttons[index]
+		var weapon: WeaponDef = weapons_by_id[StringName(button.get_meta("entry_id", &""))] as WeaponDef
+		var preview: EnemyIconPreview = button.get_node_or_null("ModelPreview") as EnemyIconPreview
+		_expect(preview != null and button.text.is_empty(), "Authored weapon uses its 3D model: " + weapon.weapon_id)
+		if preview == null:
+			continue
+		previews.append(preview)
+		poses.append(preview.get_model_root().global_basis)
+		_expect(preview.is_active() and preview.texture != null and preview.get_viewport_3d().own_world_3d, "Visible weapon model uses a small isolated viewport")
+		_expect(preview.mouse_filter == Control.MOUSE_FILTER_IGNORE and preview.focus_mode == Control.FOCUS_NONE, "Weapon portrait leaves input on the original inert button")
+		var copied: int = 0
+		var safe: bool = true
+		var actual: bool = true
+		var compatible: bool = true
+		for node: Node in preview.get_model_root().find_children("*", "", true, false):
+			if node.get_script() != null or node is CollisionObject3D or node is AudioStreamPlayer or node is AudioStreamPlayer3D or node is Timer or node is AnimationPlayer or node is GPUParticles3D or node is CPUParticles3D:
+				safe = false
+			var mesh: MeshInstance3D = node as MeshInstance3D
+			if mesh != null:
+				copied += 1
+				actual = actual and (source_meshes[weapon.get_weapon_id()] as Array).has(mesh.mesh)
+				for surface: int in mesh.mesh.get_surface_count():
+					var material: BaseMaterial3D = mesh.get_active_material(surface) as BaseMaterial3D
+					compatible = compatible and (material == null or not material.subsurf_scatter_enabled)
+		_expect(copied > 0 and copied == (source_meshes[weapon.get_weapon_id()] as Array).size() and actual, "Weapon thumbnail uses all authored visible hull meshes")
+		_expect(safe and compatible, "Weapon preview contains no firing, drone, projectile, particle, audio or gameplay behavior")
+		_check_weapon_framing(preview)
+	await _frames(20)
+	for index: int in previews.size():
+		_expect(not poses[index].is_equal_approx(previews[index].get_model_root().global_basis), "Each visible weapon portrait rotates")
+	await _capture("weapons_models_720p.png")
+	for button: Button in buttons:
+		button.pressed.emit()
+	_expect(_menu.call("get_current_page") == &"weapons", "Activating weapon portraits still opens no details")
+	_expect(GameFlow.selected_pilot == selected_pilot and GameFlow.get_selected_ship() == selected_ship and GameFlow.get_selected_weapon() == selected_weapon and FileAccess.get_file_as_string(GameFlow.SAVE_PATH) == saved, "Weapon previews change neither selected loadout nor saved progress")
+	var originals_unchanged: bool = not materials.is_empty()
+	for resource: Variant in materials.keys():
+		var material: BaseMaterial3D = resource as BaseMaterial3D
+		originals_unchanged = originals_unchanged and material.subsurf_scatter_enabled == bool(materials[resource])
+	_expect(originals_unchanged, "Preview-only material adjustments leave authored weapon resources unchanged")
+	_menu.hide()
+	await _frames(6)
+	poses.clear()
+	for preview: EnemyIconPreview in previews:
+		_expect(not preview.is_active() and preview.get_viewport_3d().render_target_update_mode == SubViewport.UPDATE_DISABLED, "Hidden menu stops weapon viewport rendering")
+		poses.append(preview.get_model_root().global_basis)
+	await _frames(12)
+	for index: int in previews.size():
+		_expect(poses[index].is_equal_approx(previews[index].get_model_root().global_basis), "Hidden weapon portraits do no rotation work")
+	_menu.show()
+	await _frames(6)
+	for preview: EnemyIconPreview in previews:
+		_expect(preview.is_active(), "Showing the menu resumes visible weapon portraits")
+	await _open(&"ships")
+	for preview: EnemyIconPreview in previews:
+		_expect(not is_instance_valid(preview) or not preview.is_active(), "Switching category retires the old weapon rendering")
+	await _open(&"weapons")
+	_expect(_grid.find_children("*", "SubViewport", true, false).size() == AUTHORED_WEAPONS.size(), "Reopening weapons cannot accumulate duplicate preview viewports")
+	var missing: WeaponDef = _make_weapon("information_missing_visual", "Missing Visual")
+	missing.visual_scene = null
+	ship.starter_weapon_options.assign([_weapon_option(missing), _weapon_option(AUTHORED_WEAPONS[0], 1000)])
+	await _open(&"weapons")
+	buttons = _grid.get_entry_buttons()
+	_expect(buttons.size() == 2 and buttons[0].text == "!" and buttons[0].get_node_or_null("ModelPreview") == null, "An unlocked weapon without a visual safely retains its exclamation marker")
+	_expect(buttons[1].text == "?" and buttons[1].get_node_or_null("ModelPreview") == null, "A locked weapon creates no preview viewport")
+	_close.pressed.emit()
+	await _frames(3)
+	_expect(not _panel.visible and get_viewport().gui_get_focus_owner() == _button("WeaponsContainer/Weapons"), "Weapon previews retain Close and focus-return behavior")
+	_menu.set("pilot_roster", _roster)
+
+func _collect_weapon_meshes(node: Node, inherited_visible: bool, meshes: Array[Mesh], materials: Dictionary) -> void:
+	var shown: bool = inherited_visible
+	if node is Node3D:
+		shown = shown and (node as Node3D).visible
+	var mesh: MeshInstance3D = node as MeshInstance3D
+	if shown and mesh != null and mesh.mesh != null:
+		meshes.append(mesh.mesh)
+		for surface: int in mesh.mesh.get_surface_count():
+			var material: BaseMaterial3D = mesh.get_active_material(surface) as BaseMaterial3D
+			if material != null:
+				materials[material] = material.subsurf_scatter_enabled
+	for child: Node in node.get_children():
+		_collect_weapon_meshes(child, shown, meshes, materials)
+
+func _check_weapon_framing(preview: EnemyIconPreview) -> void:
+	var model: Node3D = preview.get_model_root()
+	var camera: Camera3D = preview.get_camera_3d()
+	var bounds: AABB = preview.get_model_bounds()
+	var original: Basis = model.basis
+	var framed: bool = bounds.is_finite() and bounds.size.length_squared() > 0.0
+	for angle: float in [0.0, PI / 4.0, PI / 2.0, PI * 0.75]:
+		model.rotation.y = angle
+		for corner: int in range(8):
+			var point: Vector3 = model.to_global(bounds.get_endpoint(corner))
+			var projected: Vector2 = camera.unproject_position(point)
+			framed = framed and not camera.is_position_behind(point) and Rect2(Vector2(2.0, 2.0), Vector2(preview.get_viewport_3d().size) - Vector2(4.0, 4.0)).has_point(projected)
+	model.basis = original
+	_expect(framed, "Shared framing keeps the weapon inside its portrait throughout rotation")
 
 func _check_layout() -> void:
 	var panel_rect: Rect2 = _panel.get_global_rect()
