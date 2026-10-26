@@ -7,6 +7,12 @@ var _wd: WaveDirector
 
 func _ready() -> void:
 	_wd = get_node_or_null(wave_director_path)
+	visibility_changed.connect(_sync_processing_state)
+	_sync_processing_state()
+
+func _sync_processing_state() -> void:
+	# Hidden diagnostics do no per-frame work; showing the panel enables them.
+	set_process(is_visible_in_tree())
 
 func _process(_delta: float) -> void:
 	var state: RunState.State = RunState.run_state

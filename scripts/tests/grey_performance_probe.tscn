@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/tests/grey_performance_probe.gd" id="1"]
+
+[node name="GreyPerformanceProbe" type="Node3D"]
+script = ExtResource("1")
