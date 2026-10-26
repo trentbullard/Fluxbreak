@@ -1,6 +1,9 @@
 extends InformationIconGrid
 class_name UnlockInformationGrid
 
+## Lift dark hulls only in ship thumbnails, preserving other categories' exposure.
+const SHIP_PREVIEW_EXPOSURE: float = 2.5
+
 ## Each identity is listed once, including options behind still-locked parents.
 ## Availability follows the same pilot -> ship -> starting weapon path as Hangar.
 func refresh(category: StringName, roster: PilotRoster) -> void:
@@ -35,7 +38,8 @@ func refresh(category: StringName, roster: PilotRoster) -> void:
 			button.set_meta(&"unlocked", unlocked)
 			_set_icon_state(button, unlocked, String(record["name"]), "Locked " + singular)
 			if category == &"weapons" or category == &"ships":
-				_set_model_preview(button, record.get("model_scene") as PackedScene, unlocked)
+				var exposure: float = SHIP_PREVIEW_EXPOSURE if category == &"ships" else 1.0
+				_set_model_preview(button, record.get("model_scene") as PackedScene, unlocked, exposure)
 	_reset_scroll()
 
 func _record(records: Array[Dictionary], by_id: Dictionary, entry_id: StringName, display_name: String, unlocked: bool, model_scene: PackedScene = null) -> void:

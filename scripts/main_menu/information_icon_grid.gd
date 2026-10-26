@@ -64,7 +64,7 @@ func _set_icon_state(button: Button, known: bool, display_name: String, hidden_n
 	button.add_theme_color_override("font_color", COLOR_KNOWN if known else COLOR_UNKNOWN)
 
 ## One cached visual-only preview per known entry; missing models keep the marker.
-func _set_model_preview(button: Button, model_scene: PackedScene, known: bool) -> void:
+func _set_model_preview(button: Button, model_scene: PackedScene, known: bool, exposure_multiplier: float = 1.0) -> void:
 	var preview: EnemyIconPreview = button.get_node_or_null("ModelPreview") as EnemyIconPreview
 	if not known or model_scene == null:
 		if preview != null:
@@ -79,6 +79,7 @@ func _set_model_preview(button: Button, model_scene: PackedScene, known: bool) -
 		preview.offset_top = 4.0
 		preview.offset_right = -4.0
 		preview.offset_bottom = -4.0
+	preview.set_exposure_multiplier(exposure_multiplier)
 	preview.show()
 	if preview.set_model(model_scene):
 		button.text = ""

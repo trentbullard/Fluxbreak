@@ -92,6 +92,21 @@ func get_model_bounds() -> AABB:
 func get_camera_3d() -> Camera3D:
 	return _camera
 
+## Optional thumbnail exposure; neutral previews keep their original camera setup.
+func set_exposure_multiplier(multiplier: float) -> void:
+	if _camera == null:
+		return
+	if is_equal_approx(multiplier, 1.0):
+		_camera.attributes = null
+	else:
+		var attributes: CameraAttributesPractical = _camera.attributes as CameraAttributesPractical
+		if attributes == null:
+			attributes = CameraAttributesPractical.new()
+		attributes.exposure_multiplier = maxf(multiplier, 0.01)
+		_camera.attributes = attributes
+	if _active:
+		_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
+
 func is_active() -> bool:
 	return _active
 
