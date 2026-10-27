@@ -84,9 +84,9 @@ const ENTRIES: Dictionary = {
 	},
 	"bug_sporeling_mk1": {
 		"lore": "A small shard of the hive's appetite. What it lacks in carapace it makes up for in restless movement and the company of its brood.",
-		"role": "The fastest, lightest Bug pursuer, dangerous when many approach together.",
-		"attack": "Weaves around the player at close range and commits a delayed spore strike to a fixed position. The organism keeps strafing, but its marked strike stays where it was placed.",
-		"weapon": "Spore strike",
+		"role": "The fastest, lightest Bug pursuer, laying short-lived poison clouds that become more dangerous when they overlap.",
+		"attack": "Leaves a fixed poison cloud that damages on contact, then continues ticking while you remain inside. Overlapping clouds all deal damage independently. Destroying the Sporeling clears its cloud. The organism keeps strafing, but its deposited cloud stays in place and expires without an extra strike.",
+		"weapon": "Spore cloud",
 	},
 	"bug_carapace_mk1": {
 		"lore": "Growth traded for armor. Layered plates let this organism keep advancing through punishment that would scatter a lighter brood.",
@@ -179,13 +179,17 @@ static func for_enemy(definition: EnemyDef) -> Dictionary:
 		{"label": "Evasion", "value": String.num(definition.evasion * 100.0, 2) + "%"},
 	]
 	var weapon: WeaponDef = definition.weapon
+	var cloud_behavior: BugBehaviorDef = _sporeling_cloud_behavior(definition)
 	if weapon != null and not definition is EnemyBossDef:
-		stats.append_array([
-			{"label": "Weapon", "value": String(copy["weapon"])},
-			{"label": "Damage per release" if _has_committed_attacks(definition) else "Damage per shot", "value": _damage(weapon)},
-			{"label": "Weapon range", "value": String.num(weapon.base_range, 2) + " m"},
-			{"label": "Base accuracy", "value": String.num(weapon.base_accuracy * 100.0, 2) + "%"},
-		])
+		stats.append({"label": "Weapon", "value": String(copy["weapon"])})
+		if cloud_behavior != null:
+			var tick_multiplier: float = maxf(cloud_behavior.spore_cloud_damage_multiplier, 0.0) / maxf(cloud_behavior.spore_cloud_duration_sec, 0.05)
+			stats.append({"label": "Damage per tick", "value": "%s–%s" % [String.num(weapon.damage_min * tick_multiplier, 2), String.num(weapon.damage_max * tick_multiplier, 2)]})
+		else:
+			stats.append({"label": "Damage per release" if _has_committed_attacks(definition) else "Damage per shot", "value": _damage(weapon)})
+		stats.append({"label": "Weapon range", "value": String.num(weapon.base_range, 2) + " m"})
+		if cloud_behavior == null:
+			stats.append({"label": "Base accuracy", "value": String.num(weapon.base_accuracy * 100.0, 2) + "%"})
 		if definition.get_faction_id() == &"machines":
 			# Machine turrets use their weapon's real autonomous shot interval.
 			stats.insert(6, {"label": "Shot interval", "value": String.num(weapon.fire_rate, 2) + " s"})
@@ -199,6 +203,8 @@ static func for_enemy(definition: EnemyDef) -> Dictionary:
 	if definition is EnemyBossDef:
 		_add_boss_armament(definition as EnemyBossDef, sections)
 		sections[3]["text"] = "Full Campaign base defenses before run and sector modifiers. Practice can use reduced defenses. Damage is listed per shot or field release, not per complete attack sequence."
+	elif cloud_behavior != null:
+		sections[3]["text"] = "Base poison values before run and sector modifiers. Each cloud ticks independently while you remain inside. Accuracy and evasion do not change poison ticks."
 	elif _has_committed_attacks(definition):
 		sections[3]["text"] = "Before run scaling, elites and sector modifiers. Damage is per field release, not per sequence. Leave a committed volume before it flashes to avoid its hit; attacks inside it still use accuracy and evasion."
 	return {
@@ -208,6 +214,12 @@ static func for_enemy(definition: EnemyDef) -> Dictionary:
 		"model_scene": definition.model_scene,
 		"sections": sections,
 	}
+
+static func _sporeling_cloud_behavior(definition: EnemyDef) -> BugBehaviorDef:
+	var bug: BugEnemyDef = definition as BugEnemyDef
+	if bug != null and bug.behavior != null and bug.behavior.mode == BugBehaviorDef.Mode.SPORELING:
+		return bug.behavior
+	return null
 
 static func _has_committed_attacks(definition: EnemyDef) -> bool:
 	if definition is BugEnemyDef or definition is GreyEnemyDef:
@@ -265,6 +277,16 @@ static func _add_merc_stats(behavior: MercBehaviorDef, rows: Array[Dictionary]) 
 
 static func _add_bug_stats(behavior: BugBehaviorDef, rows: Array[Dictionary]) -> void:
 	if behavior == null:
+		return
+	if behavior.mode == BugBehaviorDef.Mode.SPORELING:
+		var duration: float = maxf(behavior.spore_cloud_duration_sec, 0.05)
+		var interval: float = maxf(behavior.spore_cloud_tick_interval_sec, 0.05)
+		_stat(rows, "Cloud duration", duration, " s")
+		_stat(rows, "Tick interval", interval, " s")
+		rows.append({"label": "Full-exposure ticks", "value": str(ceili(duration / interval))})
+		_stat(rows, "Cloud radius", behavior.attack_radius, " m")
+		_stat(rows, "Attack cooldown", behavior.attack_cooldown_sec, " s")
+		_stat(rows, "Attack recovery", behavior.attack_recovery_sec, " s")
 		return
 	if behavior.mode == BugBehaviorDef.Mode.HIVE_QUEEN:
 		_stat(rows, "Spore warning per pulse", behavior.zone_windup_sec, " s")

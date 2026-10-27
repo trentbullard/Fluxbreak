@@ -27,8 +27,8 @@ func start_tether(source: Enemy, target: Ship, windup_sec: float = 1.3, duration
 		set_warning_style("CAPTURE CORRIDOR", Color(0.8, 0.46, 1.0, 0.9))
 		set_response_hint("TURN OUT OF THE LANE")
 	start_attack(source, target, source, windup_sec, radius, directional, corridor_end, corridor_start)
-	if _grey_field != null:
-		_grey_field.set_capture_style()
+	if _attack_field != null:
+		_attack_field.set_capture_style()
 	add_to_group("grey_tethers")
 	return _active
 
@@ -85,8 +85,8 @@ func _physics_process(delta: float) -> void:
 	_update_link()
 
 func _update_link() -> void:
-	_grey_field.configure_link(_source.global_position, _ship.global_position)
-	_grey_field.set_charge(1.0, _elapsed_sec)
+	_attack_field.configure_link(_source.global_position, _ship.global_position)
+	_attack_field.set_charge(1.0, _elapsed_sec)
 
 func _finish() -> void:
 	if _finished:

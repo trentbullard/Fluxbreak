@@ -132,7 +132,7 @@ func get_tactical_state() -> String:
 			BugBehaviorDef.Mode.DEVOURER:
 				return "Devourer charge winding up"
 			_:
-				return "Spore strike winding up"
+				return "Poison cloud — move clear"
 	if _recovery_left > 0.0:
 		return "Exposed recovery"
 	match _behavior.mode:
@@ -150,15 +150,15 @@ func get_tactical_state() -> String:
 func _tick_sporeling(delta: float = 1.0 / 60.0) -> void:
 	var desired: Vector3 = _evasive_orbit.desired_velocity(delta, player_ship.global_position - global_position, player_ship.linear_velocity, _behavior.approach_range * 0.45, _behavior.approach_range * 0.8, _behavior.max_speed, _behavior.orbit_strength, _orbit_direction, _behavior.jink_interval_sec, _behavior.jink_strength)
 	_steer_to_velocity(desired)
-	# Its strike stays at the captured player position; the small hull can weave.
+	# The cloud stays at the captured player position; the small hull can weave.
 	if is_instance_valid(_active_attack):
-		_animate_contraction(1.0 - _active_attack.get_time_remaining() / maxf(_behavior.attack_windup_sec, 0.2))
+		_animate_contraction(1.0 - _active_attack.get_time_remaining() / maxf(_behavior.spore_cloud_duration_sec, 0.05))
 		return
 	_animate_contraction(0.0)
 	if _recovery_left > 0.0:
 		return
 	if _attack_cooldown_left <= 0.0 and _is_player_in_attack_range():
-		_start_attack(false, "SPORE STRIKE")
+		_start_attack(false, "SPORE CLOUD")
 
 func _tick_carapace() -> void:
 	if _tick_committed_attack():
@@ -311,6 +311,14 @@ func _start_attack(corridor: bool, attack_name: String) -> void:
 	var turret: EnemyTurret = _first_valid_turret()
 	var encounter_root: Node = get_tree().current_scene
 	if turret == null or encounter_root == null:
+		return
+	if _behavior.mode == BugBehaviorDef.Mode.SPORELING:
+		var cloud: BugSporeCloud = BugSporeCloud.new()
+		_active_attack = cloud
+		cloud.set_warning_style(attack_name, ATTACK_COLOR)
+		encounter_root.add_child(cloud)
+		cloud.resolved.connect(_on_attack_resolved)
+		cloud.start_cloud(self, player_ship, turret, _behavior.spore_cloud_duration_sec, _behavior.attack_radius, _behavior.spore_cloud_tick_interval_sec, _behavior.spore_cloud_damage_multiplier)
 		return
 	_active_attack = EnemyAttackTelegraph.new()
 	_active_attack.set_warning_style(attack_name, ATTACK_COLOR)

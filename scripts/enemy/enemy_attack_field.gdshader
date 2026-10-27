@@ -4,6 +4,8 @@ render_mode unshaded, cull_disabled, shadows_disabled, fog_disabled, depth_draw_
 // x: charge, y: pause-aware attack age, z: release intensity, w: shape/style.
 // One shared material; each attack supplies its own small instance parameter.
 instance uniform vec4 field_state = vec4(0.0);
+// Alpha selects an authored Merc/Bug palette; zero preserves Grey shape colors.
+instance uniform vec4 field_tint = vec4(0.0);
 
 void fragment() {
 	float charge = field_state.x;
@@ -23,11 +25,13 @@ void fragment() {
 	if (field_state.w > 2.5) {
 		tint = vec3(0.32, 0.55, 0.76); // Harmless relocation diamonds.
 	}
+	tint = mix(tint, field_tint.rgb, field_tint.a);
 	// Fully faded effects are hidden by their owner rather than rendered at zero.
 	float released = sign(burst);
 	float flash = max(burst, 0.0);
 	strength = mix(strength, flash, released);
-	ALBEDO = mix(tint, vec3(0.87, 0.97, 1.0), flash);
+	vec3 release_tint = mix(vec3(0.87, 0.97, 1.0), mix(tint, vec3(1.0), 0.85), field_tint.a);
+	ALBEDO = mix(tint, release_tint, flash);
 	EMISSION = ALBEDO * (0.18 + flash * 0.65);
 	ALPHA = clamp(strength, 0.0, 1.0);
 }

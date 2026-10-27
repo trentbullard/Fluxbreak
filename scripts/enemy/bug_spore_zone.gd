@@ -50,6 +50,8 @@ func _physics_process(delta: float) -> void:
 			cancel()
 			return
 		_flash_remaining_sec -= delta
+		if _attack_field != null:
+			_attack_field.set_release(maxf(_flash_remaining_sec, 0.0) / RELEASE_FLASH_SEC)
 		if _flash_remaining_sec <= 0.0:
 			_pending_next_pulse = false
 			_has_resolved = false

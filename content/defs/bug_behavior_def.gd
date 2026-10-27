@@ -32,6 +32,14 @@ enum Mode { SPORELING, CARAPACE, BROODMOTHER, DEVOURER, HIVE_QUEEN }
 ## Weapon recovery after a strike; Sporelings keep strafing during this window.
 @export_range(0.1, 8.0, 0.05) var attack_recovery_sec: float = 0.55
 
+@export_group("Sporeling Cloud")
+## Damaging lifetime replacing the Sporeling's old single-strike windup.
+@export_range(0.1, 30.0, 0.1) var spore_cloud_duration_sec: float = 3.0
+## Seconds between independent poison ticks, with the first tick on contact.
+@export_range(0.05, 5.0, 0.05) var spore_cloud_tick_interval_sec: float = 0.5
+## Each tick rolls captured strike damage times this value divided by duration.
+@export_range(0.0, 5.0, 0.05) var spore_cloud_damage_multiplier: float = 1.2
+
 @export_group("Brood Release")
 ## Time between Broodmother releases; the first release waits this long too.
 @export_range(1.0, 40.0, 0.1) var brood_interval_sec: float = 8.0

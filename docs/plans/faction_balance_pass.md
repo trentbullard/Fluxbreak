@@ -189,3 +189,43 @@ This reduces late per-kill rewards by about 49% and 55%, respectively, across al
 - Durability: 412 assertions passed. Gateways: 1,041 checks passed across all four factions and both routes. Stage modifiers: 76 checks passed. Successful runs contained no engine errors, warnings or leaked objects; saves were isolated from player progress.
 
 Playtest the three light fighters against the same loadout, including during their attacks, then compare Bug/Grey ordinary waves and both Practice bosses. Check enlarged overlapping Grey patterns for readable escape paths. Compare currency earned at the same sector/wave and approximate kill count; lower per-kill payouts do not alone establish final run economy balance. Headless measurements do not establish visual feel or full CPU/GPU frame times. No version increment or release build accompanies this tuning.
+
+## Follow-up: double Bug hull — 2026-10-26
+
+All Bug base hull values are doubled after playtesting. The change includes both Campaign bosses, their separate Practice variants, and summoned Sporelings through their shared enemy definition. Enemy costs, rewards, shields, regeneration, damage, movement, attack timing and combat-scaling multipliers are unchanged. The earlier tables above record the original pass.
+
+| Enemy | Previous hull | Current hull |
+|---|---:|---:|
+| Sporeling | 36 | 72 |
+| Carapace | 180 | 360 |
+| Broodmother | 220 | 440 |
+| Devourer | 350 | 700 |
+| Hive Queen | 520 | 1,040 |
+| Nestbreaker Matron — Campaign | 7,000 | 14,000 |
+| First Queen — Campaign | 7,600 | 15,200 |
+| Nestbreaker Matron — Practice | 650 | 1,300 |
+| First Queen — Practice | 1,000 | 2,000 |
+
+Bugs now exceed the comparable Merc hull-and-shield pools at the same purchase costs; the former requirement that Mercs always have the largest raw pool no longer applies. Brood-producing hulls can potentially release more reinforcements before being killed, so test encounter pressure as well as individual durability. Sporeling poison clouds were assessed for a possible later change and are not implemented by this hull adjustment.
+
+## Follow-up: Sporeling contact poison — 2026-10-26
+
+Sporelings and summoned Sporelings now replace their delayed single strike with a fixed, immediately damaging cloud. It uses the existing field visual and radius, lasts three active gameplay seconds, and ticks independently every 0.5 seconds while the player remains inside. There is no additional opening strike or final damage burst. Other Bug attacks and Hive/Queen warned spore pulses retain their existing mechanics.
+
+The requested per-tick formula is `captured strike damage * 1.2 / cloud duration`. With the existing 4.8–8.4 base strike and three-second duration, each tick rolls 1.92–3.36 damage before the player's damage reduction. Existing encounter damage scaling enters through the captured weapon snapshot once. Poison exposure itself is the hit test; ticks do not make additional accuracy, critical-hit or graze rolls. Full exposure produces six ticks at 0/0.5/1/1.5/2/2.5 seconds, for a total roll range of 11.52–20.16. The formula is per tick, not a fixed total damage budget distributed over all six ticks.
+
+Each cloud owns its contact cooldown, so overlaps all contribute. Leaving stops ticks immediately; a later entry receives one due contact tick without accumulating damage from time outside, and edge crossing cannot bypass the remaining cooldown. The current actor cannot deploy another cloud until its cloud expires and its ordinary cooldown/recovery allow it. Existing source death/removal, player end-state and sector cleanup cancel its cloud; clouds are not permanent deposits after their owner dies.
+
+The duration, interval and damage multiplier are authored on `BugBehaviorDef` and the Sporeling behavior resource. Tick damage follows the normal shield, damage-reduction, combat-stat and death path. Rapidly stacked DOT hits share a 0.1-second pause-aware feedback cooldown for hit sounds and shield flashes while their actual damage and attribution remain independent. No particles, meshes, shaders, lights, collision areas or attack-population caps were added.
+
+### Visual follow-up: static spore sprites — 2026-10-26
+
+Sporeling clouds now replace the internal lightning with 96 small, static green sprite discs at 25% alpha, retaining the sphere outline at 50% alpha. Both use native unshaded materials with normal world occlusion; there is no custom shader, particle simulation, light or per-sprite processing. All clouds share one cached sprite batch, texture, boundary mesh and materials. Sprite positions use a separate seeded generator so visual construction cannot affect combat randomness. The existing brief expiration fade remains; tick damage, duration, radius and all other factions' fields are unchanged.
+
+Godot import, the 55 Sporeling cloud assertions and 266 shared field assertions passed. A rendered near/far preview confirmed sprite sizing and opaque-object occlusion. The isolated 200-overlapping-cloud component probe completed with 1,000 independent DOT calls, approximately 0.20 ms render CPU time and 0.60 ms GPU time on the test machine. This is a component measurement, not a full-battlefield performance guarantee.
+
+DOT meta-stat bookkeeping batches additive values by complete prepared combat context each frame; actual health changes, adaptive combat reports and boss metrics remain per hit. Pending totals flush before run finalization and clear on restart or abandonment, preserving Campaign records and Practice's no-progression rule.
+
+Validation: Bug regular/Matron/advanced/Queen suites and the complete Practice encounter passed; focused cloud checks passed 55 assertions, Practice progression 337, and enemy Information 1,098. The cloud checks include six-tick timing, independent overlaps, exclusive expiry, immutable damage/position, entry cooldowns, cancellation during catch-up, feedback coalescing, exact queued attribution and lethal-hit finalization.
+
+An isolated Forward+ test with 200 overlapping clouds, the actual Ship damage path and active Campaign stat recording measured normal cloud-update plus bookkeeping CPU at 0.43 ms median and 0.60 ms p95. Perfectly synchronized 200-hit batches took 4.17–4.28 ms after batching, down from 7.82–9.99 ms; queue flush cost peaked at 0.052 ms. Rendering measured about 0.073 ms CPU and 0.123 ms GPU on this PC. All 1,000 damage calls in the sample remained independent, five synchronized tick batches produced five cosmetic feedback events, and shield loss matched recorded damage. This component fixture excludes enemy AI and full battlefield load; it does not establish full-game frame rate.

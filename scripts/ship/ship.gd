@@ -75,7 +75,9 @@ const Stat = StatTypes.Stat
 @onready var shield_low_alarm_audio: AudioStreamPlayer3D = $Audio/ShieldLowAlarm
 @onready var hull_low_alarm_audio: AudioStreamPlayer3D = $Audio/HullLowAlarm
 const LOW_ALARM_THRESHOLD: float = 0.2
+const DAMAGE_OVER_TIME_FEEDBACK_INTERVAL_SEC: float = 0.1
 var _current_alarm: AudioStreamPlayer3D = null
+var _damage_over_time_feedback_remaining: float = 0.0
 
 # --- cached effective stats ---
 var eff_max_hull: float
@@ -191,6 +193,7 @@ func reconfigure_from_selected_pilot(reset_current_health: bool = true) -> void:
 	if reset_current_health:
 		hull = eff_max_hull
 		shield = eff_max_shield
+		_damage_over_time_feedback_remaining = 0.0
 	_update_shield_mesh_visibility()
 	update_alarms()
 	if hardpoint_manager != null:
@@ -408,6 +411,7 @@ func get_nanobots() -> int:
 func reset_for_stage_transition() -> void:
 	clear_tether_slow(null, false)
 	_tether_immunity_sec = 0.0
+	_damage_over_time_feedback_remaining = 0.0
 	linear_velocity = Vector3.ZERO
 	angular_velocity = Vector3.ZERO
 	global_transform = Transform3D.IDENTITY
@@ -435,6 +439,8 @@ func _refresh() -> void:
 
 func _physics_process(delta: float) -> void:
 	_tick_tether_status(delta)
+	if _damage_over_time_feedback_remaining > 0.0:
+		_damage_over_time_feedback_remaining = maxf(_damage_over_time_feedback_remaining - maxf(delta, 0.0), 0.0)
 	if _hull_repair_cooldown_remaining > 0.0:
 		_hull_repair_cooldown_remaining = max(_hull_repair_cooldown_remaining - delta, 0.0)
 	if _hull_repair_input_suppressed:
@@ -748,6 +754,13 @@ func is_alive() -> bool:
 	return not _dead
 
 func apply_damage(amount: float, combat_stat_context: CombatStatContext = null) -> void:
+	_apply_incoming_damage(amount, combat_stat_context, false)
+
+## Every tick applies damage with its own attribution; stacked hits share feedback.
+func apply_damage_over_time(amount: float, combat_stat_context: CombatStatContext = null) -> void:
+	_apply_incoming_damage(amount, combat_stat_context, true)
+
+func _apply_incoming_damage(amount: float, combat_stat_context: CombatStatContext, limit_feedback: bool) -> void:
 	if _dead:
 		return
 	var incoming: float = max(0.0, amount * eff_damage_taken_mult)
@@ -769,13 +782,19 @@ func apply_damage(amount: float, combat_stat_context: CombatStatContext = null) 
 	if total_damage_applied > 0.0:
 		CombatStats.report_damage_taken(total_damage_applied)
 		if combat_stat_context != null:
-			GameFlow.record_damage_taken(total_damage_applied, combat_stat_context)
+			if limit_feedback:
+				GameFlow.queue_damage_taken(total_damage_applied, combat_stat_context)
+			else:
+				GameFlow.record_damage_taken(total_damage_applied, combat_stat_context)
 	_update_shield_mesh_visibility()
-	if hull_damage > 0.0:
-		_play_hit_sound(hull_hit_audio)
-	elif shield_damage > 0.0:
-		_flash_shield()
-		_play_hit_sound(shield_hit_audio)
+	if not limit_feedback or _damage_over_time_feedback_remaining <= 0.0:
+		if hull_damage > 0.0:
+			_play_hit_sound(hull_hit_audio)
+		elif shield_damage > 0.0:
+			_flash_shield()
+			_play_hit_sound(shield_hit_audio)
+		if limit_feedback and total_damage_applied > 0.0:
+			_damage_over_time_feedback_remaining = DAMAGE_OVER_TIME_FEEDBACK_INTERVAL_SEC
 	if hull <= 0.0:
 		_die()
 

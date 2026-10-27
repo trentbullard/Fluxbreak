@@ -88,7 +88,8 @@ func _test_shipped_actors() -> void:
 	print("BUG_REGULAR_CHECKS: shipped models, identities, snapshots and autonomous firing checked")
 
 func _test_committed_attacks() -> void:
-	for enemy_def: BugEnemyDef in [SPORELING, CARAPACE, BROODMOTHER]:
+	_test_sporeling_cloud()
+	for enemy_def: BugEnemyDef in [CARAPACE, BROODMOTHER]:
 		_ship.global_position = Vector3.ZERO
 		var enemy: BugEnemy = _spawn_enemy(enemy_def, Vector3(0.0, 0.0, enemy_def.behavior.approach_range * 0.7))
 		if enemy == null:
@@ -139,6 +140,56 @@ func _test_committed_attacks() -> void:
 		_check(is_equal_approx(hull_before - _ship.hull, 10.0), "%s cannot damage twice from one committed attack" % enemy_def.id)
 	_ship.global_position = Vector3.ZERO
 	print("BUG_REGULAR_CHECKS: warning, contraction, dodge, recovery and immutable damage checked")
+
+func _test_sporeling_cloud() -> void:
+	_ship.global_position = Vector3.ZERO
+	var enemy: BugEnemy = _spawn_enemy(SPORELING, Vector3(0.0, 0.0, SPORELING.behavior.approach_range * 0.7))
+	if enemy == null:
+		return
+	var turret: EnemyTurret = enemy._first_valid_turret()
+	turret.eff_damage_min = 10.0
+	turret.eff_damage_max = 10.0
+	var duration: float = SPORELING.behavior.spore_cloud_duration_sec
+	var tick_damage: float = 10.0 * SPORELING.behavior.spore_cloud_damage_multiplier / duration
+	var hull_before: float = _ship.hull
+	enemy._attack_cooldown_left = 0.0
+	enemy._tick_sporeling(0.01)
+	var cloud: BugSporeCloud = enemy._active_attack as BugSporeCloud
+	_check(cloud != null, "A live Sporeling starts the dedicated poison cloud mechanic")
+	if cloud == null:
+		return
+	cloud.set_physics_process(false)
+	_check(is_equal_approx(hull_before - _ship.hull, tick_damage), "Sporeling cloud starts with one immediate tick and no separate strike")
+	_check(cloud.get_attack_label().contains("SPORE") and cloud.is_warning_for(_ship), "The cloud keeps shared attack metadata for the HUD")
+	turret.eff_damage_min = 1000.0
+	turret.eff_damage_max = 1000.0
+	cloud._physics_process(SPORELING.behavior.spore_cloud_tick_interval_sec * 0.5)
+	_check(is_equal_approx(hull_before - _ship.hull, tick_damage), "The immediate tick does not repeat before the authored tick interval")
+	_ship.global_position = Vector3(SPORELING.behavior.attack_radius * 3.0, 0.0, 0.0)
+	cloud._physics_process(duration)
+	_check(is_equal_approx(hull_before - _ship.hull, tick_damage), "Leaving the locked Sporeling cloud avoids its remaining ticks and expiry")
+	_check(enemy._active_attack == null and enemy._recovery_left > 0.0, "Cloud completion restores the Sporeling's normal recovery")
+	enemy._attack_cooldown_left = 0.0
+	enemy._tick_sporeling(0.01)
+	_check(enemy._active_attack == null, "A Sporeling cannot create another cloud through its recovery window")
+	_ship.global_position = Vector3.ZERO
+	enemy._recovery_left = 0.0
+	enemy._attack_cooldown_left = 0.0
+	turret.eff_damage_min = 10.0
+	turret.eff_damage_max = 10.0
+	hull_before = _ship.hull
+	enemy._tick_sporeling(0.01)
+	cloud = enemy._active_attack as BugSporeCloud
+	_check(cloud != null, "A recovered Sporeling can create its next cloud")
+	if cloud == null:
+		return
+	cloud.set_physics_process(false)
+	turret.eff_damage_min = 1000.0
+	turret.eff_damage_max = 1000.0
+	cloud._physics_process(duration)
+	_check(is_equal_approx(hull_before - _ship.hull, tick_damage * 6.0), "Standing inside the three-second cloud receives six captured half-second ticks")
+	cloud._physics_process(0.05)
+	_check(is_equal_approx(hull_before - _ship.hull, tick_damage * 6.0), "The terminal cloud flash has no extra damage")
 
 func _test_brood_release_and_limits() -> void:
 	var scaling: EnemyCombatScalingSnapshot = EnemyCombatScalingSnapshot.new()

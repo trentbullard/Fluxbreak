@@ -191,7 +191,7 @@ func _measure_case(count: int, mode: String, point_test_ms: float) -> void:
 		warning._elapsed_sec = warning._windup_sec * 0.6
 		warning._update_visuals(0.6)
 		if mode == "release_close":
-			var field: MeshInstance3D = warning.get("_grey_field") as MeshInstance3D
+			var field: MeshInstance3D = warning.get("_attack_field") as MeshInstance3D
 			if field != null:
 				field.call("set_release", 1.0)
 	for visual: GeometryInstance3D in _model_geometry:
@@ -271,7 +271,7 @@ func _capture_field_views() -> void:
 	for warning: EnemyAttackTelegraph in [sphere, corridor]:
 		if warning == null:
 			continue
-		var field: MeshInstance3D = warning.get("_grey_field") as MeshInstance3D
+		var field: MeshInstance3D = warning.get("_attack_field") as MeshInstance3D
 		if field == null or not field.has_method("set_release"):
 			push_error("Field captures require the single-field Grey presentation.")
 			continue

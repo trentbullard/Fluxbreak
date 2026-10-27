@@ -109,6 +109,7 @@ var _run_boss_kills: int = 0
 var _run_completed_stage_keys: Dictionary = {}
 var _run_meta_stats_global: Dictionary = {}
 var _run_meta_stats_by_pilot_id: Dictionary = {}
+var _pending_damage_taken: Dictionary = {}
 var _run_boss_stats_global_by_id: Dictionary = {}
 var _run_boss_stats_by_pilot_id: Dictionary = {}
 var _active_run_definition: RunDefinition = null
@@ -132,6 +133,7 @@ func _ready() -> void:
 	await get_tree().process_frame
 
 func _process(delta: float) -> void:
+	_flush_pending_damage_taken()
 	if not _run_active:
 		return
 	if get_tree().paused:
@@ -141,6 +143,7 @@ func _process(delta: float) -> void:
 		_active_boss_encounter_time_sec += max(delta, 0.0)
 
 func start_new_run(run_definition: RunDefinition = null) -> void:
+	_pending_damage_taken.clear()
 	RunState.start_run()
 	_run_active = true
 	_run_end_in_progress = false
@@ -186,6 +189,34 @@ func record_enemy_kill(combat_stat_context: CombatStatContext) -> void:
 func record_damage_taken(amount: float, combat_stat_context: CombatStatContext) -> void:
 	_record_run_meta_stat(META_STAT_DAMAGE_TAKEN, amount, combat_stat_context)
 	_record_active_boss_metric(BOSS_STAT_DAMAGE_TAKEN, amount, combat_stat_context)
+
+## DOT hits remain independent; only additive lifetime bookkeeping is grouped.
+func queue_damage_taken(amount: float, combat_stat_context: CombatStatContext) -> void:
+	if not _run_active or combat_stat_context == null or amount <= 0.0:
+		return
+	var context: CombatStatContext = _prepare_combat_stat_context(combat_stat_context)
+	context.equipped_weapon_ids.sort()
+	var signature: String = var_to_str([
+		context.pilot_id, context.ship_id, context.weapon_direct_id,
+		context.equipped_weapon_ids, context.enemy_id, context.faction_id, context.role_id,
+	])
+	if _pending_damage_taken.has(signature):
+		var group: Dictionary = _pending_damage_taken[signature]
+		group["amount"] = float(group["amount"]) + amount
+	else:
+		_pending_damage_taken[signature] = {"context": context, "amount": amount}
+	# Boss ownership can change before the frame ends, so record it immediately.
+	_record_active_boss_metric(BOSS_STAT_DAMAGE_TAKEN, amount, context)
+
+func _flush_pending_damage_taken() -> void:
+	if _pending_damage_taken.is_empty():
+		return
+	var pending: Dictionary = _pending_damage_taken
+	_pending_damage_taken = {}
+	if not _run_active:
+		return
+	for group: Dictionary in pending.values():
+		_record_run_meta_stat(META_STAT_DAMAGE_TAKEN, float(group["amount"]), group["context"] as CombatStatContext)
 
 func begin_boss_encounter(boss_def: EnemyBossDef, wave_index: int) -> void:
 	if not _run_active or boss_def == null:
@@ -1189,6 +1220,7 @@ func _get_stage_completion_key(stage: StageDef) -> String:
 	return stage.resource_path
 
 func _clear_run_progression() -> void:
+	_pending_damage_taken.clear()
 	_active_run_definition = null
 	_active_stage_index = -1
 	_run_elapsed_sec = 0.0
@@ -1376,6 +1408,7 @@ func _safe_ratio(numerator: float, denominator: float) -> float:
 func _finalize_run_stats(count_as_death: bool) -> void:
 	if not _run_active:
 		return
+	_flush_pending_damage_taken()
 	_run_active = false
 	if not _run_allows_progression():
 		_last_flux_anchor_reward_breakdown.clear()

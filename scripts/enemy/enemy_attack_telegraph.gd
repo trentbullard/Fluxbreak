@@ -4,7 +4,6 @@ class_name EnemyAttackTelegraph
 ## Emitted once after the locked area has been tested and the shot resolved.
 signal resolved(hit: bool)
 
-const RING_SEGMENTS: int = 48
 const RELEASE_FLASH_SEC: float = 0.18
 
 # This object is the immutable weapon host used by the combat resolver. Damage,
@@ -38,12 +37,7 @@ var _elapsed_sec: float = 0.0
 var _active: bool = false
 var _has_resolved: bool = false
 var _flash_remaining_sec: float = 0.0
-var _wire_mesh: ImmediateMesh = null
-var _progress_mesh: ImmediateMesh = null
-var _wire_material: StandardMaterial3D = null
-var _progress_material: StandardMaterial3D = null
-var _label: Label3D = null
-var _grey_field: GreyAttackField = null
+var _attack_field: EnemyAttackField = null
 var _warning_label: String = ""
 var _warning_tint: Color = Color(1.0, 0.62, 0.12, 0.85)
 var _response_hint: String = "MOVE CLEAR"
@@ -51,7 +45,7 @@ var _companions: Array[EnemyAttackTelegraph] = []
 var _pattern_hit: bool = false
 var _resolution_emitted: bool = false
 
-## A complementary warning gets its own geometry/countdown. The owning actor
+## A complementary attack gets its own field and windup. The owning actor
 ## recovers only after every member resolves; cancelling the primary cancels all.
 func add_companion(warning: EnemyAttackTelegraph) -> void:
 	if warning == null or warning == self or _companions.has(warning):
@@ -144,17 +138,13 @@ func contains_position(world_position: Vector3) -> bool:
 
 func _physics_process(delta: float) -> void:
 	if _has_resolved:
-		if _grey_field != null:
-			# A completed member fades independently while its pattern finishes.
-			if _flash_remaining_sec > 0.0:
-				_flash_remaining_sec = maxf(_flash_remaining_sec - delta, 0.0)
-				_grey_field.set_release(_flash_remaining_sec / RELEASE_FLASH_SEC)
-			if not _companions.is_empty():
-				return
-		else:
-			if not _companions.is_empty():
-				return
-			_flash_remaining_sec -= delta
+		# A completed member fades independently while its pattern finishes.
+		if _flash_remaining_sec > 0.0:
+			_flash_remaining_sec = maxf(_flash_remaining_sec - delta, 0.0)
+			if _attack_field != null:
+				_attack_field.set_release(_flash_remaining_sec / RELEASE_FLASH_SEC)
+		if not _companions.is_empty():
+			return
 		if _flash_remaining_sec <= 0.0:
 			queue_free()
 		return
@@ -209,11 +199,8 @@ func _resolve_attack() -> void:
 		if is_instance_valid(turret.shot_sound):
 			turret.shot_sound.pitch_scale = randf_range(0.9, 1.1)
 			turret.shot_sound.play()
-	if _grey_field != null:
-		_grey_field.set_release(1.0)
-	else:
-		_wire_material.albedo_color = Color(1.0, 0.85, 0.4, 1.0)
-		_label.text = "FIRE" if did_hit else "CLEAR"
+	if _attack_field != null:
+		_attack_field.set_release(1.0)
 	_pattern_hit = _pattern_hit or did_hit
 	_emit_pattern_resolution()
 
@@ -221,90 +208,16 @@ func _on_source_died(_enemy: Enemy) -> void:
 	cancel()
 
 func _build_visuals() -> void:
-	# The shared host also serves Merc/Bug attacks; only Greys use this field.
-	if _source.get_faction_id() == &"greys":
-		_grey_field = GreyAttackField.new()
-		_grey_field.name = "LockedVolume"
-		add_child(_grey_field)
-		if _corridor:
-			_grey_field.configure_corridor(_locked_origin, _locked_position, _radius)
-		else:
-			_grey_field.configure_sphere(_radius)
-		return
-	_wire_material = _make_material(_warning_tint)
-	_progress_material = _make_material(Color(1.0, 0.2, 0.1, 1.0))
-	_wire_mesh = ImmediateMesh.new()
-	_progress_mesh = ImmediateMesh.new()
-	var warning: MeshInstance3D = MeshInstance3D.new()
-	warning.name = "LockedVolume"
-	warning.mesh = _wire_mesh
-	warning.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(warning)
-	var progress: MeshInstance3D = MeshInstance3D.new()
-	progress.name = "CountdownRing"
-	progress.mesh = _progress_mesh
-	progress.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(progress)
-	_wire_mesh.surface_begin(Mesh.PRIMITIVE_LINES, _wire_material)
+	_attack_field = EnemyAttackField.new()
+	_attack_field.name = "LockedVolume"
+	add_child(_attack_field)
+	if _source.get_faction_id() != &"greys":
+		_attack_field.set_tint(_warning_tint)
 	if _corridor:
-		_add_corridor()
+		_attack_field.configure_corridor(_locked_origin, _locked_position, _radius)
 	else:
-		_add_ring(_wire_mesh, Vector3.ZERO, Vector3.RIGHT, Vector3.UP, _radius)
-		_add_ring(_wire_mesh, Vector3.ZERO, Vector3.RIGHT, Vector3.BACK, _radius)
-		_add_ring(_wire_mesh, Vector3.ZERO, Vector3.UP, Vector3.BACK, _radius)
-	_wire_mesh.surface_end()
-	_label = Label3D.new()
-	_label.name = "AttackCountdown"
-	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_label.no_depth_test = true
-	_label.font_size = 28
-	_label.outline_size = 6
-	_label.pixel_size = 0.28
-	_label.position = Vector3.UP * (_radius + 14.0)
-	_label.modulate = Color(1.0, 0.75, 0.3)
-	add_child(_label)
-
-func _make_material(color: Color) -> StandardMaterial3D:
-	var material: StandardMaterial3D = StandardMaterial3D.new()
-	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	material.no_depth_test = true
-	material.albedo_color = color
-	return material
-
-func _add_corridor() -> void:
-	var start: Vector3 = _locked_origin - _locked_position
-	var direction: Vector3 = (_locked_position - _locked_origin).normalized()
-	if direction.length_squared() <= 0.0001:
-		direction = Vector3.FORWARD
-	var reference_axis: Vector3 = Vector3.UP if absf(direction.dot(Vector3.UP)) < 0.95 else Vector3.RIGHT
-	var right: Vector3 = direction.cross(reference_axis).normalized()
-	var up: Vector3 = direction.cross(right).normalized()
-	_add_ring(_wire_mesh, start, right, up, _radius)
-	_add_ring(_wire_mesh, Vector3.ZERO, right, up, _radius)
-	for rail in range(8):
-		var angle: float = TAU * float(rail) / 8.0
-		var offset: Vector3 = (right * cos(angle) + up * sin(angle)) * _radius
-		_wire_mesh.surface_add_vertex(start + offset)
-		_wire_mesh.surface_add_vertex(offset)
-
-func _add_ring(mesh: ImmediateMesh, center: Vector3, axis_a: Vector3, axis_b: Vector3, radius: float, fraction: float = 1.0) -> void:
-	var segments: int = maxi(1, int(ceil(float(RING_SEGMENTS) * fraction)))
-	for segment in range(segments):
-		var angle_a: float = TAU * fraction * float(segment) / float(segments)
-		var angle_b: float = TAU * fraction * float(segment + 1) / float(segments)
-		mesh.surface_add_vertex(center + (axis_a * cos(angle_a) + axis_b * sin(angle_a)) * radius)
-		mesh.surface_add_vertex(center + (axis_a * cos(angle_b) + axis_b * sin(angle_b)) * radius)
+		_attack_field.configure_sphere(_radius)
 
 func _update_visuals(progress: float) -> void:
-	if _grey_field != null:
-		_grey_field.set_charge(progress, _elapsed_sec)
-		return
-	_wire_material.albedo_color = _warning_tint.lerp(Color(1.0, 0.12, 0.1, 0.9), progress)
-	_label.text = "%s  %.1f" % [get_attack_label(), maxf(_windup_sec - _elapsed_sec, 0.0)]
-	_progress_mesh.clear_surfaces()
-	if progress <= 0.0:
-		return
-	_progress_mesh.surface_begin(Mesh.PRIMITIVE_LINES, _progress_material)
-	_add_ring(_progress_mesh, Vector3.ZERO, Vector3.RIGHT, Vector3.UP, _radius * 1.08, progress)
-	_progress_mesh.surface_end()
+	if _attack_field != null:
+		_attack_field.set_charge(progress, _elapsed_sec)

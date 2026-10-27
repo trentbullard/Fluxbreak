@@ -1,9 +1,9 @@
 extends MeshInstance3D
-class_name GreyAttackField
+class_name EnemyAttackField
 
 ## Sparse line geometry bounds each attack, with a few internal electric paths.
 ## Built once per shape, shared across every attack; never rebuilt during play.
-const FIELD_SHADER: Shader = preload("res://scripts/enemy/grey_attack_field.gdshader")
+const FIELD_SHADER: Shader = preload("res://scripts/enemy/enemy_attack_field.gdshader")
 const RING_SEGMENTS: int = 24
 
 static var _material: ShaderMaterial = null
@@ -69,10 +69,15 @@ func configure_marker(radius: float) -> void:
 	_state.w = 3.0
 
 func set_charge(progress: float, elapsed: float) -> void:
+	visible = true
 	_state.x = clampf(progress, 0.0, 1.0)
 	_state.y = elapsed
 	_state.z = 0.0
 	set_instance_shader_parameter(&"field_state", _state)
+
+## Non-Grey attacks retain their authored color without duplicating the material.
+func set_tint(tint: Color) -> void:
+	set_instance_shader_parameter(&"field_tint", Vector4(tint.r, tint.g, tint.b, 1.0))
 
 func set_capture_style() -> void:
 	_state.w = 2.0
@@ -92,7 +97,7 @@ func _align_segment(start: Vector3, end: Vector3, radius: float) -> void:
 	var up: Vector3 = forward.cross(right).normalized()
 	global_transform = Transform3D(Basis(right * radius, up * radius, forward * length), start)
 
-static func _build_sphere() -> ArrayMesh:
+static func _build_sphere(include_filaments: bool = true) -> ArrayMesh:
 	var vertices: PackedVector3Array = PackedVector3Array()
 	var uv: PackedVector2Array = PackedVector2Array()
 	_append_ring(vertices, uv, Vector3.ZERO, Vector3.RIGHT, Vector3.UP, 1.0)
@@ -100,11 +105,12 @@ static func _build_sphere() -> ArrayMesh:
 	_append_ring(vertices, uv, Vector3.ZERO, Vector3.UP, Vector3.BACK, 1.0)
 	for height: float in [-0.5, 0.5]:
 		_append_ring(vertices, uv, Vector3.UP * height, Vector3.RIGHT, Vector3.BACK, sqrt(0.75))
-	for axis: int in range(3):
-		for index: int in range(10):
-			var start: Vector3 = _sphere_filament(float(index) / 10.0, axis)
-			var end: Vector3 = _sphere_filament(float(index + 1) / 10.0, axis)
-			_append_line(vertices, uv, start, end, float(index) / 10.0 + float(axis), 1.0)
+	if include_filaments:
+		for axis: int in range(3):
+			for index: int in range(10):
+				var start: Vector3 = _sphere_filament(float(index) / 10.0, axis)
+				var end: Vector3 = _sphere_filament(float(index + 1) / 10.0, axis)
+				_append_line(vertices, uv, start, end, float(index) / 10.0 + float(axis), 1.0)
 	return _make_mesh(vertices, uv)
 
 static func _sphere_filament(fraction: float, axis: int) -> Vector3:

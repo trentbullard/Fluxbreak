@@ -11,8 +11,8 @@ var _remaining_sec: float = 0.0
 var _active: bool = false
 var _finished: bool = false
 var _windup_sec: float = 1.2
-var _origin_marker: GreyAttackField = null
-var _arrival_marker: GreyAttackField = null
+var _origin_marker: EnemyAttackField = null
+var _arrival_marker: EnemyAttackField = null
 
 func start_displacement(source: Enemy, destination: Vector3, windup_sec: float = 1.2) -> bool:
 	if _active or _finished or not is_inside_tree() or not is_instance_valid(source) or source._dead or not source.is_inside_tree() or not destination.is_finite():
@@ -63,12 +63,12 @@ func _on_source_died(_enemy: Enemy) -> void:
 	cancel()
 
 func _build_markers() -> void:
-	_origin_marker = GreyAttackField.new()
+	_origin_marker = EnemyAttackField.new()
 	_origin_marker.name = "ShiftOrigin"
 	add_child(_origin_marker)
 	_origin_marker.configure_marker(22.0)
 	_origin_marker.global_position = _origin
-	_arrival_marker = GreyAttackField.new()
+	_arrival_marker = EnemyAttackField.new()
 	_arrival_marker.name = "ShiftArrival"
 	add_child(_arrival_marker)
 	_arrival_marker.configure_marker(30.0)

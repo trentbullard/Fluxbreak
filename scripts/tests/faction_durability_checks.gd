@@ -12,6 +12,18 @@ const BOSSES: Dictionary = {
 	&"bugs": ["bug_nestbreaker_matron_mk1", "bug_first_queen_mk1"],
 	&"greys": ["grey_witness_mk1", "grey_veiled_mind_mk1"],
 }
+## The Bug hull increase changes defenses only, including both Practice bosses.
+const BUG_BASELINES: Dictionary = {
+	"bug_sporeling_mk1": {"hull": 72.0, "cost": 1},
+	"bug_carapace_mk1": {"hull": 360.0, "cost": 3},
+	"bug_broodmother_mk1": {"hull": 440.0, "cost": 4},
+	"bug_devourer_mk1": {"hull": 700.0, "cost": 6},
+	"bug_hive_queen_mk1": {"hull": 1040.0, "cost": 10},
+	"bug_nestbreaker_matron_mk1": {"hull": 14000.0, "cost": 15},
+	"bug_first_queen_mk1": {"hull": 15200.0, "cost": 25},
+	"bug_nestbreaker_matron_practice": {"hull": 1300.0, "cost": 15},
+	"bug_first_queen_practice": {"hull": 2000.0, "cost": 25},
+}
 
 var _checks: int = 0
 var _failures: int = 0
@@ -45,8 +57,9 @@ func _run_checks() -> void:
 			var pool: float = definition.max_hull + definition.max_shield
 			_check(pool > prior_pool, "%s advances the roster's total durability." % entry)
 			prior_pool = pool
-			var per_point: float = pool / float(maxi(definition.threat_cost, 1))
-			_check(per_point >= 30.0 and per_point <= 80.0, "%s stays in a broad durability-per-point band without requiring identical ships." % entry)
+			if faction_id != &"bugs":
+				var per_point: float = pool / float(maxi(definition.threat_cost, 1))
+				_check(per_point >= 30.0 and per_point <= 80.0, "%s stays in its existing broad durability-per-point band." % entry)
 			for scaling: EnemyCombatScalingSnapshot in [early, late, second_sector]:
 				_check_resolved_theme(definition, faction_id, scaling)
 			if definition is BugEnemyDef:
@@ -54,6 +67,7 @@ func _run_checks() -> void:
 				_check(bug.behavior != null and bug.behavior.max_speed < prior_speed, "%s trades ordinary movement speed for heavier hull." % entry)
 				prior_speed = bug.behavior.max_speed
 		_test_role_comparisons()
+	_test_bug_hull_baselines(early, late, second_sector)
 	_test_boss_baselines(early, late, second_sector)
 	_test_damage_and_regeneration(second_sector)
 	_print_reference_estimates(early, late, second_sector)
@@ -78,20 +92,29 @@ func _check_resolved_theme(definition: EnemyDef, faction_id: StringName, scaling
 
 func _test_role_comparisons() -> void:
 	var mercs: Array = REGULARS[&"mercs"]
-	var bugs: Array = REGULARS[&"bugs"]
 	var greys: Array = REGULARS[&"greys"]
 	for index: int in range(mercs.size()):
 		var merc: EnemyDef = _load_enemy(mercs[index])
-		var bug: EnemyDef = _load_enemy(bugs[index])
 		var grey: EnemyDef = _load_enemy(greys[index])
-		if merc == null or bug == null or grey == null:
+		if merc == null or grey == null:
 			continue
 		var merc_pool_per_point: float = (merc.max_hull + merc.max_shield) / float(merc.threat_cost)
-		_check(merc_pool_per_point > bug.max_hull / float(bug.threat_cost), "%s has greater burst durability per point than its Bug roster counterpart." % merc.id)
 		_check(merc_pool_per_point > (grey.max_hull + grey.max_shield) / float(grey.threat_cost), "%s has greater burst durability per point than its Grey roster counterpart." % merc.id)
 		_check(grey.shield_regen > merc.shield_regen, "%s trades raw durability for stronger regeneration than its Merc counterpart." % grey.id)
 	var devourer: BugEnemyDef = _load_enemy("bug_devourer_mk1") as BugEnemyDef
 	_check(devourer != null and devourer.behavior.charge_speed > devourer.behavior.max_speed * 2.0, "Slower Devourer transit preserves its fast committed charge.")
+
+func _test_bug_hull_baselines(early: EnemyCombatScalingSnapshot, late: EnemyCombatScalingSnapshot, second_sector: EnemyCombatScalingSnapshot) -> void:
+	for stem: String in BUG_BASELINES:
+		var definition: EnemyDef = _load_enemy(stem)
+		if definition == null:
+			continue
+		var expected: Dictionary = BUG_BASELINES[stem]
+		_check(is_equal_approx(definition.max_hull, float(expected["hull"])), "%s uses its doubled base hull." % stem)
+		_check(definition.threat_cost == int(expected["cost"]), "%s retains its purchase cost after the hull increase." % stem)
+		_check(definition.get_faction_id() == &"bugs" and is_zero_approx(definition.max_shield) and is_zero_approx(definition.shield_regen), "%s remains a shieldless Bug with no shield regeneration." % stem)
+		for scaling: EnemyCombatScalingSnapshot in [early, late, second_sector]:
+			_check_resolved_theme(definition, &"bugs", scaling)
 
 func _test_boss_baselines(early: EnemyCombatScalingSnapshot, late: EnemyCombatScalingSnapshot, second_sector: EnemyCombatScalingSnapshot) -> void:
 	var machine: EnemyDef = _load_enemy("machine_boss_1_mk1")
@@ -102,7 +125,8 @@ func _test_boss_baselines(early: EnemyCombatScalingSnapshot, late: EnemyCombatSc
 			if definition == null:
 				continue
 			var pool: float = definition.max_hull + definition.max_shield
-			_check(pool >= machine_pool * 0.9 and pool <= machine_pool * 1.35, "%s uses the Campaign boss scale rather than the short Practice scale." % entry)
+			var hull_pass_multiplier: float = 2.0 if faction_id == &"bugs" else 1.0
+			_check(pool >= machine_pool * hull_pass_multiplier * 0.9 and pool <= machine_pool * hull_pass_multiplier * 1.35, "%s uses its current faction's Campaign boss durability scale." % entry)
 			for scaling: EnemyCombatScalingSnapshot in [early, late, second_sector]:
 				_check_resolved_theme(definition, faction_id, scaling)
 
