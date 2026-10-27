@@ -1,6 +1,6 @@
 ## Enemy Factions
 
-Each run selects one of five hostile factions as the dominant enemy force. Factions are not only visual identities — they represent distinct combat philosophies, wave compositions, pressure curves, scaling tendencies, and upgrade challenges.
+The final vision includes five hostile factions; four are currently implemented. Each run has one dominant hostile faction. Factions are not only visual identities — they represent distinct combat philosophies, wave compositions, pressure curves, scaling tendencies, and upgrade challenges.
 
 A strong build against one faction may struggle against another.
 
@@ -12,14 +12,16 @@ Faction identity should influence:
 - weapon effectiveness  
 - threat recognition  
 
-Each faction has:
+Each faction should ultimately have:
 - a recognizable silhouette language  
 - a distinct offensive personality  
 - internal tier progression  
 - elite variants  
 - a fixed home system for late-run escalation  
 
-Faction home systems are always consistent and should reinforce faction identity through modifiers, atmosphere, and encounter pressure.
+The intended faction home systems should remain consistent and reinforce faction identity through modifiers, atmosphere, and encounter pressure. Home-system concepts, elite affixes and variant tags below are final-vision directions rather than a claim that every variant or modifier is implemented.
+
+The [current roadmap](../plans/next_gameplay_milestones.md) tracks priorities and the Steam playtest milestone. Completing the fifth faction and the other planned expansion systems is not a prerequisite for Steam publishing.
 
 ### Current Campaign and Practice Runs
 
@@ -37,7 +39,14 @@ Machines retain their existing stats as the baseline. Mercs concentrate durabili
 
 Summoned enemies remain independent combatants after their source dies or leaves the scene. Spawners have no per-owner or encounter-wide living/lifetime minion ceiling; warned release batches and launch cadence remain authored. Children cannot create further generations and grant no kill rewards or adaptive kill-pressure credit. Killing a spawner prevents future releases rather than clearing its existing force. Confirmed sector transfer and actual run/scene cleanup remove all remaining enemies, including children whose original source no longer exists.
 
-Merc, Bug and Grey committed attacks use one shared, bounded field that charges during windup, flashes at the damage frame and fades after release. Merc fields retain amber colors, Bugs use their authored greens, and Greys retain their blue spatial effects. Cached line geometry and one shared unshaded shader replace the extra countdown rings, floating 3D attack text and per-frame mesh rebuilding. Normal depth occlusion remains. Hit volumes, warning duration, damage and HUD warning metadata are unchanged; multi-pulse spore zones recharge the same field before each hit. Harmless brood/escort launch cues and shield-support links remain separate.
+Merc, Bug and Grey committed attacks use one shared, bounded field that charges during windup, flashes at the damage frame and fades after release. Merc fields retain amber colors, Bugs use their authored greens, and Greys retain their blue spatial effects. Cached line geometry and one shared unshaded shader replace the extra countdown rings, floating 3D attack text and per-frame mesh rebuilding. Sporeling contact clouds are the exception: their static sprites and outline use native materials as detailed below. Normal depth occlusion remains. Hit volumes, warning duration, damage and HUD warning metadata are unchanged by the shared presentation; multi-pulse spore zones recharge the same field before each hit. Harmless brood/escort launch cues and shield-support links remain separate.
+
+### Planned Faction Variety And Balance — October 27, 2026
+
+- Add faction-specific stage modifiers, distinct from the implemented Salvage/Assault route conditions. Disclose their effects and keep their visual indicators readable in crowded battles.
+- Expand elite and special enemies with recognizable indicators, explicit modifiers and meaningful counterplay. Existing shield-support ships, brood carriers, displacement and tether attacks provide some specialized behavior; a general elite/modifier presentation and broader special-unit roster remain planned.
+- Preserve differences in faction difficulty and build matchups while investigating whether repeated Campaign restarts make an easy faction the most efficient progression farm. Campaign's random assignment does not by itself prevent this behavior. No balance correction or restart rule is selected yet.
+- Evaluate these changes with representative early, late and heavily upgraded runs, including the observed challenging fresh Rookie/Fighter and powerful meta-invested Ace/Heavy Bruiser cases. Performance and clarity at 100–200 combatants remain important validation targets.
 
 # Machines (AI Collective)
 
@@ -239,7 +248,7 @@ Their presence should create uncertainty.
 - Strange movement patterns  
 - Delayed pressure  
 - Spatial disruption  
-- Unclear threat windows  
+- Unfamiliar but readable threat windows
 
 ### Common Role Bias
 - Displacer  
@@ -265,6 +274,8 @@ Relocations stay within the starting gun's reach so automatic weapons can reacqu
 # Fifth Faction (Reserved)
 
 The fifth faction remains intentionally open during early development and should be used carefully to fill whatever strategic identity is still missing after the first four are stable.
+
+It remains planned expansion scope, with its identity, ships, bosses and wave deck still to be defined. The existing four factions are the foundation for the upcoming polished Steam playtest.
 
 This faction should not duplicate existing pressure patterns.
 

@@ -1,4 +1,22 @@
-## Player Characters
+# Player Characters
+
+Updated October 27, 2026.
+
+## Current Implementation And Completion Goal
+
+The current playable pilot profiles are **Rookie, Ace, and Technician**. These prototype profiles provide gameplay selection and progression; they do not yet implement the authored characters, their relationships, dialogue interactions, or character-specific introductions described below. No final mapping from those profiles to narrative characters is established here.
+
+The intended core cast is **five playable characters: Trey, Laura, Roman, The Captain, and Cami**. Aggy remains the supporting AI described in [the lore](./lore.md). Implementing this cast and its dialogue is one of the owner's three personal goals for a complete Fluxbreak experience, alongside stage music and emotionally compelling character introductions. These are final-vision goals; the forthcoming Steam Playtest milestone follows gameplay polish and selected small enhancements and does not require every narrative feature to be finished.
+
+- [ ] Implement the five authored characters while preserving flexible pilot/ship/build combinations.
+- [ ] Define each character's rescue subject and surviving station contact within the existing story premise.
+- [ ] Write and implement dialogue interactions that establish individual voices, relationships, and motivation during runs.
+- [ ] Create a brief intro animation or montage for each character, connecting ordinary station life to the attack and pursuit.
+- [ ] Preserve clear combat information and readable pacing when dialogue appears during play.
+
+The central milestone and optional-work checklist is maintained in [Next Gameplay Milestones](../plans/next_gameplay_milestones.md).
+
+## Authored Pilot Identities
 
 Each pilot is designed with an **intended starting identity**, including a natural build direction, ship profile, dialogue tone, and stat bias. These are not hard restrictions. Players should be able to bend, hybridize, or completely subvert intended roles through ship unlocks, upgrade choices, and faction adaptation.
 
@@ -169,7 +187,9 @@ She relies heavily on positioning and timing rather than sustained defense.
 
 ---
 
-### Ghost
+### Ghost — Optional Future Concept
+
+Ghost is an existing exploratory pilot concept outside the five-character core cast. It is not part of the current character-completion commitment.
 
 **Role Identity:** Meta-build disruptor, economy specialist, high variance  
 **Default Ship:** Undetermined / adaptive platform  

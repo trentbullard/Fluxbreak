@@ -1,5 +1,7 @@
 ## Core Gameplay Loop / Vision
 
+The bullets below describe the intended experience; the current implementation is recorded in the sections that follow. Updated October 27, 2026: adaptive stage music, the five narrative characters with dialogue, and emotionally compelling character intros are the owner's three complete-game goals. The next public milestone is a polished Steam Playtest candidate with a deliberately selected enhancement scope. See the [roadmap](../plans/next_gameplay_milestones.md) for checklists and current status.
+
 - Pilot First: Each run begins with pilot selection. Pilots unlock progressively as the player completes objectives and narrative milestones with previously available characters. Pilot choice determines the initial narrative perspective, starting dialogue pool, intended build direction, and default ship.
 - Ship Identity with Flexibility: Each pilot has a default ship that reflects their intended combat style, but unlocked ships may later be paired with different pilots to create alternate synergies, unusual builds, and high-risk combinations outside the intended archetype.
 - Run Entry Framing: After selecting a pilot, the player launches into the run through a stylized intro sequence: brief glimpses of station life, crew interaction, humor, maintenance work, and ordinary routines transition into the attack, breach, capture, and emergency departure. The selected pilot becomes the emotional center of that transition.
@@ -20,7 +22,7 @@
 - Major Encounters: Runs should feature one or more major encounter peaks that test the build more explicitly than ordinary waves. These may be bosses, faction champions, siege events, or other climax encounters depending on the final run structure.
 - Scaling Philosophy: Enemy scaling must outpace careless or unfocused builds. Strong runs should feel earned through compounding synergy rather than simple stat accumulation.
 - Build Experimentation: Every pilot has an intended build path, but the upgrade system should remain open enough that players can intentionally or accidentally discover powerful off-path builds, strange hybrid strategies, and occasionally broken combinations.
-- Replay Through Variance: Pilot choice, faction choice, starting system modifiers, upgrade rolls, ship combinations, and dialogue pairings should create strong replay variety even before additional story systems exist.
+- Replay Through Variance: Pilot choice, faction variation, starting system modifiers, upgrade rolls, ship combinations, and dialogue pairings should create strong replay variety. Campaign currently rolls one faction for the run; Practice exposes faction selection. Future narrative interactions should deepen that variety.
 - Endless Mode: Endless should exist as a mode where narrative completion falls away and the run is judged by survival quality and duration. Enemy scaling must eventually exceed realistic player scaling no matter how strong the build becomes.
 - Endless Design Principle: The best endless builds should feel like temporary victories against inevitability — players squeezing out extra seconds through superior synergy, movement, and decision-making rather than reaching true immortality.
 

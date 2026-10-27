@@ -4,6 +4,8 @@ This document describes the intended final-state behavior of run-time scaling, b
 
 Upgrades define most of the player's build identity during a run.
 
+Implementation status and priorities live in the [current roadmap](../plans/next_gameplay_milestones.md). The categories in this document include future ideas; their presence does not mean that the corresponding upgrades or mechanics already exist.
+
 The goal is not to force a single correct build, but to create shifting incentives based on the interaction between:
 
 - pilot
@@ -89,6 +91,8 @@ Weapon scaling should stay legible in combat and should not collapse target-prio
 
 ### Damage-Type Specialization
 
+Ammo types, their associated upgrades and player/enemy resistance interactions remain planned expansion work. Begin with a readable set of interactions that changes build decisions, and tune it through playtesting. No complete ammo roster or resistance matrix is fixed here.
+
 - kinetic
 - laser
 - plasma
@@ -167,6 +171,8 @@ Minions should inherit the build's identity without becoming opaque parallel act
 - ship-centered area effects
 - remote area effects
 
+Additional player abilities may be specific to ships. A purchasable nanobot magnet is a separate utility proposal whose form remains open: a single-use item or an activated ability. Existing passive pickup upgrades remain part of the current build system.
+
 ### Energy And Power Management
 
 - energy regeneration
@@ -220,15 +226,21 @@ Their role is to bias the run toward certain families of decisions, not to elimi
 
 ### Luck Mitigation
 
-Players should have limited tools to shape upgrade outcomes.
+Players should have limited tools to shape upgrade outcomes. Upgrade-screen reroll and ban actions are planned, with a possible connection to purchases or unlocks in the meta-upgrade screen.
 
 Examples may include:
 
-- **Refresh** - reroll available upgrades
-- **Banish** - permanently remove specific upgrade choices from the current run pool
+- **Refresh / Reroll** - replace available upgrade offers
+- **Ban / Banish** - exclude a selected upgrade from future choices, with the duration and affected pool still to be decided
 - other light-touch pool-shaping tools that preserve uncertainty
 
-These mechanics should allow players to influence luck without eliminating uncertainty.
+These mechanics should allow players to influence luck without eliminating uncertainty. Prices, uses, acquisition, reset rules and the scope of bans remain open design decisions; this document does not mark them as implemented.
+
+### Build Diversity Follow-Up — October 27, 2026
+
+Expand the upgrade pool with more diverse modifiers that can benefit multiple weapon families or create useful interactions between them. Show exactly which weapons, minions and player stats each choice affects. Build on the existing shared modifier and stat-projection systems so combinations remain understandable and maintainable.
+
+Use playtesting to check whether players can form several effective builds across factions, ships and levels of meta investment. Favor meaningful alternative choices and synergies rather than filling the pool with mandatory flat-stat purchases. Ammo specialization, additional abilities and luck-mitigation tools are broader backlog work, not automatic prerequisites for the Steam playtest milestone.
 
 ### Design Principle
 

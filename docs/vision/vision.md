@@ -22,6 +22,20 @@ When using them to make changes:
 - Is it **data-driven** (defs/resources), not hard-coded?
 - Can it run on **mid-tier GPUs** without choking?
 
+## Completion Direction and the Next Public Milestone
+
+Updated October 27, 2026. The next intended public milestone is a polished Steam Playtest build once the owner is happy with polish and selected small enhancements. External first-run usability, camera comfort, combat readability, reliable progression and late-game performance are central checks. This is a planned milestone; no Steam submission or publication is recorded as complete.
+
+The owner's three goals for Fluxbreak to feel like a complete game are:
+
+- **Adaptive stage music:** explore several approximately 3–4 minute loops at different BPMs and intensities, transitioning up and down with sustained gameplay intensity. Menu music already exists; stage music and its transition policy remain planned.
+- **Five characters and dialogue:** implement Trey, Laura, Roman, The Captain and Cami with distinct relationships and pilot/crewmate interactions. The runtime Rookie/Ace/Technician profiles are prototypes; Aggy remains the supporting AI and Ghost an optional later concept.
+- **Emotional character intros:** use animations or montages to make station life, the capture and the rescue pursuit meaningful from each character's perspective.
+
+Start with a small self-authored music and character-presentation prototype. Limited animation, shared scenes, simple artwork and deliberate sound/text can establish the style before expanding it. Commissions or licensed assets remain optional choices rather than assumed production requirements.
+
+The [central roadmap](../plans/next_gameplay_milestones.md) tracks these completion goals separately from Playtest readiness and the wider backlog: a fifth faction, utility/ship abilities, reroll/ban tools, in-run settings, asset improvements, POIs, ammo, cross-weapon upgrades, balancing, faction-stage modifiers, elites and save protection. These are not all automatic Steam publishing prerequisites. Preserve the scope explicitly chosen for each implementation task.
+
 ## Supporting Design Files
 
 - [gameplay.md](./gameplay.md) — run structure and progression
@@ -29,3 +43,6 @@ When using them to make changes:
 - [factions.md](./factions.md) — enemy philosophies and combat roles
 - [lore.md](./lore.md) — narrative foundation
 - [systems.md](systems.md) — progression economy and mechanics
+- [upgrade_system.md](./upgrade_system.md) — build diversity and future upgrade tools
+- [Roadmap and completion goals](../plans/next_gameplay_milestones.md) — current status, Playtest milestone and backlog
+- [Production checklist](../release/PRODUCTION_CHECKLIST.md) — build, distribution and external QA checks

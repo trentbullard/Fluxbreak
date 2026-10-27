@@ -15,28 +15,32 @@ The game is built around auto-combat rather than manual aiming. Your job is to s
 
 ## What You Do In A Run
 
-1. Prepare your pilot, ship, and starting weapon in Hangar, then open Play to choose a faction and launch Campaign for a two-stage run or Practice for short introduction waves and a boss. Random chooses one faction for the entire run.
+1. Prepare your pilot, ship, and starting weapon in Hangar, then open Play. Campaign chooses one random faction for its two-stage run; Practice offers a faction selector for short introduction waves and a boss. Each run retains its faction throughout.
 2. Fly through a 3D combat space while your turrets auto-acquire and fire on targets in range.
 3. Survive enemy waves, destroy hostile ships, and collect nanobots.
 4. Dock with points of interest such as the Arms Factory, Shield Array, and Repair Hangar.
 5. Spend nanobots on run-defining upgrades or new weapons, then push into the next wave.
 6. In Campaign, defeat the first boss and choose the Salvage Corridor or Assault Lane before entering the final sector. Review its threats, opportunities, and conditions, then explicitly confirm entry.
-7. Chase a higher score, a deeper wave count, and new pilot unlocks.
+7. In Campaign, chase a higher score, a deeper wave count, unlocks and Flux Anchors for meta upgrades. Practice grants no persistent rewards, stats, score records, progression or unlocks.
 
 ## Current Content Snapshot
 
-- Home opens Play, Hangar, Upgrades, Settings, or Exit. Play shows the current loadout and offers Change Loadout; Hangar offers selection details and Continue To Play. Back or Escape returns to Home, and closing Upgrades returns to the page that opened it.
+- Home opens Play, Hangar, Upgrades, Information, Settings, or Exit. Play shows the current loadout and offers Change Loadout; Hangar offers selection details and Continue To Play. Back or Escape returns to Home, and closing Upgrades returns to the page that opened it.
 - The passive 3D hangar displays existing ships and placeholder pilot stand-ins, with a smooth camera moving between selection bays. Settings includes master volume, fullscreen, control instructions, and Animate Hangar, which can be disabled to reduce motion.
 - Campaign keeps two played stages. Its first boss opens a cyan hexagonal Salvage Corridor gateway and an amber chevron Assault Lane gateway. The briefing supports mouse, keyboard, and controller confirmation; Escape, Back, or Not yet returns to flight. Your faction, ship, upgrades, and nanobots carry forward. Practice retains its existing short encounter.
 - Enemies and bosses use occasional lateral spacing pulses away from the nearest crowded ship or target. Tight overlaps use stable escape directions; committed attacks retain their original movement. POIs are excluded from spacing.
-- Pilots include `Rookie`, `Ace`, and `Technician`
+- Current prototype pilot profiles are `Rookie`, `Ace`, and `Technician`. The five planned narrative characters are Trey, Laura, Roman, The Captain and Cami; their character presentation, dialogue and intros remain future work.
 - Ships include `Fighter Mk1`, `Heavy Bruiser`, and `Drone Carrier`
-- Weapons currently include pulse, laser, and drone-based loadout pieces
+- Weapons currently include pulse, laser, particle-beam and drone-based loadout pieces
 - Upgrade families cover hull, shields, targeting, systems, salvage, and thrusters
 - Enemy content includes Machines, Mercs, Bugs, and Greys, with faction wave decks, bosses, and wave-directed scaling
 - Mercs have five regular ship classes, ten wave cards, Contract Enforcer, and Vanguard Flagship. Merc Practice teaches all five classes and draws one boss; Campaign uses Enforcer at the gateway and Flagship at the finale.
 - Bugs have five regular organisms and ten wave cards. Bug Practice teaches the full hive and draws one boss; Campaign uses Nestbreaker Matron at the gateway and The First Queen at the finale.
 - Greys have five regular ship classes and ten wave cards. Grey Practice teaches the full fleet and draws one boss; Campaign uses The Witness at the gateway and The Veiled Mind at the finale.
+- Enemy purchasing/delivery and late-wave/second-sector budgets support overlapping pressure. Boss arrival preserves the battlefield; surviving minions persist after their summoner dies, and boss defeat advances the run immediately.
+- Nanobot reward growth is reduced. Separate swarms decay over 120 active gameplay seconds and use larger bright particles with dark outlines. Merc, Bug and Grey attack fields avoid redundant warning meshes; Sporeling clouds use static sprites and independent poison ticks.
+- Flight Camera settings are available from the main menu and pause while retaining the original follow camera. Pause also shows stats, map/faction modifiers and purchased upgrades; stage helper text remains there after fading from gameplay.
+- Compact enemy/target nameplates combine faction/name with blue shield and red hull sections and shrink with distance. Information uses reusable rotating previews and details for discovered enemies and eligible weapons/ships; pilots currently have placeholder icons.
 
 ## Controls
 
@@ -65,7 +69,7 @@ Combat targeting and firing are handled automatically by the ship's weapon syste
 
 - Engine: Godot 4.7.2
 - Language: typed GDScript
-- Project version: `0.5.6`
+- Project version: `0.5.6.1`
 
 ## Running The Project
 
@@ -101,17 +105,25 @@ Fluxbreak is aiming for readable chaos. The guiding rubric for new work is simpl
 
 ## TODO
 
-See the [ordered gameplay roadmap](docs/plans/next_gameplay_milestones.md). Menu/Hangar navigation and Campaign sector choices are complete; more useful points of interest are the recommended next milestone.
+See the [roadmap and completion checklist](docs/plans/next_gameplay_milestones.md) for current progress, open decisions and the full backlog. Updated October 27, 2026.
 
-- [x] Main Menu, Hangar, Play, and passive camera prototype.
-- [x] Campaign sector choices with working temporary sector modifiers.
-- [ ] Add salvage beacons, refit stations, and bounty relays.
-- [ ] Expand special units and readable auto-combat counterplay.
-- [ ] Add ammo/damage specialization and resistances.
-- [ ] Add progression variants for Mercs, Bugs, and Greys.
-- [ ] Define and implement the fifth faction, including its ships, bosses, and wave deck, once the first four factions' combat identities are stable.
+The next intended public milestone is a **polished Steam Playtest build**, after the owner is happy with polish and a selected set of small enhancements. The owner's three goals for a complete game are adaptive stage music, five characters with dialogue, and emotionally compelling character intro animations/montages. Those goals are tracked separately from the initial Playtest scope.
 
-Music, pilot artwork, and story/lore expansion remain deferred.
+- [x] Four factions, Campaign sector choices/modifiers, wave-pressure improvements and Practice progression isolation.
+- [x] Main-menu/Hangar overhaul, Information previews/details, flight-camera settings, pause modifier history and compact distance-scaled nameplates.
+- [ ] Prepare and externally test a polished Steam Playtest candidate, including onboarding, full-run reliability and late-game performance on ordinary hardware.
+- [ ] Create adaptive stage music, exploring several 3–4 minute loops at different BPMs/intensities and transitions in both directions.
+- [ ] Implement the five narrative characters and their dialogue interactions.
+- [ ] Create character intro animations/montages that establish relationships and emotional motivation.
+- [ ] Expand in-run audio/performance settings, player abilities and a purchasable single-use or activated nanobot magnet.
+- [ ] Add upgrade reroll/ban tools, potentially through meta purchases, plus more cross-weapon upgrades and build diversity.
+- [ ] Expand POIs, ammo specialization, faction-stage modifiers, and elite/special enemies with readable indicators.
+- [ ] Implement the fifth faction and further faction progression variants.
+- [ ] Review faction balance and the incentive to restart Campaign for an easier faction to farm.
+- [ ] Explore encrypted progression/high-score storage and a dedicated save folder with safe migration of existing data.
+- [ ] Consider improved self-made, commissioned or licensed ship/enemy/weapon/pilot assets where useful.
+
+Self-authored music and presentation remain the preferred first approach. Small prototypes will establish a manageable style; commissioning or buying assets is optional. The wider backlog does not automatically block Steam publishing.
 
 ## License
 
