@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="LogisticsDef" format=3]
+
+[ext_resource type="Script" path="res://content/defs/logistics_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = "refresh_stock"
+display_name = "Refresh Stock"
+description = "+1 refresh per run per tier. Replace a station's upgrade selection; its weapon offer stays unchanged. Uses refill each new run."
+max_tiers = 3
+base_cost = 50
+cost_multiplier = 2.0

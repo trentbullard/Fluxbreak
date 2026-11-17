@@ -226,21 +226,29 @@ Their role is to bias the run toward certain families of decisions, not to elimi
 
 ### Luck Mitigation
 
-Players should have limited tools to shape upgrade outcomes. Upgrade-screen reroll and ban actions are planned, with a possible connection to purchases or unlocks in the meta-upgrade screen.
+Players have limited tools to shape upgrade outcomes through permanent purchases in the meta screen's separate Logistics section. These actions preserve uncertainty while giving players deliberate ways to steer a build.
 
-Examples may include:
+### Current Logistics — November 2, 2026
 
-- **Refresh / Reroll** - replace available upgrade offers
-- **Ban / Banish** - exclude a selected upgrade from future choices, with the duration and affected pool still to be decided
-- other light-touch pool-shaping tools that preserve uncertainty
+- **Refresh Stock:** purchase up to three allowance tiers, costing 50, 100 and 200 Flux Anchors respectively. Each tier provides one refresh per new run. The button sits to the left of the upgrade rows and displays remaining uses in parentheses.
+- **Blacklist:** purchase one allowance for 150 Flux Anchors, granting one use per new run. Each upgrade row has a Blacklist button on its right, displaying the same shared remaining count. It can be used even when the upgrade itself is unaffordable.
+- Both actions disable when their remaining count is zero. Refresh also disables when there are no different eligible upgrades; an unchanged selection cannot consume a use.
+- A refresh prefers new eligible upgrades under the station's existing pool, tier and purchase-memory weighting, retaining current choices only when needed to fill a small pool. Unchanged retained offers keep their base prices.
+- Blacklist applies to the selected upgrade family, including all tiers, at every upgrade POI for the rest of the run. Purchased effects and purchase history stay intact. Only excluded slots are replaced; an exhausted pool may show fewer or no upgrades rather than restoring excluded content.
+- The weapon offer is separated from the upgrade rows by spacing and a divider. Refresh Stock and Blacklist do not alter it.
+- A POI retains its choices and rolled base prices when closed and revisited. Normal applicable player discounts and progressive weapon pricing still resolve through the existing pricing systems. Visiting again never grants a free refresh.
+- Allowances and exclusions are shared across POIs and persist through Campaign sector transfer. Starting a new Campaign or Practice run snapshots the purchased allowances, refills their uses and clears old exclusions. Spending uses in Practice changes no persistent purchases, Flux Anchors, stats or unlocks.
+- Logistics levels are saved separately from stat upgrades; they do not enter the ship's stat aggregator or run purchase history. The meta screen stages purchases/refunds in both sections through its shared Apply/Reset flow. Logistics levels cannot be changed during an active run.
 
-These mechanics should allow players to influence luck without eliminating uncertainty. Prices, uses, acquisition, reset rules and the scope of bans remain open design decisions; this document does not mark them as implemented.
+The initial prices above are playtest settings authored in `content/data/logistics/`. Existing saves start with zero Logistics allowances without resetting progression. No remaining-use count or run blacklist is written to the permanent purchase record.
+
+`UpgradeOfferService` owns the reusable offer generation, refresh and exclusion rules. `PoiInstance` owns its current cached stock, and `RunState` owns run-wide uses and excluded families. Upgrade menus handle presentation and purchasing; future upgrade POIs can reuse this service with their own definitions, pools and choice counts. New runs invalidate old stock through a run generation token.
 
 ### Build Diversity Follow-Up — October 27, 2026
 
 Expand the upgrade pool with more diverse modifiers that can benefit multiple weapon families or create useful interactions between them. Show exactly which weapons, minions and player stats each choice affects. Build on the existing shared modifier and stat-projection systems so combinations remain understandable and maintainable.
 
-Use playtesting to check whether players can form several effective builds across factions, ships and levels of meta investment. Favor meaningful alternative choices and synergies rather than filling the pool with mandatory flat-stat purchases. Ammo specialization, additional abilities and luck-mitigation tools are broader backlog work, not automatic prerequisites for the Steam playtest milestone.
+Use playtesting to check whether players can form several effective builds across factions, ships and levels of meta investment. Favor meaningful alternative choices and synergies rather than filling the pool with mandatory flat-stat purchases. Ammo specialization, additional abilities and further luck-mitigation extensions remain broader backlog work, not automatic prerequisites for the Steam playtest milestone.
 
 ### Design Principle
 

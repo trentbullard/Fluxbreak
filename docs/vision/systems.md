@@ -104,3 +104,9 @@ Campaign randomly chooses a faction and retains it throughout the run. Restartin
 The current progression/statistics file is `user://highscore.cfg`. Encrypting it and possibly relocating it from the current Godot user-data folder are backlog items. Any change should preserve existing progression through an explicit migration and keep test saves isolated. The destination, format and migration behavior are not decided.
 
 Local encryption can discourage casual editing, but a key shipped with the client cannot make local scores cheat-proof. A different folder is an organization choice, not a security guarantee. This proposal does not establish trusted online leaderboards or change Practice's progression isolation.
+
+## Current Upgrade Logistics — November 2, 2026
+
+The meta purchase screen separates Logistics from permanent stat upgrades. Resource-authored purchases provide up to three Refresh Stock uses and one Blacklist per new run. Their permanent purchase levels share the Flux Anchor wallet and staged Apply/Reset transaction, but save in a separate section and supply no ship stat modifiers. Run-wide remaining uses and family exclusions live in RunState; sector changes preserve them and a new run refills/clears them. Practice use is transient.
+
+One shared UpgradeOfferService supplies offer generation, refresh, exclusion and cached base-price rules for current and future upgrade POIs. Each POI owns its stock, preventing free refreshes by closing and reopening the menu. Blacklists apply to entire upgrade families across all tiers and stations for that run, without removing acquired upgrades. The separate weapon offer is unaffected. See [Logistics details and initial prices](upgrade_system.md#current-logistics--november-2-2026).

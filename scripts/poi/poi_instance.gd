@@ -17,6 +17,9 @@ var spawn_index: int = 0
 ## Display name for UI/nameplates
 var display_name: String = "POI"
 
+## Current-run upgrade stock and base prices, retained between docking visits.
+var upgrade_offer: Dictionary = {}
+
 ## Optional path to the mesh that receives visual overrides
 @export var mesh_instance_path: NodePath = NodePath("MeshInstance3D")
 
@@ -40,6 +43,7 @@ func _ready() -> void:
 
 ## Configure this POI instance with a definition and metadata
 func configure(def: PoiDef, id: int, index: int, using_scene_override: bool = false) -> void:
+	upgrade_offer.clear()
 	poi_def = def
 	instance_id = id
 	spawn_index = index

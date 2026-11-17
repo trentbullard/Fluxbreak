@@ -12,11 +12,16 @@ signal boss_encounter_started(boss_def: EnemyBossDef, wave_index: int)
 signal boss_encounter_ended(boss_def: EnemyBossDef, wave_index: int, player_won: bool, player_died: bool)
 signal flux_anchors_updated(new_value: int, old_value: int)
 signal meta_upgrades_applied(levels: Dictionary)
+signal logistics_applied(levels: Dictionary)
 
 const MENU: String = "res://scenes/world/world.tscn"
 const DEFAULT_PILOT_ROSTER: String = "res://content/data/pilots/pilot_roster.tres"
 const DEFAULT_RUN_DEFINITION: String = "res://content/data/runs/story_mode_intro.tres"
 const DEFAULT_META_UPGRADE_CATALOG: String = "res://content/data/meta_upgrades/meta_upgrade_catalog.tres"
+const DEFAULT_LOGISTICS_PATHS: Array[String] = [
+	"res://content/data/logistics/logistics_refresh_stock.tres",
+	"res://content/data/logistics/logistics_blacklist.tres",
+]
 const DEFAULT_FLUX_ANCHOR_REWARD: String = "res://content/data/rewards/default_flux_anchor_reward.tres"
 const SAVE_PATH: String = "user://highscore.cfg"
 const VICTORY_MESSAGE: String = "YOU WON"
@@ -40,6 +45,7 @@ const BOSS_STATS_GLOBAL_SECTION_PREFIX: String = "boss_stats.global."
 const BOSS_STATS_PILOT_SECTION_PREFIX: String = "boss_stats.pilot."
 const ARCHIVE_SECTION_PREFIX: String = "archive."
 const META_UPGRADES_SECTION: String = "meta_upgrades"
+const LOGISTICS_SECTION: String = "logistics"
 const META_KEY_FLUX_ANCHORS: String = "flux_anchors"
 const CURRENT_SAVE_SCHEMA_VERSION: int = 2
 
@@ -96,6 +102,8 @@ var _loaded_selected_ship_id: StringName = &""
 var _selected_ship_id_by_pilot_id: Dictionary = {}
 var _selected_weapon_id_by_ship_id: Dictionary = {}
 var _meta_upgrade_levels: Dictionary = {}
+var _logistics_levels: Dictionary = {}
+var _cached_logistics: Array[LogisticsDef] = []
 
 var _run_active: bool = false
 var _run_started_msec: int = 0
@@ -450,6 +458,22 @@ func get_meta_upgrade_level(upgrade_id: String) -> int:
 func get_current_meta_upgrade_levels() -> Dictionary:
 	return _meta_upgrade_levels.duplicate(true)
 
+## Logistics grants run allowances; it never enters the ship's stat modifiers.
+func get_all_logistics() -> Array[LogisticsDef]:
+	if _cached_logistics.is_empty():
+		for path: String in DEFAULT_LOGISTICS_PATHS:
+			var definition: LogisticsDef = load(path) as LogisticsDef
+			if definition != null:
+				_cached_logistics.append(definition)
+	return _cached_logistics.duplicate()
+
+func get_logistics_level(logistics_id: String) -> int:
+	var normalized: Dictionary = _normalize_logistics_levels(_logistics_levels)
+	return int(normalized.get(logistics_id, 0))
+
+func get_current_logistics_levels() -> Dictionary:
+	return _normalize_logistics_levels(_logistics_levels)
+
 func get_meta_upgrade_catalog() -> MetaUpgradeCatalog:
 	if _cached_meta_upgrade_catalog != null:
 		return _cached_meta_upgrade_catalog
@@ -593,18 +617,56 @@ func add_flux_anchors(amount: int) -> void:
 	flux_anchors_updated.emit(flux_anchors, old)
 
 func apply_meta_upgrades(new_levels: Dictionary) -> bool:
-	var normalized_levels: Dictionary = _normalize_meta_upgrade_levels(new_levels)
+	return apply_meta_purchases(new_levels, get_current_logistics_levels())
+
+## One balance check and save commits both sections, including staged refunds.
+## Changing Logistics during a live run is disallowed; allowances are snapshots.
+func apply_meta_purchases(new_upgrade_levels: Dictionary, new_logistics_levels: Dictionary) -> bool:
+	var normalized_levels: Dictionary = _normalize_meta_upgrade_levels(new_upgrade_levels)
+	var normalized_logistics: Dictionary = _normalize_logistics_levels(new_logistics_levels)
+	var current_logistics: Dictionary = get_current_logistics_levels()
+	if _run_active and normalized_logistics != current_logistics:
+		return false
 	var cost: int = _calculate_meta_upgrade_transition_cost(_meta_upgrade_levels, normalized_levels)
+	cost += _calculate_logistics_transition_cost(current_logistics, normalized_logistics)
 	if cost > flux_anchors:
 		return false
 	var old_anchors: int = flux_anchors
 	flux_anchors = max(0, flux_anchors - cost)
 	_meta_upgrade_levels = normalized_levels
+	_logistics_levels = normalized_logistics
 	_save_user_data()
 	if flux_anchors != old_anchors:
 		flux_anchors_updated.emit(flux_anchors, old_anchors)
 	meta_upgrades_applied.emit(_meta_upgrade_levels.duplicate(true))
+	if current_logistics != normalized_logistics:
+		logistics_applied.emit(get_current_logistics_levels())
 	return true
+
+func _normalize_logistics_levels(levels: Dictionary) -> Dictionary:
+	var normalized: Dictionary = {}
+	for definition: LogisticsDef in get_all_logistics():
+		if definition.id.is_empty():
+			continue
+		var raw_level: Variant = levels.get(definition.id, 0)
+		var level: int = 0
+		if raw_level is int:
+			level = clampi(int(raw_level), 0, maxi(definition.max_tiers, 0))
+		elif raw_level is float and is_finite(float(raw_level)):
+			level = clampi(int(raw_level), 0, maxi(definition.max_tiers, 0))
+		elif raw_level is String and String(raw_level).is_valid_int():
+			level = clampi(int(raw_level), 0, maxi(definition.max_tiers, 0))
+		if level > 0:
+			normalized[definition.id] = level
+	return normalized
+
+func _calculate_logistics_transition_cost(current_levels: Dictionary, next_levels: Dictionary) -> int:
+	var current: Dictionary = _normalize_logistics_levels(current_levels)
+	var next: Dictionary = _normalize_logistics_levels(next_levels)
+	var total: int = 0
+	for definition: LogisticsDef in get_all_logistics():
+		total += definition.get_total_cost_for_levels(int(current.get(definition.id, 0)), int(next.get(definition.id, 0)))
+	return total
 
 func _normalize_meta_upgrade_levels(levels: Dictionary) -> Dictionary:
 	var normalized: Dictionary = {}
@@ -1646,6 +1708,7 @@ func _load_user_data() -> void:
 	_selected_ship_id_by_pilot_id.clear()
 	_selected_weapon_id_by_ship_id.clear()
 	_meta_upgrade_levels.clear()
+	_logistics_levels.clear()
 	_loaded_selected_pilot_id = &""
 	_loaded_selected_ship_id = &""
 	high_score = 0
@@ -1691,6 +1754,12 @@ func _load_user_data() -> void:
 		if section == META_UPGRADES_SECTION:
 			for key in cfg.get_section_keys(section):
 				_meta_upgrade_levels[String(key)] = max(0, int(cfg.get_value(section, key, 0)))
+			continue
+		if section == LOGISTICS_SECTION:
+			var loaded_logistics: Dictionary = {}
+			for key: String in cfg.get_section_keys(section):
+				loaded_logistics[key] = cfg.get_value(section, key, 0)
+			_logistics_levels = _normalize_logistics_levels(loaded_logistics)
 			continue
 		if section.begins_with(META_STATS_PILOT_SECTION_PREFIX):
 			var meta_pilot_id: String = section.trim_prefix(META_STATS_PILOT_SECTION_PREFIX)
@@ -1765,6 +1834,9 @@ func _save_user_data() -> void:
 		if section == META_UPGRADES_SECTION:
 			cfg.erase_section(section)
 			continue
+		if section == LOGISTICS_SECTION:
+			cfg.erase_section(section)
+			continue
 		if section.begins_with(PILOT_SHIP_SELECTION_SECTION_PREFIX):
 			cfg.erase_section(section)
 			continue
@@ -1821,6 +1893,8 @@ func _save_user_data() -> void:
 		var level: int = max(0, int(_meta_upgrade_levels[upgrade_id]))
 		if level > 0:
 			cfg.set_value(META_UPGRADES_SECTION, String(upgrade_id), level)
+	for logistics_id: String in get_current_logistics_levels():
+		cfg.set_value(LOGISTICS_SECTION, logistics_id, get_logistics_level(logistics_id))
 
 	var err: int = cfg.save(SAVE_PATH)
 	if err != OK:

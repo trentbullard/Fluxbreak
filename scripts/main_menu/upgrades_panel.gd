@@ -31,9 +31,11 @@ var _reset_btn: Button = null
 
 # Per-upgrade row data: { upgrade, tier_label, plus_btn, minus_btn, cost_label }
 var _row_data: Array[Dictionary] = []
+var _logistics_row_data: Array[Dictionary] = []
 
 # Staged (uncommitted) tier levels: upgrade_id -> int
 var _pending_levels: Dictionary = {}
+var _pending_logistics_levels: Dictionary = {}
 
 
 func _ready() -> void:
@@ -81,7 +83,7 @@ func _build_ui() -> void:
 	vbox.add_child(header_row)
 
 	var title_label: Label = Label.new()
-	title_label.text = "Meta Upgrades"
+	title_label.text = "Upgrades & Logistics"
 	title_label.add_theme_font_size_override("font_size", 28)
 	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header_row.add_child(title_label)
@@ -136,76 +138,88 @@ func _build_ui() -> void:
 	scroll_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(scroll_vbox)
 
+	_add_section_title(scroll_vbox, "Logistics")
+	var logistics_hint: Label = Label.new()
+	logistics_hint.text = "Permanent allowances. Uses refill each new run and are shared across all stations."
+	logistics_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	logistics_hint.add_theme_font_size_override("font_size", 13)
+	logistics_hint.modulate = Color(0.65, 0.75, 0.85, 1.0)
+	scroll_vbox.add_child(logistics_hint)
+	_logistics_row_data.clear()
+	for definition: LogisticsDef in GameFlow.get_all_logistics():
+		var row: Dictionary = _add_purchase_row(scroll_vbox, definition.display_name, definition.description,
+			_on_logistics_plus_pressed.bind(definition.id), _on_logistics_minus_pressed.bind(definition.id))
+		row["logistics"] = definition
+		_logistics_row_data.append(row)
+	scroll_vbox.add_child(HSeparator.new())
+	_add_section_title(scroll_vbox, "Permanent Upgrades")
 	_row_data.clear()
-	for upgrade in _get_meta_upgrades():
+	for upgrade: MetaUpgradeDef in _get_meta_upgrades():
 		if upgrade == null:
 			continue
-		var row: HBoxContainer = HBoxContainer.new()
-		row.add_theme_constant_override("separation", 10)
-		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		scroll_vbox.add_child(row)
-
-		var name_col: VBoxContainer = VBoxContainer.new()
-		name_col.add_theme_constant_override("separation", 1)
-		name_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(name_col)
-
-		var name_label: Label = Label.new()
-		name_label.text = upgrade.display_name
-		name_label.add_theme_font_size_override("font_size", 16)
-		name_col.add_child(name_label)
-
-		var desc_label: Label = Label.new()
-		desc_label.text = upgrade.description
-		desc_label.add_theme_font_override("font", desc_font)
-		desc_label.add_theme_font_size_override("font_size", 11)
-		desc_label.modulate = Color(0.65, 0.75, 0.85, 1.0)
-		desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		name_col.add_child(desc_label)
-
-		var tier_label: Label = Label.new()
-		tier_label.text = "[0/%d]" % [upgrade.max_tiers]
-		tier_label.add_theme_font_size_override("font_size", 16)
-		tier_label.custom_minimum_size = Vector2(55.0, 0.0)
-		tier_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		row.add_child(tier_label)
-
-		var minus_btn: Button = Button.new()
-		minus_btn.text = "[-]"
-		minus_btn.focus_mode = Control.FOCUS_ALL
-		minus_btn.add_theme_font_size_override("font_size", 16)
-		minus_btn.custom_minimum_size = Vector2(45.0, 0.0)
-		minus_btn.pressed.connect(_on_minus_pressed.bind(upgrade.id))
-		row.add_child(minus_btn)
-
-		var plus_btn: Button = Button.new()
-		plus_btn.text = "[+]"
-		plus_btn.focus_mode = Control.FOCUS_ALL
-		plus_btn.add_theme_font_size_override("font_size", 16)
-		plus_btn.custom_minimum_size = Vector2(45.0, 0.0)
-		plus_btn.pressed.connect(_on_plus_pressed.bind(upgrade.id))
-		row.add_child(plus_btn)
-
-		var cost_label: Label = Label.new()
-		cost_label.text = "%d FA" % [upgrade.base_cost]
-		cost_label.add_theme_font_size_override("font_size", 14)
-		cost_label.custom_minimum_size = Vector2(80.0, 0.0)
-		cost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		row.add_child(cost_label)
-
-		_row_data.append({
-			"upgrade": upgrade,
-			"tier_label": tier_label,
-			"plus_btn": plus_btn,
-			"minus_btn": minus_btn,
-			"cost_label": cost_label,
-		})
+		var row: Dictionary = _add_purchase_row(scroll_vbox, upgrade.display_name, upgrade.description,
+			_on_plus_pressed.bind(upgrade.id), _on_minus_pressed.bind(upgrade.id))
+		row["upgrade"] = upgrade
+		_row_data.append(row)
 
 	# Reparent close button above the dim to keep it accessible
 	if btn_close != null:
 		btn_close.reparent(_root)
 		btn_close.focus_mode = Control.FOCUS_ALL
 		btn_close.add_theme_font_size_override("font_size", 47)
+
+func _add_section_title(parent: VBoxContainer, text: String) -> void:
+	var title: Label = Label.new()
+	title.text = text
+	title.add_theme_font_size_override("font_size", 20)
+	parent.add_child(title)
+
+## Both sections share presentation without treating Logistics as stat upgrades.
+func _add_purchase_row(parent: VBoxContainer, display_name: String, description: String, on_plus: Callable, on_minus: Callable) -> Dictionary:
+	var row: HBoxContainer = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	parent.add_child(row)
+	var name_col: VBoxContainer = VBoxContainer.new()
+	name_col.add_theme_constant_override("separation", 1)
+	name_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(name_col)
+	var name_label: Label = Label.new()
+	name_label.text = display_name
+	name_label.add_theme_font_size_override("font_size", 16)
+	name_col.add_child(name_label)
+	var desc_label: Label = Label.new()
+	desc_label.text = description
+	desc_label.add_theme_font_override("font", desc_font)
+	desc_label.add_theme_font_size_override("font_size", 11)
+	desc_label.modulate = Color(0.65, 0.75, 0.85, 1.0)
+	desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	name_col.add_child(desc_label)
+	var tier_label: Label = Label.new()
+	tier_label.add_theme_font_size_override("font_size", 16)
+	tier_label.custom_minimum_size = Vector2(55.0, 0.0)
+	tier_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	row.add_child(tier_label)
+	var minus_btn: Button = Button.new()
+	minus_btn.text = "[-]"
+	minus_btn.focus_mode = Control.FOCUS_ALL
+	minus_btn.add_theme_font_size_override("font_size", 16)
+	minus_btn.custom_minimum_size = Vector2(45.0, 0.0)
+	minus_btn.pressed.connect(on_minus)
+	row.add_child(minus_btn)
+	var plus_btn: Button = Button.new()
+	plus_btn.text = "[+]"
+	plus_btn.focus_mode = Control.FOCUS_ALL
+	plus_btn.add_theme_font_size_override("font_size", 16)
+	plus_btn.custom_minimum_size = Vector2(45.0, 0.0)
+	plus_btn.pressed.connect(on_plus)
+	row.add_child(plus_btn)
+	var cost_label: Label = Label.new()
+	cost_label.add_theme_font_size_override("font_size", 14)
+	cost_label.custom_minimum_size = Vector2(80.0, 0.0)
+	cost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	row.add_child(cost_label)
+	return {"tier_label": tier_label, "plus_btn": plus_btn, "minus_btn": minus_btn, "cost_label": cost_label}
 
 
 func _apply_menu_font_theme() -> void:
@@ -217,16 +231,15 @@ func _apply_menu_font_theme() -> void:
 
 
 func show_panel() -> void:
-	_pending_levels.clear()
-	var current: Dictionary = GameFlow.get_current_meta_upgrade_levels()
-	for upgrade in _get_meta_upgrades():
-		if upgrade == null or upgrade.id == "":
-			continue
-		_pending_levels[upgrade.id] = int(current.get(upgrade.id, 0))
+	_load_pending_levels()
 	_refresh_display()
 	visible = true
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	_focus_available_action.call_deferred()
 
+func _load_pending_levels() -> void:
+	_pending_levels = GameFlow.get_current_meta_upgrade_levels()
+	_pending_logistics_levels = GameFlow.get_current_logistics_levels()
 
 func _refresh_display() -> void:
 	if _balance_label == null or _pending_cost_label == null or _apply_btn == null or _reset_btn == null:
@@ -288,6 +301,27 @@ func _refresh_display() -> void:
 			cost_label.text = "%d FA" % [upgrade.get_tier_cost(pending_tier + 1)]
 			cost_label.modulate = Color(1.0, 1.0, 1.0, 1.0)
 
+	var current_logistics: Dictionary = GameFlow.get_current_logistics_levels()
+	for row: Dictionary in _logistics_row_data:
+		var definition: LogisticsDef = row["logistics"] as LogisticsDef
+		var pending: int = int(_pending_logistics_levels.get(definition.id, 0))
+		var current: int = int(current_logistics.get(definition.id, 0))
+		var tier_label: Label = row["tier_label"] as Label
+		var plus_btn: Button = row["plus_btn"] as Button
+		var minus_btn: Button = row["minus_btn"] as Button
+		var cost_label: Label = row["cost_label"] as Label
+		tier_label.text = "%d/%d\nper run" % [pending, definition.max_tiers]
+		tier_label.modulate = Color(1.0, 0.6, 0.1) if pending > current else (Color(0.3, 1.0, 0.4) if pending < current else Color.WHITE)
+		var next_cost: int = definition.get_tier_cost(pending + 1)
+		plus_btn.disabled = pending >= definition.max_tiers or pending_cost + next_cost > current_balance
+		minus_btn.disabled = pending <= 0
+		cost_label.text = "MAX" if pending >= definition.max_tiers else "%d FA" % next_cost
+		cost_label.modulate = Color(0.5, 0.8, 1.0) if pending >= definition.max_tiers else Color.WHITE
+	if visible:
+		var focus: Button = get_viewport().gui_get_focus_owner() as Button
+		if focus == null or focus.disabled or not focus.is_visible_in_tree():
+			_focus_available_action.call_deferred()
+
 
 func _calculate_pending_cost(current_levels: Dictionary) -> int:
 	var total: int = 0
@@ -297,6 +331,9 @@ func _calculate_pending_cost(current_levels: Dictionary) -> int:
 		var pending_tier: int = int(_pending_levels.get(upgrade.id, 0))
 		var current_tier: int = int(current_levels.get(upgrade.id, 0))
 		total += upgrade.get_total_cost_for_levels(current_tier, pending_tier)
+	var current_logistics: Dictionary = GameFlow.get_current_logistics_levels()
+	for definition: LogisticsDef in GameFlow.get_all_logistics():
+		total += definition.get_total_cost_for_levels(int(current_logistics.get(definition.id, 0)), int(_pending_logistics_levels.get(definition.id, 0)))
 	return total
 
 
@@ -307,6 +344,10 @@ func _has_pending_changes(current_levels: Dictionary) -> bool:
 		var pending_tier: int = int(_pending_levels.get(upgrade.id, 0))
 		var current_tier: int = int(current_levels.get(upgrade.id, 0))
 		if pending_tier != current_tier:
+			return true
+	var current_logistics: Dictionary = GameFlow.get_current_logistics_levels()
+	for definition: LogisticsDef in GameFlow.get_all_logistics():
+		if int(_pending_logistics_levels.get(definition.id, 0)) != int(current_logistics.get(definition.id, 0)):
 			return true
 	return false
 
@@ -329,24 +370,42 @@ func _on_minus_pressed(upgrade_id: String) -> void:
 
 
 func _on_apply_pressed() -> void:
-	if GameFlow.apply_meta_upgrades(_pending_levels):
-		_pending_levels.clear()
-		var new_current: Dictionary = GameFlow.get_current_meta_upgrade_levels()
-		for upgrade in _get_meta_upgrades():
-			if upgrade == null or upgrade.id == "":
-				continue
-			_pending_levels[upgrade.id] = int(new_current.get(upgrade.id, 0))
+	if GameFlow.apply_meta_purchases(_pending_levels, _pending_logistics_levels):
+		_load_pending_levels()
 		_refresh_display()
 
 
 func _on_reset_pressed() -> void:
-	_pending_levels.clear()
-	var current: Dictionary = GameFlow.get_current_meta_upgrade_levels()
-	for upgrade in _get_meta_upgrades():
-		if upgrade == null or upgrade.id == "":
-			continue
-		_pending_levels[upgrade.id] = int(current.get(upgrade.id, 0))
+	_load_pending_levels()
 	_refresh_display()
+
+func _on_logistics_plus_pressed(logistics_id: String) -> void:
+	for definition: LogisticsDef in GameFlow.get_all_logistics():
+		if definition.id != logistics_id:
+			continue
+		var pending: int = int(_pending_logistics_levels.get(logistics_id, 0))
+		if pending < definition.max_tiers:
+			_pending_logistics_levels[logistics_id] = pending + 1
+			_refresh_display()
+		return
+
+func _on_logistics_minus_pressed(logistics_id: String) -> void:
+	var pending: int = int(_pending_logistics_levels.get(logistics_id, 0))
+	if pending > 0:
+		_pending_logistics_levels[logistics_id] = pending - 1
+		_refresh_display()
+
+func _focus_available_action() -> void:
+	if not visible:
+		return
+	for row: Dictionary in _logistics_row_data + _row_data:
+		for key: String in ["plus_btn", "minus_btn"]:
+			var button: Button = row[key] as Button
+			if not button.disabled and button.is_visible_in_tree():
+				button.grab_focus()
+				return
+	if btn_close != null:
+		btn_close.grab_focus()
 
 
 func _on_close_pressed() -> void:

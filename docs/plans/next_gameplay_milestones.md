@@ -2,6 +2,8 @@
 
 Updated October 27, 2026.
 
+Logistics implementation update: November 2, 2026.
+
 This is the central checklist for current progress, the next Steam Playtest milestone, the owner's goals for a complete game, and the wider backlog. Linked vision files describe the intended experience; implementation records describe what has actually shipped. Unchecked items are plans, not promises of a release date or requirements imposed by Steam.
 
 ## Next Milestone: A Polished Steam Playtest Build
@@ -37,6 +39,7 @@ These items record implemented features. They do not mean every balance, accessi
 - [x] Compact faction/name durability plates with a blue shield upper half, red hull lower half and distance-based shrinking.
 - [x] Information panels for enemies, weapons, ships and pilots. Discovered enemies and eligible weapons/ships use reusable rotating previews and details pages; pilot entries remain placeholders.
 - [x] Debug HUD processing disabled while retaining its implementation for later use.
+- [x] Upgrade Logistics: permanent purchases grant up to three Refresh Stock uses and one Blacklist per run. Shared POI offer rules cache choices/base prices, preserve the separate weapon offer, and apply family exclusions across stations and sectors.
 
 For the wave/salvage work, Phases 1, 2, 4 and 6 are implemented; Phases 3 and 5 were explicitly skipped after playtesting; Phase 7 remains deferred and disabled. See [the implementation record](wave_salvage_enhancements.md). This roadmap does not reactivate the skipped phases.
 
@@ -86,7 +89,7 @@ These are desired enhancements and open design tasks. They do not automatically 
 | [ ] | Fifth faction | Define its identity, ships, bosses and wave deck after the existing factions are sufficiently stable. |
 | [ ] | Save protection and location | Explore encryption for `highscore.cfg` and a dedicated application folder outside the default `%APPDATA%\Godot\app_userdata\Fluxbreak`. The file also holds progression, selections, currency and statistics; preserve them through any format/path migration. Local encryption is a tampering deterrent, not trusted score verification, and moving the folder adds no integrity guarantee. |
 | [ ] | Purchasable nanobot magnet | Explore a single-use purchase or activated collection ability. Keep this distinct from existing passive magnet/collection upgrades, and preserve collection decisions. |
-| [ ] | Upgrade reroll and ban | Add ways to reroll offerings or exclude choices, possibly purchased/unlocked through meta upgrades. Define purchase model, limits, ban duration/scope and UI feedback before implementation. |
+| [x] | Upgrade reroll and ban | Implemented as Refresh Stock and Blacklist through separate Logistics purchases. Refresh allowance tiers cost 50/100/200 Flux Anchors, maximum three uses per run; one Blacklist allowance costs 150. Blacklist removes all tiers of a family from offers for the current run. See [upgrade rules](../vision/upgrade_system.md#current-logistics--november-2-2026). |
 | [ ] | Expanded in-run settings | Add accessible audio and performance/quality controls while paused. Main-menu master volume/fullscreen/hangar motion and in-run camera settings already exist. |
 | [ ] | More player abilities | Explore additional active abilities, including ship-specific identities and clear costs/cooldowns. |
 | [ ] | Model/art improvements | Optionally replace ship, enemy, weapon and pilot models with improved self-made, commissioned or licensed assets. Preserve readable silhouettes and performance; replacing every model is not a release requirement. |

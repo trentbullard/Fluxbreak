@@ -41,6 +41,7 @@ The game is built around auto-combat rather than manual aiming. Your job is to s
 - Nanobot reward growth is reduced. Separate swarms decay over 120 active gameplay seconds and use larger bright particles with dark outlines. Merc, Bug and Grey attack fields avoid redundant warning meshes; Sporeling clouds use static sprites and independent poison ticks.
 - Flight Camera settings are available from the main menu and pause while retaining the original follow camera. Pause also shows stats, map/faction modifiers and purchased upgrades; stage helper text remains there after fading from gameplay.
 - Compact enemy/target nameplates combine faction/name with blue shield and red hull sections and shrink with distance. Information uses reusable rotating previews and details for discovered enemies and eligible weapons/ships; pilots currently have placeholder icons.
+- The meta screen has a separate Logistics section for permanent per-run allowances: up to three Refresh Stock uses and one Blacklist. Upgrade POIs share those uses across sectors, preserve stock between visits, and keep their weapon offer separate. Blacklist excludes an upgrade family and all its tiers for that run without removing purchased upgrades.
 
 ## Controls
 
@@ -69,7 +70,7 @@ Combat targeting and firing are handled automatically by the ship's weapon syste
 
 - Engine: Godot 4.7.2
 - Language: typed GDScript
-- Project version: `0.5.6.1`
+- Project version: `0.5.7`
 
 ## Running The Project
 
@@ -116,7 +117,8 @@ The next intended public milestone is a **polished Steam Playtest build**, after
 - [ ] Implement the five narrative characters and their dialogue interactions.
 - [ ] Create character intro animations/montages that establish relationships and emotional motivation.
 - [ ] Expand in-run audio/performance settings, player abilities and a purchasable single-use or activated nanobot magnet.
-- [ ] Add upgrade reroll/ban tools, potentially through meta purchases, plus more cross-weapon upgrades and build diversity.
+- [x] Add Refresh Stock and Blacklist tools, purchased as permanent per-run allowances in Logistics.
+- [ ] Add more cross-weapon upgrades and build diversity.
 - [ ] Expand POIs, ammo specialization, faction-stage modifiers, and elite/special enemies with readable indicators.
 - [ ] Implement the fifth faction and further faction progression variants.
 - [ ] Review faction balance and the incentive to restart Campaign for an easier faction to farm.

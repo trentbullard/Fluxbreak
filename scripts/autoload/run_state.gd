@@ -6,6 +6,7 @@ signal nanobots_updated(amount: int) # called by ship when nanobots collected
 signal nanobots_spent(amount: int) # called by pause menu
 signal weapon_purchased_count_changed(count: int)
 signal upgrade_purchased(upgrade_id: String)
+signal logistics_changed
 
 # --- Weapon Pricing ---
 var weapons_purchased: int = 0
@@ -35,15 +36,60 @@ var _purchased_upgrade_entries: Array[Dictionary] = []
 var _purchased_family_counts_by_poi_type: Dictionary = {}
 var _purchased_family_unique_by_poi_type: Dictionary = {}
 var _purchased_family_total_by_poi_type: Dictionary = {}
+var _refresh_stock_remaining: int = 0
+var _blacklist_remaining: int = 0
+var _blacklisted_upgrade_families: PackedStringArray = PackedStringArray()
+var _run_generation: int = 0
 
 func start_run() -> void:
+	_run_generation += 1
 	reset_score()
 	reset_weapons_purchased()
 	reset_upgrades_purchased()
 	reset_wave_progression()
+	reset_logistics()
 	set_state(State.DOWNTIME)
 	if CombatStats != null:
 		CombatStats.reset_run_metrics()
+
+## Permanent purchases provide a fresh shared allowance only when a run starts.
+## Sector changes and Practice actions never modify the purchased allowances.
+func reset_logistics() -> void:
+	_refresh_stock_remaining = GameFlow.get_logistics_level("refresh_stock")
+	_blacklist_remaining = GameFlow.get_logistics_level("blacklist")
+	_blacklisted_upgrade_families.clear()
+	logistics_changed.emit()
+
+func get_run_generation() -> int:
+	return _run_generation
+
+func get_refresh_stock_remaining() -> int:
+	return _refresh_stock_remaining
+
+func get_blacklist_remaining() -> int:
+	return _blacklist_remaining
+
+func get_blacklisted_upgrade_families() -> PackedStringArray:
+	return _blacklisted_upgrade_families.duplicate()
+
+func is_upgrade_family_blacklisted(family: String) -> bool:
+	return _blacklisted_upgrade_families.has(family.strip_edges().to_lower())
+
+func try_use_refresh_stock() -> bool:
+	if _refresh_stock_remaining <= 0:
+		return false
+	_refresh_stock_remaining -= 1
+	logistics_changed.emit()
+	return true
+
+func try_blacklist_upgrade_family(family: String) -> bool:
+	var normalized: String = family.strip_edges().to_lower()
+	if _blacklist_remaining <= 0 or normalized.is_empty() or is_upgrade_family_blacklisted(normalized):
+		return false
+	_blacklist_remaining -= 1
+	_blacklisted_upgrade_families.append(normalized)
+	logistics_changed.emit()
+	return true
 
 
 func reset_weapons_purchased() -> void:
